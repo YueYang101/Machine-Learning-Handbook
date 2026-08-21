@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diffusion Policy 图解与推导 · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap canvas { width:100%; display:block; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; }
+.ctl button { font:600 .85rem/1 inherit; color:var(--ink); background:var(--bg);
+  border:1px solid var(--line2); border-radius:7px; padding:7px 11px; cursor:pointer; }
+.ctl button:hover { border-color:var(--blue); color:var(--blue); }
+.ctl button.pri { background:var(--blue); border-color:var(--blue); color:#fff; }
+.ctl label { display:inline-flex; gap:5px; align-items:center; font-size:.85rem; color:var(--sub);
+  cursor:pointer; user-select:none; }
+.ctl input[type=range] { flex:1 1 140px; min-width:120px; accent-color:var(--blue); }
+.ctl .ro { font:.8rem/1.4 ui-monospace,Menlo,monospace; color:var(--sub); }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="kicker">MACHINE LEARNING HANDBOOK · IMITATION LEARNING</div>
+<h1>Diffusion Policy：图解与完整推导<br><span style="font-size:.72em;color:var(--sub)">它到底在加噪去噪什么，以及 loss 是怎么一步步推出来的</span></h1>
+
+<p class="lede">这一页做两件事。<b>前半图示</b>：纠正两个常见误区——DP 不是「在分布峰上爬山找最优点」，也不是「对密度曲线本身加噪去噪」；被加噪去噪的是<b>样本（action 本身）</b>，模型学的是一个「球在每个位置往哪滚」的方向场。<b>后半推导</b>：从贝叶斯变换和高斯的性质出发，把正向闭式解、反向后验、ELBO、KL divergence 一路推到 DDPM 的 $\|\epsilon-\epsilon_\theta\|^2$，再落到操纵原论文的 Diffusion Policy 和 Flow Matching。所有动画按解析解实时模拟，不是示意贴图。</p>
+
+<div class="toc"><b>目录</b> ·
+<a href="#g1">§1 误区</a> ·
+<a href="#g2">§2 弹球比喻</a> ·
+<a href="#g3">§3 正向/反向</a> ·
+<a href="#g4">§4 采样≠分布</a> ·
+<a href="#g5">§5 DP vs FM</a> ·
+<a href="#g6">§6 高维的账</a> ·
+<a href="#m1">§7 工具箱</a> ·
+<a href="#m2">§8 正向闭式解</a> ·
+<a href="#m3">§9 反向后验</a> ·
+<a href="#m4">§10 ELBO 与 KL</a> ·
+<a href="#m5">§11 高斯 KL</a> ·
+<a href="#m6">§12 噪声预测 loss</a> ·
+<a href="#m7">§13 数值例子</a> ·
+<a href="#dp">§14 DP 原论文</a> ·
+<a href="#fm">§15 Flow Matching</a></div>
+
+<h2 id="g1"><span class="n">§ 1</span>先把两个误区摆上台面</h2>
+
+<p>设定：固定一个 observation $o$（比如「杯子在桌上」），专家动作不唯一——可以左抓也可以右抓。要建模的是条件分布 $p(A\mid o)$，横轴是 <b>action 本身</b>（不是 timestep、不是 $\beta_k$、不是噪声强度）。下面三块动画里横轴都是一维 action，双峰：左峰 $A\approx-2$（left grasp，数据里占 60%），右峰 $A\approx+2$（right grasp，占 40%）。</p>
+
+<div class="figrow">
+<div class="figwrap"><canvas id="cvA" height="200"></canvas>
+<div class="cap"><b style="color:var(--red)">✗ 误区 1「在峰上爬山」</b>：以为样本沿密度曲线往上爬、最优点是顶峰。若真如此，跑多少次结果都挤在同一个峰顶，多模态直接消失。</div></div>
+<div class="figwrap"><canvas id="cvB" height="200"></canvas>
+<div class="cap"><b style="color:var(--red)">✗ 误区 2「对曲线加噪去噪」</b>：以为被模糊/锐化的是密度曲线这条函数。但网络从头到尾没有显式表示过这条曲线。</div></div>
+<div class="figwrap"><canvas id="cvC" height="200"></canvas>
+<div class="cap"><b style="color:var(--green)">✓ 正确图景</b>：被加噪/去噪的是<b>样本点</b>。每个橙点从纯噪声出发被运输到高密度区，很多点的落点合起来才是蓝色曲线。</div></div>
+</div>
+
+<div class="key warn">
+<b>误区 1 里藏着半个真相。</b>去噪方向确实约等于 score $\nabla_A \log p_k(A\mid o)$——「指向密度更高的方向」，所以「往上走」对了一半。但：
+① 移动的是<b>样本空间里的点</b>，不是「曲线上的点」；
+② 每一步用的是<b>当前噪声水平那张地形</b> $p_k$ 的场——$k$ 从 $T$ 退火到 $0$，地形从一座平缓大山逐渐变回真实多峰地形，不是一直在 $p_0$ 上爬；
+③ <b>随机起点 + 每步注入的采样噪声</b>让终点按密度铺开，而不是全部收敛到 argmax（§2 动画里可以亲手关掉噪声验证）。
+另外「峰顶 = 最优」本身不成立：$\arg\max_A p_{\text{expert}}(A\mid o)$ 只是专家数据里最常见的动作，不等于 $\arg\max_A Q(o,A)$，更不等于当前用户想做的动作——对 shared control 尤其要紧。
+</div>
+
+<h2 id="g2"><span class="n">§ 2</span>弹球比喻：不背地图，只学「球在哪儿往哪滚」</h2>
+
+<p>把 $p(A\mid o)$ 想成一张三维弹球台地形：高密度处是盆地，样本是球。把整张地形图背下来（显式表示密度函数）在高维下贵得离谱，连归一化常数 $Z$ 都算不动。DP 只统计一件便宜得多的事：<b>球在任意位置、任意噪声水平下，该往哪个方向弹</b>。随机撒下的球顺着这个局部方向场（加一点随机弹跳）滚，最终按各盆地的深浅 × 面积比例落进去。下面是二维 action 空间、三个 mode 的真实模拟：</p>
+
+<div class="figwrap">
+<div class="ctl">
+<button class="pri" id="pbDrop">投下 100 个球</button>
+<button id="pbOne">单球慢放</button>
+<button id="pbClear">清空</button>
+<label><input type="checkbox" id="pbField" checked>方向场</label>
+<label><input type="checkbox" id="pbTerrain" checked>地形</label>
+<label><input type="checkbox" id="pbNoise" checked>采样噪声</label>
+<label><input type="checkbox" id="pbSame">同一起点</label>
+<span class="ro" id="pbInfo"></span>
+</div>
+<canvas id="cvPin" height="420"></canvas>
+<div class="cap">背景越蓝 = 数据密度越高（三个 grasp mode）；箭头 = 当前噪声水平下的去噪方向场；橙球 = 采样中的样本；小圆点 = 已完成的落点。试试<b>关掉「采样噪声」并勾选「同一起点」</b>：所有球走完全相同的确定性路径、落进同一个 mode——「随机起点 + 采样噪声」是 DP 能表示整个分布的前提，不是工程杂音。</div>
+</div>
+
+<div class="key good">
+<b>比喻的技术版本。</b>DP 学的是「不同噪声水平下的 denoising / score field」，而不是「显式存储 $T$ 张概率分布」。noise schedule（$\beta_k,\alpha_k,\bar\alpha_k$）预先定义、不用学；网络只学 $\epsilon_\theta(A^k,k,o)$：给定当前带噪 action、扩散步数、observation，预测往哪个方向去噪。DP 原论文就是这么解读的——$\epsilon_\theta$ 在学动作分布的梯度场，采样是带噪声的梯度步（Stochastic Langevin Dynamics，见 §14）。
+</div>
+
+<h2 id="g3"><span class="n">§ 3</span>正向 / 反向：是运输（transport），不是验证（verification）</h2>
+
+<p>正向过程：对<b>数据样本</b>一步步加高斯噪声，直到变成 $\mathcal N(0,I)$，什么信息都不剩。反向过程：从 $\mathcal N(0,I)$ 抽一个点，用学到的方向场一步步运输回数据分布。拖动滑块看每个噪声水平 $k$ 下，粒子群怎么移动、边缘分布 $p_k$ 怎么形变：</p>
+
+<div class="figwrap">
+<div class="ctl">
+<button class="pri" id="frF">▶ 正向（数据→噪声）</button>
+<button id="frR">▶ 反向（噪声→数据）</button>
+<button id="frN">重抽样本</button>
+<input type="range" id="frK" min="0" max="60" value="0">
+<span class="ro" id="frInfo"></span>
+</div>
+<canvas id="cvFR" height="320"></canvas>
+<div class="cap">蓝点：真实逐步加噪模拟；橙点：按精确后验的反向采样。实线是当前 $k$ 的解析边缘分布 $p_k$，虚线是目标 $p_0$。两个要点：① 中间那串 $p_k$ 是「数据与噪声的插值分布」，去噪的场走在这串<b>退火地形</b>上，不是一直在 $p_0$ 上；② 多步去噪不是「逐步确认当前 action 概率越来越高」，而是把简单高斯<b>运输</b>成复杂分布：$p_T\to p_{T-1}\to\cdots\to p_0$。</div>
+</div>
+
+<h2 id="g4"><span class="n">§ 4</span>一次采样 = 一个 action；很多次采样 = 分布</h2>
+
+<p>理解 DP 最关键的一点：<b>单次 inference 只移动一个点</b>。从 $A^T\sim\mathcal N(0,I)$ 出发（比如抽到 $0.37$），去噪链形如 $0.37\to0.51\to0.73\to1.10\to1.55\to2.01$，最终 $A^0\approx2$——这只是<b>一个</b> action。固定同一个 $o$ 重复 $N$ 次，落点的直方图才是 $p(A\mid o)$：</p>
+
+<div class="figwrap">
+<div class="ctl">
+<button class="pri" id="hsOne">采样 1 次（慢放）</button>
+<button id="hsMany">采样 200 次</button>
+<button id="hsClear">清空</button>
+<span class="ro" id="hsInfo"></span>
+</div>
+<canvas id="cvHist" height="320"></canvas>
+<div class="cap">上：单次采样的去噪轨迹（横轴 $k$ 从 $T$ 到 $0$）。下：落点直方图 vs 真实 $p(A\mid o)$（蓝线）。数据里左抓 60%、右抓 40%——采样够多后直方图自动逼近 60/40，没有任何地方显式写过这两个数。$$\boxed{\text{一次采样}\to\text{一个 action}}\qquad\boxed{\text{很多次采样}\to\text{整个分布}}$$</div>
+</div>
+
+<h2 id="g5"><span class="n">§ 5</span>DP 与 Flow Matching：同一思想的两种「场」</h2>
+
+<p>DP 和 FM 的共同本质：<b>都不显式表示密度函数，而是用「把噪声运输到数据的场」作为分布的另一种表示</b>。区别只在场的类型和走法：DP 学噪声方向场（$\propto$ score），按 SDE 随机走，路径弯；FM 直接学速度场 $v_\theta$，按 ODE 确定走，路径近直线——所以推理步数可以少得多（§15）。</p>
+
+<div class="figwrap">
+<canvas id="cvFM" height="290"></canvas>
+<div class="cap">同一个双峰目标。左：DP 反向 SDE 轨迹——随机、弯曲、彼此交叉。右：FM 条件直线路径——确定、笔直。两边左端都是 $\mathcal N(0,I)$ 样本，右端都落到 $\pm2$。「弯 vs 直」决定数值积分步数，这正是 FM / DDIM / distillation 存在的理由。</div>
+</div>
+
+<h2 id="g6"><span class="n">§ 6</span>为什么「学场」比「背地图」省：高维 action chunk 的账</h2>
+
+<p>DP 的优势从来不是「能表示多模态」——MDN / GMM 也能。优势是在<b>高维 action chunk</b> 下用去噪过程<b>隐式</b>表示分布，绕开显式参数化和归一化的代价。算一笔账：dexterous hand，20 DOF × 16 步 horizon，$A\in\mathbb R^{320}$，要学 320 维<b>联合</b>分布 $p(a_1,\dots,a_{320}\mid o)$。</p>
+
+<ul>
+<li><b>MDN / GMM 背地图</b>：$p(A\mid o)=\sum_{k=1}^K \pi_k(o)\,\mathcal N(A;\mu_k(o),\Sigma_k(o))$。$K$ 要提前定死；一个 full covariance $\Sigma\in\mathbb R^{320\times320}$ 就要约 $5\times10^4$ 参数再乘 $K$，实际只好退化成 diagonal——恰好丢掉两种<b>不能丢</b>的相关性：<b>joint correlation</b>（各维独立时可能拼出数据里从未出现的组合：thumb 用 grasp A、index 用 grasp B——physically incoherent）和 <b>temporal correlation</b>（专家要么整段左绕 $[L,L,L,L]$ 要么整段右绕 $[R,R,R,R]$，独立建模会输出 $[L,R,L,R]$）。</li>
+<li><b>EBM / IBC 背未归一化地图</b>：学 $E(o,A)$，但训练要么算 $Z$ 要么靠负样本（InfoNCE），高维下出了名地不稳。</li>
+<li><b>DP 学场</b>：一个网络 $\epsilon_\theta:\mathbb R^{320}\times k\times o\to\mathbb R^{320}$。没有 $K$、没有 $\Sigma$、没有 $Z$；整个 chunk 作为<b>一个联合随机变量</b>生成，joint / temporal correlation 天然保留，mode commitment 天然成立。</li>
+</ul>
+
+<div class="key">
+<b>「低成本」指表示成本，不是推理成本。</b>省掉的是 $K$、$\Sigma$、$Z$；代价是推理要跑多步网络，比 MDN 一次 forward 慢得多——DP 是用<b>推理时间</b>换<b>表示能力</b>，这正是 DDIM / distillation / Flow Matching 存在的理由。反过来：若任务只是有限几种 grasp mode 的低维输出，MDN 可能就够了，「这个任务不需要 DP」也是合法的实验结论。
+</div>
+
+<div class="tw"><table>
+<tr><th>项目</th><th>MDN / GMM</th><th>Diffusion Policy</th></tr>
+<tr><td>分布表示</td><td>显式 mixture（背地图）</td><td>隐式 denoising / score field（学场）</td></tr>
+<tr><td>inference</td><td><b>一次 forward，快</b></td><td>多步去噪，慢（需 DDIM / FM 加速）</td></tr>
+<tr><td>probability 可读性</td><td><b>$\pi_k$ 直读</b>（利于 arbitration）</td><td>通常不直接提供</td></tr>
+<tr><td>mode 数量</td><td>要预设 $K$</td><td><b>不需要</b></td></tr>
+<tr><td>高维联合 / action chunk</td><td>covariance 爆炸、退化丢相关性</td><td><b>强项，天然联合生成</b></td></tr>
+<tr><td>temporal multimodality</td><td>需额外建模</td><td><b>强项（chunk 级 commitment）</b></td></tr>
+</table></div>
+
+<h2 id="m1"><span class="n">§ 7</span>推导前的工具箱：四件武器</h2>
+
+<p class="lede" style="font-size:.95rem">下面进入数学部分。符号约定：$k$ 是<b>扩散步</b>（$k{=}0$ 干净数据，$k{=}T$ 纯噪声）；$x_0$ 是数据样本——在 DP 里就是整段 action chunk $A$；$\alpha_k\in(0,1)$ 是保留系数，$\beta_k=1-\alpha_k$，$\bar\alpha_k=\prod_{i=1}^k\alpha_i$。向量情形按逐元素读（协方差均为 $\sigma^2 I$）。</p>
+
+<h3>工具 ① 贝叶斯变换</h3>
+<div class="math">$$P(A\mid B)=\frac{P(B\mid A)\,P(A)}{P(B)}\qquad\Longleftrightarrow\qquad \text{后验}=\frac{\text{似然}\times\text{先验}}{\text{证据}}$$</div>
+
+<h3>工具 ② 马尔科夫性质</h3>
+<div class="math">$$P(x_{k+1}\mid x_0,x_1,\cdots,x_k)=P(x_{k+1}\mid x_k)$$
+<p class="why">知道现在之后，预测未来不再需要完整的过去。它不是宇宙真理，而是建模时主动选的假设——正向加噪链就是按它构造的。</p></div>
+
+<h3>工具 ③ 高斯的 $\propto\exp$ 形式 + 配方法读参数</h3>
+<div class="math">
+$$p(x)=\frac{1}{\sqrt{2\pi\sigma^2}}\exp\!\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)
+\qquad\Longrightarrow\qquad
+\mathcal N(x;\mu,\sigma^2)\propto\exp\!\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)$$
+<p class="why">归一化常数不含 $x$，比较形状时可整个扔掉。反过来更有用：任何能整理成「$x$ 的二次型负指数」的式子<b>必然是高斯</b>，且展开后直接读出参数——</p>
+$$\exp\!\left(-\tfrac12\big(Ax^2-2Bx\big)+\cdots\right)\;\Longrightarrow\;x\sim\mathcal N\!\Big(\tfrac{B}{A},\;\tfrac1A\Big)$$
+<p class="why">§9 推反向后验全靠这招——这就是「贝叶斯变换到高斯分布」真正上场的地方。</p></div>
+
+<h3>工具 ④ 矩母函数 → 独立高斯的线性组合仍是高斯</h3>
+<div class="math">
+$$M_X(t)=E[e^{tX}]=\int_{-\infty}^{\infty}e^{tx}p(x)\,dx$$
+<p class="why">$p(x)$ 与 $M_X(t)$ 描述同一个随机变量：$p(x)$ 方便算概率，$M_X(t)$ 方便算均值、方差和<b>随机变量相加</b>（一阶矩 $=E[X]$，二阶矩 $=E[X^2]$；对高斯 $E[X]=\mu$，$E[X^2]=\mu^2+\sigma^2$）。高斯的通式为 $M_X(t)=\exp(\mu t+\frac12\sigma^2t^2)$。设 $X\sim\mathcal N(\mu_1,\sigma_1^2)$、$Y\sim\mathcal N(\mu_2,\sigma_2^2)$ 独立，$Z=aX+bY$：</p>
+$$M_Z(t)=E\big[e^{t(aX+bY)}\big]=E\big[e^{atX}\big]E\big[e^{btY}\big]=M_X(at)\,M_Y(bt)$$
+$$=\exp\!\left(a\mu_1t+\tfrac12a^2\sigma_1^2t^2\right)\exp\!\left(b\mu_2t+\tfrac12b^2\sigma_2^2t^2\right)
+=\exp\!\left[(a\mu_1+b\mu_2)t+\tfrac12(a^2\sigma_1^2+b^2\sigma_2^2)t^2\right]$$
+<p class="why">又是高斯矩母函数的格式，直接读出：</p>
+$$\boxed{\,aX+bY\sim\mathcal N\!\left(a\mu_1+b\mu_2,\;a^2\sigma_1^2+b^2\sigma_2^2\right)\,}$$
+</div>
+
+<h2 id="m2"><span class="n">§ 8</span>正向过程与闭式解</h2>
+
+<p>正向过程是一条马尔科夫链：每步保留 $\sqrt{\alpha_k}$ 倍信号、注入方差 $\beta_k$ 的噪声。</p>
+<div class="math">$$q(x_k\mid x_{k-1})=\mathcal N\!\big(x_k;\sqrt{\alpha_k}\,x_{k-1},\,\beta_kI\big)
+\qquad\Longleftrightarrow\qquad
+x_k=\sqrt{\alpha_k}\,x_{k-1}+\sqrt{1-\alpha_k}\,\epsilon_k,\;\;\epsilon_k\sim\mathcal N(0,I)$$</div>
+
+<p>逐步展开，看它怎么合并成一步到位：</p>
+<div class="math">
+$$\begin{gathered}
+x_1=\sqrt{\alpha_1}x_0+\sqrt{\beta_1}\epsilon_1,\qquad \beta_1=1-\alpha_1\\[2pt]
+x_2=\sqrt{\alpha_2}x_1+\sqrt{\beta_2}\epsilon_2
+=\sqrt{\alpha_1\alpha_2}\,x_0+\underbrace{\sqrt{\alpha_2\beta_1}\,\epsilon_1+\sqrt{\beta_2}\,\epsilon_2}_{\text{两个独立高斯的线性组合}}
+\end{gathered}$$
+<p class="why">用工具 ④：两个噪声均值都是 0，方差按系数平方相加，$\alpha_2\beta_1+\beta_2$，可合写成一个噪声：</p>
+$$\sqrt{\alpha_2\beta_1}\,\epsilon_1+\sqrt{\beta_2}\,\epsilon_2\;\sim\;\sqrt{\alpha_2\beta_1+\beta_2}\;\epsilon,\quad\epsilon\sim\mathcal N(0,I)$$
+<p class="why">再用 $\beta_i=1-\alpha_i$：$\;\alpha_2\beta_1+\beta_2=\alpha_2(1-\alpha_1)+(1-\alpha_2)=1-\alpha_1\alpha_2=1-\bar\alpha_2$，于是</p>
+$$x_2=\sqrt{\bar\alpha_2}\,x_0+\sqrt{1-\bar\alpha_2}\,\epsilon$$
+<p class="why">继续拓展：</p>
+$$x_3=\sqrt{\alpha_3}x_2+\sqrt{\beta_3}\epsilon_3
+=\sqrt{\alpha_1\alpha_2\alpha_3}\,x_0+\sqrt{\alpha_3(\alpha_2\beta_1+\beta_2)+\beta_3}\;\epsilon
+=\sqrt{\alpha_1\alpha_2\alpha_3}\,x_0+\sqrt{1-\alpha_1\alpha_2\alpha_3}\;\epsilon$$
+$$x_4=\sqrt{\alpha_1\alpha_2\alpha_3\alpha_4}\,x_0+\sqrt{1-\alpha_1\alpha_2\alpha_3\alpha_4}\;\epsilon$$
+<p class="why">归纳得一般式（DDPM 最重要的公式）：</p>
+$$\boxed{\,x_k=\sqrt{\bar\alpha_k}\,x_0+\sqrt{1-\bar\alpha_k}\,\epsilon,\quad\epsilon\sim\mathcal N(0,I),\quad\bar\alpha_k=\prod_{i=1}^k\alpha_i\,}
+\qquad\Longleftrightarrow\qquad
+q(x_k\mid x_0)=\mathcal N\!\big(\sqrt{\bar\alpha_k}x_0,\,(1-\bar\alpha_k)I\big)$$
+</div>
+
+<div class="key">
+<b>两个直接推论。</b>① 训练时不用真的跑 $k$ 步链，<b>一步就能采到任意噪声水平的 $x_k$</b>——loss 才能对 $k$ 均匀抽样（§12 算法 1 第 2 行）。② schedule 设计成 $\bar\alpha_T\to0$，则 $q(x_T\mid x_0)\approx\mathcal N(0,I)$：终点与数据无关，反向过程才能从纯噪声起步。
+</div>
+
+<h2 id="m3"><span class="n">§ 9</span>反向过程，与贝叶斯后验 $q(x_{k-1}\mid x_k,x_0)$</h2>
+
+<p>生成要走反方向：$x_T\sim\mathcal N(0,I)$，逐步 $x_T\to\cdots\to x_0$。真正需要的 $q(x_{k-1}\mid x_k)$ 不可解——按贝叶斯展开需要 $q(x_{k-1})$、$q(x_k)$，也就是整个数据分布本身。于是用网络近似：</p>
+<div class="math">$$p_\theta(x_{k-1}\mid x_k)=\mathcal N\!\big(x_{k-1};\,\mu_\theta(x_k,k),\,\sigma_k^2I\big)$$
+<p class="why">敢用高斯形式，是因为每步 $\beta_k$ 足够小时真实的 $q(x_{k-1}\mid x_k)$ 趋近高斯——这就是「为什么要很多小步而不是一大步」。方差取定值（DDPM 用 $\beta_k$ 或 $\tilde\beta_k$，实验差别不大），<b>要学的只剩均值 $\mu_\theta$</b>——正是 §2 的方向场。</p></div>
+
+<p>「学 $\mu_\theta$」需要监督目标。关键观察：$q(x_{k-1}\mid x_k)$ 虽不可解，<b>多挂一个条件 $x_0$ 之后完全可解</b>。用工具 ①（贝叶斯）+ 工具 ②（马尔科夫）：</p>
+
+<div class="math">
+$$q(x_{k-1}\mid x_k,x_0)
+=\frac{q(x_k\mid x_{k-1},x_0)\;q(x_{k-1}\mid x_0)}{q(x_k\mid x_0)}
+=\frac{\overbrace{q(x_k\mid x_{k-1})}^{\text{马尔科夫}}\;q(x_{k-1}\mid x_0)}{q(x_k\mid x_0)}$$
+<p class="why">右边三项全部已知——第一项是正向单步定义，后两项是 §8 闭式解。用工具 ③ 的 $\propto\exp$ 把三个高斯的指数相加减（分母取负号；一维写法，向量逐元素同理）：</p>
+$$\propto\exp\!\Bigg(-\frac12\Bigg[\frac{(x_k-\sqrt{\alpha_k}x_{k-1})^2}{\beta_k}
++\frac{(x_{k-1}-\sqrt{\bar\alpha_{k-1}}x_0)^2}{1-\bar\alpha_{k-1}}
+-\frac{(x_k-\sqrt{\bar\alpha_k}x_0)^2}{1-\bar\alpha_k}\Bigg]\Bigg)$$
+<p class="why">只关心变量 $x_{k-1}$，按它整理成二次型（第三项不含 $x_{k-1}$，连同其余常数进 $C$）：</p>
+$$\propto\exp\!\Bigg(-\frac12\Bigg[\underbrace{\Big(\frac{\alpha_k}{\beta_k}+\frac{1}{1-\bar\alpha_{k-1}}\Big)}_{A}x_{k-1}^2
+-2\underbrace{\Big(\frac{\sqrt{\alpha_k}}{\beta_k}x_k+\frac{\sqrt{\bar\alpha_{k-1}}}{1-\bar\alpha_{k-1}}x_0\Big)}_{B}x_{k-1}+C(x_k,x_0)\Bigg]\Bigg)$$
+<p class="why">先化简 $A$（通分，分子用 $\beta_k=1-\alpha_k$ 和 $\alpha_k\bar\alpha_{k-1}=\bar\alpha_k$）：</p>
+$$A=\frac{\alpha_k(1-\bar\alpha_{k-1})+\beta_k}{\beta_k(1-\bar\alpha_{k-1})}
+=\frac{\alpha_k-\bar\alpha_k+1-\alpha_k}{\beta_k(1-\bar\alpha_{k-1})}
+=\frac{1-\bar\alpha_k}{\beta_k(1-\bar\alpha_{k-1})}$$
+<p class="why">工具 ③ 说：这个形状必然是高斯，且 $\sigma^2=1/A$、$\mu=B/A$：</p>
+$$\boxed{\,q(x_{k-1}\mid x_k,x_0)=\mathcal N\!\big(x_{k-1};\,\tilde\mu_k(x_k,x_0),\,\tilde\beta_kI\big)\,}$$
+$$\tilde\beta_k=\frac1A=\frac{1-\bar\alpha_{k-1}}{1-\bar\alpha_k}\beta_k
+\qquad
+\tilde\mu_k=\frac BA
+=\frac{\sqrt{\alpha_k}(1-\bar\alpha_{k-1})}{1-\bar\alpha_k}\,x_k
++\frac{\sqrt{\bar\alpha_{k-1}}\,\beta_k}{1-\bar\alpha_k}\,x_0$$
+</div>
+
+<div class="key good">
+<b>读一下这两个式子。</b>$\tilde\mu_k$ 是 $x_k$ 与 $x_0$ 按噪声比例的<b>加权平均</b>：知道终点（当前带噪点）和起点（干净数据），「上一步应该在哪」就是两者的插值——这就是给 $\mu_\theta$ 准备的<b>监督真值</b>。$\tilde\beta_k$ 略小于 $\beta_k$ 且与 $x$ 无关，正好拿来当反向的固定方差。弹球版本：知道球从哪来、现在在哪，就能精确说出它上一帧在哪；网络要学的是在<b>看不到 $x_0$</b> 时模仿这个答案。
+</div>
+
+<h2 id="m4"><span class="n">§ 10</span>Loss：从 $-\log p_\theta(x_0)$ 到三组 KL</h2>
+
+<p>训练目标是最大似然：最小化 $-\log p_\theta(x_0)$。但 $p_\theta(x_0)=\int p_\theta(x_{0:T})\,dx_{1:T}$ 积分不可算——走变分下界（ELBO）。第一步用 Jensen 不等式（$-\log$ 凸：期望的 $-\log\le-\log$ 的期望）：</p>
+<div class="math">
+$$-\log p_\theta(x_0)
+=-\log\,\mathbb E_{q(x_{1:T}\mid x_0)}\!\left[\frac{p_\theta(x_{0:T})}{q(x_{1:T}\mid x_0)}\right]
+\;\le\;
+\underbrace{\mathbb E_{q(x_{1:T}\mid x_0)}\!\left[\log\frac{q(x_{1:T}\mid x_0)}{p_\theta(x_{0:T})}\right]}_{=:L\;\text{（variational bound）}}$$
+<p class="why">技巧是「乘一除一」：往积分里塞正向过程 $q$ 当采样分布——$q$ 完全已知、可采样，这就是它在 loss 里的角色。把两条链按马尔科夫展开：</p>
+$$q(x_{1:T}\mid x_0)=\prod_{k=1}^Tq(x_k\mid x_{k-1}),\qquad
+p_\theta(x_{0:T})=p(x_T)\prod_{k=1}^Tp_\theta(x_{k-1}\mid x_k)$$
+$$L=\mathbb E_q\!\left[-\log p(x_T)+\sum_{k=1}^T\log\frac{q(x_k\mid x_{k-1})}{p_\theta(x_{k-1}\mid x_k)}\right]$$
+<p class="why"><b>关键一步</b>（最容易卡住的一步）：分子是正向、分母是反向，方向相反没法直接比。对 $k\ge2$ 的每项，用贝叶斯把分子也翻转成反向——注意多挂一个 $x_0$（马尔科夫性保证 $q(x_k\mid x_{k-1})=q(x_k\mid x_{k-1},x_0)$）：</p>
+$$q(x_k\mid x_{k-1})=q(x_k\mid x_{k-1},x_0)
+=\frac{q(x_{k-1}\mid x_k,x_0)\;q(x_k\mid x_0)}{q(x_{k-1}\mid x_0)}$$
+<p class="why">代回求和（$k{=}1$ 项单独留着），出现一段「望远镜」连乘，相邻项相消：</p>
+$$\sum_{k=2}^T\log\frac{q(x_k\mid x_{k-1})}{p_\theta(x_{k-1}\mid x_k)}
+=\sum_{k=2}^T\log\frac{q(x_{k-1}\mid x_k,x_0)}{p_\theta(x_{k-1}\mid x_k)}
++\underbrace{\log\frac{q(x_T\mid x_0)}{q(x_1\mid x_0)}}_{\text{telescoping 之后}}$$
+<p class="why">再与 $k{=}1$ 的项 $\log\frac{q(x_1\mid x_0)}{p_\theta(x_0\mid x_1)}$ 合并——$q(x_1\mid x_0)$ 恰好上下相消：</p>
+$$L=\mathbb E_q\!\left[\log\frac{q(x_T\mid x_0)}{p(x_T)}
++\sum_{k=2}^T\log\frac{q(x_{k-1}\mid x_k,x_0)}{p_\theta(x_{k-1}\mid x_k)}
+-\log p_\theta(x_0\mid x_1)\right]$$
+<p class="why">按 KL 的定义 $D_{\mathrm{KL}}(q\|p)=\mathbb E_q[\log\frac qp]$，三块分别是：</p>
+$$\boxed{\,L=\underbrace{D_{\mathrm{KL}}\big(q(x_T\mid x_0)\,\|\,p(x_T)\big)}_{L_T\;\text{无参数，}\approx0}
++\sum_{k=2}^T\underbrace{\mathbb E_q\,D_{\mathrm{KL}}\big(q(x_{k-1}\mid x_k,x_0)\,\|\,p_\theta(x_{k-1}\mid x_k)\big)}_{L_{k-1}\;\text{训练主体}}
+\;\underbrace{-\;\mathbb E_q\log p_\theta(x_0\mid x_1)}_{L_0\;\text{重建项}}\,}$$
+</div>
+
+<div class="key">
+<b>三块各自的下场。</b>$L_T$：正向终点 vs 先验 $\mathcal N(0,I)$，schedule 固定后不含 $\theta$ 且 $\bar\alpha_T\to0$ 时 $\approx0$——扔掉。$L_{k-1}$：训练主体，「§9 的解析后验」vs「网络的反向一步」——<b>两边都是高斯</b>，这正是费力挂上 $x_0$ 的回报：KL 有闭式解（§11），不需要蒙特卡洛估计 KL 本身，方差低、训练稳（DDPM 强调的点）。$L_0$：最后一步的重建似然，DDPM 用离散化解码器处理，实践中与 $L_{k-1}$ 形式统一。
+</div>
+
+<h2 id="m5"><span class="n">§ 11</span>两个高斯之间的 KL：把公式推出来</h2>
+
+<p>$L_{k-1}$ 要算 $D_{\mathrm{KL}}(\mathcal N(\mu_1,\sigma_1^2)\,\|\,\mathcal N(\mu_2,\sigma_2^2))$。一维推一遍（对角协方差 = 各维相加）：</p>
+<div class="math">
+$$D_{\mathrm{KL}}(q\|p)=\mathbb E_{x\sim q}\big[\log q(x)-\log p(x)\big],\qquad
+\log\mathcal N(x;\mu,\sigma^2)=-\tfrac12\log(2\pi\sigma^2)-\frac{(x-\mu)^2}{2\sigma^2}$$
+$$D_{\mathrm{KL}}=\mathbb E_q\!\left[\tfrac12\log\frac{\sigma_2^2}{\sigma_1^2}
+-\frac{(x-\mu_1)^2}{2\sigma_1^2}+\frac{(x-\mu_2)^2}{2\sigma_2^2}\right]$$
+<p class="why">逐项取期望：$\mathbb E_q[(x-\mu_1)^2]=\sigma_1^2$（方差定义）；第三项展开 $(x-\mu_2)^2=(x-\mu_1+\mu_1-\mu_2)^2$，交叉项期望为 0，得 $\mathbb E_q[(x-\mu_2)^2]=\sigma_1^2+(\mu_1-\mu_2)^2$。代回：</p>
+$$\boxed{\,D_{\mathrm{KL}}\big(\mathcal N(\mu_1,\sigma_1^2)\,\|\,\mathcal N(\mu_2,\sigma_2^2)\big)
+=\log\frac{\sigma_2}{\sigma_1}+\frac{\sigma_1^2+(\mu_1-\mu_2)^2}{2\sigma_2^2}-\frac12\,}$$
+</div>
+
+<p>代入 $L_{k-1}$：$q$ 侧是 $\mathcal N(\tilde\mu_k,\tilde\beta_kI)$，$p_\theta$ 侧是 $\mathcal N(\mu_\theta,\sigma_k^2I)$。两边方差都是固定数，KL 里含方差的项全不依赖 $\theta$——<b>只剩均值差的平方</b>：</p>
+<div class="math">$$L_{k-1}=\mathbb E_q\!\left[\frac{1}{2\sigma_k^2}\big\|\tilde\mu_k(x_k,x_0)-\mu_\theta(x_k,k)\big\|^2\right]+\text{const}$$
+<p class="why">loss 的语义至此完全清楚：<b>网络的反向均值，回归解析后验的均值</b>。KL divergence 的使命到此结束，剩下是纯代数化简。</p></div>
+
+<h2 id="m6"><span class="n">§ 12</span>参数化成噪声预测：得到 $L_{\text{simple}}$</h2>
+
+<p>直接回归 $\tilde\mu_k$ 可以，但 DDPM 发现换个参数化更好。用 §8 闭式解反解 $x_0$ 并代入 $\tilde\mu_k$，目标：消掉 $x_0$，只留 $x_k$ 和 $\epsilon$。</p>
+<div class="math">
+$$x_0=\frac{x_k-\sqrt{1-\bar\alpha_k}\,\epsilon}{\sqrt{\bar\alpha_k}},\qquad
+\sqrt{\bar\alpha_{k-1}}=\frac{\sqrt{\bar\alpha_k}}{\sqrt{\alpha_k}}$$
+$$\tilde\mu_k=\frac{\sqrt{\bar\alpha_{k-1}}\beta_k}{1-\bar\alpha_k}\cdot\frac{x_k-\sqrt{1-\bar\alpha_k}\,\epsilon}{\sqrt{\bar\alpha_k}}
++\frac{\sqrt{\alpha_k}(1-\bar\alpha_{k-1})}{1-\bar\alpha_k}x_k
+=\underbrace{\left[\frac{\beta_k+\alpha_k(1-\bar\alpha_{k-1})}{\sqrt{\alpha_k}(1-\bar\alpha_k)}\right]}_{x_k\text{ 的系数}}x_k
+-\frac{\beta_k}{\sqrt{\alpha_k}\sqrt{1-\bar\alpha_k}}\epsilon$$
+<p class="why">$x_k$ 系数的分子 $=1-\alpha_k+\alpha_k-\bar\alpha_k=1-\bar\alpha_k$，与分母约掉：</p>
+$$\boxed{\,\tilde\mu_k=\frac{1}{\sqrt{\alpha_k}}\left(x_k-\frac{\beta_k}{\sqrt{1-\bar\alpha_k}}\,\epsilon\right)\,}$$
+<p class="why">「上一步在哪」只需要两样东西：当前位置 $x_k$（网络自己看得到），和<b>当初混进去的那份噪声 $\epsilon$</b>。所以让网络只干一件事——猜 $\epsilon$。把 $\mu_\theta$ 定义成同样形状，用 $\epsilon_\theta$ 顶替 $\epsilon$：</p>
+$$\mu_\theta(x_k,k):=\frac{1}{\sqrt{\alpha_k}}\left(x_k-\frac{\beta_k}{\sqrt{1-\bar\alpha_k}}\,\epsilon_\theta(x_k,k)\right)$$
+<p class="why">代回 $L_{k-1}$，两个同形状表达式相减，$x_k$ 项抵消，只剩 $\epsilon$ 差：</p>
+$$L_{k-1}=\mathbb E_{x_0,\epsilon}\!\left[\frac{\beta_k^2}{2\sigma_k^2\alpha_k(1-\bar\alpha_k)}
+\Big\|\epsilon-\epsilon_\theta\big(\underbrace{\sqrt{\bar\alpha_k}x_0+\sqrt{1-\bar\alpha_k}\,\epsilon}_{x_k\text{，一步采样}},\,k\big)\Big\|^2\right]$$
+<p class="why">DDPM 最后一个动作：把权重<b>整个扔掉</b>（实验发现不加权更好——相当于降低小 $k$ 步的权重，逼网络多花力气在高噪声难题上），对 $k$ 均匀抽样：</p>
+$$\boxed{\,L_{\text{simple}}=\mathbb E_{k\sim\mathcal U\{1..T\},\,x_0,\,\epsilon\sim\mathcal N(0,I)}
+\Big[\big\|\epsilon-\epsilon_\theta\big(\sqrt{\bar\alpha_k}x_0+\sqrt{1-\bar\alpha_k}\,\epsilon,\;k\big)\big\|^2\Big]\,}$$
+</div>
+
+<div class="key good">
+<b>整条推导链一屏回看。</b>
+$$-\log p_\theta(x_0)\xrightarrow{\text{Jensen}}L
+\xrightarrow{\text{贝叶斯翻转+望远镜}}\textstyle\sum_kD_{\mathrm{KL}}
+\xrightarrow{\text{两边都是高斯}}\|\tilde\mu-\mu_\theta\|^2
+\xrightarrow{\text{重参数化}}\|\epsilon-\epsilon_\theta\|^2$$
+最大似然训练一路化简，最后只剩「加噪，然后猜噪声」的 MSE。这也回收了 §2：$\epsilon_\theta$ 的方向 $\propto-\nabla_{x_k}\log q(x_k\mid x_0)$，学 $\epsilon_\theta$ 就是在学各噪声水平的 score field——「球在哪儿往哪滚」。
+</div>
+
+<div class="duo">
+<div class="algo"><div class="t">算法 1 · 训练（DDPM）</div>
+<ol>
+<li>repeat：抽 $x_0\sim$ 数据，$k\sim\mathcal U\{1..T\}$，$\epsilon\sim\mathcal N(0,I)$</li>
+<li>一步造带噪样本 $x_k=\sqrt{\bar\alpha_k}x_0+\sqrt{1-\bar\alpha_k}\,\epsilon$</li>
+<li>梯度步 $\nabla_\theta\|\epsilon-\epsilon_\theta(x_k,k)\|^2$，until 收敛</li>
+</ol></div>
+<div class="algo"><div class="t">算法 2 · 采样</div>
+<ol>
+<li>$x_T\sim\mathcal N(0,I)$</li>
+<li>for $k=T..1$：$z\sim\mathcal N(0,I)$（$k{=}1$ 时 $z{=}0$）</li>
+<li>$x_{k-1}=\frac{1}{\sqrt{\alpha_k}}\big(x_k-\frac{\beta_k}{\sqrt{1-\bar\alpha_k}}\epsilon_\theta(x_k,k)\big)+\sigma_kz$</li>
+<li>return $x_0$</li>
+</ol></div>
+</div>
+
+<p style="font-size:.92rem" class="lede">采样第 3 行就是 $\tilde\mu$ 的公式 + 一份新噪声 $\sigma_kz$：均值项把球往高密度推，噪声项保证终点按分布铺开——§2 里「关掉噪声全进同一个 mode」对应的正是删掉 $\sigma_kz$。DDIM 把这条链改写成非马尔科夫的确定性形式：训练不变、推理跳步（100 步训练 → 10 步推理），是 DP 实时控制的关键。</p>
+
+<h2 id="m7"><span class="n">§ 13</span>数值例子：一维双峰完整走一遍</h2>
+
+<p>取本页动画同款设定：$p_0=0.6\,\mathcal N(-2,0.3^2)+0.4\,\mathcal N(+2,0.3^2)$，$T=60$，cosine schedule。代表性噪声水平（数值由本页脚本按 schedule 实时算出）：</p>
+
+<div class="tw"><table>
+<tr><th>$k$</th><th>$\bar\alpha_k$</th><th>信号系数 $\sqrt{\bar\alpha_k}$</th><th>噪声系数 $\sqrt{1-\bar\alpha_k}$</th><th>此时 $p_k$ 的样子</th></tr>
+<tr><td>0</td><td>1.000</td><td>1.000</td><td>0.000</td><td>原始双峰</td></tr>
+<tr><td>15</td><td id="nA15">·</td><td id="nS15">·</td><td id="nN15">·</td><td>双峰仍清晰，略压扁</td></tr>
+<tr><td>30</td><td id="nA30">·</td><td id="nS30">·</td><td id="nN30">·</td><td>两峰开始粘连</td></tr>
+<tr><td>45</td><td id="nA45">·</td><td id="nS45">·</td><td id="nN45">·</td><td>接近单峰高斯</td></tr>
+<tr><td>60</td><td id="nA60">·</td><td id="nS60">·</td><td id="nN60">·</td><td>$\approx\mathcal N(0,1)$，数据信息耗尽</td></tr>
+</table></div>
+
+<p><b>训练侧走一遍</b>（算法 1）：抽到右峰样本 $x_0=+2.0$、$k=30$、$\epsilon=+0.31$，则输入 $x_{30}=\sqrt{\bar\alpha_{30}}\cdot2.0+\sqrt{1-\bar\alpha_{30}}\cdot0.31=$ <b id="nXk">·</b>，标签 $=\epsilon=0.31$。</p>
+<div class="key">
+注意这个 $x_{30}$ 的位置<b>也可能</b>由左峰样本加一个大正噪声到达——MSE 回归的最优解是所有能到达此处的 $(x_0,\epsilon)$ 组合的<b>条件期望</b> $\mathbb E[\epsilon\mid x_k]$。这就是「场」在数学上的确切含义：网络学到的不是某一条轨迹，而是每个位置上的平均去噪方向。
+</div>
+<p><b>采样侧走一遍</b>（算法 2，理想网络）：设当前 $x_{30}=1.2$。两峰在 $k=30$ 的中心位于 $\sqrt{\bar\alpha_{30}}\cdot(\pm2)=\pm$<b id="nC30">·</b>，右峰离 $1.2$ 近得多 ⇒ $\mathbb E[\epsilon\mid x_{30}]$ 指向「把它解释成右峰样本」的方向，均值项把球推向右峰；若 $x_{30}=0.05$（两峰正中间），期望方向几乎为零，往哪边走全看 $\sigma_kz$ 那份随机——这就是 mode 的分岔口。</p>
+
+<h2 id="dp"><span class="n">§ 14</span>从 DDPM 到 Diffusion Policy：操纵原论文做了什么</h2>
+
+<p>Diffusion Policy（Chi et al., RSS 2023）把上面整套机器原封不动搬到操纵上，只做三处替换 / 追加。</p>
+
+<h3>14.1 变量替换：图像 → action chunk，条件化在 observation 上</h3>
+<div class="math">
+$$x_0\;\longrightarrow\;A_t=[a_t,a_{t+1},\dots,a_{t+T_p-1}]\qquad
+\epsilon_\theta(x_k,k)\;\longrightarrow\;\epsilon_\theta\big(A_t^k,\,k,\,O_t\big)$$
+<p class="why">$A_t$ 是未来 $T_p$ 步动作拼成的<b>一个联合随机变量</b>（§6 的高维 chunk）；$O_t$ 是最近 $T_o$ 帧 observation（图像 + 本体感知），只作<b>条件</b>进网络、自己不参与扩散——比联合建模 $p(A,O)$ 再取条件便宜得多，也是 DP 与图像 DDPM 唯一的结构性区别。训练 loss 就是 §12 的 $L_{\text{simple}}$ 挂上条件：</p>
+$$L=\mathbb E\Big[\big\|\epsilon-\epsilon_\theta\big(\sqrt{\bar\alpha_k}A_t+\sqrt{1-\bar\alpha_k}\,\epsilon,\;k,\;O_t\big)\big\|^2\Big]$$
+</div>
+
+<h3>14.2 论文自己的解读：学梯度场，采样是 Langevin 步</h3>
+<div class="math">
+$$A_t^{k-1}=\alpha\Big(A_t^k-\gamma\,\epsilon_\theta(O_t,A_t^k,k)+\mathcal N(0,\sigma^2I)\Big)$$
+<p class="why">论文把去噪一步写成上式（对应算法 2 第 3 行），并明确指出这是「带噪声的梯度下降」：$\epsilon_\theta$ 扮演能量梯度 $\nabla E(A)$（$\approx$ 负 score），$\gamma$ 是学习率——Stochastic Langevin Dynamics。与显式能量模型 IBC 相比，DP 不用估计归一化常数 $Z$、不用采负样本，训练稳定得多。<b>这就是弹球比喻在原论文里的官方版本。</b></p>
+</div>
+
+<h3>14.3 工程设定（复现要记的数字）</h3>
+<ul>
+<li><b>Receding horizon</b>：观测 $T_o=2$ 帧，预测 $T_p=16$ 步，只执行前 $T_a=8$ 步再重新规划——chunk 级 commitment（时间一致性）与闭环反应性的折中。</li>
+<li><b>噪声调度</b>：Square Cosine schedule（来自 iDDPM）；训练 $T=100$ 个扩散步。</li>
+<li><b>推理加速</b>：DDIM 解耦训练/推理步数，推理只走 10 步；RTX 3080 上约 0.1 s，够闭环控制。</li>
+<li><b>两种骨干</b>：CNN 版——1D temporal U-Net（改自 Diffuser），observation 特征经 <b>FiLM</b> 逐层调制，默认首选、对超参最稳；Transformer 版——action token 对 observation 做 cross-attention，适合动作高频变化的任务。</li>
+<li><b>视觉编码器</b>：每相机一个 ResNet-18，BatchNorm 全换 <b>GroupNorm</b>，global average pooling 换 <b>spatial softmax</b>；与扩散头端到端联合训练。</li>
+<li><b>Position control 优于 velocity control</b>：位置指令下多模态更「可分」（两条路径不会在速度空间里被平均），且对延迟和累积误差更不敏感。</li>
+<li><b>结果量级</b>：4 个 benchmark、15 个任务（Robomimic、Push-T、Multimodal Block Pushing、Franka Kitchen），对当时 SOTA 平均提升 46.9%。</li>
+</ul>
+
+<div class="key">
+<b>把前半的图景对回论文。</b>弹球台 = $p(A_t\mid O_t)$ 的地形（每个 $O_t$ 一张台面）；球 = 一段候选 action chunk；方向场 = $\epsilon_\theta(A^k,k,O_t)$；投球 $N$ 次的落点分布 = policy 的多模态。真正执行时只投<b>一次</b>球——commit 到一个 mode，执行 8 步，再看新观测重新投。
+</div>
+
+<h2 id="fm"><span class="n">§ 15</span>Flow Matching：同一思想的直线版</h2>
+
+<p>FM 保留「用场表示分布」的全部世界观，只把「学噪声方向 + SDE 随机走」换成「学速度场 + ODE 确定走」。约定 $t\in[0,1]$，$t{=}0$ 噪声、$t{=}1$ 数据（与扩散的 $k$ 方向相反）：</p>
+<div class="math">
+<p class="why">构造样本对之间的<b>直线插值</b>：抽 $z\sim\mathcal N(0,I)$、$x_1\sim$ 数据，令</p>
+$$x_t=(1-t)\,z+t\,x_1\qquad\Longrightarrow\qquad\frac{dx_t}{dt}=x_1-z\;\;(\text{常向量，路径是直线})$$
+<p class="why">训练：让网络在线上每一点回归这条直线的速度（DP 场景同样挂条件 $O_t$）：</p>
+$$L_{\mathrm{FM}}=\mathbb E_{t,z,x_1}\Big[\big\|v_\theta(x_t,\,t,\,O_t)-(x_1-z)\big\|^2\Big]$$
+<p class="why">采样：从 $z\sim\mathcal N(0,I)$ 出发积分 ODE $\dot x=v_\theta(x,t,O_t)$，几步 Euler 即可。与 §13 同理，MSE 的最优解是条件期望 $v^*(x,t)=\mathbb E[x_1-z\mid x_t=x]$——无数条穿过同一点的直线的平均速度，恰好生成正确的边缘分布（Flow Matching 定理）。路径近直线 ⇒ 积分误差小 ⇒ 步数压到个位数，这是 π0 等机器人基础模型选 FM 做 action expert 的原因。</p>
+</div>
+
+<div class="tw"><table>
+<tr><th></th><th>Diffusion Policy（DDPM/DDIM）</th><th>Flow Matching</th></tr>
+<tr><td>学的场</td><td>噪声方向 $\epsilon_\theta$（$\propto$ score）</td><td>速度场 $v_\theta$</td></tr>
+<tr><td>走法</td><td>SDE：随机、弯（DDIM 将其 ODE 化）</td><td>ODE：确定、近直线</td></tr>
+<tr><td>训练目标</td><td>$\|\epsilon-\epsilon_\theta\|^2$</td><td>$\|v_\theta-(x_1-z)\|^2$</td></tr>
+<tr><td>推理步数</td><td>10（DDIM）～100</td><td>1～10</td></tr>
+<tr><td>共同本质</td><td colspan="2"><b>不表示密度函数，用「噪声→数据的运输场」作为分布的另一种表示</b></td></tr>
+</table></div>
+
+<h2 id="refs"><span class="n">§ 16</span>参考文献</h2>
+<ol style="font-size:.92rem">
+<li>Ho, Jain, Abbeel. <i>Denoising Diffusion Probabilistic Models</i>. NeurIPS 2020. <a href="https://arxiv.org/abs/2006.11239">arXiv:2006.11239</a>——§8–12 的推导框架、$L_{\text{simple}}$、算法 1/2。</li>
+<li>Chi et al. <i>Diffusion Policy: Visuomotor Policy Learning via Action Diffusion</i>. RSS 2023. <a href="https://arxiv.org/abs/2303.04137">arXiv:2303.04137</a>——§14；Langevin 解读、receding horizon、46.9%。</li>
+<li>Nichol, Dhariwal. <i>Improved DDPM</i>. 2021. <a href="https://arxiv.org/abs/2102.09672">arXiv:2102.09672</a>——square cosine schedule。</li>
+<li>Song, Meng, Ermon. <i>DDIM</i>. ICLR 2021. <a href="https://arxiv.org/abs/2010.02502">arXiv:2010.02502</a>——训练/推理步数解耦。</li>
+<li>Song et al. <i>Score-Based Generative Modeling through SDEs</i>. ICLR 2021. <a href="https://arxiv.org/abs/2011.13456">arXiv:2011.13456</a>——score field 视角。</li>
+<li>Lipman et al. <i>Flow Matching for Generative Modeling</i>. ICLR 2023. <a href="https://arxiv.org/abs/2210.02747">arXiv:2210.02747</a>；Liu et al. <i>Rectified Flow</i>. <a href="https://arxiv.org/abs/2209.03003">arXiv:2209.03003</a>——§15。</li>
+<li>Florence et al. <i>Implicit Behavior Cloning</i>. CoRL 2021. <a href="https://arxiv.org/abs/2109.00137">arXiv:2109.00137</a>——EBM 对照。</li>
+<li>Black et al. <i>π0: A Vision-Language-Action Flow Model</i>. 2024. <a href="https://arxiv.org/abs/2410.24164">arXiv:2410.24164</a>——FM 做 action expert 的实例。</li>
+</ol>
+
+<footer>Machine-Learning-Handbook · 前半观点整理自个人 Obsidian 笔记《DP 的真正优势》《Diffusion Policy 数学推导》《基本定理》 · 动画均按解析解实时模拟（cosine schedule，$T=60$）。</footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+/* ---------- palette (reads CSS vars so dark mode just works) ---------- */
+var CS = getComputedStyle(document.documentElement);
+function V(n){ return CS.getPropertyValue(n).trim(); }
+var C = {};
+function loadCols(){
+  CS = getComputedStyle(document.documentElement);
+  C = { ink:V('--ink'), sub:V('--sub'), muted:V('--muted'), line:V('--line'), line2:V('--line2'),
+        panel:V('--panel'), blue:V('--blue'), orange:V('--orange'), green:V('--green'),
+        red:V('--red'), magenta:V('--magenta') };
+}
+loadCols();
+
+/* ---------- randomness ---------- */
+function R(){ return Math.random(); }
+function randn(){ var u=0,v=0; while(!u)u=R(); while(!v)v=R();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+/* ---------- cosine noise schedule, T=60 ---------- */
+var T=60, S=0.008;
+var f0 = Math.pow(Math.cos(S/(1+S)*Math.PI/2),2);
+var abar=[1], alpha=[1], beta=[0];
+for(var k=1;k<=T;k++) abar.push(Math.pow(Math.cos(((k/T)+S)/(1+S)*Math.PI/2),2)/f0);
+for(k=1;k<=T;k++){ var a=abar[k]/abar[k-1]; a=Math.min(Math.max(a,1e-4),0.9999);
+  alpha.push(a); beta.push(1-a); }
+
+/* ---------- 1D bimodal target: 0.6 N(-2,.3^2) + 0.4 N(+2,.3^2) ---------- */
+var MIX=[{w:.6,m:-2,s:.3},{w:.4,m:2,s:.3}];
+function pdfK(x,kk){ var p=0;
+  for(var i=0;i<MIX.length;i++){ var c=MIX[i], v=abar[kk]*c.s*c.s+(1-abar[kk]);
+    p+=c.w*Math.exp(-Math.pow(x-Math.sqrt(abar[kk])*c.m,2)/(2*v))/Math.sqrt(2*Math.PI*v); }
+  return p; }
+function sample0(){ var c=R()<MIX[0].w?MIX[0]:MIX[1]; return c.m+c.s*randn(); }
+/* exact ancestral reverse step (mixture posterior, per component joint-Gaussian conditional) */
+function revStep(x,kk,noise){
+  var rs=[],tot=0,i,c,v;
+  for(i=0;i<MIX.length;i++){ c=MIX[i]; v=abar[kk]*c.s*c.s+(1-abar[kk]);
+    rs[i]=c.w*Math.exp(-Math.pow(x-Math.sqrt(abar[kk])*c.m,2)/(2*v))/Math.sqrt(v); tot+=rs[i]; }
+  var j=0;
+  if(noise){ var u=R()*tot; if(u>rs[0]) j=1; } else { if(rs[1]>rs[0]) j=1; }
+  c=MIX[j];
+  var vp=abar[kk-1]*c.s*c.s+(1-abar[kk-1]);
+  var vk=alpha[kk]*vp+beta[kk];
+  var mean=Math.sqrt(abar[kk-1])*c.m + Math.sqrt(alpha[kk])*vp/vk*(x-Math.sqrt(abar[kk])*c.m);
+  var varr=Math.max(vp-alpha[kk]*vp*vp/vk,0);
+  return mean+(noise?Math.sqrt(varr)*randn():0);
+}
+function revTraj(x0,noise){ var x=(x0===null||x0===undefined)?randn():x0, tr=[x];
+  for(var kk=T;kk>=1;kk--){ x=revStep(x,kk,noise!==false); tr.push(x); } return tr; }
+
+/* ---------- 2D three-mode target for the pinball ---------- */
+var MIX2=[{w:.45,m:[-1.5,-0.9],s:.38},{w:.35,m:[1.5,-1.05],s:.38},{w:.2,m:[0.1,1.5],s:.34}];
+function pdf2(x,y){ var p=0;
+  for(var i=0;i<MIX2.length;i++){ var c=MIX2[i], v=c.s*c.s;
+    p+=c.w*Math.exp(-((x-c.m[0])*(x-c.m[0])+(y-c.m[1])*(y-c.m[1]))/(2*v))/(2*Math.PI*v); }
+  return p; }
+function revStep2(pt,kk,noise){
+  var rs=[],tot=0,i,c,v;
+  for(i=0;i<MIX2.length;i++){ c=MIX2[i]; v=abar[kk]*c.s*c.s+(1-abar[kk]);
+    var dx=pt[0]-Math.sqrt(abar[kk])*c.m[0], dy=pt[1]-Math.sqrt(abar[kk])*c.m[1];
+    rs[i]=c.w*Math.exp(-(dx*dx+dy*dy)/(2*v))/v; tot+=rs[i]; }
+  var j=0;
+  if(noise){ var u=R()*tot, acc=0; for(i=0;i<rs.length;i++){ acc+=rs[i]; if(u<=acc){ j=i; break; } } }
+  else { var best=-1; for(i=0;i<rs.length;i++) if(rs[i]>best){ best=rs[i]; j=i; } }
+  c=MIX2[j];
+  var vp=abar[kk-1]*c.s*c.s+(1-abar[kk-1]);
+  var vk=alpha[kk]*vp+beta[kk];
+  var g=Math.sqrt(alpha[kk])*vp/vk;
+  var varr=Math.max(vp-alpha[kk]*vp*vp/vk,0), sd=noise?Math.sqrt(varr):0;
+  return [ Math.sqrt(abar[kk-1])*c.m[0]+g*(pt[0]-Math.sqrt(abar[kk])*c.m[0])+sd*randn(),
+           Math.sqrt(abar[kk-1])*c.m[1]+g*(pt[1]-Math.sqrt(abar[kk])*c.m[1])+sd*randn() ];
+}
+/* posterior-mean direction field at level kk (what epsilon_theta encodes) */
+function dir2(x,y,kk){
+  var rs=[],tot=0,i,c,v,ex=0,ey=0;
+  for(i=0;i<MIX2.length;i++){ c=MIX2[i]; v=abar[kk]*c.s*c.s+(1-abar[kk]);
+    var dx=x-Math.sqrt(abar[kk])*c.m[0], dy=y-Math.sqrt(abar[kk])*c.m[1];
+    rs[i]=c.w*Math.exp(-(dx*dx+dy*dy)/(2*v))/v; tot+=rs[i]; }
+  for(i=0;i<MIX2.length;i++){ c=MIX2[i]; v=abar[kk]*c.s*c.s+(1-abar[kk]); var r=rs[i]/tot;
+    var gm=abar[kk]*c.s*c.s/v; /* E[x0|xk,comp] per axis */
+    ex+=r*(c.m[0]+Math.sqrt(abar[kk])*c.s*c.s/v*(x-Math.sqrt(abar[kk])*c.m[0]));
+    ey+=r*(c.m[1]+Math.sqrt(abar[kk])*c.s*c.s/v*(y-Math.sqrt(abar[kk])*c.m[1])); }
+  var c1=Math.sqrt(alpha[kk])*(1-abar[kk-1])/(1-abar[kk]),
+      c2=Math.sqrt(abar[kk-1])*beta[kk]/(1-abar[kk]);
+  return [ c1*x+c2*ex-x, c1*y+c2*ey-y ];
+}
+
+/* ---------- canvas plumbing ---------- */
+var widgets=[];
+function mk(id,render){
+  var cv=document.getElementById(id); if(!cv) return null;
+  var st={cv:cv,cx:cv.getContext('2d'),render:render};
+  var h0=+cv.getAttribute('height');
+  cv.style.height=h0+'px';
+  st.fit=function(){ var d=window.devicePixelRatio||1, w=cv.clientWidth;
+    cv.width=w*d; cv.height=h0*d; st.w=w; st.h=h0; st.cx.setTransform(d,0,0,d,0,0); };
+  st.fit(); widgets.push(st); return st;
+}
+function redrawAll(){ loadCols(); for(var i=0;i<widgets.length;i++){ widgets[i].fit(); widgets[i].render(); } }
+window.addEventListener('resize',function(){ redrawAll(); });
+if(window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){ heatDirty=true; redrawAll(); });
+
+var live=[];
+function tick(ts){ for(var i=0;i<live.length;i++) live[i](ts); requestAnimationFrame(tick); }
+requestAnimationFrame(tick);
+
+function curve1(st,kk,x0,x1,yBase,hMax,color,dash,scale){
+  var cx=st.cx; cx.save(); if(dash) cx.setLineDash([4,4]);
+  cx.strokeStyle=color; cx.lineWidth=2; cx.beginPath();
+  var n=140;
+  for(var i=0;i<=n;i++){ var x=x0+(x1-x0)*i/n, p=pdfK(x,kk)*(scale||1);
+    var px=st.padL+(x-x0)/(x1-x0)*(st.w-st.padL-10), py=yBase-Math.min(p,1.6)*hMax;
+    if(i===0) cx.moveTo(px,py); else cx.lineTo(px,py); }
+  cx.stroke(); cx.restore();
+}
+function axis(st,yBase){ var cx=st.cx; cx.strokeStyle=C.line2; cx.lineWidth=1;
+  cx.beginPath(); cx.moveTo(st.padL,yBase); cx.lineTo(st.w-10,yBase); cx.stroke(); }
+function ticks(st,x0,x1,yBase){ var cx=st.cx; cx.fillStyle=C.muted; cx.font='11px ui-monospace,Menlo,monospace';
+  [-2,0,2].forEach(function(t){ var px=st.padL+(t-x0)/(x1-x0)*(st.w-st.padL-10);
+    cx.fillText((t>0?'+':'')+t,px-8,yBase+14); }); }
+
+/* ================= misconception A: hill climbing ================= */
+(function(){
+  var st=mk('cvA',render); if(!st) return; st.padL=14;
+  var ph=0;
+  function g(x){ return Math.exp(-x*x/1.1); }
+  function render(){
+    var cx=st.cx,W=st.w,H=st.h; cx.clearRect(0,0,W,H);
+    var yB=H-26, hM=H-70, x0=-3,x1=3;
+    axis(st,yB);
+    cx.strokeStyle=C.muted; cx.lineWidth=2; cx.beginPath();
+    for(var i=0;i<=120;i++){ var x=x0+(x1-x0)*i/120;
+      var px=st.padL+(x-x0)/(x1-x0)*(W-st.padL-10), py=yB-g(x)*hM;
+      if(i===0)cx.moveTo(px,py); else cx.lineTo(px,py); } cx.stroke();
+    var t=(ph%1), e=t<.85?t/.85:1, bx=-2.4+(0-(-2.4))*e;
+    var px=st.padL+(bx-x0)/(x1-x0)*(W-st.padL-10), py=yB-g(bx)*hM;
+    cx.fillStyle=C.red; cx.beginPath(); cx.arc(px,py-6,6,0,7); cx.fill();
+    cx.strokeStyle=C.red; cx.lineWidth=1.5; cx.setLineDash([3,3]); cx.beginPath();
+    cx.moveTo(px,py-6); cx.lineTo(st.padL+(0-x0)/(x1-x0)*(W-st.padL-10), yB-hM-6); cx.stroke(); cx.setLineDash([]);
+    cx.fillStyle=C.red; cx.font='700 26px system-ui'; cx.fillText('✗',W-34,32);
+    cx.fillStyle=C.muted; cx.font='11px system-ui'; cx.fillText('action →',W-64,yB+14);
+  }
+  live.push(function(){ ph+=0.006; render(); });
+})();
+
+/* ================= misconception B: blurring the curve ================= */
+(function(){
+  var st=mk('cvB',render); if(!st) return; st.padL=14;
+  var ph=0;
+  function render(){
+    var cx=st.cx,W=st.w,H=st.h; cx.clearRect(0,0,W,H);
+    var yB=H-26, hM=H-78, x0=-3.4,x1=3.4;
+    axis(st,yB);
+    var sInf=0.3+1.5*(0.5-0.5*Math.cos(ph*2*Math.PI));
+    cx.strokeStyle=C.red; cx.lineWidth=2; cx.beginPath();
+    for(var i=0;i<=140;i++){ var x=x0+(x1-x0)*i/140, p=0;
+      for(var j=0;j<MIX.length;j++){ var c=MIX[j], v=sInf*sInf;
+        p+=c.w*Math.exp(-Math.pow(x-c.m,2)/(2*v))/Math.sqrt(2*Math.PI*v); }
+      var px=st.padL+(x-x0)/(x1-x0)*(W-st.padL-10), py=yB-Math.min(p,1.3)*hM;
+      if(i===0)cx.moveTo(px,py); else cx.lineTo(px,py); } cx.stroke();
+    cx.fillStyle=C.red; cx.font='700 26px system-ui'; cx.fillText('✗',W-34,32);
+    cx.fillStyle=C.muted; cx.font='11px system-ui';
+    cx.fillText('“曲线在被加噪/去噪”？——没有这回事',st.padL,20);
+  }
+  live.push(function(){ ph+=0.0035; render(); });
+})();
+
+/* ================= misconception C: correct picture ================= */
+(function(){
+  var st=mk('cvC',render); if(!st) return; st.padL=14;
+  var trs=[], ph=0;
+  function reset(){ trs=[]; for(var i=0;i<34;i++) trs.push(revTraj(null,true)); }
+  reset();
+  function render(){
+    var cx=st.cx,W=st.w,H=st.h; cx.clearRect(0,0,W,H);
+    var yB=H-26, hM=H-78, x0=-3.4,x1=3.4;
+    axis(st,yB); st.padL=14;
+    curve1(st,0,x0,x1,yB,hM,C.blue,false,1);
+    var t=Math.min(ph,1), idx=Math.round(t*T);
+    cx.fillStyle=C.orange;
+    for(var i=0;i<trs.length;i++){ var x=trs[i][idx];
+      var px=st.padL+(x-x0)/(x1-x0)*(W-st.padL-10);
+      var yj=yB-8-((i*37)%5)*7;
+      cx.beginPath(); cx.arc(px,yj,3,0,7); cx.fill(); }
+    cx.fillStyle=C.green; cx.font='700 24px system-ui'; cx.fillText('✓',W-32,30);
+    cx.fillStyle=C.muted; cx.font='11px system-ui';
+    cx.fillText('k = '+(T-idx)+' → 0',st.padL,20);
+  }
+  live.push(function(){ ph+=0.005; if(ph>1.5){ ph=0; reset(); } render(); });
+})();
+
+/* ================= §2 pinball ================= */
+(function(){
+  var st=mk('cvPin',render); if(!st) return;
+  var lo=-3.1, hi=3.1, landed=[], balls=[], prog=0, dur=1, running=false, singleMode=false;
+  var heat=document.createElement('canvas');
+  window.heatDirty=true;
+  function X(x){ return (x-lo)/(hi-lo)*st.w; }
+  function Y(y){ return st.h-(y-lo)/(hi-lo)*st.h; }
+  function hexA(h,aa){ var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);
+    return 'rgba('+r+','+g+','+b+','+aa+')'; }
+  function buildHeat(){
+    var n=96; heat.width=n; heat.height=n; var hx=heat.getContext('2d');
+    var img=hx.createImageData(n,n);
+    var br=parseInt(C.blue.slice(1,3),16), bg=parseInt(C.blue.slice(3,5),16), bb=parseInt(C.blue.slice(5,7),16);
+    var pmax=0, vals=[];
+    for(var j=0;j<n;j++) for(var i=0;i<n;i++){ var x=lo+(hi-lo)*i/(n-1), y=hi-(hi-lo)*j/(n-1);
+      var p=pdf2(x,y); vals.push(p); if(p>pmax)pmax=p; }
+    for(var q=0;q<n*n;q++){ var t=Math.pow(vals[q]/pmax,0.5);
+      img.data[4*q]=br; img.data[4*q+1]=bg; img.data[4*q+2]=bb; img.data[4*q+3]=Math.round(t*175); }
+    hx.putImageData(img,0,0); heatDirty=false;
+  }
+  function launch(n,slow){
+    var noise=document.getElementById('pbNoise').checked;
+    var same=document.getElementById('pbSame').checked;
+    var start=same?[randn()*0+1.9,2.2]:null;
+    balls=[];
+    for(var i=0;i<n;i++){
+      var p=start?[start[0],start[1]]:[randn(),randn()], tr=[p.slice()];
+      for(var kk=T;kk>=1;kk--){ p=revStep2(p,kk,noise); tr.push(p); }
+      balls.push(tr);
+    }
+    prog=0; dur=slow?6.5:2.6; running=true; singleMode=slow;
+  }
+  function render(){
+    var cx=st.cx,W=st.w,H=st.h; cx.clearRect(0,0,W,H);
+    if(heatDirty) buildHeat();
+    if(document.getElementById('pbTerrain').checked){
+      cx.imageSmoothingEnabled=true; cx.drawImage(heat,0,0,W,H); }
+    var idx=Math.min(T,Math.floor(prog*T));
+    var kk=Math.max(T-idx,2);
+    if(document.getElementById('pbField').checked){
+      cx.strokeStyle=hexA(C.orange,0.75); cx.lineWidth=1.4;
+      var gN=15;
+      for(var gj=0;gj<gN;gj++) for(var gi=0;gi<gN;gi++){
+        var x=lo+ (hi-lo)*(gi+0.5)/gN, y=lo+(hi-lo)*(gj+0.5)/gN;
+        var d=dir2(x,y,running?kk:14);
+        var L=Math.hypot(d[0],d[1]), s=Math.min(L*3,0.22)/(L||1);
+        var x2=x+d[0]*s, y2=y+d[1]*s;
+        cx.beginPath(); cx.moveTo(X(x),Y(y)); cx.lineTo(X(x2),Y(y2)); cx.stroke();
+        var an=Math.atan2(Y(y2)-Y(y),X(x2)-X(x));
+        cx.beginPath(); cx.moveTo(X(x2),Y(y2));
+        cx.lineTo(X(x2)-5*Math.cos(an-0.45),Y(y2)-5*Math.sin(an-0.45));
+        cx.lineTo(X(x2)-5*Math.cos(an+0.45),Y(y2)-5*Math.sin(an+0.45));
+        cx.closePath(); cx.fillStyle=hexA(C.orange,0.75); cx.fill();
+      }
+    }
+    cx.fillStyle=(C.panel==='#1a1a19')?'rgba(255,255,255,.85)':'rgba(20,20,20,.55)';
+    for(var i=0;i<landed.length;i++){ cx.beginPath(); cx.arc(X(landed[i][0]),Y(landed[i][1]),2.1,0,7); cx.fill(); }
+    if(running){
+      for(i=0;i<balls.length;i++){
+        var tr=balls[i];
+        cx.strokeStyle=hexA(C.orange,0.5); cx.lineWidth=1.2; cx.beginPath();
+        for(var q=Math.max(0,idx-9);q<=idx;q++){ var p=tr[q];
+          if(q===Math.max(0,idx-9)) cx.moveTo(X(p[0]),Y(p[1])); else cx.lineTo(X(p[0]),Y(p[1])); }
+        cx.stroke();
+        var hp=tr[idx];
+        cx.fillStyle=C.orange; cx.beginPath(); cx.arc(X(hp[0]),Y(hp[1]),singleMode?5:3,0,7); cx.fill();
+      }
+    }
+    cx.fillStyle=C.muted; cx.font='11px ui-monospace,Menlo,monospace';
+    cx.fillText(running?('k = '+(T-idx)):'k = 0（静止）',10,16);
+    document.getElementById('pbInfo').textContent='已落点 '+landed.length+' 球';
+  }
+  live.push(function(){
+    if(running){ prog+=1/(60*dur);
+      if(prog>=1){ running=false;
+        for(var i=0;i<balls.length;i++) landed.push(balls[i][T]);
+        balls=[]; } }
+    render();
+  });
+  document.getElementById('pbDrop').onclick=function(){ launch(100,false); };
+  document.getElementById('pbOne').onclick=function(){ launch(1,true); };
+  document.getElementById('pbClear').onclick=function(){ landed=[]; balls=[]; running=false; render(); };
+  st.render=function(){ heatDirty=true; render(); };
+})();
+
+/* ================= §3 forward / reverse ================= */
+(function(){
+  var st=mk('cvFR',render); if(!st) return; st.padL=34;
+  var N=140, F=[], Rv=[], kCur=0, playing=0; /* playing: 0 none, +1 fwd, -1 rev */
+  var slider=document.getElementById('frK');
+  function gen(){
+    F=[]; Rv=[];
+    for(var i=0;i<N;i++){
+      var x=sample0(), tr=[x];
+      for(var kk=1;kk<=T;kk++){ x=Math.sqrt(alpha[kk])*x+Math.sqrt(beta[kk])*randn(); tr.push(x); }
+      F.push(tr);
+      Rv.push(revTraj(null,true));
+    }
+  }
+  gen();
+  function render(){
+    var cx=st.cx,W=st.w,H=st.h; cx.clearRect(0,0,W,H);
+    var yB=H-30, hM=H-95, x0=-3.6,x1=3.6;
+    axis(st,yB); ticks(st,x0,x1,yB);
+    var rev=(playing===-1)||(playing===0&&st.mode==='r');
+    if(rev) curve1(st,0,x0,x1,yB,hM,C.blue,true,1.7);
+    curve1(st,kCur,x0,x1,yB,hM,rev?C.orange:C.blue,false,1.7);
+    cx.fillStyle=rev?C.orange:C.blue;
+    for(var i=0;i<N;i++){
+      var x=rev?Rv[i][T-kCur]:F[i][kCur];
+      var px=st.padL+(x-x0)/(x1-x0)*(W-st.padL-10);
+      var yj=yB-6-((i*29)%23)*2.2;
+      cx.globalAlpha=.75; cx.beginPath(); cx.arc(px,yj,2.4,0,7); cx.fill(); }
+    cx.globalAlpha=1;
+    cx.fillStyle=C.muted; cx.font='11px ui-monospace,Menlo,monospace';
+    cx.fillText((rev?'反向':'正向')+'  k='+kCur+'  ᾱ='+abar[kCur].toFixed(3),st.padL,16);
+    document.getElementById('frInfo').textContent='k='+kCur+'  ᾱ='+abar[kCur].toFixed(3);
+  }
+  st.mode='f';
+  var kPos=0;
+  live.push(function(){
+    if(playing===1){ kPos+=0.35; if(kPos>=T){ kPos=T; playing=0; } }
+    else if(playing===-1){ kPos-=0.35; if(kPos<=0){ kPos=0; playing=0; } }
+    else return;
+    kCur=Math.round(kPos);
+    slider.value=kCur;
+    render();
+  });
+  slider.oninput=function(){ playing=0; kPos=kCur=+slider.value; render(); };
+  document.getElementById('frF').onclick=function(){ st.mode='f'; kPos=kCur=0; playing=1; };
+  document.getElementById('frR').onclick=function(){ st.mode='r'; kPos=kCur=T; playing=-1; };
+  document.getElementById('frN').onclick=function(){ gen(); render(); };
+  render();
+})();
+
+/* ================= §4 histogram ================= */
+(function(){
+  var st=mk('cvHist',render); if(!st) return; st.padL=34;
+  var BINS=44, lo=-3.3, hi=3.3, cnt=new Array(BINS).fill(0), n=0, nl=0;
+  var anim=null, prog=0;
+  function add(x){ var b=Math.floor((x-lo)/(hi-lo)*BINS);
+    if(b>=0&&b<BINS)cnt[b]++; n++; if(x<0)nl++; }
+  function render(){
+    var cx=st.cx,W=st.w,H=st.h; cx.clearRect(0,0,W,H);
+    var topH=110, yB=H-30, hM=H-30-topH-40, x0=lo,x1=hi;
+    /* top strip: trajectory k:T->0 */
+    cx.strokeStyle=C.line; cx.beginPath(); cx.moveTo(st.padL,topH+6); cx.lineTo(W-10,topH+6); cx.stroke();
+    cx.fillStyle=C.muted; cx.font='11px ui-monospace,Menlo,monospace';
+    cx.fillText('k=T',st.padL,12); cx.fillText('k=0',W-38,12);
+    function tx(j){ return st.padL+j/T*(W-st.padL-10); }
+    function ty(x){ return topH/2+8-x/3.4*(topH/2-10); }
+    if(anim){
+      var idx=Math.min(T,Math.floor(prog*T));
+      cx.strokeStyle=C.magenta; cx.lineWidth=1.8; cx.beginPath();
+      for(var j=0;j<=idx;j++){ if(j===0)cx.moveTo(tx(0),ty(anim[0])); else cx.lineTo(tx(j),ty(anim[j])); }
+      cx.stroke();
+      cx.fillStyle=C.magenta; cx.beginPath(); cx.arc(tx(idx),ty(anim[idx]),4,0,7); cx.fill();
+    }
+    /* histogram */
+    axis(st,yB); ticks(st,x0,x1,yB);
+    var mx=1; for(var b=0;b<BINS;b++) if(cnt[b]>mx)mx=cnt[b];
+    if(n>0) mx=Math.max(mx,n*(hi-lo)/BINS*0.8); /* 0.8 ≈ max pdf value, keeps overlay inside */
+    var bw=(W-st.padL-10)/BINS;
+    cx.fillStyle=C.orange;
+    for(b=0;b<BINS;b++){ if(!cnt[b])continue;
+      var hgt=cnt[b]/mx*hM;
+      cx.fillRect(st.padL+b*bw+1,yB-hgt,bw-2,hgt); }
+    /* true pdf scaled to same max */
+    if(n>0){ var scale=(n*(hi-lo)/BINS)/mx;
+      cx.strokeStyle=C.blue; cx.lineWidth=2; cx.beginPath();
+      for(var i=0;i<=140;i++){ var x=x0+(x1-x0)*i/140;
+        var py=yB-pdfK(x,0)*scale*hM, px=st.padL+(x-x0)/(x1-x0)*(W-st.padL-10);
+        if(i===0)cx.moveTo(px,Math.max(py,topH+16)); else cx.lineTo(px,Math.max(py,topH+16)); }
+      cx.stroke(); }
+    document.getElementById('hsInfo').textContent=
+      'N='+n+(n?('  左峰 '+Math.round(100*nl/n)+'% / 右峰 '+Math.round(100*(n-nl)/n)+'%（真值 60/40）'):'');
+  }
+  live.push(function(){
+    if(anim){ prog+=1/110;
+      if(prog>=1){ add(anim[T]); anim=null; }
+      render(); }
+  });
+  document.getElementById('hsOne').onclick=function(){ anim=revTraj(null,true); prog=0; };
+  document.getElementById('hsMany').onclick=function(){
+    for(var i=0;i<200;i++){ var tr=revTraj(null,true); add(tr[T]); } render(); };
+  document.getElementById('hsClear').onclick=function(){ cnt=new Array(BINS).fill(0); n=0; nl=0; anim=null; render(); };
+  render();
+})();
+
+/* ================= §5 DP vs FM trajectories ================= */
+(function(){
+  var st=mk('cvFM',render); if(!st) return;
+  var ph=0, dp=[], fm=[];
+  function gen(){ dp=[]; fm=[];
+    for(var i=0;i<14;i++){ dp.push(revTraj(null,true));
+      fm.push([randn(),sample0()]); } }
+  gen();
+  function render(){
+    var cx=st.cx,W=st.w,H=st.h; cx.clearRect(0,0,W,H);
+    var gap=26, pw=(W-gap)/2, top=30, bot=H-24;
+    function ymap(x){ return top+(1-(x+3.3)/6.6)*(bot-top); }
+    cx.fillStyle=C.sub; cx.font='600 12px system-ui';
+    cx.fillText('Diffusion Policy · SDE（弯、随机）',10,16);
+    cx.fillText('Flow Matching · ODE（直、确定）',pw+gap+10,16);
+    cx.strokeStyle=C.line;
+    [[0,pw],[pw+gap,W]].forEach(function(seg){
+      [-2,2].forEach(function(m){ cx.beginPath(); cx.setLineDash([3,4]);
+        cx.moveTo(seg[0]+6,ymap(m)); cx.lineTo(seg[1]-6,ymap(m)); cx.stroke(); cx.setLineDash([]); });
+    });
+    var t=Math.min(ph,1);
+    /* DP panel */
+    var idx=Math.floor(t*T);
+    for(var i=0;i<dp.length;i++){
+      cx.strokeStyle=C.orange; cx.globalAlpha=.6; cx.lineWidth=1.4; cx.beginPath();
+      for(var j=0;j<=idx;j++){ var px=6+j/T*(pw-12), py=ymap(dp[i][j]);
+        if(j===0)cx.moveTo(px,py); else cx.lineTo(px,py); }
+      cx.stroke(); cx.globalAlpha=1;
+      cx.fillStyle=C.orange; cx.beginPath();
+      cx.arc(6+idx/T*(pw-12),ymap(dp[i][idx]),3,0,7); cx.fill(); }
+    /* FM panel */
+    for(i=0;i<fm.length;i++){ var z=fm[i][0],y=fm[i][1];
+      cx.strokeStyle=C.blue; cx.globalAlpha=.6; cx.lineWidth=1.4; cx.beginPath();
+      cx.moveTo(pw+gap+6,ymap(z));
+      cx.lineTo(pw+gap+6+t*(pw-12),ymap(z+(y-z)*t)); cx.stroke(); cx.globalAlpha=1;
+      cx.fillStyle=C.blue; cx.beginPath();
+      cx.arc(pw+gap+6+t*(pw-12),ymap(z+(y-z)*t),3,0,7); cx.fill(); }
+  }
+  live.push(function(){ ph+=0.004; if(ph>1.45){ ph=0; gen(); } render(); });
+})();
+
+/* ================= §13 numbers ================= */
+(function(){
+  function put(id,v){ var el=document.getElementById(id); if(el)el.textContent=v; }
+  [15,30,45,60].forEach(function(kk){
+    put('nA'+kk,abar[kk].toFixed(3));
+    put('nS'+kk,Math.sqrt(abar[kk]).toFixed(3));
+    put('nN'+kk,Math.sqrt(1-abar[kk]).toFixed(3));
+  });
+  put('nXk',(Math.sqrt(abar[30])*2+Math.sqrt(1-abar[30])*0.31).toFixed(2));
+  put('nC30',(Math.sqrt(abar[30])*2).toFixed(2));
+})();
+
+})();
+</script>
+</body>
+</html>
