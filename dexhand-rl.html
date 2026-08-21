@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>灵巧手 RL 实验记录:锤钉与抓取</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --blue:#2a78d6; --green:#2c7a4b; --red:#b4423a; --amber:#9a6b15;
+  --code:#f1f0ea;
+}
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --blue:#3987e5; --green:#4caf7d; --red:#d9695f; --amber:#c99b3f;
+    --code:#232322; }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:860px; margin:0 auto; padding:56px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.8rem; margin:.3em 0 .3em; line-height:1.35; }
+h2 { font-size:1.35rem; margin:2.4em 0 .5em; padding-top:.8em; border-top:1px solid var(--line); }
+h3 { font-size:1.08rem; margin:1.8em 0 .4em; }
+.lede { color:var(--sub); }
+p { margin:.6em 0; }
+code { background:var(--code); border-radius:5px; padding:1px 6px; font-size:.88em;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:10px;
+  padding:14px 16px; overflow-x:auto; font-size:.83rem; line-height:1.6;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:14px 0; font-size:.92rem; display:block; overflow-x:auto; }
+th, td { border:1px solid var(--line); padding:7px 11px; text-align:left; vertical-align:top; }
+th { background:var(--code); white-space:nowrap; }
+.videos { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0; }
+@media (max-width:640px){ .videos { grid-template-columns:1fr; } }
+.videos figure { margin:0; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px; }
+.videos video { width:100%; border-radius:8px; display:block; background:#000; }
+.videos figcaption { font-size:.85rem; color:var(--sub); margin-top:7px; line-height:1.5; }
+.tag { display:inline-block; font-size:.76rem; border-radius:99px; padding:1px 10px; margin-right:6px;
+  border:1px solid var(--line); color:var(--sub); vertical-align:2px; }
+.tag.ok { color:var(--green); border-color:var(--green); }
+.tag.bad { color:var(--red); border-color:var(--red); }
+.tag.warn { color:var(--amber); border-color:var(--amber); }
+.callout { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--blue);
+  border-radius:10px; padding:12px 16px; margin:16px 0; font-size:.94rem; }
+.callout.bad { border-left-color:var(--red); }
+.callout.good { border-left-color:var(--green); }
+.small { font-size:.87rem; color:var(--sub); }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+a { color:var(--blue); text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="kicker">YUE YANG · NOTES · 实验记录 · 2026-08-20 → 08-21</div>
+<h1>灵巧手 RL 实验记录:锤钉与抓取<br><span class="small" style="font-weight:400">L20 欠驱动五指手 · MuJoCo Playground (MJX) · brax PPO · reward 迭代实录 + 训练系统优化编年史</span></h1>
+
+<p class="lede">平台:LinkerHand L20(21 关节 / 16 执行器,5 组欠驱动耦合)装在 6 自由度浮动基座上,MJX 大规模并行(4096 环境),brax PPO,单卡训练。两天里两个任务从"编译不出来"走到"训练收敛",hammer 的 reward 走过五个版本,训练后端从 XLA 换到 Warp,一次 1.058 亿步的完整训练从 36 分钟降到 7 分钟。本页按任务归档:每个版本的效果视频、具体 reward、局限与修改方向;最后是训练系统的优化全记录。</p>
+
+<h2>任务一 · L20CubePick——抓方块放到空中目标点(基线 A)</h2>
+<p><span class="tag ok">已收敛</span><span class="tag">与 LeapCubePick 逐项同超参的孪生任务</span></p>
+<p>基线 A 的问题是"L20 这只欠驱动手到底能不能学"。参照系是上游已验证的 LeapCubePick(锚点:episode 内目标点步数 174/200 = 87%)。</p>
+
+<h3>Reward(Adroit relocate 权重,连续斜坡)</h3>
+<table>
+<tr><th>项</th><th>权重</th><th>形式</th></tr>
+<tr><td>reach</td><td>0.1</td><td>手→方块距离,密集</td></tr>
+<tr><td>lift</td><td>1.0</td><td>方块离地 5 cm 即给</td></tr>
+<tr><td>palm_target / obj_target</td><td>0.5 + 0.5</td><td>手/方块→空中目标点距离,<b>全程密集</b>——每抬高 1 cm 都涨分</td></tr>
+<tr><td>near / very_near</td><td>10 + 20</td><td>接近目标点的大额奖励</td></tr>
+</table>
+
+<h3>结果</h3>
+<p>105.8M 步(berlin H200,与他人共卡):最终 eval reward <b>5685</b>,目标点步数 <b>184.7/200(92%)</b>——<b>超过 Leap 锚点本身</b>,远超合格线(Leap 的 50% = 87/200)。回放 6 种子 284–288/300 步在目标点,稳定性极高。</p>
+<div class="videos">
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/pick-best.mp4"></video>
+<figcaption><b>best</b>(seed 1004):288/300 步在目标点。抓起 54 mm 方块,悬停在空中目标点。</figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/pick-worst.mp4"></video>
+<figcaption><b>worst</b>(seed 1001):284/300——最差与最好几乎无差别。</figcaption></figure>
+</div>
+<p class="small"><b>局限与方向</b>:单 seed;正式基线结论需 ≥3 seed(协议已定,warp 后每 seed 仅 ~10 分钟)。reward 本身无已知问题。</p>
+
+<h2>任务二 · L20HammerNail——拿锤子把钉子打进木板(工具使用)</h2>
+<p><span class="tag warn">五个 reward 版本的完整演化</span><span class="tag">首个工具任务</span></p>
+<p>场景:地面上一把锤(胶囊柄 + 钢盒头)、矮板上一根竖直滑轨钉(重力补偿,打到哪停到哪,全程 5 cm)。难点不在物理,在 reward:五个版本每一版都暴露一种教科书级的 reward 设计陷阱。</p>
+
+<h3>v1 · 瞬时二值门 <span class="tag bad">失败:零成功</span></h3>
+<pre><code>reach     = 1 − tanh(5·‖palm − hammer‖)          # 永远在线
+lifted    = (hammer_z &gt; 5cm)                      # 瞬时二值门
+hold / face_nail / drive / success  全部 × lifted  # 藏在门后</code></pre>
+<p>训满 105.8M 步,reward 117,<b>success 全程为 0</b>。策略停在唯一有梯度的地方:掌心贴着锤柄躺平吃 reach 分。从"贴着"到"举起 5 cm"之间梯度为零,还要冒丢 reach 分的风险——这正是 MetaWorld 已废弃的 v1 硬门结构。</p>
+<div class="videos">
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v1-best.mp4"></video>
+<figcaption><b>v1 best</b>:整集保持"扶着锤子躺平"的姿势,钉子原封不动。</figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v1-worst.mp4"></video>
+<figcaption><b>v1 worst</b>:同一个局部最优,六个种子无一例外。</figcaption></figure>
+</div>
+<p class="small"><b>修改方向(当时定的)</b>:调研 Adroit / MetaWorld v2 / DexPBT 的三派成功配方 → 密集项永不藏在门后、阶段门用锁存不用瞬时判据。</p>
+
+<h3>v2.1 · 锁存链 staged reward <span class="tag warn">成功但作弊:手腕压钉</span></h3>
+<pre><code>reach(举起后停发) + fingers(五指尖收拢,拇指×3)
+  → grasp 锁存(指尖均距&lt;6cm ∧ 掌距&lt;12cm)
+  → lift 斜坡(0→15cm 连续) + 首过 10cm 一次性 +25 + lifted 锁存
+  → hold(举稳) + face_nail(long-tail) + drive(深度水平×10) + success(×20)
+掉锤 → episode 结束(−50)   |   锁存在 done 时自清(防 AutoReset 泄漏)</code></pre>
+<p>阶段依序点亮,最终 reward 5603,回放 6/6 把钉子打平——但看视频:它<b>举着锤子的同时用手腕把钉子压了下去</b>。drive/success 只看钉子深度,不问"是谁弄下去的"。附带教训:staged 策略真的去抓锤后,双胶囊楔紧接触打爆了 5 迭代 Euler 求解(NaN),靠关节阻尼 + nan_to_num 缓解。</p>
+<div class="videos">
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v21-best.mp4"></video>
+<figcaption><b>v2.1 best</b>:锁存链走通(抓→举→"打平"),但仔细看是手体压钉,锤头只是陪衬。</figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v21-worst.mp4"></video>
+<figcaption><b>v2.1 worst</b>:同样的压钉策略,成功步数略少。</figcaption></figure>
+</div>
+<p class="small"><b>修改方向</b>:给深度"记对功劳"——只有锤面造成的深度增量才计分。</p>
+
+<h3>v3 / v3.1 · 合法深度记账 <span class="tag bad">堵住作弊,却饿死了举升</span></h3>
+<pre><code># 合法深度累计器:每步深度增量,只有同时满足才计入 —
+#   锤面在钉顶 4cm 内 ∧ 手掌+五指尖全部离钉顶 6cm 外 ∧ lifted
+strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
+# 物理路线证伪:MuJoCo frictionloss 正则化在本求解器配置下饱和于 ~44N,
+# 设多大都拦不住 50N 手压 —— 力阈值造不出来,只能 reward 记账。</code></pre>
+<p>手压从此在所有通道零分——但训练平台在 ~400 分(纯"趴着抓住"的收益),举升锁存达成率只有 4–8%。<b>原因发人深省:v2.1 的作弊客观上是课程</b>——为了压钉必须先举锤,30 分/步的压钉大奖把策略拉过了举升关;堵掉之后,诚实的举后收益(3 分/步)打不过安逸趴着(2 分/步)+ 掉锤恐惧(−50)。v3.1 配平(reach 抓住即停、举后收益×3、掉锤 −50→−10)方向正确但不够:纯探索翻不过"持续举稳"这道墙。无视频(两版都在平台期被终止)。</p>
+<p class="small"><b>修改方向</b>:不能只堵坏路,要修好路——后段状态必须被直接采样到。</p>
+
+<h3>v4 · implicitfast + pregrasp 课程 <span class="tag ok">合法打平,6/6</span></h3>
+<pre><code>① 场景积分器 Euler → implicitfast:双胶囊楔紧接触在 5 迭代 Euler 下必炸、
+   implicitfast 下全稳 —— 训练 NaN 类问题根治(pick 场景保持 Euler 对齐 Leap)
+② pregrasp 课程(TCDM/PGDM):离线搜索一个 800 步稳定的"指笼握锤"姿态
+   (手指 70% 屈曲成笼,锤柄放入,物理沉降验证),30% episode 由此出生、
+   grasp/lift 锁存已置 —— hold/运锤/砸击从第一步就有样本
+③ reward = v3.1 全套(合法记账原封生效)</code></pre>
+<p>22M 步破举升墙(72% episode 过锁存、掉锤率 0.09),33M 步 reward 5185,最终 <b>7533</b>;回放 6/6 全部<b>合法</b>打平(成功步数 239–274/300,成功口径 = 合法深度,手压构造上为零分);画面确认锤头做功、手体离钉。</p>
+<div class="videos">
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v4-best.mp4"></video>
+<figcaption><b>v4 best</b>(seed 1000,274/300):握柄、锤头对钉敲击,钉子没入板中。</figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v4-worst.mp4"></video>
+<figcaption><b>v4 worst</b>(seed 1005,239/300):同样成功,动作稍拖沓。</figcaption></figure>
+</div>
+
+<h3>v4 的现存局限 → 下一轮四臂对照(已实现,待跑)</h3>
+<p>四条肉眼可见的问题:①锤子只是勉强拿住;②钉子近乎一次"推"到底;③没有抡/蓄势的过程;④抓握手势不像人。对应的迭代臂(同一 env 类,<code>--env-name</code> 切换,四臂 PPO 超参逐项相同、TensorBoard 指标名一致,可直接叠图):</p>
+<table>
+<tr><th>env 名</th><th>机制</th><th>针对</th><th>文献依据</th></tr>
+<tr><td><code>L20HammerNail</code></td><td>v4 原样</td><td>对照组</td><td>—</td></tr>
+<tr><td><code>L20HammerNailImpact</code></td><td>击打状态机:接触<b>开始瞬间</b>锤面下向速度 ≥0.5 m/s 才开启有效击,慢推永不开门;face_nail 换成 hover(钉上方对准+举高蓄势)</td><td>②③</td><td>合法记账的自然延伸;TCDM hammer_strike 的挥击轨迹精神</td></tr>
+<tr><td><code>L20HammerNailBlows</code></td><td>Impact + 每击进给上限 2 cm(打平 ≥3 击)+ 每落一击一次性 bonus + success 需 ≥3 击</td><td>②③</td><td>Adroit 连续 N 步判据、allegro_kuka near_goal_steps 计数器</td></tr>
+<tr><td><code>L20HammerNailPose</code></td><td>grasp 锁存加姿态条件:柄轴水平才算抓住;tool_pose 项奖励保持横握</td><td>①④</td><td>SeqDex tool positioning 的 rot_dist 门</td></tr>
+</table>
+<p class="small">更远的方向:teleop 录制真人抓锤姿态替换指笼 pregrasp(本项目独有资产);人类包络校验(基座速度/冲量分布须"人能做");长程组合任务"开柜→放入"(PandaOpenCabinet + pick 元素,复用锁存+记账骨架)。</p>
+
+<h2>训练系统优化编年史:从"编译不出来"到 7 分钟一轮</h2>
+
+<h3>阶段 0 · 编译危机(2026-08-20 白天)</h3>
+<p>最初在 berlin(8×H200 共享机)上,任何 L20 任务都编译不出来:XLA 编译要 40–60 GB 主机内存、小时级不收敛,4090(46 GB RAM)直接被 OOM killer 无声击杀,berlin 上编译成功后又死于装载(<code>std::bad_alloc</code>/段错误,82 天未重启的驱动有 NV_ERR_NO_MEMORY 病史)。三层根因逐层拆除:</p>
+<table>
+<tr><th>根因</th><th>修复</th><th>效果</th></tr>
+<tr><td>钉帽 cylinder × 手 mesh 碰撞(MJX 未实现)</td><td>钉帽换同尺寸 box</td><td>能进编译</td></tr>
+<tr><td>手内部 2841 对 mesh×mesh 自碰撞(碰撞类 conaffinity 配置)</td><td>先关闭;基本体化后按 Leap 惯例恢复(Leap 自带 381 对基本体自碰撞)</td><td>图缩小 7 倍</td></tr>
+<tr><td>82 个碰撞凸包 / 21.6 万顶点(掌+拇指基座各 16 个 VHACD 凸包,手指用视觉 mesh 兼职碰撞)</td><td>PCA 程序化拟合:掌/拇指基座→盒子,18 指节→胶囊;视觉 mesh 与显式惯性不动</td><td><b>编译 20–28 秒</b>;碰撞对 3260→325(hammer),低于 Leap 的 577</td></tr>
+</table>
+<p class="small">附带修复:hammer 场景 Euler→implicitfast(楔紧接触稳定)、4090 补 80 GB swap、机器分工确立(4090 主力独占,berlin 大显存备份)。</p>
+
+<h3>阶段 1 · JAX/XLA 基线</h3>
+<p>基本体化后 jax 路线完全可用:hammer 51k steps/s(4090),105.8M 步 ≈ 36 分钟;编译缓存需 <code>JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS=0</code> 才写小条目(大图条目写入仍疑似静默失败,挂账)。当天全部 reward 迭代(v1→v4)在此后端完成。</p>
+
+<h3>阶段 2 → 3 · Warp 接入全记录(2026-08-20 → 08-21)</h3>
+
+<h4>版本认知——一条今后不会再踩错的规则</h4>
+<p>依赖是四层的,<code>warp-lang</code> 必须和 <code>mujoco</code> 精确配对(权威来源是 <code>mujoco-mjx[warp]</code> extra 的钉版本):</p>
+<pre><code>我们的 env/launcher → mjx API(稳定层,我们只碰这层)
+                       └─ mjwarp 物理 kernel(打包在 mujoco 里,随 mujoco 版本走)
+                            └─ warp-lang 运行时/编译器(必须配对:3.6.0↔1.11.1,3.12.0↔1.16.0)</code></pre>
+<p>4090 上双栈并存:<code>Mujoco_playground</code>(生产:mujoco 3.6 + warp 1.11 + jax 0.6.2,服务 jax 基线和已验证的 warp 训练)、<code>Mujoco_playground_116</code>(实验:上游 e74217b + mujoco 3.12 + warp 1.16,快 1.47×,待拍板转正)。</p>
+
+<h4>写/改的文件(原则:jax 路径零改动,warp 是平行孪生不是替换;layering 测试全程 33 passed)</h4>
+<table>
+<tr><th>文件</th><th>内容</th></tr>
+<tr><td><code>level_1_run_config/warp_launch.py</code> 新建</td><td>策略层:从 trainer_launch 派生、只换 <code>--impl warp</code> + 固定 kernel 缓存目录(<code>~/.cache/warp_mjx</code>);<code>smoke_flags()</code>(1M 步 + <code>--num_videos 0</code>);smoke 时 <code>XLA_PYTHON_CLIENT_PREALLOCATE=false</code> 以便与在跑训练共存</td></tr>
+<tr><td><code>level_3_train_launch/warp.py</code> 新建</td><td><code>smoke_warp()</code>(前台冒烟)+ <code>train_detached_warp()</code>(detached 完整跑,TB 开)</td></tr>
+<tr><td><code>level_3_evaluation/warp.py</code> 新建</td><td><code>evaluate_checkpoint_warp()</code>:同后端回放,EGL 无头渲染,所有重 import 移入函数体</td></tr>
+<tr><td><code>main.py</code> 增量</td><td><code>train-warp</code> / <code>eval-warp</code> 两个子命令(jax 的 train/eval 一字未动)</td></tr>
+<tr><td>三个 L20 env 配置小改</td><td><code>naccdmax=30*8192</code>(三个都加);hammer <code>njmax</code> 160→256</td></tr>
+</table>
+
+<h4>版本更新怎么做的</h4>
+<p><b>1.11(第一天)</b>:发现 box 的老 venv 其实已经能跑 warp——什么都没升,<code>put_model(impl='warp')</code> 直接通,当天完成 smoke → 完整训练 → 2×2 后端等价验证。<b>1.16(当天深夜)</b>:并排新 clone(e74217b)+ <code>uv venv</code> + <code>uv sync --extra cuda</code> + <code>uv pip install mujoco==3.12.0 mujoco-mjx[warp]==3.12.0</code>——生产 venv 全程不动,失败成本 = 删目录。</p>
+
+<h4>坑的完整清单(按疼痛排序)</h4>
+<table>
+<tr><th>#</th><th>坑</th><th>细节与教训</th></tr>
+<tr><td>1</td><td><b>naccdmax 没配(最大的坑)</b></td><td>CCD 缓冲溢出刷了 4200 万行警告。三重伤害:接触被静默丢弃(reorient reward 15.6 vs jax 的 81.3,差点误判"warp 训不动");打印本身把吞吐拖慢 5 倍(40k → 修复后 195k steps/s,"warp 只快 20%"是这个假象);日志按 GB 增长。<b>教训:warp 的容量三件套 naconmax/naccdmax/njmax 一个都不能少,溢出不是报错而是物理悄悄变假。</b></td></tr>
+<tr><td>2</td><td>版本混搭崩溃</td><td>mujoco 3.6 + warp 1.16 → mjx 把类型退化成占位符(GraphMode 变 int),put_model 直接 AttributeError。playground 的 lock 声称这个组合可解析——<b>依赖解析器说行 ≠ 测试过</b>。</td></tr>
+<tr><td>3</td><td><code>MUJOCO_GL=egl</code> 设晚了</td><td>MuJoCo 在 import 时就选定 GL 后端,模块顶层 import 链提前把 mujoco 拉了进来 → 走了 GLFW → 无头必崩。修复:环境变量先行、重 import 全部推迟进函数体。</td></tr>
+<tr><td>4</td><td>uv sync 默认不带 cuda extra</td><td>新 venv 的 jax 只有 CPU("Unknown backend cuda")。要 <code>--extra cuda</code>。</td></tr>
+<tr><td>5</td><td>njmax=160 差一口气</td><td>hammer 实测约束行峰值 ~175,6687 次溢出——量小但同属"静默丢物理",提到 256。</td></tr>
+<tr><td>6</td><td>训练完成后的渲染假失败</td><td>上游 train 脚本收尾要渲染视频,headless SSH 下崩掉污染 exit code(训练和 checkpoint 其实都好了)。smoke 加 <code>--num_videos 0</code>;回放走 eval-warp + box 缺 ffmpeg 时的 npz 兜底 + Mac 端编码。</td></tr>
+<tr><td>7</td><td>pgrep -f 自匹配</td><td>ssh 命令行里含 "trainer-shim" 字样,把自己匹配成"训练在跑",两次假警报(一次差点不敢关机)。</td></tr>
+<tr><td>8</td><td><b>归因坑(认知层面,比代码坑更危险)</b></td><td>300M 跑出 2198 平台期,第一反应是怪 warp——最后靠 2×2 对照实验(jax/warp × seed 1/2 → 7533/7710/7598/7380 全部同噪声带)证明是任务级 seed 方差。<b>换后端之后的一切异常,先做对照再下结论。</b></td></tr>
+</table>
+
+<h4>成绩单</h4>
+<table>
+<tr><th>指标</th><th>简化前</th><th>XLA(jax)</th><th>Warp 1.11</th><th>Warp 1.16</th></tr>
+<tr><td>编译</td><td>小时级失败</td><td>分钟级(20–28 s 图编译)</td><td>冷编译 30–90 s</td><td>热缓存秒级</td></tr>
+<tr><td>吞吐(hammer)</td><td>—</td><td>51k steps/s</td><td>177k</td><td><b>260k</b></td></tr>
+<tr><td>105.8M 步完整训练</td><td>不可行</td><td>36 分钟</td><td>10 分钟</td><td><b>约 7 分钟</b></td></tr>
+</table>
+<p>同时解锁了 kitchen 这类大场景(jax 上编译就劝退)。reward 迭代周期从"一天四版"变成"一小时四臂对照"。</p>
+
+<div class="callout good"><b>方法论沉淀(两天里反复兑现的三条)</b>:①静默失败比报错危险——容量溢出、缓存不写、接触丢弃都不喊一声,必须主动装哨兵;②堵作弊时先问它是不是在客观上当课程,堵了坏路要同时修好路;③换任何一层(后端/积分器/reward)之后的异常,先做同条件对照实验再归因。</div>
+
+<footer>
+<a href="index.html">← 返回目录</a> · 代码与完整提交历史:私有仓库 Share-Control-Hand(<code>training/reinforcement_learning/</code>);实验数据与视频:本页 assets。
+</footer>
+</div>
+</body>
+</html>
