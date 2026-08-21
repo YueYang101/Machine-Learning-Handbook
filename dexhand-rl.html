@@ -164,7 +164,17 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <tr><td>blow_bonus 防刷</td><td>一击必须实际进给 &gt;1 mm 才计数发奖——钉子打平后空锤蹭不到分</td><td>堵"离开奖励"被刷的口子</td></tr>
 </table>
 <p class="small">五臂消融注册(超参逐项相同、TensorBoard 指标同名):<code>L20HammerNail</code>(v5 默认)、<code>Staged</code>(v4 对照)、<code>Impact</code>/<code>Blows</code>/<code>Pose</code>。</p>
-<p><b>V5 首训结果(105.8M 步 / ~9 分钟,warp 1.16)</b>:前四段全部达成——66–72% episode 过举升锁存、hold 130+/episode、掉锤率低、<b>超速全程为零(人类包络生效)</b>;但 hover≈0.7、strike/success 全零:锤子从未被运到钉上方落击。</p>
+<p><b>V5 首训结果(105.8M 步,纯训练 330 秒 = 5.5 分钟 @ 321k steps/s,warp 1.16)</b>:前四段全部达成——66–72% episode 过举升锁存、hold 130+/episode、掉锤率低、<b>超速全程为零(人类包络生效)</b>;但 hover≈0.7、strike/success 全零:锤子从未被运到钉上方落击。曲线 55M 步后完全平台化(880–920 噪声带,后 50M 零增益)——<b>100M 步足够,卡住的是物理不是步数</b>。</p>
+<figure style="margin:14px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;">
+<img src="assets/dexhand-rl/hammer-v5-curve.png" alt="v4 vs V5 reward 曲线" style="width:100%;border-radius:8px;display:block;">
+<figcaption class="small" style="margin-top:7px;">v4 与 V5 的 eval reward 曲线:V5 收紧记分口径后总分自然低于 v4(v4 的 7533 里含压/敲混合的深度分),55M 后平台 = 收敛于"拐杖姿势"局部最优。</figcaption>
+</figure>
+<div class="videos">
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v5-best.mp4"></video>
+<figcaption><b>V5 best</b>(return 1563,success 0):拐杖姿势实锤——柄端举高满足 lifted 锁存,锤头拄地,钉子原封不动。</figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v5-worst.mp4"></video>
+<figcaption><b>V5 worst</b>(return 271):连拐杖姿势都没维持稳。</figcaption></figure>
+</div>
 <div class="callout bad"><b>解剖:一个被指标掩盖的物理不可行</b>。0.59 kg 锤的钢头挂在握点 12.5 cm 外,重力矩 ~0.5 N·m;±1 N 的手指提供不了悬臂端所需的 ~18 N 级切向握力——<b>这只手物理上握不住水平悬空的重锤</b>。训练学到的"举稳"实为拐杖姿势:柄端翘高满足 <code>lifted</code> 锁存(它只看锤体原点高度),锤头拄地。课程姿态实验独立证实:指笼悬空后 600 步内被下垂的锤头拽脱手。教训:<b>加难物理之前,先做"任务在该形态下是否可行"的静力学验算</b>;锁存判据要盯真正的目标量(锤头高度,不是锤体原点)。</div>
 <p class="small"><b>V5.1 候选路线</b>:① 竖持课程——柄竖直、头朝上时重力矩归零,弱指力也能持,swing = 竖持移动到钉上方再翻腕下击(纯课程/判据改动);② hammer 场景 fork 一份专用手 include,手指 forcerange ±1→±3 N(pick 的手不动,基线 A 对照不受污染);③ 锤头回轻(0.41 kg)+ 握点前移(choke up)。</p>
 
