@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>共享控制路线：从 To the Noise and Back 到 EMG 灵巧手 · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e; }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.8rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap canvas { width:100%; display:block; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; }
+.ctl button { font:600 .85rem/1 inherit; color:var(--ink); background:var(--bg);
+  border:1px solid var(--line2); border-radius:7px; padding:7px 11px; cursor:pointer; }
+.ctl button:hover { border-color:var(--blue); color:var(--blue); }
+.ctl button.pri { background:var(--blue); border-color:var(--blue); color:#fff; }
+.ctl label { display:inline-flex; gap:5px; align-items:center; font-size:.85rem; color:var(--sub); }
+.ctl input[type=range] { flex:1 1 120px; min-width:100px; accent-color:var(--blue); }
+.ctl .ro { font:.8rem/1.4 ui-monospace,Menlo,monospace; color:var(--sub); }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.92rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:1.2em 0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+/* flow diagram */
+.flow { margin:1.4em 0; }
+.frow { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; align-items:stretch; }
+.node { background:var(--panel); border:1px solid var(--line2); border-radius:9px;
+  padding:8px 14px; font-size:.9rem; line-height:1.5; flex:1 1 200px; max-width:340px; }
+.node b { display:block; font-size:.95rem; }
+.node .d { color:var(--sub); font-size:.83rem; }
+.node.hl { border-color:var(--blue); }
+.node.todo { border-style:dashed; border-color:var(--orange); }
+.node.todo b::after { content:" · 未建"; color:var(--orange); font-weight:700; font-size:.8em; }
+.fdown { text-align:center; color:var(--muted); font-size:1.1rem; line-height:1; margin:6px 0; }
+.status-done { color:var(--green); font-weight:700; }
+.status-part { color:var(--yellow); font-weight:700; }
+.status-todo { color:var(--red); font-weight:700; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="kicker">MACHINE LEARNING HANDBOOK · SHARED CONTROL</div>
+<h1>共享控制路线：从 To the Noise and Back 到 EMG 灵巧手<br><span style="font-size:.72em;color:var(--sub)">参照论文的流程、它的实验、我们的架构与当前进度</span></h1>
+
+<p class="lede">参照论文是 <b>To the Noise and Back: Diffusion for Shared Autonomy</b>（Yoneda et al., RSS 2023, arXiv:2302.12244）：用扩散模型的「部分加噪 + 去噪」把用户动作拉回专家分布，不需要知道用户目标、不需要 reward、不需要在线人类参与训练。本页把它的流程和实验讲清楚，然后对照我们的系统：<b>EMG 采集 → emg2pose 解码手指、Quest 只供 wrist pose、MuJoCo 里的 L20 共享控制</b>——同一套配方，但动作空间从他们的 2–3 维升到 16+6 维。我们目前在 RL 阶段生成专家数据（论文也是这么造 demo 的），正在找合适的长程任务。</p>
+
+<div class="toc"><b>目录</b> ·
+<a href="#s1">§1 论文的核心想法与流程</a> ·
+<a href="#s2">§2 交互演示:γ 的取舍</a> ·
+<a href="#s3">§3 论文的实验与结果</a> ·
+<a href="#s4">§4 映射到我们的系统</a> ·
+<a href="#s5">§5 我们的架构现状</a> ·
+<a href="#s6">§6 进度:走到哪一步了</a> ·
+<a href="#s7">§7 参考</a></div>
+
+<h2 id="s1"><span class="n">§ 1</span>论文的核心想法与流程</h2>
+
+<p>共享自主（shared autonomy）里，copilot 要在「尊重用户意图（<b>fidelity</b>）」和「把动作拉向安全/有效的专家行为（<b>conformity</b>）」之间做取舍。传统做法要么要知道环境动力学、要么要一个离散的目标集合做意图推断、要么（deep RL 一系）要任务 reward 和人在环训练。这篇论文把三样全部扔掉，只要一样东西：<b>一批能代表「期望行为」的专家轨迹</b>。</p>
+
+<h3>训练（就是标准 DDPM，见<a href="diffusion-policy.html">DP 推导页</a>）</h3>
+<div class="math">
+<p class="why">收集专家演示（目标随机采样；<b>把目标从 observation 里删掉</b>再训练——copilot 永远不知道用户想去哪），训练一个状态条件扩散模型：</p>
+$$p_\theta(a_t \mid s_t) \qquad \text{loss}=\mathbb E\Big[\big\|\epsilon-\epsilon_\theta\big(\sqrt{\bar\alpha_k}\,a+\sqrt{1-\bar\alpha_k}\,\epsilon,\;k\mid s\big)\big\|^2\Big]$$
+<p class="why">训练全程<b>不需要用户模型、不需要 surrogate pilot、不需要 reward</b>。用户的策略只在推理时进场。</p>
+</div>
+
+<h3>推理：部分正向 + 部分反向（partial diffusion）</h3>
+<div class="algo">
+<div class="t">Algorithm 1 · Shared autonomy as partial diffusion</div>
+<ol>
+<li>输入：状态 $s_t$、用户动作 $a_t^h$；超参：forward diffusion ratio $\gamma\in[0,1]$，扩散总步数 $K$</li>
+<li>$k_{sw}\leftarrow\lfloor\gamma K\rfloor$（切换步）</li>
+<li><b>正向</b>：$\tilde a\leftarrow\sqrt{\bar\alpha_{k_{sw}}}\,a_t^h+\sqrt{1-\bar\alpha_{k_{sw}}}\,\epsilon$ —— 把用户动作加噪 $k_{sw}$ 步（闭式一步到位）</li>
+<li><b>反向</b>：从 $k=k_{sw}$ 起用 $\mu_\theta(\cdot,k\mid s_t)$ 逐步去噪回 $k=0$</li>
+<li>输出共享动作 $a_t^s$</li>
+</ol>
+</div>
+
+<div class="key good">
+<b>为什么这一步就完成了仲裁。</b>正向扩散「破坏」用户动作里的信息，反向去噪把它「投影」回专家分布——$\gamma$ 控制破坏多少：
+$\gamma$ 小 → 原信息保留多、输出离 $a^h$ 近（<b>高 fidelity，低 conformity</b>）；
+$\gamma$ 大 → 信息几乎清零、输出就是从专家分布里重新采样（<b>低 fidelity，高 conformity</b>）；
+$\gamma=1$ 退化为完全自主。论文还给了正式的界（式 10）：$\|a^h-a^s\|$ 的上界随 $k_{sw}$ 单调增长——<b>copilot 偏离用户的程度是可控的</b>。
+关键前提是<b>用户意图在专家分布下有非零概率</b>：demo 里同时包含到各个目标的轨迹（多模态！），去噪会把用户动作拉向<b>离它最近的那个 mode</b>——意图不需要被显式推断，它藏在「用户动作靠近哪个 mode」里。这正是上一页说的「score field 把球滚进就近盆地」。
+</div>
+
+<h2 id="s2"><span class="n">§ 2</span>交互演示：$\gamma$ 的 fidelity ↔ conformity 取舍</h2>
+
+<p>下面用一维双峰专家分布（±2 两种抓法）复现论文 Fig. 2 / Fig. 4 的机制。拖动 $a^h$（用户动作，可以故意选一个又偏又烂的）和 $\gamma$，采样看输出分布怎么在「贴着用户」和「贴着专家」之间移动：</p>
+
+<div class="figwrap">
+<div class="ctl">
+<label>用户动作 $a^h$ <input type="range" id="paA" min="-300" max="300" value="120"></label>
+<label>γ <input type="range" id="paG" min="0" max="100" value="30"></label>
+<button class="pri" id="paRun">采样 300 次</button>
+<span class="ro" id="paInfo"></span>
+</div>
+<canvas id="cvPA" height="300"></canvas>
+<div class="cap">蓝线 = 专家分布 $P_{\text{demo}}$；红色竖线 = 用户动作 $a^h$；橙色直方图 = 共享动作 $a^s$ 的分布（精确 DDPM 部分扩散模拟）。
+$\gamma\!\approx\!0.1$：输出紧贴 $a^h$（几乎不帮忙）；$\gamma\!\approx\!0.3$：输出被拉进<b>离 $a^h$ 近的那个 mode</b>——修正但保意图，这是论文实验里的最优区间；$\gamma\!\to\!1$：输出无视 $a^h$、按专家分布整体铺开（60/40），意图丢失。论文的结论曲线一模一样：成功率随 $\gamma$ 先升到临界点再回落。</div>
+</div>
+
+<h2 id="s3"><span class="n">§ 3</span>论文的实验与结果</h2>
+
+<h3>3.1 环境与 pilot</h3>
+<div class="tw"><table>
+<tr><th>环境</th><th>动作空间</th><th>任务 / 多目标设置</th></tr>
+<tr><td>2D Control（D4RL maze-2D，MuJoCo 点质量）</td><td>2 维力</td><td>到达左下 / 右下两个目标之一，目标只告诉 pilot</td></tr>
+<tr><td>Lunar Lander（OpenAI Gym）</td><td>2 维连续推力</td><td>降落在随机采样的着陆点</td></tr>
+<tr><td>Lunar Reacher（改版）</td><td>2 维连续推力</td><td>飞到空中随机目标区</td></tr>
+<tr><td>Block Pushing（xArm6，PyBullet）</td><td>末端速度（平面）</td><td>把物块推进两个目标区之一</td></tr>
+<tr><td>真机 UR5（附加实验）</td><td><b>3 维</b>末端速度（手柄双摇杆）</td><td>把圆盘套上两根柱子之一</td></tr>
+</table></div>
+
+<p>专家 demo 的来源值得划重点：<b>先用 SAC 训练 expert policy（Lunar 系 3M 步、Block Pushing 1M 步），再 rollout 收集带随机目标的轨迹当 $P_{\text{demo}}$</b>——没有人类演示。评估用两种 surrogate pilot：<b>Laggy</b>（以概率 $p$ 重复上一动作）和 <b>Noisy</b>（以概率 $p$ 输出均匀随机动作），外加 Zero / Random / Expert 对照。</p>
+
+<h3>3.2 结果量级（每格 10 episodes × 30 seeds）</h3>
+<div class="tw"><table>
+<tr><th>指标</th><th>无 copilot</th><th>有 copilot</th></tr>
+<tr><td>Lunar Lander 成功率（Noisy pilot，γ=0.4）</td><td>20.7%</td><td><b>68.0%</b></td></tr>
+<tr><td>Lunar Lander 成功率（Laggy pilot）</td><td>21.3%</td><td><b>75.0%</b></td></tr>
+<tr><td>Lunar Lander 坠毁率（Laggy pilot）</td><td>76.7%</td><td><b>9.7%</b></td></tr>
+<tr><td>Lunar Reacher 成功率（Laggy pilot）</td><td>30.7%</td><td><b>55.3%</b></td></tr>
+<tr><td>Block Pushing 正确目标率（Laggy，γ=0.2）</td><td>42.0%</td><td><b>74.3%</b></td></tr>
+<tr><td>真人实验（17 人）Lunar Lander 成功率</td><td>1.8%</td><td><b>32.4%</b>（p≈3×10⁻⁷）</td></tr>
+<tr><td>真机 UR5（14 人）成功率 / 步数</td><td>0.89 / 209 步</td><td><b>1.00 / 144 步</b></td></tr>
+</table></div>
+
+<div class="key">
+<b>γ 扫描的形状（Fig. 5/6）：</b>成功率随 γ 上升到一个临界值后回落——γ 太大时 copilot 无视用户、按训练分布均匀选目标，正确目标率跌向 50%。坠毁率基本随 γ 单调下降。<b>Expert pilot 配 copilot 不掉分</b>（LL 77.7→78.7）：帮不了但也不添乱。问卷上（helpful / consistent / responsive / collaborative / trustworthy 五项 Likert）copilot 全面高于直接遥操作。
+</div>
+
+<div class="key warn">
+<b>但注意它的实验有多「小」。</b>动作全部是 2–3 维、状态十几维、episode 几百步、目标二选一或平面上一个点。整套方法在这个尺度上闭环成立——它在高维灵巧手上是否成立，正是我们要回答的问题（§4）。
+</div>
+
+<h2 id="s4"><span class="n">§ 4</span>映射到我们的系统：同一配方，维度抬高一个量级</h2>
+
+<div class="tw"><table>
+<tr><th>论文的组件</th><th>论文的实现</th><th>我们的对应物</th></tr>
+<tr><td>pilot 动作 $a^h$</td><td>手柄 / surrogate（2–3 维）</td><td><b>EMG→emg2pose 解码的手指姿态 + Quest wrist pose</b>，retarget 成 L20 的 16 维关节命令 $u_h$（+6 维手腕）</td></tr>
+<tr><td>专家分布 $P_{\text{demo}}$</td><td>SAC expert rollout（他们也不用人类 demo！）</td><td><b>MJX/Warp 上 PPO 训练的 L20 expert，rollout 生成抓取/操作轨迹</b>——我们现在正处在这一步</td></tr>
+<tr><td>copilot 生成模型</td><td>状态条件 DDPM $p_\theta(a\mid s)$，单步动作</td><td>Diffusion Policy 式的 <b>action-chunk</b> 模型 $p_\theta(A\mid s)$（16 维 × H 步）或 Phase 1 的 residual policy</td></tr>
+<tr><td>仲裁旋钮</td><td>forward diffusion ratio $\gamma$（partial diffusion）</td><td>Phase 1：$u=\mathrm{clip}(u_h+\alpha\,\Delta u_a)$ 的 $\alpha$ schedule（0→0.3，张手立即归零）；模型路线：同款 $\gamma$</td></tr>
+<tr><td>意图保护</td><td>目标从 copilot observation 里删掉</td><td><b>手腕永远 100% 归用户</b>，assistance 只作用于手指；$\alpha$ 只依赖接触状态，不做目标推断</td></tr>
+<tr><td>评估</td><td>surrogate + 17 人 sim + 14 人真机</td><td>within-subject：4 任务 × 2 controller × 3 trials = 24 trials/人，NASA-TLX + agency 问卷</td></tr>
+</table></div>
+
+<div class="key good">
+<b>为什么我们「目前在 RL 阶段」是这条配方的正确一步。</b>论文的整个方法只需要一样输入：$P_{\text{demo}}$。他们用 SAC expert rollout 造出来——我们同样用 RL（Playground fork 里的 L20 env + PPO，4090 上 Warp 后端）造。区别在难度：他们的 expert 是「2 维推力降落」，我们的 expert 要在 16 自由度欠驱动手上完成抓取和使用工具。<b>expert 质量直接决定 copilot 的上限</b>——这就是为什么 reward 设计（锤钉的 legit-depth 记账、pregrasp 课程）值得反复打磨。
+</div>
+
+<div class="key">
+<b>维度账。</b>论文：动作 2–3 维，$P_{\text{demo}}$ 是低维分布，单步生成。我们：单步 $u\in\mathbb R^{16}$（手指）+ 6 维手腕由人独占；上 chunk 后 $A\in\mathbb R^{16\times H}$（H=16 时 256 维）。<b>这正是 DP 推导页 §6 的论点落地处</b>：低维时 MDN/单步 DDPM 都行，高维联合分布（指间协调 + 时间一致性）才是 diffusion 表示的主场——也是我们相对论文的增量主张。同时它带来论文没有的开放问题：partial diffusion 的 γ 界随维度 $d$ 变松（式 10 里有 $d$）、去噪延迟要过 100 Hz 控制环、chunk 级仲裁怎么与逐帧张手 override 共存。
+</div>
+
+<h2 id="s5"><span class="n">§ 5</span>我们的架构现状</h2>
+
+<p>整个实验平台分四个项目（层级规则由测试强制）：<code>emg/</code>（采集与解码）、<code>quest/</code>（头显 app）、<code>hand_control/</code>（遥操作与共享控制）、<code>training/</code>（RL 专家）。端到端数据流——虚线橙框是还没建的：</p>
+
+<div class="flow">
+<div class="frow">
+  <div class="node hl"><b>EMG 腕带（8ch, 2 kHz）</b><div class="d">WaveleTech 串口 · recorder daemon 采集 · raw.rrd 双时间戳</div></div>
+  <div class="node hl"><b>Quest 3 —— 只出 wrist pose</b><div class="d">改造版 hand-tracking-streamer · TCP latest-buffer · 60–90 Hz。最终形态不再输入手指手势</div></div>
+</div>
+<div class="fdown">↓ &nbsp;&nbsp;&nbsp;&nbsp; ↓</div>
+<div class="frow">
+  <div class="node todo"><b>emg2pose 解码器</b><div class="d">离线训练（emg/training 子应用，HDF5 兼容 emg2pose 基线）：EMG → 手指姿态，顶替 Quest 的手指追踪</div></div>
+  <div class="node"><b>标定 + 确定性 retarget → $u_h$</b><div class="d">hold-flat 桌高标定 · --shift-90 帧常量 · 16 关节 authoritative map · 纯函数，离线在线逐位一致</div></div>
+</div>
+<div class="fdown">↓</div>
+<div class="frow">
+  <div class="node todo"><b>copilot：residual policy / DP</b><div class="d">输入 sim 状态+接触+$u_h$，输出 16 维有界残差 $\Delta u_a$（或 chunk）。RL expert 数据 → 离线训练，实验期间冻结</div></div>
+  <div class="node todo"><b>仲裁 $u=\mathrm{clip}(u_h+\alpha\Delta u_a)$</b><div class="d">α: 0→0.3 随接触逼近；张手/丢追踪一个周期内归零。接线点已定位（teleop.py，安全层上游）</div></div>
+</div>
+<div class="fdown">↓</div>
+<div class="frow">
+  <div class="node hl"><b>MuJoCo L20 物理权威（500 Hz implicitfast）</b><div class="d">16 主动 DOF + 5 耦合关节 · mocap+soft-weld 手腕 · 安全层（range/rate/watchdog）· 任务判分 TaskScorer</div></div>
+</div>
+<div class="fdown">↓ &nbsp;&nbsp;&nbsp;&nbsp; ↓</div>
+<div class="frow">
+  <div class="node"><b>VR 渲染回 Quest</b><div class="d">Unity 只摆 MuJoCo 发来的 world poses，不重建 FK，烘焙 mesh 渲染</div></div>
+  <div class="node"><b>Recorder / replay / 指标</b><div class="d">全流 npz + meta hashes · --source replay 无头显复现 · derived 指标可重算</div></div>
+</div>
+</div>
+
+<div class="key">
+<b>与论文架构的一个刻意差异。</b>论文的 copilot 每步重采整个动作；我们 Phase 1 采用 <b>residual + α</b> 而不是直接 partial diffusion——因为手腕必须无条件归用户、且要保证「张手一个控制周期内解除辅助」这类硬性 fail-safe。partial diffusion 的 γ 路线是 Phase 1 之后的模型升级：把 residual 换成 DP chunk 模型后，γ 和 α 扮演同一个角色（都是 fidelity↔conformity 的旋钮），且 γ 有论文那条随 $k_{sw}$ 单调的偏离上界可引用。
+</div>
+
+<h2 id="s6"><span class="n">§ 6</span>进度：走到哪一步了</h2>
+
+<h3>6.1 共享控制主计划（plan of record，2026-08-17 采纳）</h3>
+<p>0/10 个 Go/No-Go gate 正式通过——但这句话会误导：gate 只认落盘证据，而<b>大量基建已经建成并每日在用</b>。逐项看：</p>
+<div class="tw"><table>
+<tr><th>Gate</th><th>状态</th><th>实情</th></tr>
+<tr><td>Pre-gate · L20 物理验收</td><td><span class="status-part">大半</span></td><td>10 项验收里约半数已是 pytest（static hold、joint step、replay 逐位一致、rate test）；缺 drop/tilt/timestep 测试与成文 report、MJX↔CPU 耦合一致性检查</td></tr>
+<tr><td>Stage 0 · 仓库审计</td><td><span class="status-part">大半</span></td><td>所有「找到 X」都有确定路径，缺一页成文 map</td></tr>
+<tr><td>Stage 1 · Direct 遥操作基线</td><td><span class="status-part">大半</span></td><td>整条链已建成、rig 上验证干净：位姿链非偏航残差中位 0.05°、palm-pair 9 mm/0.0°；hold-flat 标定、世界锚定修复完。缺 30 分钟 soak 与 latency 分布报告两个证据</td></tr>
+<tr><td>Stage 2 · 四任务 + trial 状态机</td><td><span class="status-part">部分</span></td><td>--task/TaskScorer/respawn 已有（single 任务 lift→hold→place→settle 全序列）；缺 Reach 任务、两个新物体、显式相位机、failure 五分类、seeds</td></tr>
+<tr><td>Stage 3 · Recorder/replay/导出</td><td><span class="status-part">大半</span></td><td>录制/回放/derived 在用；缺 α、Δu_a 两列与部分指标</td></tr>
+<tr><td>Stage 4 · 离线 residual expert</td><td><span class="status-part">进行中 ← 当前位置</span></td><td>训练基建全部就位（见 6.2）；residual grasp env 未建，先在标准 env 上打磨 expert 与 reward</td></tr>
+<tr><td>Stage 5 · 仲裁</td><td><span class="status-todo">未动</span></td><td>接线点已定位，未写一行代码</td></tr>
+<tr><td>Stage 6–8 · pilot/正式实验/分析</td><td><span class="status-todo">未动</span></td><td>—</td></tr>
+</table></div>
+
+<h3>6.2 RL 专家（当前主战场）</h3>
+<ul>
+<li><b>环境</b>：Playground fork 注册 <code>l20_hand</code>，已有 <b>reorient</b>（掌内重定向）、<b>pick_cube</b>、<b>hammer_nail</b> 三个 env。</li>
+<li><b>锤钉一弧已收口</b>：reward 迭代到 v4（瞬时门 → 锁存链 → 「打击必须来自锤子」的 legit-depth 记账 → 30% 锤在手课程），6/6 评估 episode 用锤子把钉打入，reward 7533。</li>
+<li><b>训练系统</b>：4090 为日常主力；Warp 后端跑通（warp 1.11），一轮训练从 36 分钟压到 7 分钟——reward 迭代周期因此才转得动。</li>
+<li><b>正在找长程任务</b>：shared control 的 demo 要覆盖「接近 → 预抓取 → 抓稳 → 使用/搬运」的完整多阶段行为，纯 reach/lift 太短。hammer_nail（抓工具→用工具）是现有最长的一条；teleop 侧已接入 dexjoco 的 <b>Hanoi</b> 场景（三盘两柱，天然长程多步）与关节夹持器（tongs）物体，是候选池；仍在扫描能在 MJX/Warp 尺度训得动、又够长的任务。</li>
+</ul>
+
+<h3>6.3 EMG 线（并行，spec 三阶段）</h3>
+<ul>
+<li><b>Phase 0 骨架</b> <span class="status-done">✅ 验收通过</span>：无硬件全流程，pytest 全绿，fake session 过 verify。</li>
+<li><b>Phase 1 真实采集</b> <span class="status-part">代码就位，验收未跑</span>：串口 supervisor、Quest 源、daemon+Web 三页、软件互相关同步（腕带 IMU × Quest 手腕）都在；差的是戴上腕带真录 5 分钟并让 verify 五族全过。</li>
+<li><b>emg2pose 解码器</b>：<code>emg/training</code> 子应用框架在（HDF5 导出兼容 emg2pose 基线），等 Phase 1 的真实数据。</li>
+<li>注意 Phase 1 共享控制计划<b>明确不含 EMG</b>——EMG 顶替 Quest 手指输入是共享控制验证之后的下一阶段,两条线并行推进互不阻塞。</li>
+</ul>
+
+<div class="key good">
+<b>一句话总结当前位置。</b>遥操作平台已建成并测量到干净（论文里那种「pilot→系统→物理→显示」的闭环我们有了，而且是 16+6 维的）；论文配方里唯一缺的原料是 $P_{\text{demo}}$——所以现在的全部火力在 RL expert 上：reward 打磨完锤钉，训练一轮 7 分钟，正在选长程任务扩 demo 覆盖面。expert 数据一到位，路线就是：residual policy（Stage 4）→ α 仲裁（Stage 5）→ 用户实验（Stage 6–7）→ 换 DP chunk + γ 的模型路线。
+</div>
+
+<h2 id="s7"><span class="n">§ 7</span>参考</h2>
+<ol style="font-size:.92rem">
+<li>Yoneda, Sun, Yang, Stadie, Walter. <i>To the Noise and Back: Diffusion for Shared Autonomy</i>. RSS 2023. <a href="https://arxiv.org/abs/2302.12244">arXiv:2302.12244</a>（<a href="https://diffusion-for-shared-autonomy.github.io">项目页</a>）</li>
+<li>本手册：<a href="diffusion-policy.html">Diffusion Policy 图解与完整推导</a>——本页 §1 的训练目标、§2 演示的数学机制都在那页推完。</li>
+<li>Reddy et al. <i>Shared Autonomy via Deep RL</i>. <a href="https://arxiv.org/abs/1802.01744">arXiv:1802.01744</a>；Schaff & Walter（residual safe-advising）——论文 §I 对照的两条 RL 路线。</li>
+<li>项目内文档（非公开）：PROJECT_SPEC（EMG 采集不变量与三阶段）、l20_shared_control_phase1（Phase 1 十个 gate 的 plan of record）、transformations-and-alignment（坐标链）。</li>
+</ol>
+
+<footer>Machine-Learning-Handbook · 本地草稿，未发布 · §2 演示按精确 DDPM 部分扩散模拟（cosine schedule，K=60）。</footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+function V(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+var C={};
+function loadCols(){ C={ink:V('--ink'),sub:V('--sub'),muted:V('--muted'),line:V('--line'),line2:V('--line2'),
+  blue:V('--blue'),orange:V('--orange'),red:V('--red'),green:V('--green')}; }
+loadCols();
+function R(){ return Math.random(); }
+function randn(){ var u=0,v=0; while(!u)u=R(); while(!v)v=R();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+var T=60,S=0.008;
+var f0=Math.pow(Math.cos(S/(1+S)*Math.PI/2),2);
+var abar=[1],alpha=[1],beta=[0];
+for(var k=1;k<=T;k++) abar.push(Math.pow(Math.cos(((k/T)+S)/(1+S)*Math.PI/2),2)/f0);
+for(k=1;k<=T;k++){ var a=abar[k]/abar[k-1]; a=Math.min(Math.max(a,1e-4),0.9999);
+  alpha.push(a); beta.push(1-a); }
+var MIX=[{w:.6,m:-2,s:.3},{w:.4,m:2,s:.3}];
+function pdf0(x){ var p=0;
+  for(var i=0;i<MIX.length;i++){ var c=MIX[i], v=c.s*c.s;
+    p+=c.w*Math.exp(-Math.pow(x-c.m,2)/(2*v))/Math.sqrt(2*Math.PI*v); }
+  return p; }
+function revStep(x,kk){
+  var rs=[],tot=0,i,c,v;
+  for(i=0;i<MIX.length;i++){ c=MIX[i]; v=abar[kk]*c.s*c.s+(1-abar[kk]);
+    rs[i]=c.w*Math.exp(-Math.pow(x-Math.sqrt(abar[kk])*c.m,2)/(2*v))/Math.sqrt(v); tot+=rs[i]; }
+  var j=0,u=R()*tot; if(u>rs[0]) j=1;
+  c=MIX[j];
+  var vp=abar[kk-1]*c.s*c.s+(1-abar[kk-1]);
+  var vk=alpha[kk]*vp+beta[kk];
+  var mean=Math.sqrt(abar[kk-1])*c.m+Math.sqrt(alpha[kk])*vp/vk*(x-Math.sqrt(abar[kk])*c.m);
+  var varr=Math.max(vp-alpha[kk]*vp*vp/vk,0);
+  return mean+Math.sqrt(varr)*randn();
+}
+function partial(ah,gamma){
+  var ksw=Math.max(0,Math.min(T,Math.round(gamma*T)));
+  if(ksw===0) return ah;
+  var x=Math.sqrt(abar[ksw])*ah+Math.sqrt(1-abar[ksw])*randn();
+  for(var kk=ksw;kk>=1;kk--) x=revStep(x,kk);
+  return x;
+}
+var cv=document.getElementById('cvPA'), cx=cv.getContext('2d'), W=0,H=0;
+var h0=+cv.getAttribute('height'); cv.style.height=h0+'px';
+function fit(){ var d=window.devicePixelRatio||1; W=cv.clientWidth; H=h0;
+  cv.width=W*d; cv.height=h0*d; cx.setTransform(d,0,0,d,0,0); }
+fit();
+var BINS=48, lo=-3.4, hi=3.4, cnt=new Array(BINS).fill(0), n=0;
+function ah(){ return +document.getElementById('paA').value/100; }
+function gm(){ return +document.getElementById('paG').value/100; }
+function run(){
+  cnt=new Array(BINS).fill(0); n=0;
+  var A=ah(), G=gm();
+  for(var i=0;i<300;i++){ var x=partial(A,G);
+    var b=Math.floor((x-lo)/(hi-lo)*BINS);
+    if(b>=0&&b<BINS)cnt[b]++; n++; }
+  render();
+}
+function render(){
+  cx.clearRect(0,0,W,H);
+  var padL=14, yB=H-28, hM=H-70;
+  cx.strokeStyle=C.line2; cx.beginPath(); cx.moveTo(padL,yB); cx.lineTo(W-10,yB); cx.stroke();
+  cx.fillStyle=C.muted; cx.font='11px ui-monospace,Menlo,monospace';
+  [-2,0,2].forEach(function(t){ var px=padL+(t-lo)/(hi-lo)*(W-padL-10);
+    cx.fillText((t>0?'+':'')+t,px-8,yB+14); });
+  var mx=1,b;
+  for(b=0;b<BINS;b++) if(cnt[b]>mx)mx=cnt[b];
+  if(n>0) mx=Math.max(mx,n*(hi-lo)/BINS*0.8);
+  var bw=(W-padL-10)/BINS;
+  cx.fillStyle=C.orange;
+  for(b=0;b<BINS;b++){ if(!cnt[b])continue;
+    var hh=cnt[b]/mx*hM;
+    cx.fillRect(padL+b*bw+1,yB-hh,bw-2,hh); }
+  cx.strokeStyle=C.blue; cx.lineWidth=2; cx.beginPath();
+  var scale=n>0?(n*(hi-lo)/BINS)/mx:hM*0.9;
+  for(var i=0;i<=140;i++){ var x=lo+(hi-lo)*i/140;
+    var py=n>0?yB-pdf0(x)*scale*hM:yB-pdf0(x)*1.1*hM;
+    var px=padL+(x-lo)/(hi-lo)*(W-padL-10);
+    if(i===0)cx.moveTo(px,py); else cx.lineTo(px,py); }
+  cx.stroke();
+  var axp=padL+(ah()-lo)/(hi-lo)*(W-padL-10);
+  cx.strokeStyle=C.red; cx.lineWidth=2; cx.setLineDash([5,4]);
+  cx.beginPath(); cx.moveTo(axp,yB); cx.lineTo(axp,18); cx.stroke(); cx.setLineDash([]);
+  cx.fillStyle=C.red; cx.font='600 12px system-ui';
+  cx.fillText('aʰ = '+ah().toFixed(2),Math.min(axp+6,W-88),26);
+  document.getElementById('paInfo').textContent=
+    'γ='+gm().toFixed(2)+'  k_sw='+Math.round(gm()*T)+'/'+T+(n?('  N='+n):'');
+}
+document.getElementById('paRun').onclick=run;
+document.getElementById('paA').oninput=function(){ n=0; cnt=new Array(BINS).fill(0); render(); };
+document.getElementById('paG').oninput=function(){ render(); };
+window.addEventListener('resize',function(){ fit(); render(); });
+if(window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){ loadCols(); render(); });
+render(); run();
+})();
+</script>
+</body>
+</html>

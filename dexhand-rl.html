@@ -152,6 +152,33 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 </table>
 <p class="small">更远的方向:teleop 录制真人抓锤姿态替换指笼 pregrasp(本项目独有资产);人类包络校验(基座速度/冲量分布须"人能做");长程组合任务"开柜→放入"(PandaOpenCabinet + pick 元素,复用锁存+记账骨架)。</p>
 
+<h3>v5 · 冲击窗口 + 人类包络 + 值得抡的锤子 <span class="tag warn">2026-08-21,训练中</span></h3>
+<div class="callout bad"><b>两条物理路线的证伪(动手前先测,都留了数据)</b>:①<b>力阈值不可行</b>——MuJoCo 的 <code>frictionloss</code> 是交给约束求解器的软约束,本配置下输出饱和在 ~44 N,设 90 还是 900 都拦不住 50 N 慢压(最小模型连行程限位都被穿透);②<b>阻尼当力阈值也不可行且方向相反</b>——粘性力 ∝ 速度,damping 越大惩罚快冲击越狠、慢推照样推平(标定实测:damping 4000 时慢推 10 s 仍到 4.9 cm,单击反而只剩 0.9 mm)。<b>damping 的正确用法是"每击进给限制器"</b>:它管不住慢推(交给 reward),但让每一击的咬入有物理上限——多次锤击从物理里自然涌现。</div>
+<table>
+<tr><th>改动</th><th>内容</th><th>标定依据</th></tr>
+<tr><td>锤头加重</td><td>头 ×1.15 → 锤总重 <b>0.59 kg</b>(真实爪锤量级)。手指执行器只有 ±1 N:捏握拿不住重锤,只有指笼式 power grasp 抱得住——坏抓姿物理上直接脱手</td><td>扫描 head×{1.0,1.15,1.3,1.6} × damping</td></tr>
+<tr><td>钉阻尼 10→400</td><td>0.25 m 落锤单击咬入 <b>1.17 cm</b> → ~4 击打平;落锤自由反弹连击 4 s 内确实自然打平(检查实测 4.65 cm)</td><td>同上,唯一同时满足"单击 0.8–1.5 cm"的组合之一</td></tr>
+<tr><td><b>冲击窗口</b></td><td>一击只在接触<b>开始瞬间</b>锤面下向速度 ∈ [0.5, 2.5] m/s 时开启:下限拒慢推,<b>上限就是人类速度包络</b>(基座限速 0.5 m/s + 腕杠杆)</td><td>reward 侧;`hammer_face_linvel` 传感器</td></tr>
+<tr><td>超速惩罚</td><td>任意时刻锤速超包络 → 持续负分(软约束,挥舞也不许超人)</td><td>—</td></tr>
+<tr><td>空中脱手终结</td><td>举起后锤离掌 &gt;20 cm(飞脱)→ episode 终结,与掉地并列——重锤 + 弱指力下,坏抓姿的自然下场</td><td>—</td></tr>
+<tr><td>blow_bonus 防刷</td><td>一击必须实际进给 &gt;1 mm 才计数发奖——钉子打平后空锤蹭不到分</td><td>堵"离开奖励"被刷的口子</td></tr>
+</table>
+<p class="small">五臂消融注册(超参逐项相同、TensorBoard 指标同名):<code>L20HammerNail</code>(v5 默认)、<code>Staged</code>(v4 对照)、<code>Impact</code>/<code>Blows</code>/<code>Pose</code>。</p>
+<p><b>V5 首训结果(105.8M 步 / ~9 分钟,warp 1.16)</b>:前四段全部达成——66–72% episode 过举升锁存、hold 130+/episode、掉锤率低、<b>超速全程为零(人类包络生效)</b>;但 hover≈0.7、strike/success 全零:锤子从未被运到钉上方落击。</p>
+<div class="callout bad"><b>解剖:一个被指标掩盖的物理不可行</b>。0.59 kg 锤的钢头挂在握点 12.5 cm 外,重力矩 ~0.5 N·m;±1 N 的手指提供不了悬臂端所需的 ~18 N 级切向握力——<b>这只手物理上握不住水平悬空的重锤</b>。训练学到的"举稳"实为拐杖姿势:柄端翘高满足 <code>lifted</code> 锁存(它只看锤体原点高度),锤头拄地。课程姿态实验独立证实:指笼悬空后 600 步内被下垂的锤头拽脱手。教训:<b>加难物理之前,先做"任务在该形态下是否可行"的静力学验算</b>;锁存判据要盯真正的目标量(锤头高度,不是锤体原点)。</div>
+<p class="small"><b>V5.1 候选路线</b>:① 竖持课程——柄竖直、头朝上时重力矩归零,弱指力也能持,swing = 竖持移动到钉上方再翻腕下击(纯课程/判据改动);② hammer 场景 fork 一份专用手 include,手指 forcerange ±1→±3 N(pick 的手不动,基线 A 对照不受污染);③ 锤头回轻(0.41 kg)+ 握点前移(choke up)。</p>
+
+<h3>V6 方向(已记录,含抓姿 reward 专项调研结论)</h3>
+<table>
+<tr><th>方向</th><th>做法</th><th>依据(代码级核对)</th></tr>
+<tr><td><b>power-grasp 姿态先验</b>(抓姿性价比第 1)</td><td>手指关节对一个真实 power grasp 参考姿态的二次型惩罚,权重 ≈ 主任务项 1/10,恒开;参考姿态用 teleop 录一次真人握锤</td><td>playground reorient <code>hand_pose=-0.5</code> vs orientation 5.0;Hora <code>poseDiffPenaltyScale=-0.3</code>(先验点 = 预计算稳定抓姿缓存)</td></tr>
+<tr><td><b>指腹接触门控</b>(第 2)</td><td>掌心+各指中节布 MuJoCo touch sensor(MJX 图内原生支持),grasp 锁存加条件"拇指 pad 接触 ∧ ≥2 pad 接触"——指尖蹭永远锁不上</td><td>DexPoint 的 ≥2 接触门(`relocate_env.py`);Gymnasium-Robotics 92-touch-sensor 布点先例</td></tr>
+<tr><td>物理淘汰增强</td><td>持锤阶段对锤加随机 wrench 扰动 + 质量/摩擦域随机化,坏抓姿被脱手终结淘汰(零 reward 代码)</td><td>playground reorient `pert_config`;DexGraspNet 6 向重力筛选;RobustDexGrasp 扰动课程</td></tr>
+<tr><td>多击节奏塑形</td><td>击间隔/退避高度的精细引导——先看 v5 物理涌现够不够再决定</td><td>本页 v5 设计注</td></tr>
+<tr><td>teleop 演示接入</td><td>真人 pregrasp 替换指笼;进一步可录挥锤轨迹做 TCDM 式 object-mimic reward</td><td>TCDM/PGDM(pregrasp 消融:去掉则大面积失败)</td></tr>
+<tr><td class="small">不建议先试</td><td class="small">force-closure/σ_min 进 RL 回路:唯一在环先例只有 12 并行环境且依赖力传感器 readback,4096 并行下性价比垫底</td><td class="small">Chen et al. RSS 2026 workshop;DexGraspNet 的 FC 只用于离线合成</td></tr>
+</table>
+
 <h2>训练系统优化编年史:从"编译不出来"到 7 分钟一轮</h2>
 
 <h3>阶段 0 · 编译危机(2026-08-20 白天)</h3>

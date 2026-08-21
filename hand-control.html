@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hand Control 技术路线手册</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --blue:#2a78d6; --green:#2c7a4b; --red:#b4423a; --amber:#9a6b15;
+  --code:#f1f0ea;
+}
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --blue:#3987e5; --green:#4caf7d; --red:#d9695f; --amber:#c99b3f;
+    --code:#232322; }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:860px; margin:0 auto; padding:56px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.8rem; margin:.3em 0 .3em; line-height:1.35; }
+h2 { font-size:1.35rem; margin:2.4em 0 .5em; padding-top:.8em; border-top:1px solid var(--line); }
+h3 { font-size:1.08rem; margin:1.8em 0 .4em; }
+.lede { color:var(--sub); }
+p { margin:.6em 0; }
+code { background:var(--code); border-radius:5px; padding:1px 6px; font-size:.88em;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:10px;
+  padding:14px 16px; overflow-x:auto; font-size:.83rem; line-height:1.6;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:14px 0; font-size:.92rem; display:block; overflow-x:auto; }
+th, td { border:1px solid var(--line); padding:7px 11px; text-align:left; vertical-align:top; }
+th { background:var(--code); white-space:nowrap; }
+.tag { display:inline-block; font-size:.76rem; border-radius:99px; padding:1px 10px; margin-right:6px;
+  border:1px solid var(--line); color:var(--sub); vertical-align:2px; }
+.tag.ok { color:var(--green); border-color:var(--green); }
+.tag.bad { color:var(--red); border-color:var(--red); }
+.tag.warn { color:var(--amber); border-color:var(--amber); }
+.callout { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--blue);
+  border-radius:10px; padding:12px 16px; margin:16px 0; font-size:.94rem; }
+.callout.bad { border-left-color:var(--red); }
+.callout.good { border-left-color:var(--green); }
+.callout.warn { border-left-color:var(--amber); }
+.small { font-size:.87rem; color:var(--sub); }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+a { color:var(--blue); text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="kicker">YUE YANG · NOTES · 工程手册 · 2026-08-21</div>
+<h1>Hand Control 技术路线手册<br><span class="small" style="font-weight:400">EMG + Quest 手部追踪 + L20 灵巧手遥操作 · 版本化路线记录（V1–V4）· 踩坑史 · retargeting 方案对比</span></h1>
+
+<p class="lede">这份手册记录 human_machine_interaction 仓库里 hand control 平台的技术路线：V1 是已建成并通过 rig 验证的"Mac 物理权威 + Quest 薄渲染"自研链路；V2（Quest 本地跑官方 MuJoCo Unity 插件）与 V3（4090 Linux 物理+渲染、ALVR 串流）正在调研推进；V4（Mac 端串流）是远期探索且调研结论基本判死。开头是当前有问题的模块总表，中间是 V1 全景与踩坑史——每一个坑都写清"现象 → 根因 → 解法 → 钉住它的测试"。</p>
+
+<h2 id="issues">0 · 当前有问题的模块（总表）</h2>
+<p>先看这张表再看别的。状态含义：<span class="tag bad">未修</span>坑还在；<span class="tag warn">刻意</span>是权衡后接受的代价，有逃生口；<span class="tag">平台</span>受 OS/硬件限制无法修。</p>
+<table>
+<tr><th>#</th><th>模块</th><th>位置</th><th>问题</th><th>影响</th><th>状态</th></tr>
+<tr><td>1</td><td><b>retarget 小拇指侧摆</b></td><td><code>level_1_retargeting/l20.py::l20_tasks</code></td><td><code>pinky_mcp_roll</code> 限位仅 ±13°（人 ±21°），且 <code>little_scale=1.35</code> 把横向目标同比放大 → 长期钉在限位；小指尖横向由 <code>thumb→pinky</code>(w=1.5) 而非 <code>palm→pinky</code>(w=0.8) 主导</td><td>侧摆活动范围在头显里基本不可见</td><td><span class="tag bad">未修</span>机制分析见 §3.4，待实测确认</td></tr>
+<tr><td>2</td><td>pinch 任务全线失败</td><td><code>l20_scene.py</code> pinch task</td><td>bead(⌀16)、coin(⌀22×3)、peg(⌀10×40) 上 vector 与 angle 的 <code>--autograsp</code> baseline 全部失败</td><td>小物体精密抓取未跑通</td><td><span class="tag bad">未修</span></td></tr>
+<tr><td>3</td><td>vector 关节撞限位</td><td><code>--compare</code> 输出</td><td>平均 3.7 个关节在限位（angle 是 0.0），jerk 363 vs 251 rad/s³</td><td>与 #1 同源——"人的位姿机构够不到"的数据表现</td><td><span class="tag warn">已测量、已接受</span></td></tr>
+<tr><td>4</td><td><code>--attach wrist</code> 指尖误差</td><td><code>palm_align.py</code> / <code>teleop.py</code></td><td>L20 base 杠杆 148 mm vs 人腕 93 mm：30° 腕转 ≈ 26 mm 指尖误差</td><td>精密抓取可达性下降</td><td><span class="tag warn">刻意</span>具身感换精度；<code>--attach palm</code> 是逃生口</td></tr>
+<tr><td>5</td><td>换场景需重建 APK</td><td><code>export_l20_meshes.py</code></td><td>头显画烘焙 mesh，<code>--scene</code> 换了必须重导出 + 重建 APK（~12 min），否则 arena 在头显里不存在；当前 APK 烘的是 <code>robosuite_table</code></td><td>烘焙网格过期 → 看到的 ≠ 物理算的</td><td><span class="tag bad">有流程无自动化</span>V2/V3 的动机之一</td></tr>
+<tr><td>6</td><td>arena 桌高烘死</td><td>同上 <code>--table-height</code></td><td>arena 静态几何在导出时的单一桌高上烘死，运行时 <code>table_top_m</code> re-seat 只能移动 default 场景的桌子</td><td>hold-flat 量出的桌高与 arena 画的桌高不一致</td><td><span class="tag bad">未修</span></td></tr>
+<tr><td>7</td><td>头显地面估计</td><td>Quest OS</td><td>floor estimate 实测偏低 ~0.4 m（头 pose 2.13 m）</td><td>绝对高度不可信</td><td><span class="tag">平台</span>解法：重跑 Quest floor/boundary 标定</td></tr>
+<tr><td>8</td><td>Meta palm-pinch 系统手势</td><td>Quest OS</td><td>OS 保留手势（VRC.Quest.Input.8），app 无法禁用</td><td>掌心朝头显时误弹菜单</td><td><span class="tag">平台</span>只在朝向头显时 arm</td></tr>
+<tr><td>9</td><td>Heartbeat 未根治</td><td><code>HandLandmarkStreamer.cs</code></td><td>app 侧 producer 仍静默死亡不自报；PC 靠 25 µm 冻结检测 + <code>--stall-after</code> 事后兜底</td><td>卡死的流只能检测不能预防</td><td><span class="tag warn">部分覆盖</span><code>plan/plans/heartbeat.md</code></td></tr>
+<tr><td>10</td><td>Leash 优雅退让</td><td><code>tracking.clamp_to_reach</code></td><td>wrist clamp 已默认开，但命令被卡住后的恢复行为未定义</td><td>—</td><td><span class="tag warn">measuring</span><code>plan/plans/leash.md</code></td></tr>
+<tr><td>11</td><td>左手镜像近似</td><td><code>l20.py::human_task_vectors</code></td><td>asset 只有右手，左手按镜像 retarget，拇指上是可见的近似</td><td>左手 session 拇指不准</td><td><span class="tag warn">刻意</span></td></tr>
+<tr><td>12</td><td>Shared control 未开工</td><td><code>teleop.py</code></td><td>Residual policy 与 α-arbitration 一行代码都没写（挂点在 <code>--compare</code> 的 A/B 处）</td><td>Phase 1 核心研究问题</td><td><span class="tag bad">全部 gate 未过</span><code>l20_shared_control_phase1.md</code></td></tr>
+<tr><td>13</td><td>头显内看不到 <code>--head-camera</code></td><td>协议层</td><td>host→headset 无视频通道（协议 §2 是单向）</td><td>—</td><td><span class="tag bad">未建</span></td></tr>
+</table>
+
+<h2 id="roadmap">1 · 总路线图</h2>
+<p>四个版本编号的是<b>物理与渲染住在哪</b>这个顶层决定。所有版本共享同一条设计公理：<b>MuJoCo 是唯一物理权威，头显里看到的必须就是任务被计分的那个世界</b>。</p>
+<table>
+<tr><th>版本</th><th>物理在哪</th><th>渲染在哪</th><th>连接</th><th>状态</th></tr>
+<tr><td><b>V1</b> 自研薄渲染</td><td>Mac（mjpython，500 Hz implicitfast）</td><td>Quest 本地（Unity 摆 Transform）</td><td>TCP over adb reverse USB（8000 上行 / 8002 下行）</td><td><span class="tag ok">已实现</span>rig 验证通过</td></tr>
+<tr><td><b>V2</b> Quest 本地物理</td><td>Quest（官方 MuJoCo Unity 插件，NDK 编译 arm64）</td><td>Quest 本地</td><td>Mac 经 8000/8003 做控制器与记录器</td><td><span class="tag warn">进行中</span>第一步：1 天 benchmark 定生死</td></tr>
+<tr><td><b>V3</b> 服务器物理+渲染</td><td>4090 Linux（建议 B′：Python 栈整体搬过去）</td><td>4090 渲染，ALVR 串流回 Quest</td><td>ALVR（支持 USB 有线），手部追踪经 OpenXR 转发</td><td><span class="tag warn">进行中</span>第一步：2 天 spike 定生死</td></tr>
+<tr><td><b>V4</b> Mac 串流</td><td>Mac</td><td>Mac 渲染 → 串流 Quest</td><td>无现成 runtime</td><td><span class="tag bad">调研判死</span>仅留"非沉浸监视 quad"火种</td></tr>
+</table>
+<div class="callout"><b>决策计划</b>：V2 的 benchmark（预编译 <code>libmujoco.so</code> 空转 <code>mj_step</code> 计时，1 天）与 V3 的 spike（Linux SteamVR + Unity 出双目画面 + <code>XR_EXT_hand_tracking</code> 拿到 26 关节，2 天）<b>并行做，合计 3 天出决断</b>，之后全力押注其一。V4 停止投入。</div>
+
+<h2 id="v1">2 · V1（已实现）：Mac 物理权威 + Quest 薄渲染</h2>
+<p><span class="tag ok">rig 验证通过</span><span class="tag">session 20260816_084142：cmd_vs_chain_non_yaw 中位 0.05° · palm-pair 9 mm 0.0°</span></p>
+<p>标准命令一行：<code>mjpython hand_control/main.py --operator op01</code>。quest 源的默认值即完整流程：app 自动拉起 → hold-flat 桌高标定 → 场景编译 → 自动 engage → <code>--orientation absolute</code> 1:1 映射 → <code>--attach wrist</code> 具身契约 → 全程 session 记录。</p>
+
+<h3>2.1 架构一图流</h3>
+<pre>
+┌────────────── Quest 3（只做三件事：追踪、摆 Transform、显示）──────────────┐
+│ HandLandmarkStreamer  ~70 Hz 21 landmark（Unity-left）──┐                  │
+│ SimStateReceiver  ← 网络线程只留一个 line buffer 覆盖    │                  │
+│   （drain-to-latest：排队在结构上不可能）                │                  │
+│ SimStateApplier   ← 主线程解析，BodyVisual_* 扁平挂      │                  │
+│   SimulationRoot（世界系位姿，无 FK 无层级）             │                  │
+│ SimulationRootController ← AlignPalms 一次 + root.y=0   │                  │
+└──────────────────────────┬──────────────────────────────┴──────────────────┘
+                    USB 线（~70 Hz 稳定性的来源）
+        adb reverse tcp:8000 ← 上行手部追踪    tcp:8002 ← 下行世界位姿
+┌──────────────────────────┴───────────────── Mac（mjpython）────────────────┐
+│ QuestSource：Unity-left→right-handed，25µm 冻结检测→confidence=0           │
+│ tracking.py：→FLU，engage 零点差分，latched heading yaw                    │
+│ Engagement 状态机 → attach 契约 → wrist clamp（只缩短，不侧移）            │
+│ level_1_retargeting/l20.py：vector 求解 → 16 关节目标 → safety clamp       │
+│ MuJoCo ★唯一物理权威★ 500 Hz implicitfast，mocap weld → hand_base_link     │
+│ vr_link.StatePublisher ≤90 Hz：FLU→Unity-left（★转换在 Python 侧★），      │
+│   非阻塞（buffer 满=丢包计数），整包或不发                                 │
+│ SessionRecorder → teleop.npz / meta.json / headset.log / pose.jsonl        │
+└────────────────────────────────────────────────────────────────────────────┘
+</pre>
+<p class="small">两条铁律撑起整个链路：<b>坐标转换全部在 Python 侧</b>（basis 错误在 Python 是毫秒级单测，在 C# 是 12 分钟 APK 重建 + 重新戴头显）；<b>Unity 永不跑 dynamics/IK/FK</b>（两份真相必然分叉，操作者看到的就不再是计分的世界）。</p>
+
+<h3>2.2 已实现清单</h3>
+<table>
+<tr><th>能力</th><th>要点</th><th>关键文件</th></tr>
+<tr><td>三数据源一接口</td><td><code>quest</code>（TCP:8000）/ <code>synthetic</code>（无网络 bench，测试用）/ <code>replay</code>（离线逐位重现，I5 路径）</td><td><code>l20_sources.py</code></td></tr>
+<tr><td>hold-flat 桌高标定</td><td>平伸静止手 1.2 s + 测量 0.8 s → 桌面编译在手下 20 cm → 自动 engage。四道门：tracked / extension≥0.93 / 共面≤13 mm RMS / 掌面≤35°，提示点名失败的门；grace 0.35 s 吞 tracker glitch</td><td><code>level_2_calibration/hold_flat.py</code></td></tr>
+<tr><td>engage 三模式</td><td><code>flat</code>（默认，无按键）/ <code>space</code>（键盘）/ <code>auto</code>（synthetic/replay）。首次 engage：latch heading yaw + 手姿归零 + 机器人抬到操作者手高</td><td><code>teleop.py::Engagement</code></td></tr>
+<tr><td>VR 下行链路</td><td>90 Hz（必须高于 70 Hz 源与 72 Hz 显示，否则拍频 judder）、seq 计包、schema v2 不匹配即拒绝、anchor 门控 <code>command_reached</code>+手静止</td><td><code>vr_link.py</code></td></tr>
+<tr><td>场景系统</td><td>5 个 <code>--scene</code>：default / robosuite_table / robosuite_pegs / dexjoco_table / dexjoco_hanoi；<code>MjSpec.attach</code> + fixup，桌高随 session 重建、地板钉 z=0；dexjoco 场景把自己的物体（钳子/汉诺塔盘）借给 single 任务；session <code>&lt;option&gt;</code> 永远 canonical</td><td><code>arena_scenes.py</code></td></tr>
+<tr><td>任务与计分</td><td><code>single</code>（54 mm 立方：抓→抬 100 mm→持 2 s→放区）/ bare / blocks(BBT) / grasp / pinch；<code>respawn_fallen</code> 只在"出桌面足迹且落地"时触发；<code>held_at_end</code> 防"抓一下就算成功"</td><td><code>l20_scene.py</code></td></tr>
+<tr><td>attach 双契约</td><td><code>wrist</code>（具身：手从手腕长出来；代价 26 mm@30°）vs <code>palm</code>（精度：指尖落在指尖上；代价装配座过腕 55 mm）。切换不需重建 APK</td><td><code>transformations-and-alignment.md</code> §5</td></tr>
+<tr><td>markers 判读体系</td><td>白（操作者腕）+ 黄（L20 base）+ 品红/青（对齐契约的两个掌心）。品红套进青 = 契约成立；白黄本就应差 148 vs 93 mm。存在意义：它们是"流"与"眼睛"之间唯一的探针</td><td><code>WristPointMarkers.cs</code></td></tr>
+<tr><td>session 记录</td><td><code>teleop.npz</code> 三组同索引列：<code>operator</code>（人做了什么）/ <code>command</code>（变成了什么）/ <code>sim_*</code>（世界返回了什么）——只训 command 会把 safety 层的习惯学成人的习惯。附 <code>headset.log</code> 自动保存、<code>pose.jsonl</code> 全链分析</td><td><code>l20_dataset.py</code></td></tr>
+<tr><td>测试体系</td><td>分层规则 ast 强制（<code>test_layering</code>）、场景可比性契约（<code>test_arena_scenes</code>）、39 个 retarget 测试、16 个 hold-flat 测试、basis 互逆/手性测试；全量 ~33 s 并行</td><td><code>tests/</code> 各处</td></tr>
+</table>
+<p class="small">已退役：clutch 手势（2026-08-16）。数据判死刑：session 20260816_191302 的 14/14 次 clutch 全部发生在抓取中、累计冻结 14.7 s——absolute 1:1 映射下没有东西需要 re-center，而任何抓握都会闭合 thumb–little 距离。机制保留为 <code>Engagement(clutch_enabled=True)</code> 能力，无 CLI flag。</p>
+
+<h3>2.3 Retargeting：一个求解器、两条路线、六个实现</h3>
+<p>目录 <code>hand_control/services/level_1_retargeting/</code>。出货路径是 <b>vector</b>（<code>--retarget vector</code> 默认），<b>angle</b> 是诚实的对照组。</p>
+<table>
+<tr><th>实现</th><th>思路</th><th>状态</th></tr>
+<tr><td><code>L20VectorRetargeter</code></td><td>vector 求解器 + L20 配置（palm 原点、掌宽 scale、中点 seed）</td><td><span class="tag ok">出货路径</span></td></tr>
+<tr><td><code>L20AngleRetargeter</code></td><td>landmark 向量数学直出 16 角，无优化无 MuJoCo，~20–90 µs</td><td><span class="tag ok">对照组</span></td></tr>
+<tr><td><code>MujocoVectorRetargeter</code></td><td>通用求解器（HTS SDK 移植，Gauss–Newton + LM 阻尼 + posture 项）</td><td><span class="tag ok">底座</span></td></tr>
+<tr><td><code>OrcaVectorRetargeter</code></td><td>同一求解器指向 ORCA v1（17 关节无耦合，wrist 归手臂）</td><td><span class="tag ok">已实现</span></td></tr>
+<tr><td><code>IdentityRetargeter</code></td><td>直读人手关节角，I5"逐位相同"测试的唯一参照物</td><td><span class="tag">夹具</span></td></tr>
+<tr><td><code>DexRetargeter</code></td><td>dex-retargeting 包装</td><td><span class="tag bad">stub</span>调用即 raise；依赖决策仍开放</td></tr>
+</table>
+
+<p><b>vector 的核心思想</b>：匹配"两点之间的向量"而非任一点的绝对位置——<code>robot(b−a) ≈ scale·human(b−a)</code>。绝对匹配要求两只手共享原点和尺寸；向量匹配只要求共享<b>形状</b>，而形状正是遥操作真正想传递的东西。相对上游的四处刻意偏离（每一处都对应一类静默错误）：耦合矩阵 <code>J·C</code>（L20 有 5 个 equality 耦合关节，切列会让求解器"收敛到错的位姿"）；无状态 <code>step()</code>（热启动挂 self 违反 I5）；<code>tol=0</code> 永不早停（求解时间不许依赖数据）；在 palm site 坐标系里匹配（朝向无关，上游只有 home 朝向恰好对时才成立）。</p>
+
+<p><b>关键实测对比</b>（30 s 同一脚本刺激，<code>--compare</code>）：</p>
+<table>
+<tr><th>指标</th><th>vector</th><th>angle</th></tr>
+<tr><td>retarget residual 均值</td><td><b>12.7 mm</b></td><td>56.0 mm</td></tr>
+<tr><td>pinch error 均值</td><td><b>11.5 mm</b></td><td>74.1 mm</td></tr>
+<tr><td>solve time p95</td><td>1.16 ms</td><td><b>1.04 ms</b></td></tr>
+<tr><td>joint jerk</td><td>363 rad/s³</td><td><b>251 rad/s³</b></td></tr>
+<tr><td>在限位的关节均值</td><td>3.7</td><td><b>0.0</b></td></tr>
+</table>
+<p><b>优缺点一句话</b>：vector 准（pinch 3.3 mm vs angle 22 mm）但硬（撞限位、jerk 高、每帧 ~1 ms 求解）；angle 快而柔顺、永不撞限位，但<b>拇指是死穴</b>——L20 拇指是 3-DoF CMC、轴经两个非轴对齐四元数串联，任何逐轴启发式都恢复不了对掌（对掌构型 (0.88, 0.66, 0.31, 0.45) 不可能被独立映射碰巧命中），tripod 误差 84 mm。所以 angle 永远是 baseline/control condition，不是出货路径。ORCA 侧：同求解器 overall 14.2 mm，需要一个 L20 不需要的旋钮 <code>auto_scale_correction=0.72</code>（否则拇指被要求超出 62° 外展范围）。</p>
+
+<h3 id="pinky">2.4 ★ 小拇指侧摆问题（当前最优先的 retarget 缺陷）</h3>
+<div class="callout warn"><b>注意</b>：这个问题在仓库文档里没有既有记载（文档记载的小指问题是 curl，见 §3.4）。以下机制分析是从代码推导的，四个环节各自贡献多少<b>待实测确认</b>。</div>
+<p>现象：操作者小指左右侧摆（abduction），头显里的机器人小指基本不动。四个叠加环节：</p>
+<ol>
+<li><b>机构先饱和（天花板，对所有 retargeter 成立）</b>：人手 splay ±21°，L20 <code>pinky_mcp_roll</code> 限位 ±0.23 rad = ±13°——"机器人先于操作者饱和，这是机构属性不是标定错误"（<code>l20.py</code> 原话）。</li>
+<li><b><code>little_scale=1.35</code> 把天花板又推高 35%</b>：它乘的是<b>整条向量</b>，包括横向分量。人小指全外展横向 ≈26 mm，×1.35×全局 scale ≈ 要求 32 mm；机器人 ±13° 最多给 ±23 mm——<b>操作者还没摆到自己的极限，<code>pinky_mcp_roll</code> 已经压死在限位上</b>，之后输出恒定。这正是 vector "平均 3.7 个关节在限位"的主要来源。</li>
+<li><b>权重倒挂</b>：小指尖位置由 <code>thumb→pinky</code>（w=1.5）主导而非 <code>palm→pinky</code>（w=0.8）——小指的横向落点主要在回答"离拇指多远"，操作者相对掌面的侧摆意图是目标函数里权重更低的那项。</li>
+<li><b>小增益方向被正则压制</b>：<code>mcp_roll</code> 指尖增益仅 ~0.099 m/rad（该指最小），在 LM 阻尼 + posture 项下拿到最大的相对阻尼份额，加上 <code>max_iters=8</code> + 热启动，每帧只挪一点。</li>
+</ol>
+<p class="small"><b>验证判据</b>：跑一段只做小指开合的 session，看 <code>q[pinky_mcp_roll]</code> 时间序列与 <code>n_at_limit</code>——长时间钉在 ±0.23 则环节 1+2 确认；中段来回但幅度远小于 ±0.23 则环节 4 主导。<b>归一化不是元凶</b>（掌宽 scale 姿态无关，有测试钉住）；真正的放大器是 little_scale 作用于整条向量。可能的修法方向：little_scale 只作用于纵向分量（沿指方向分解后再缩放）、把 palm→pinky 权重抬回主导、或给 roll 单独的增益补偿——三者都要先过 pinch 回归表再上 rig。</p>
+
+<h2 id="pitfalls">3 · 踩坑史（现象 → 根因 → 解法）</h2>
+<p>每一条都值一次 session。前四条是大案，后面的收进速查表。</p>
+
+<h3>3.1 ~90° 扭转（最贵的一次）</h3>
+<p><span class="tag bad">现象</span>absolute 模式下虚拟手跟着走但整体扭 ~90°，且持续整场（<code>_alignedThisRun</code> 意味着永远）。</p>
+<p><b>排查</b>：所有嫌疑逐一测清白——设备契约 <code>q_if_flat</code> 8.3°、tracker→command 0.15°、anchor replay 0.2°、烘焙 mesh 与新导出差 &lt;3°。离线重放证明命令链精确，但被命令的掌<b>在 MuJoCo 里就偏了 94°</b>——扭转是真的，不在画面里。</p>
+<p><b>根因</b>：连续 logcat 抓到现行——世界放置 anchor 在机器人<b>还在 engage snap 途中 70°</b> 时就发货了。<code>weld_settled</code> 比较的是被 wrist clamp 过的 mocap target，而 clamp 每周期只把 target 发到距 base 一小步、weld 同周期内闭合这一步，所以 target-vs-achieved 全程读 ~0，"settled"在 snap 中途就为真，头显把世界锁在一个扭着的机器人上。</p>
+<p><b>解法</b>：anchor 改门控在 <code>command_reached</code>（achieved palm 对<b>未 clamp 的</b>命令）+ 操作者手静止（25°/s）；头显重试对齐直到 non-yaw 残差 ≤3°。钉住它的测试：<code>test_command_reached_sees_through_the_wrist_clamp</code>。验证：palm-pair 9 mm 0.0°、<code>wrist→base</code> 172 mm 恰为设计偏置。</p>
+<div class="callout"><b>教训</b>："settled" 的判据必须看穿所有会替它说好话的中间层。clamp 的存在意义就是让 target 永远离 achieved 很近——拿它做收敛判据是循环论证。</div>
+
+<h3>3.2 hold-flat 误触发：无人持有的完美的手</h3>
+<p><span class="tag bad">现象</span>桌子建在离谱的高度（掌心读数 1.82 m）。</p>
+<p><b>根因</b>：HTS 在手出视野/头显被摘下时<b>重发最后一批好 landmark</b>——伸直、共面、完全静止，"理想的平直静止手，由无人持有"。另外竖直的手刀在几何上也"平"。</p>
+<p><b>解法</b>：四道门（tracked 必须由 source 传入不能推断 / extension / 共面性 / 掌面水平），prompt 点名失败的门（"amber 灯什么都没教，'level your palm' 才教"）。第二刀：静止阈值从 0.06 m/s 放宽到 0.10——原值是在给生理性震颤（~1 mm @8–12 Hz，70 Hz 采样下几十 mm/s 瞬时）设门，不是给意图设门；再加 0.35 s grace 吞掉真实存在的 ~0.3 s tracker glitch。</p>
+
+<h3>3.3 clutch 手势之死</h3>
+<p><span class="tag bad">现象</span>操作者原话："我一捏它就卡住。"</p>
+<p><b>根因</b>：数据一锤定音——14/14 次 clutch 全部发生在抓取中，累计冻结 14.7 s。absolute 1:1 映射下没有东西需要 re-center，而任何抓握都闭合 thumb–little 距离：手势和它服务的场景已互斥。</p>
+<p><b>解法</b>：退役（保留姿态门控的能力开关，无 CLI）。<b>教训</b>：一个交互机制的前提被架构演进抽掉之后，它不会安静消失，会变成 bug。</p>
+
+<h3>3.4 小拇指 curl：1.44 个掌宽的手指</h3>
+<p><span class="tag bad">现象</span>平手时小指末节明显弯曲（<code>pinky_pip</code> 63.6°）。</p>
+<p><b>根因</b>：比例不匹配且全局 scale 无法表达——L20 小指与其他三指等长（1.44 掌宽），人的小指短得多（1.17 掌宽）。求解器要匹配一个比例上偏短的目标，唯一手段是卷起来。</p>
+<p><b>解法</b>：<code>little_scale=1.35</code>（straight pip 63°→23°）+ <code>little_pinch_weight</code> 2.5→1.5（否则放大的 thumb→little 向量拖走拇指、thumb–index 闭合变差）。1.45 更直但 pinch 超 5 mm，停在 1.35。测试：<code>test_a_flat_hand_does_not_curl_the_little_finger</code>；参考位姿重生成并钉住。<b>但这个修正是 §2.4 侧摆问题的放大器之一——按下葫芦浮起瓢的完整案例。</b></p>
+
+<h3>3.5 坐标基混用：不存在的 94°</h3>
+<p><b>现象/根因</b>：四个基变换矩阵分在两个文件里，一个文件的向量配另一个文件的矩阵，测出 94° 的不存在误差。<b>解法</b>：全部收进 <code>common_tool/.../math/frames.py</code>，两个手写、两个是表达式（互为转置/乘积），不可能各自漂移。两条便宜的检查：行列式（异手性必须 det −1；该 −1 却 +1 = 根本没转换，手会镜像到达，而<b>镜像的手看起来几乎是对的</b>）；旋转按 <code>B·R·Bᵀ</code> 相似变换（写成 <code>B·R</code> 得到的矩阵仍正交仍单位行列式，动起来之前零症状）。</p>
+
+<h3>3.6 速查表：其余的坑</h3>
+<table>
+<tr><th>现象（看起来像什么）</th><th>根因（实际是什么）</th><th>解法</th></tr>
+<tr><td>VR 链路 60 Hz 设置只跑出 38 Hz，judder</td><td>速率限制与 70 Hz 周期源拍频，每第二帧早 2.4 ms 被丢</td><td>默认 90 Hz，必须高于源与显示</td></tr>
+<tr><td>探针报 198/223 丢包（链路其实没丢）</td><td><code>seq</code> 误用 control cycle 计数（100 Hz 循环/60 Hz 发送本来就跳）</td><td>seq 由 publisher 拥有，计包</td></tr>
+<tr><td>头显里机器人随机冻结/跳变，无法调试</td><td>TCP 部分写造成半包，污染后续所有 newline 分帧</td><td>一个包要么整发要么不发（pending 缓存）</td></tr>
+<tr><td>掌对、指尖越来越离谱（像 retargeting 坏了）</td><td>Unity 建了运动学树，世界系位姿被父变换二次施加</td><td>所有 BodyVisual 扁平挂 SimulationRoot</td></tr>
+<tr><td>机器人越来越落后于手，什么都不报错</td><td>接收端排队、每帧应用一个</td><td>结构性禁止排队：单 line buffer 覆盖</td></tr>
+<tr><td>前倾时桌子后退、无运动视差（世界变 HUD）</td><td>root 被 parent 到相机</td><td><code>Awake()</code> 检查层级并拒绝运行</td></tr>
+<tr><td>平移 2 m 的手 retarget 出来像没动</td><td>palm 缓存用 <code>id()</code> 作键，CPython 复用已释放地址</td><td>缓存持有引用，用 <code>is</code> 比较</td></tr>
+<tr><td>满力捏合整手转 24°、指尖偏 80 mm（像 retargeter 坏了）</td><td>mocap weld 默认 <code>solref</code> 太软，1.6 N·m 就能转动手</td><td><code>solref=0.002, torquescale=5</code> → 0.01°</td></tr>
+<tr><td>每次抓取都落空（像 retargeting 问题）</td><td>物体坐标手打的，比手指实际闭合点靠后 ~100 mm</td><td>先驱动裸手到参考位姿、读出实际闭合点、物体放那里</td></tr>
+<tr><td>物体从指间转出去</td><td>无扭转摩擦；金字塔摩擦锥对角高估</td><td>指尖 <code>condim=4</code> + <code>cone=elliptic</code> + <code>impratio=10</code></td></tr>
+<tr><td>整个 rig 感觉迟钝</td><td>手指伺服 7.1 Hz 过阻尼（kp=2），192 ms 滞后</td><td><code>kp=8, kv=0.08</code> 临界阻尼 96 ms</td></tr>
+<tr><td>抬头看一眼就横移过桌子</td><td>tracking space 的"前方"是上次 recenter 的朝向</td><td><code>--align yaw</code> 每次 engage 从 head pose latch heading</td></tr>
+<tr><td>engage 瞬间机器人猛跳 96°</td><td>absolute 下掌瞬间 snap 到操作者掌</td><td>保留 relative/absolute 双契约按场景选</td></tr>
+<tr><td>命令无界跑在被卡住的机器人前面（压桌 150 mm 抬手一次性释放）</td><td>weld 是弹簧，命令是对手的无记忆函数，不知道桌子存在</td><td>wrist clamp："只会更短，绝不侧移"</td></tr>
+<tr><td>ORCA 拇指 73% 外展范围无法命令</td><td>actuator 带常量 bias，可达带整体平移</td><td>加载时清零 <code>biasprm[0]</code> 使 <code>ctrl==qpos</code></td></tr>
+<tr><td>headset 的日志找不回来</td><td>logcat ring buffer 几分钟轮转</td><td>每 session 自动存 <code>headset.log</code></td></tr>
+</table>
+
+<h2 id="v2">4 · V2（进行中）：Quest 本地跑官方 MuJoCo Unity 插件</h2>
+<p><span class="tag warn">进行中 · 调研完成</span><span class="tag">流程更新：物理从 Mac 移进头显，Mac 变成控制器与记录器</span></p>
+<p><b>相对 V1 改变了什么</b>：物理权威从 Mac 的 Python 进程移进 Quest 上的 Unity 进程（官方插件 in-process <code>mj_step</code>）；渲染零延迟拿到本地物理的最新状态，<b>烘焙网格过期问题（问题表 #5/#6）从根上消失</b>——头显画的就是它自己算的。Mac 保留 retargeting/标定/计分栈，角色反转为控制器。</p>
+<h3>4.1 调研结论（好消息）</h3>
+<ul>
+<li><b>Android 编译障碍已被上游清除</b>：最大的坑 <code>qsort_r</code>（bionic libc 没有）在 MuJoCo ≥3.3.0 已被自研排序替换，可无补丁交叉编译；社区有现成 arm64 预编译包（joanllobera/mujoco-bin，3.3.0/3.5.0），往 <code>Packages/manifest.json</code> 加两条 entry 即用。</li>
+<li><b>与 Meta XR SDK 共存无冲突</b>：插件只是组件 + P/Invoke，不占相机不占 XR loader；MuJoCo body transform 每帧回写，现有 <code>BodyVisual_*</code> 挂到对应 <code>MjBody</code> 下即可，双目由 OVRCameraRig 照常出。</li>
+<li><b>版本三方对齐是硬约束</b>：Python <code>mujoco</code> / 插件 C#（checkout 同版本 tag）/ <code>libmujoco.so</code> 全钉同一版本（3.3.0 或 3.5.0），否则"与训练一致"作废。</li>
+</ul>
+<h3>4.2 生死点与对策</h3>
+<div class="callout bad"><b>一票否决项：XR2 Gen 2 跑不跑得满 500 Hz。</b>官方插件在主线程 <code>FixedUpdate</code> 步进——<code>fixedDeltaTime=0.002</code> 意味着 90 Hz 渲染下每帧主线程塞 ~5.6 次 <code>mj_step</code>，与渲染和 OVR 输入抢 11.1 ms 帧预算；物理跑不满时 Unity 追帧进入死亡螺旋。<b>第一步（1 天）</b>：20 行 benchmark app 加载导出的 session XML 空转 <code>mj_step</code> 一万次，logcat 读 ns/step；单步 &gt;1.5 ms 即判负转 V3。降到 250 Hz 能救性能但打破与训练一致——牺牲这条路的核心卖点。</div>
+<p><b>若 benchmark 通过，建议一开始就做子线程物理</b>（改 <code>MjScene</code>：专职线程自计时跑 <code>mj_step</code> 循环，主线程每帧从双缓冲抓 qpos/xpos 快照，ctrl 写入走无锁队列，约 2–4 天）——不指望 FixedUpdate。参考工程：Balint-H/modular-agents（就是在 Quest 2 上跑通的那个项目，但它也是主线程步进）。</p>
+<h3>4.3 数据链路设计</h3>
+<pre>
+8000 上行不变：手部追踪 Quest→Mac，retarget/标定/clamp 栈完全复用
+8003 新增下行：Mac 算出的 ctrl[] + mocap 目标 → Quest（adb reverse 同构，+1–3 ms USB 往返）
+8002 改义：世界位姿本地就有 → 改为 Quest→Mac telemetry（qpos/qvel/contact/任务事件）
+记录：telemetry 回传 Mac 落盘（现有工具链零改动）+ Quest 本地双写兜底，会话末 adb pull
+场景导入：MjSpec 运行时拼装 → mj_saveLastXML 导出自包含 XML → MjImporterWithAssets
+</pre>
+<p class="small"><b>工作量估计 4–7 人周</b>：编译+benchmark 0.5 周 · Unity 工程+场景导入 1–2 周 · 子线程步进 0.5–1 周 · 8003 协议+双写 1 周 · 标定流程适配+联调 1–1.5 周。次级风险：dexjoco 钳子等 vendor 物理要逐一验证（插件不支持 elasticity 等 engine plugin）；respawn 等运行时结构变化要改成 qpos 重置（增删组件触发整场景重建）；调试受 12 分钟 APK 循环拖累（对策：物理逻辑先在 Mac 的 Unity Editor 用桌面 dylib 验证）。</p>
+
+<h2 id="v3">5 · V3（进行中）：4090 Linux 物理+渲染，ALVR 串流</h2>
+<p><span class="tag warn">进行中 · 调研完成</span><span class="tag">流程更新：整个 Python 栈搬 4090，Unity 变 SteamVR 薄渲染客户端，头显退化为显示器+追踪器</span></p>
+<div class="callout good"><b>调研中的关键转向——按变体 B′ 实施</b>：不把物理搬进 Unity（正统做法会让会话逻辑进 C#、场景定义出现第二份），而是<b>现有 hand_control Python 栈整体搬到 4090</b>，Unity 只做 SteamVR 薄渲染客户端，8000/8002 协议原样走 localhost。对代码侵入近零、与训练一致性最好（与 RL/warp 同机），还顺手解决了烘焙过期问题——渲染进程可以直接读本机物理的实时状态。</div>
+<h3>5.1 调研结论</h3>
+<ul>
+<li><b>ALVR Linux 服务端受支持</b>（v20.14.1，2026-07）：要求 NVIDIA 驱动 ≥535 + CUDA ≥12.1，NVENC 编码；建议 X11 会话独占 4090（Wayland 有 GPU 探测坑）。</li>
+<li><b>USB 有线串流已官方化</b>（v20.12+ 内置 wired mode，插线自动拉起 client）——保住 V1 用 USB 换稳定性的哲学。</li>
+<li><b>手部追踪不需要伴随 app</b>：ALVR 把 Quest 手部追踪以 SteamVR skeletal input + OpenXR <code>XR_EXT_hand_tracking</code> 转发到 host——26 关节原始数据，不是 controller 模拟。写 ~200 行 reader 把关节按现有 8000 协议发 localhost:8000，<code>l20_sources.py</code> 以下零改动。</li>
+<li><b>固有税：延迟</b>。ALVR 端到端 motion-to-photon 典型 50–90 ms，比 V1 本地渲染明显变差，对精细遥操作的手感是实打实的损伤。</li>
+</ul>
+<div class="callout bad"><b>一票否决项：Linux SteamVR + Unity XR 出双目画面的 spike（2 天）。</b>Unity OpenXR 对 Linux 桌面 runtime 长期边缘化，SteamVR skeletal input 在 Linux 也有历史 bug——空场景出画面 + 拿到 26 关节，这两样任一不通即撤退。退路：4090 双系统 Windows host（ALVR/SteamVR 最成熟，+1 周但确定性大增）。</div>
+<p class="small"><b>工作量估计 2–4 人周</b>：spike 0.5 周 · ALVR+SteamVR 环境 0.5 周 · Unity 薄渲染客户端 1 周 · hand-tracking 桥+联调 1 周。数据记录照旧落 <code>hand_control/data/</code>（在 4090 上），rsync 回 Mac。次级风险：4090 box 46 GB RAM 与训练任务抢占。</p>
+
+<h2 id="v4">6 · V4（远期）：Mac 端串流 —— 调研判死</h2>
+<p><span class="tag bad">三条子路线全部阵亡</span></p>
+<table>
+<tr><th>子路线</th><th>结论</th><th>依据</th></tr>
+<tr><td>ALVR macOS 服务端</td><td><b>不存在，且不会有</b></td><td>ALVR 服务端强依赖 SteamVR host，Valve 2020-04-30 已终结 SteamVR macOS；官方兼容表 macOS 明确 ❌</td></tr>
+<tr><td>CrossOver/Whisky 跑 Quest Link</td><td><b>架构性阻塞</b></td><td>社区完整验尸（Clooney 笔记，2026-05 更新）：Link、ALVR、SteamVR-in-CrossOver、Virtual Desktop 逐条试过全部失败，"not a realistic path today"；缺的是整条 VR runtime 栈不是某个组件</td></tr>
+<tr><td>自研最小串流</td><td><b>不值得做</b></td><td>渲染位姿到眼睛已 stale 80–120 ms；旋转可用世界锚定 layer 让 compositor 重投影救回，<b>平移视差救不了</b>（无深度）——手在 30–60 cm 的桌面操作恰是视差最敏感的场景。4–8 人周只能到"能看但晕"</td></tr>
+</table>
+<p class="small"><b>保留的火种</b>：若只需"非沉浸监视"（Mac 的 MuJoCo viewer 以平面 quad 投进头显给旁观者/实验员看），2–3 天可做且不晕——但那是观察窗，不是遥操作。</p>
+
+<h2 id="compare">7 · 三条在研路线对比与决断</h2>
+<table>
+<tr><th>维度</th><th>V2：Quest 本地物理</th><th>V3（按 B′）：4090 物理+渲染串流</th><th>V4：Mac 串流</th></tr>
+<tr><td>手→画面延迟</td><td><b>最优</b>（本地渲染与 V1 同级）；控制环 +10–20 ms</td><td>+50–90 ms（ALVR 固有）</td><td>&gt;100 ms 且无平移重投影，晕</td></tr>
+<tr><td>与训练一致性</td><td>同一 MuJoCo 但需三方钉版本；<b>500 Hz 存疑</b></td><td><b>完全一致</b>（就是现有 Python 栈原样跑，与 RL/warp 同机）</td><td>完全一致（物理仍在 Mac）</td></tr>
+<tr><td>烘焙过期问题（#5/#6）</td><td>根治</td><td>根治</td><td>根治</td></tr>
+<tr><td>对 Python 栈侵入</td><td>中：物理权威移出，会话 reset 经 8003 遥控</td><td><b>近零</b>：8000/8002 走 localhost</td><td>零（唯一优点）</td></tr>
+<tr><td>开发量</td><td>4–7 人周</td><td>2–4 人周（+Windows 兜底 1 周）</td><td>4–8 人周仍不可用</td></tr>
+<tr><td>一票否决风险</td><td>XR2 Gen 2 跑不满 500 Hz（1 天 benchmark）</td><td>Linux SteamVR spike 失败（2 天，可退 Windows）</td><td>已判死</td></tr>
+</table>
+<div class="callout"><b>下一步（3 天）</b>：并行跑 V2 benchmark 与 V3 spike，各自都是一天级的小实验，结果直接决定押注方向。倾向性预判：V3(B′) 开发量最小、一致性最好、且探针有 Windows 退路；V2 延迟最优但探针是硬性能墙。两个探针都过的话，V3 先上（快、稳、保研究进度），V2 作为延迟敏感实验的长线投资。</div>
+
+<h2 id="refs">8 · 参考</h2>
+<ul class="small">
+<li>仓库内：<code>PROJECT_SPEC.md</code> · <code>hand_control/plan/transformations-and-alignment.md</code>（每个坐标变换与三个高度机制）· <code>hand_control/plan/l20_shared_control_phase1.md</code>（下一阶段 plan of record）· <code>plan/architecture/layers.py</code>（分层唯一权威表）</li>
+<li>MuJoCo Unity 插件：<a href="https://mujoco.readthedocs.io/en/latest/unity.html">官方文档</a> · <a href="https://github.com/google-deepmind/mujoco/discussions/1638">Discussion #1638（Android/Quest 编译）</a> · <a href="https://github.com/joanllobera/mujoco-bin">joanllobera/mujoco-bin（arm64 预编译）</a> · <a href="https://github.com/Balint-H/modular-agents">Balint-H/modular-agents（Quest 2 参考工程）</a></li>
+<li>串流：<a href="https://github.com/alvr-org/ALVR">ALVR</a> · <a href="https://github.com/alvr-org/ALVR/wiki/ALVR-wired-setup-(ALVR-over-USB)">ALVR USB 有线</a> · <a href="https://github.com/alvr-org/ALVR/wiki/Linux-encoders-requirements">Linux 编码器要求</a> · <a href="https://blog.nicholas.clooney.io/notes/quest-pcvr-on-mac-notes/">Quest PCVR on Apple Silicon 验尸笔记</a></li>
+</ul>
+
+<footer>hand-control.html · 2026-08-21 · 素材来自仓库盘点与路线调研，数字均出自 session 实测或代码常量</footer>
+</div>
+</body>
+</html>
