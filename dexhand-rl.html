@@ -217,7 +217,7 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v52-probe-wrist.mp4"></video>
 <figcaption><b>探针 B · 基座+腕转</b>:接触速度 −0.58…−0.98 m/s,窗口打开(blow_live=1),钉子近打平 47.9 mm——仍 0 分,hand_clear 门 5 cm&lt;6 cm 拒收。</figcaption></figure>
 </div>
-<h3>V5.2 · 门修正 + hover 预算 + 钉上方课程 <span class="tag warn">2026-08-22,门测试通过,训练中</span></h3>
+<h3>V5.2 · 门修正 + hover 预算 + 钉上方课程 <span class="tag bad">门开了,策略仍不下探——缺下降梯度</span></h3>
 <table>
 <tr><th>改动</th><th>内容</th><th>依据</th></tr>
 <tr><td>窗口下沿 0.5→0.4</td><td>接触瞬间锤面下向速度 ≥0.4 m/s 即开窗(上沿 2.5 人类包络不动)</td><td>探针实测基座权限接触速度 0.46–0.48;慢压只有 0.01–0.24,margin 保住</td></tr>
@@ -228,7 +228,18 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <tr><td>第二段课程</td><td>30% in-hand 出生的一半改为<b>持锤悬于钉正上方 0.15 m</b>(xy 误差 0.4 cm、沉降验证 drift 0.1 mm)——离计分击打一步之遥,专治"状态分布从不路过挥击区"</td><td>V4 用同一招破举升墙;V5 时因笼弱失败,kp=4 笼已过携带测试</td></tr>
 </table>
 <p class="small"><b>训练前门测试(纪律:gate 不通过不训练)</b>:同一脚本击打在新口径下重放——纯基座三次接触全部开窗、<b>计 3 击、strike 262 分</b>;加腕转 218 分;blow_cap 生效(48 mm 行程只计约一半)。reward 面从"焊死"变为"可达",放行训练。</p>
-<p class="small"><b>V5.3 方向(已定,排在挥击点火之后)</b>:"握得越远分越高"的持续项——手掌沿柄轴离锤头的距离连续给分,杠杆越长力矩越大,±2 N 握不住就掉锤终结,物理自己当惩罚;同时长杠杆放大腕转的锤面速度,与冲击窗口正协同。不放进 V5.2:学习早期它把策略往可行域边缘推,先会砸再谈握远。</p>
+<p><b>V5.2 结果(105.8M 步,warp 1.16)</b>:hover 预算精确生效(episode 累计封顶 ~57/60,"举出画面"的怪行为被高度带治住),超速 0、掉锤 ≈0——但 <b>strike 全程未点火</b>(偶发火花 0.001–0.008 出现过、从未放大),总 eval ~1480 里剩余年金是 hold+lift+grasp 的 ~1250。<b>决定性诊断</b>:强制"钉上方出生"回放——离拿分一步之遥、reward 面已验证可达,策略 300 步里锤面最低只到 <b>14.7 cm,一厘米都没往下探</b>。结论:门修好了、课程把状态送到了,但从"悬停均值动作"到"连贯 8–10 步下砸"之间没有任何奖励梯度,22 维高斯噪声几乎不可能自发采出;偶发拙劣的尝试以脱手告终,advantage 反而把均值往"别动"推。<b>缺的正是下降引导项(V5.2.1)</b>。</p>
+<figure style="margin:14px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;">
+<img src="assets/dexhand-rl/hammer-v52-curve.png" alt="V5.2 曲线与 hover 预算" style="width:100%;border-radius:8px;display:block;">
+<figcaption class="small" style="margin-top:7px;">左:总分不可与 V5.1 直接比(V5.2 的 hover 是预算制);右:hover 预算封顶精确生效(60,虚线)。封掉年金没有自动换来砸击——梯度缺口才是主矛盾。</figcaption>
+</figure>
+<div class="videos">
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v52-nailbirth.mp4"></video>
+<figcaption><b>V5.2 诊断回放 · 钉上方出生</b>(return 2059,blows 0):离计分击打一步之遥,整集锤面最低 14.7 cm——纹丝不下探。</figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v52-best.mp4"></video>
+<figcaption><b>V5.2 best</b>(seed 1001,return 1983):行为与 V5.1 相同的稳定持锤悬停;高度带已把"举出画面"拉回窗内。</figcaption></figure>
+</div>
+<p class="small"><b>V5.2.1(下一步)· 下降引导项</b>:对准钉上方且锤面带下向速度时按速度线性给分(封顶人类包络 2.5 m/s,权重 ~1/步,远小于旧年金)——付"朝正确方向的运动"而非接触,慢压依旧零分;就算被"上下抖动"刷,在钉上方带速抖动本身就是准锤击,迟早撞进冲击窗口。<b>V5.3 方向(排在挥击点火之后)</b>:"握得越远分越高"的持续项——手掌沿柄轴离锤头的距离连续给分,杠杆越长力矩越大,±2 N 握不住就掉锤终结,物理自己当惩罚;同时长杠杆放大腕转的锤面速度,与冲击窗口正协同。</p>
 
 <h3>V6 方向(已记录,含抓姿 reward 专项调研结论)</h3>
 <table>
