@@ -79,9 +79,9 @@ a { color:var(--blue); text-decoration:none; }
 <p>105.8M 步(berlin H200,与他人共卡):最终 eval reward <b>5685</b>,目标点步数 <b>184.7/200(92%)</b>——<b>超过 Leap 锚点本身</b>,远超合格线(Leap 的 50% = 87/200)。回放 6 种子 284–288/300 步在目标点,稳定性极高。</p>
 <div class="videos">
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/pick-best.mp4"></video>
-<figcaption><b>best</b>(seed 1004):288/300 步在目标点。抓起 54 mm 方块,悬停在空中目标点。</figcaption></figure>
+<figcaption><b>best</b>(seed 1004):288/300 步在目标点。抓起 54 mm 方块,悬停在空中目标点。 <a href="assets/dexhand-rl/pick-best.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/pick-worst.mp4"></video>
-<figcaption><b>worst</b>(seed 1001):284/300——最差与最好几乎无差别。</figcaption></figure>
+<figcaption><b>worst</b>(seed 1001):284/300——最差与最好几乎无差别。 <a href="assets/dexhand-rl/pick-worst.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
 <p class="small"><b>局限与方向</b>:单 seed;正式基线结论需 ≥3 seed(协议已定,warp 后每 seed 仅 ~10 分钟)。reward 本身无已知问题。</p>
 
@@ -96,9 +96,9 @@ hold / face_nail / drive / success  全部 × lifted  # 藏在门后</code></pre
 <p>训满 105.8M 步,reward 117,<b>success 全程为 0</b>。策略停在唯一有梯度的地方:掌心贴着锤柄躺平吃 reach 分。从"贴着"到"举起 5 cm"之间梯度为零,还要冒丢 reach 分的风险——这正是 MetaWorld 已废弃的 v1 硬门结构。</p>
 <div class="videos">
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v1-best.mp4"></video>
-<figcaption><b>v1 best</b>:整集保持"扶着锤子躺平"的姿势,钉子原封不动。</figcaption></figure>
+<figcaption><b>v1 best</b>:整集保持"扶着锤子躺平"的姿势,钉子原封不动。 <a href="assets/dexhand-rl/hammer-v1-best.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v1-worst.mp4"></video>
-<figcaption><b>v1 worst</b>:同一个局部最优,六个种子无一例外。</figcaption></figure>
+<figcaption><b>v1 worst</b>:同一个局部最优,六个种子无一例外。 <a href="assets/dexhand-rl/hammer-v1-worst.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
 <p class="small"><b>修改方向(当时定的)</b>:调研 Adroit / MetaWorld v2 / DexPBT 的三派成功配方 → 密集项永不藏在门后、阶段门用锁存不用瞬时判据。</p>
 
@@ -111,9 +111,9 @@ hold / face_nail / drive / success  全部 × lifted  # 藏在门后</code></pre
 <p>阶段依序点亮,最终 reward 5603,回放 6/6 把钉子打平——但看视频:它<b>举着锤子的同时用手腕把钉子压了下去</b>。drive/success 只看钉子深度,不问"是谁弄下去的"。附带教训:staged 策略真的去抓锤后,双胶囊楔紧接触打爆了 5 迭代 Euler 求解(NaN),靠关节阻尼 + nan_to_num 缓解。</p>
 <div class="videos">
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v21-best.mp4"></video>
-<figcaption><b>v2.1 best</b>:锁存链走通(抓→举→"打平"),但仔细看是手体压钉,锤头只是陪衬。</figcaption></figure>
+<figcaption><b>v2.1 best</b>:锁存链走通(抓→举→"打平"),但仔细看是手体压钉,锤头只是陪衬。 <a href="assets/dexhand-rl/hammer-v21-best.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v21-worst.mp4"></video>
-<figcaption><b>v2.1 worst</b>:同样的压钉策略,成功步数略少。</figcaption></figure>
+<figcaption><b>v2.1 worst</b>:同样的压钉策略,成功步数略少。 <a href="assets/dexhand-rl/hammer-v21-worst.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
 <p class="small"><b>修改方向</b>:给深度"记对功劳"——只有锤面造成的深度增量才计分。</p>
 
@@ -136,9 +136,9 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <p>22M 步破举升墙(72% episode 过锁存、掉锤率 0.09),33M 步 reward 5185,最终 <b>7533</b>;回放 6/6 全部<b>合法</b>打平(成功步数 239–274/300,成功口径 = 合法深度,手压构造上为零分);画面确认锤头做功、手体离钉。</p>
 <div class="videos">
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v4-best.mp4"></video>
-<figcaption><b>v4 best</b>(seed 1000,274/300):握柄、锤头对钉敲击,钉子没入板中。</figcaption></figure>
+<figcaption><b>v4 best</b>(seed 1000,274/300):握柄、锤头对钉敲击,钉子没入板中。 <a href="assets/dexhand-rl/hammer-v4-best.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v4-worst.mp4"></video>
-<figcaption><b>v4 worst</b>(seed 1005,239/300):同样成功,动作稍拖沓。</figcaption></figure>
+<figcaption><b>v4 worst</b>(seed 1005,239/300):同样成功,动作稍拖沓。 <a href="assets/dexhand-rl/hammer-v4-worst.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
 
 <h3>v4 的现存局限 → 下一轮四臂对照(已实现,待跑)</h3>
@@ -171,9 +171,9 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 </figure>
 <div class="videos">
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v5-best.mp4"></video>
-<figcaption><b>V5 best</b>(return 1563,success 0):拐杖姿势实锤——柄端举高满足 lifted 锁存,锤头拄地,钉子原封不动。</figcaption></figure>
+<figcaption><b>V5 best</b>(return 1563,success 0):拐杖姿势实锤——柄端举高满足 lifted 锁存,锤头拄地,钉子原封不动。 <a href="assets/dexhand-rl/hammer-v5-best.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v5-worst.mp4"></video>
-<figcaption><b>V5 worst</b>(return 271):连拐杖姿势都没维持稳。</figcaption></figure>
+<figcaption><b>V5 worst</b>(return 271):连拐杖姿势都没维持稳。 <a href="assets/dexhand-rl/hammer-v5-worst.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
 <div class="callout bad"><b>解剖:一个被指标掩盖的物理不可行</b>。0.59 kg 锤的钢头挂在握点 12.5 cm 外,重力矩 ~0.5 N·m;±1 N 的手指提供不了悬臂端所需的 ~18 N 级切向握力——<b>这只手物理上握不住水平悬空的重锤</b>。训练学到的"举稳"实为拐杖姿势:柄端翘高满足 <code>lifted</code> 锁存(它只看锤体原点高度),锤头拄地。课程姿态实验独立证实:指笼悬空后 600 步内被下垂的锤头拽脱手。教训:<b>加难物理之前,先做"任务在该形态下是否可行"的静力学验算</b>;锁存判据要盯真正的目标量(锤头高度,不是锤体原点)。</div>
 <p class="small"><b>V5.1 候选路线</b>(2026-08-22 采纳④混合方案,见下节):① 竖持课程;② 工具级手 fork(±3 N);③ 锤回轻 + choke up;④ = ②+③ 折中:±2 N + 0.45 kg + 握点 0.08。</p>
@@ -196,9 +196,9 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 </figure>
 <div class="videos">
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v51-best.mp4"></video>
-<figcaption><b>V5.1 best</b>(seed 1004,return 2993,success 0):真实举锤——从地面抓起,锤头朝上举到钉上方高位悬停,不掉不甩。</figcaption></figure>
+<figcaption><b>V5.1 best</b>(seed 1004,return 2993,success 0):真实举锤——从地面抓起,锤头朝上举到钉上方高位悬停,不掉不甩。 <a href="assets/dexhand-rl/hammer-v51-best.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v51-worst.mp4"></video>
-<figcaption><b>V5.1 worst</b>(seed 1002,return 2844):与 best 几乎同一行为——策略方差塌缩到"稳定持锤悬停"这一个模式。</figcaption></figure>
+<figcaption><b>V5.1 worst</b>(seed 1002,return 2844):与 best 几乎同一行为——策略方差塌缩到"稳定持锤悬停"这一个模式。 <a href="assets/dexhand-rl/hammer-v51-worst.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
 <h3>V5.2 前置 · 裁判实验:脚本化下砸 <span class="tag bad">两道门叠着焊死了挥击</span></h3>
 <p>训练前不改任何代码,先回答一个问题:<b>"砸"这个动作在当前 reward 口径下到底能不能拿到分?</b> 方法:让训好的策略先跑 75 步到它惯常的悬停位,然后接管控制,手写"全速下降 → 回抬"三个循环(基座满舵;变体加腕转),逐步记录锤面速度、手–钉距离和每道记分门的开合。</p>
@@ -213,9 +213,9 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 </table>
 <div class="videos">
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v52-probe-base.mp4"></video>
-<figcaption><b>探针 A · 纯基座下砸</b>:三次全速下压,接触速度 −0.46…−0.48 m/s 全部擦窗而过,钉子进 31.6 mm、得分 0。</figcaption></figure>
+<figcaption><b>探针 A · 纯基座下砸</b>:三次全速下压,接触速度 −0.46…−0.48 m/s 全部擦窗而过,钉子进 31.6 mm、得分 0。 <a href="assets/dexhand-rl/hammer-v52-probe-base.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v52-probe-wrist.mp4"></video>
-<figcaption><b>探针 B · 基座+腕转</b>:接触速度 −0.58…−0.98 m/s,窗口打开(blow_live=1),钉子近打平 47.9 mm——仍 0 分,hand_clear 门 5 cm&lt;6 cm 拒收。</figcaption></figure>
+<figcaption><b>探针 B · 基座+腕转</b>:接触速度 −0.58…−0.98 m/s,窗口打开(blow_live=1),钉子近打平 47.9 mm——仍 0 分,hand_clear 门 5 cm&lt;6 cm 拒收。 <a href="assets/dexhand-rl/hammer-v52-probe-wrist.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
 <h3>V5.2 · 门修正 + hover 预算 + 钉上方课程 <span class="tag bad">门开了,策略仍不下探——缺下降梯度</span></h3>
 <table>
@@ -235,9 +235,9 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 </figure>
 <div class="videos">
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v52-nailbirth.mp4"></video>
-<figcaption><b>V5.2 诊断回放 · 钉上方出生</b>(return 2059,blows 0):离计分击打一步之遥,整集锤面最低 14.7 cm——纹丝不下探。</figcaption></figure>
+<figcaption><b>V5.2 诊断回放 · 钉上方出生</b>(return 2059,blows 0):离计分击打一步之遥,整集锤面最低 14.7 cm——纹丝不下探。 <a href="assets/dexhand-rl/hammer-v52-nailbirth.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v52-best.mp4"></video>
-<figcaption><b>V5.2 best</b>(seed 1001,return 1983):行为与 V5.1 相同的稳定持锤悬停;高度带已把"举出画面"拉回窗内。</figcaption></figure>
+<figcaption><b>V5.2 best</b>(seed 1001,return 1983):行为与 V5.1 相同的稳定持锤悬停;高度带已把"举出画面"拉回窗内。 <a href="assets/dexhand-rl/hammer-v52-best.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
 <h3>V5.2.1 · 下降引导项 <span class="tag bad">引导被 hold 年金压制——权重打不过罚款</span></h3>
 <p><b>设计</b>:<code>descend = lifted × 对准(xy 长尾容差) × clip(−face_vz, 0, 2.5)/2.5</code>,权重 2/步——只在举起且锤面对准钉上方时,按下向速度<b>线性</b>给分,封顶就是人类包络(2.5 m/s),超包络另有 overspeed 兜底。付的是"朝击打方向的运动",不付接触、不付深度:慢压实测 0.01–0.24 m/s,拿到的引导分≈0;防刷分析——就算学成"钉上方带速上下抖动",那本身就是准锤击动作,迟早以合规速度撞进冲击窗口触发 strike+bonus,刷分陷阱通向正确行为。仅 v5 默认臂携带(其余四臂为 0,TensorBoard 同名指标可对照)。本地验证:强制下压 10 步 descend 进账 1.5 raw、其余四臂恒 0、52 项测试全绿。<b>门测试(训前纪律)</b>:脚本下砸三次全开窗、计 2 击、strike 141 分,descend 在下砸过程进账 12.7 分——引导梯度确认存在后放行训练。</p>
@@ -251,9 +251,9 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 </figure>
 <div class="videos">
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v522-nailbirth.mp4"></video>
-<figcaption><b>V5.2.2 · 钉上方出生</b>(return 1645,1 合法击,钉入 37.2 mm):蓄势 → 下砸 → 集末钉子只剩短桩——V5.2 同一出生点是 300 步纹丝不动。</figcaption></figure>
+<figcaption><b>V5.2.2 · 钉上方出生</b>(return 1645,1 合法击,钉入 37.2 mm):蓄势 → 下砸 → 集末钉子只剩短桩——V5.2 同一出生点是 300 步纹丝不动。 <a href="assets/dexhand-rl/hammer-v522-nailbirth.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v522-best.mp4"></video>
-<figcaption><b>V5.2.2 best</b>(seed 1004,return 1649):从地面抓锤、运到钉上方、下砸——完整链条首次出现在自由出生的episode里。</figcaption></figure>
+<figcaption><b>V5.2.2 best</b>(seed 1004,return 1649):从地面抓锤、运到钉上方、下砸——完整链条首次出现在自由出生的episode里。 <a href="assets/dexhand-rl/hammer-v522-best.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
 <div class="callout bad"><b>回放复盘揪出的新 hacking(人看视频发现的,指标没报警)</b>:相当一部分"击打"其实是<b>松手抛砸</b>——运到钉上方后张开指笼,让锤自由落体砸钉。从 15 cm 释放接触速度 ≈1.7 m/s,轻松落在窗口正中;而握持基座下压只有 0.46–0.48 m/s 擦下沿——松手是满足速度窗口<b>物理上最省力的路</b>。且无一道门要求"击中时锤在手":lifted 是锁存、hand_clear 反被松手满足、descend 付的是锤面速度(自由落体照付)、slip 终结门槛 20 cm 够不到。抓握不稳是结果不是原因:<b>握紧在该账本下没有额外收益</b>。</div>
 <h3>V5.2.3 · 持续握持奖励 + 脱手即终结 <span class="tag warn">洞封住了——同时证明 V5.2.2 的"点火"全是抛砸</span></h3>
@@ -278,11 +278,19 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 </figure>
 <div class="videos">
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v525-fullchain.mp4"></video>
-<figcaption><b>V5.2.5 全链条</b>(纯地面出生,return 2196,钉入 28.9 mm):抓锤 → 运到钉上方 → 握持下砸——本任务的完整动作链首次在无课程辅助的 episode 里出现。</figcaption></figure>
+<figcaption><b>V5.2.5 全链条</b>(纯地面出生,return 2196,钉入 28.9 mm):抓锤 → 运到钉上方 → 握持下砸——本任务的完整动作链首次在无课程辅助的 episode 里出现。 <a href="assets/dexhand-rl/hammer-v525-fullchain.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v525-nailbirth.mp4"></video>
-<figcaption><b>V5.2.5 钉上方出生</b>(return 2324,钉入 29.3 mm):挥击中段出生,握持完成击打并继续压入——palm–grip 全程 &lt;1.5 cm。</figcaption></figure>
+<figcaption><b>V5.2.5 钉上方出生</b>(return 2324,钉入 29.3 mm):挥击中段出生,握持完成击打并继续压入——palm–grip 全程 &lt;1.5 cm。 <a href="assets/dexhand-rl/hammer-v525-nailbirth.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
-<p class="small"><b>后续候选(V5.2.6+)</b>:从单击到 ~3 击打平(success 点火)——①拉长 episode(250→400 步,给"退避-再蓄势-再击"留时间);②退避塑形(击后 hover/descend 重新武装);③blow_bonus 递增。之后:V5.3 握远给分,V6 抓姿先验/指腹门控。</p>
+<h3>单击形态复盘:是"加速后按进去",不是"一下一下锤进去"</h3>
+<p>看回放(<a href="assets/dexhand-rl/hammer-v525-nailbirth.mp4">钉上方出生 mp4 ↗</a> / <a href="assets/dexhand-rl/hammer-v525-fullchain.mp4">全链条 mp4 ↗</a>)和逐步仪表能确认当前成功的真实形态:<b>带速到达(−1.22 m/s 开窗)之后并没有弹开-再举-再击,而是贴着钉子持续压入</b>——接触后 vz 立刻回到 ≈0,深度在接下来 15 步里从 0.5 mm 爬到 26.8 mm。这是"合规到达 + 压穿"的混合体:reward 侧 blow_cap 把<b>计分</b>封在每接触 2 cm,但<b>物理</b>上钉子被一路压深(阻尼只限速不封行程)。两个原因叠加:</p>
+<p class="small">① <b>物理没有反弹</b>:锤-钉接触是软接触(solref 0.01/1.0)+ 钉侧大阻尼(400)吸能,恢复系数≈0,锤头击中后不弹起——现实中锤子会被反作用力弹开,自然形成"退避"节奏,我们的仿真里这个免费的节拍器不存在;② <b>reward 没付"离开"的钱</b>:击后留在钉上不亏(窗口关了但不罚),抬起重新蓄势反而要重新走一遍风险,策略自然选择压着不动。</p>
+<table>
+<tr><th>下一步两条线(2026-08-22 记)</th><th>内容</th></tr>
+<tr><td><b>线一 · V6 多次锤击</b>(reward/课程侧)</td><td>从"单击+压穿"到"一下一下锤":①击后<b>退避塑形</b>——blow 结束后 hover/descend 重新武装,回到蓄势高度才有下一轮收入;②blow_bonus 递增(第 2、3 击加码)+ success 绑定 min_blows(blows 臂现成机制);③拉长 episode 250→400 步给节奏留时间;④(与线二配合)击后把"贴钉滞留"改为小额流失,把"离开-再来"变成正期望</td></tr>
+<tr><td><b>线二 · 物理拟真</b>(仿真侧)</td><td>把真实锤击的物理找回来:①<b>反弹</b>——锤-钉接触加恢复系数(solref/solreffriction 调硬、或显式 restitution),锤头击中自然弹开,退避节奏由物理免费提供;②钉子行程阻力随深度递增(越深越难打,逼出多击);③锤头-钉接触的冲量转化拟真(当前 damping 限进给是工程近似,不是物性);④做完需重标定:落锤检查阈值、blow_cap、每击进给窗口全部重扫。<b>拟真同时天然堵"压穿":有反弹就压不住。</b></td></tr>
+</table>
+<p class="small">顺序建议:先线二的①(反弹)——它一刀同时提供节拍器、堵压穿、逼多击,线一的塑形做补充;两线做完 success(~3 击打平)应自然点火。之后:V5.3 握远给分,V6 抓姿先验/指腹门控。</p>
 <p class="small"><b>V5.3 方向(排在挥击点火之后)</b>:"握得越远分越高"的持续项——手掌沿柄轴离锤头的距离连续给分,杠杆越长力矩越大,±2 N 握不住就掉锤终结,物理自己当惩罚;同时长杠杆放大腕转的锤面速度,与冲击窗口正协同。</p>
 
 <h3>V6 方向(已记录,含抓姿 reward 专项调研结论)</h3>
