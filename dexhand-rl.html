@@ -217,7 +217,18 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v52-probe-wrist.mp4"></video>
 <figcaption><b>探针 B · 基座+腕转</b>:接触速度 −0.58…−0.98 m/s,窗口打开(blow_live=1),钉子近打平 47.9 mm——仍 0 分,hand_clear 门 5 cm&lt;6 cm 拒收。</figcaption></figure>
 </div>
-<p class="small"><b>V5.2 待拍板项(实验已给出数据,方案讨论中)</b>:① 两道门的数值修正(hand_clear 0.06→~0.045、v_min 0.5→~0.40,配 blow_cap 堵"开窗后持续压");② 第二段课程——部分 episode 出生在"持锤悬于钉上方"(kp=4 笼已过携带测试);③ hover 改为高度带限制 + 收入预算,达到蓄势高度后让位;④ 高度门控的下降速度引导——到达蓄势高度后,下向速度越快给分越高(封顶在人类包络、基座关节限速内),付"朝正确方向的运动"而非接触,慢压依旧零分。</p>
+<h3>V5.2 · 门修正 + hover 预算 + 钉上方课程 <span class="tag warn">2026-08-22,门测试通过,训练中</span></h3>
+<table>
+<tr><th>改动</th><th>内容</th><th>依据</th></tr>
+<tr><td>窗口下沿 0.5→0.4</td><td>接触瞬间锤面下向速度 ≥0.4 m/s 即开窗(上沿 2.5 人类包络不动)</td><td>探针实测基座权限接触速度 0.46–0.48;慢压只有 0.01–0.24,margin 保住</td></tr>
+<tr><td>hand_clear 0.06→0.045</td><td>手离钉门槛放到 4.5 cm,匹配 choke up 后 9.5 cm 杠杆的击打几何(实测击打时手距 5.0–5.6 cm)</td><td>手掌真压钉需贴到 ~0–2 cm,4.5 cm 照样拦</td></tr>
+<tr><td>blow_cap 进默认臂</td><td>每次接触计分封顶 2 cm——"到速开窗后持续压穿"只能赚一击的钱</td><td>反事实验算暴露的新口子</td></tr>
+<tr><td>hover 预算 + 高度带</td><td>每 episode hover 累计发 ~60 步即停(就位学费,不是年金);高度带 [0.12, 0.25] m,再高衰减归零(治"举出画面")</td><td>V5.1 的 2272 分年金 = 终局局部最优</td></tr>
+<tr><td>blow_bonus 15→50</td><td>首击从噪声(~25 分 vs 2900)抬成信号</td><td>—</td></tr>
+<tr><td>第二段课程</td><td>30% in-hand 出生的一半改为<b>持锤悬于钉正上方 0.15 m</b>(xy 误差 0.4 cm、沉降验证 drift 0.1 mm)——离计分击打一步之遥,专治"状态分布从不路过挥击区"</td><td>V4 用同一招破举升墙;V5 时因笼弱失败,kp=4 笼已过携带测试</td></tr>
+</table>
+<p class="small"><b>训练前门测试(纪律:gate 不通过不训练)</b>:同一脚本击打在新口径下重放——纯基座三次接触全部开窗、<b>计 3 击、strike 262 分</b>;加腕转 218 分;blow_cap 生效(48 mm 行程只计约一半)。reward 面从"焊死"变为"可达",放行训练。</p>
+<p class="small"><b>V5.3 方向(已定,排在挥击点火之后)</b>:"握得越远分越高"的持续项——手掌沿柄轴离锤头的距离连续给分,杠杆越长力矩越大,±2 N 握不住就掉锤终结,物理自己当惩罚;同时长杠杆放大腕转的锤面速度,与冲击窗口正协同。不放进 V5.2:学习早期它把策略往可行域边缘推,先会砸再谈握远。</p>
 
 <h3>V6 方向(已记录,含抓姿 reward 专项调研结论)</h3>
 <table>
