@@ -200,7 +200,24 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v51-worst.mp4"></video>
 <figcaption><b>V5.1 worst</b>(seed 1002,return 2844):与 best 几乎同一行为——策略方差塌缩到"稳定持锤悬停"这一个模式。</figcaption></figure>
 </div>
-<p class="small"><b>V5.2 方向(挥击发现)</b>:① 第二段课程——一部分 episode 从"持锤悬于钉上方"出生(V5 时该实验因笼子太弱失败,kp=4 的新笼子已通过 +10 cm 携带测试);② hover 收入在就位后衰减/封顶,把"继续悬停"的机会成本让位给尝试落击;③ 必要时 blow_bonus 加码。</p>
+<h3>V5.2 前置 · 裁判实验:脚本化下砸 <span class="tag bad">两道门叠着焊死了挥击</span></h3>
+<p>训练前不改任何代码,先回答一个问题:<b>"砸"这个动作在当前 reward 口径下到底能不能拿到分?</b> 方法:让训好的策略先跑 75 步到它惯常的悬停位,然后接管控制,手写"全速下降 → 回抬"三个循环(基座满舵;变体加腕转),逐步记录锤面速度、手–钉距离和每道记分门的开合。</p>
+<div class="callout bad"><b>结论:策略不是"不想砸",是砸了也一分拿不到——两道门叠着焊死</b>。
+①<b>冲击窗口下沿压在动作权限之上</b>:基座限速 0.02 m/步 ÷ 0.04 s = 0.5 m/s,恰好等于窗口下沿——纯基座下砸三次接触速度 −0.48/−0.46/−0.46 m/s,<b>每次都差 0.02–0.04 m/s,窗口从未打开</b>(而钉子被物理打进了 31.6 mm,零分);叠加腕转杠杆能到 −0.58…−0.98 m/s,窗口开了(blow_live=1)——但仍然零分,因为:
+②<b>choke up 把 hand_clear 门挤爆了</b>:握点 0.05→0.08 后锤头杠杆缩到 9.5 cm,锤面砸在钉上时手掌/指尖离钉顶只剩 <b>5.0–5.6 cm &lt; 门槛 6 cm</b>——V5.1 的几何下<b>任何速度的锤击都被当成"疑似手压"拒收</b>。这完整解释了训练中 strike≡0:V5.1 的新平台不是探索失败,是记分口径与新几何互相矛盾。</div>
+<table>
+<tr><th>反事实验算(同一条脚本轨迹重放记分逻辑)</th><th>纯基座下砸</th><th>基座+腕转</th></tr>
+<tr><td>现行口径(hand_clear 0.06,v_min 0.5)</td><td>0 分</td><td>0 分</td></tr>
+<tr><td>hand_clear 0.045 + v_min 0.40</td><td><b>31.6 mm / 316 分 / 2 击</b></td><td><b>54.2 mm / 542 分 / 2 击</b></td></tr>
+<tr><td class="small">防作弊裕量:实测慢压/贴住阶段速度只有 0.01–0.24 m/s,v_min 0.40 仍有安全边际;手掌真压钉需贴到 ~0–2 cm,4.5 cm 门槛照样拦</td><td colspan="2" class="small">注意的口子:窗口一旦开启、贴住持续压也计分——如需堵死,给 v5 默认也上 'blows' 臂的每击封顶(blow_cap)</td></tr>
+</table>
+<div class="videos">
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v52-probe-base.mp4"></video>
+<figcaption><b>探针 A · 纯基座下砸</b>:三次全速下压,接触速度 −0.46…−0.48 m/s 全部擦窗而过,钉子进 31.6 mm、得分 0。</figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v52-probe-wrist.mp4"></video>
+<figcaption><b>探针 B · 基座+腕转</b>:接触速度 −0.58…−0.98 m/s,窗口打开(blow_live=1),钉子近打平 47.9 mm——仍 0 分,hand_clear 门 5 cm&lt;6 cm 拒收。</figcaption></figure>
+</div>
+<p class="small"><b>V5.2 待拍板项(实验已给出数据,方案讨论中)</b>:① 两道门的数值修正(hand_clear 0.06→~0.045、v_min 0.5→~0.40,配 blow_cap 堵"开窗后持续压");② 第二段课程——部分 episode 出生在"持锤悬于钉上方"(kp=4 笼已过携带测试);③ hover 改为高度带限制 + 收入预算,达到蓄势高度后让位;④ 高度门控的下降速度引导——到达蓄势高度后,下向速度越快给分越高(封顶在人类包络、基座关节限速内),付"朝正确方向的运动"而非接触,慢压依旧零分。</p>
 
 <h3>V6 方向(已记录,含抓姿 reward 专项调研结论)</h3>
 <table>
