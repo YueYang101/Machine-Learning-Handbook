@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>灵巧手 RL 工程记录:碰撞简化与 Warp 迁移</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --blue:#2a78d6; --green:#2c7a4b; --red:#b4423a; --amber:#9a6b15;
+  --code:#f1f0ea;
+}
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --blue:#3987e5; --green:#4caf7d; --red:#d9695f; --amber:#c99b3f;
+    --code:#232322; }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:860px; margin:0 auto; padding:56px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.8rem; margin:.3em 0 .3em; line-height:1.35; }
+h2 { font-size:1.35rem; margin:2.4em 0 .5em; padding-top:.8em; border-top:1px solid var(--line); }
+h3 { font-size:1.08rem; margin:1.8em 0 .4em; }
+.lede { color:var(--sub); }
+p { margin:.6em 0; }
+code { background:var(--code); border-radius:5px; padding:1px 6px; font-size:.88em;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:10px;
+  padding:14px 16px; overflow-x:auto; font-size:.83rem; line-height:1.6;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:14px 0; font-size:.92rem; display:block; overflow-x:auto; }
+th, td { border:1px solid var(--line); padding:7px 11px; text-align:left; vertical-align:top; }
+th { background:var(--code); white-space:nowrap; }
+.figs { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin:16px 0; }
+@media (max-width:640px){ .figs { grid-template-columns:1fr; } }
+.figs figure { margin:0; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px; }
+.figs img { width:100%; border-radius:8px; display:block; background:#000; }
+.figs figcaption { font-size:.85rem; color:var(--sub); margin-top:7px; line-height:1.5; }
+.tag { display:inline-block; font-size:.76rem; border-radius:99px; padding:1px 10px; margin-right:6px;
+  border:1px solid var(--line); color:var(--sub); vertical-align:2px; }
+.tag.ok { color:var(--green); border-color:var(--green); }
+.tag.bad { color:var(--red); border-color:var(--red); }
+.tag.warn { color:var(--amber); border-color:var(--amber); }
+.callout { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--blue);
+  border-radius:10px; padding:12px 16px; margin:16px 0; font-size:.94rem; }
+.callout.bad { border-left-color:var(--red); }
+.callout.good { border-left-color:var(--green); }
+.small { font-size:.87rem; color:var(--sub); }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+a { color:var(--blue); text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="kicker">YUE YANG · NOTES · 工程记录 · 2026-08-20 → 08-21</div>
+<h1>灵巧手 RL 工程记录:碰撞简化与 Warp 迁移<br><span class="small" style="font-weight:400">从"编译不出来"到 7 分钟一轮 · 坑清单 · 瓶颈解剖 · 版本机制分析</span></h1>
+
+<p class="lede">本页是 <a href="dexhand-rl.html">灵巧手 RL 实验记录</a> 的工程姊妹篇:reward 和 checkpoint 的研究内容在那边,这里只记录训练<b>系统</b>本身——碰撞几何怎么简化的、JAX→Warp 怎么迁的、每个版本崩在哪、瓶颈到底是什么、以及"提出的问题 → 做的优化"的完整对照。</p>
+
+<h2>一 · 碰撞简化:82 个凸包 → 22 个基元</h2>
+
+<h3>三个时代的碰撞几何(同一只手)</h3>
+<div class="figs">
+<figure><img src="assets/dexhand-rl/mesh-visual-palm.png" alt="视觉 mesh">
+<figcaption><b>视觉 mesh</b>(渲染用,从未改动):22 个 STL,你在头显和视频里看到的手。</figcaption></figure>
+<figure><img src="assets/dexhand-rl/mesh-hulls-palm.png" alt="旧碰撞:凸包+mesh">
+<figcaption><b>旧碰撞</b>:掌+拇指基座各 16 个 VHACD 凸包、手指直接用视觉 mesh 兼职碰撞——82 个凸包 / 21.6 万顶点,每条棱都在参与运算。</figcaption></figure>
+<figure><img src="assets/dexhand-rl/mesh-capsules-palm.png" alt="新碰撞:capsule+box">
+<figcaption><b>新碰撞</b>(现役):每个指节一根 capsule、掌/拇指基座各一个 box,共 22 个基元,PCA 程序化拟合。</figcaption></figure>
+</div>
+<p class="small">另一角度:<a href="assets/dexhand-rl/mesh-visual-back.png">视觉</a> · <a href="assets/dexhand-rl/mesh-hulls-back.png">旧碰撞</a> · <a href="assets/dexhand-rl/mesh-capsules-back.png">新碰撞</a>(角度不合适可以重渲)。</p>
+
+<h3>方法与保留物</h3>
+<p>脚本 <code>gen_collision.py</code>:取每个链节视觉 mesh 的顶点云 → PCA 定主轴 → 顶点分位数定尺寸 → 生成单一基元。<b>没动的</b>:视觉 mesh(外观零变化)、显式 <code>&lt;inertial&gt;</code>(质量/惯量即动力学零变化)。效果:接触对 hammer 3260→119、pick 3006→45,mesh 对归零;编译从小时级失败到 20–28 秒。</p>
+
+<h3>牺牲了准确性吗</h3>
+<p>诚实答案:牺牲了<b>形状保真</b>(接触点/法线有毫米级偏差,棱和凹陷没了),没牺牲<b>任务级正确性</b>(动力学零损;接触模型本身的 sim-to-real 误差远大于毫米级形状误差;四次训练 7380–7710 等价复现)。以后若某任务需要指尖棱边细节,只精化指尖那一个 geom 即可。</p>
+
+<h3>自碰撞没有关——而且行业都这么干</h3>
+<p>常见误解:"简化 = 关掉自碰撞"。实际上简化的只是形状,自碰撞开着(<code>conaffinity=3</code>),手指之间 194 对基元碰撞对每步都在算——实测自然姿态下就有 9 个掌骨间接触被实时检测解算。正因为换成了便宜的基元,自碰撞才开得起(旧 mesh 时代曾被迫关掉,基本体化后按 Leap 惯例恢复)。横查业界:</p>
+<table>
+<tr><th>手</th><th>来源</th><th>碰撞方案</th><th>自碰撞</th></tr>
+<tr><td>Leap</td><td>menagerie / playground 上游</td><td>67 个 box,纯基元(指尖也是 box)</td><td>开,381 对</td></tr>
+<tr><td>Shadow(OpenAI 版)</td><td>Gymnasium-Robotics</td><td>16 capsule + 5 box + 1 mesh</td><td>开</td></tr>
+<tr><td>Shadow(官方版)</td><td>menagerie</td><td>29 基元 + 7 mesh(腕/前臂)</td><td>开</td></tr>
+<tr><td>Allegro</td><td>menagerie / dexjoco</td><td>capsule + box</td><td>开</td></tr>
+<tr><td><b>L20(本项目)</b></td><td>—</td><td>21 capsule + box,纯基元</td><td>开,194 对</td></tr>
+</table>
+<p class="small">结论:每指节一根 capsule 是灵巧手 RL 的行业标准(OpenAI 转笔/魔方的 Shadow 就是这么建的);之前的 82 凸包 + 全 mesh 才是异类。Leap/Shadow 出厂即基元,不需要我们的方法;L20 厂商只给视觉 STL,凸包也是我们早期自己 VHACD 的,这次是用更好的方法替换自己的旧方案。</p>
+
+<h2>二 · 编译危机与 JAX/XLA 基线(阶段 0–1)</h2>
+<p>最初任何 L20 任务都编译不出来:XLA 编译要 40–60 GB 主机内存、小时级不收敛,4090(46 GB RAM)被 OOM killer 无声击杀,berlin 上编译成功后又死于装载(<code>std::bad_alloc</code>/段错误)。三层根因逐层拆除:</p>
+<table>
+<tr><th>根因</th><th>修复</th><th>效果</th></tr>
+<tr><td>钉帽 cylinder × 手 mesh 碰撞(MJX 未实现)</td><td>钉帽换同尺寸 box</td><td>能进编译</td></tr>
+<tr><td>手内部 2841 对 mesh×mesh 自碰撞</td><td>先关闭;基本体化后按 Leap 惯例恢复(381 对基元自碰撞的量级)</td><td>图缩小 7 倍</td></tr>
+<tr><td>82 个碰撞凸包 / 21.6 万顶点</td><td>上节的 PCA 基元化</td><td><b>编译 20–28 秒</b>;接触对 3260→119,低于 Leap 的 577</td></tr>
+</table>
+<p class="small">附带修复:hammer 场景 Euler→implicitfast(楔紧接触稳定)、4090 补 80 GB swap、机器分工确立(4090 主力独占,berlin 大显存备份)。</p>
+<p>基本体化后 jax 路线完全可用:hammer 51k steps/s(4090),105.8M 步 ≈ 36 分钟;编译缓存需 <code>JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS=0</code> 才写小条目(大图条目写入仍疑似静默失败,挂账)。第一天全部 reward 迭代(v1→v4)在此后端完成。</p>
+
+<h2>三 · Warp 迁移(阶段 2–3)</h2>
+
+<h3>版本认知——一条今后不会再踩错的规则</h3>
+<pre><code>我们的 env/launcher → mjx API(稳定层,我们只碰这层)
+                       └─ mjwarp 物理 kernel(打包在 mujoco 里,随 mujoco 版本走)
+                            └─ warp-lang 运行时/编译器(必须精确配对:3.6.0↔1.11.1,3.12.0↔1.16.0,
+                               权威来源 = mujoco-mjx[warp] extra 的钉版本)</code></pre>
+<p>4090 双栈并存:<code>Mujoco_playground</code>(生产:mujoco 3.6 + warp 1.11 + jax 0.6.2,服务 jax 基线与已验证 warp 训练)、<code>Mujoco_playground_116</code>(实验:上游 e74217b + mujoco 3.12 + warp 1.16)。</p>
+
+<h3>写/改的文件(jax 路径零改动,warp 是平行孪生;layering 测试全程 33 passed)</h3>
+<table>
+<tr><th>文件</th><th>内容</th></tr>
+<tr><td><code>level_1_run_config/warp_launch.py</code> 新建</td><td>策略层:从 trainer_launch 派生、只换 <code>--impl warp</code> + 固定 kernel 缓存目录;<code>smoke_flags()</code>(1M 步 + <code>--num_videos 0</code>);smoke 时 <code>XLA_PYTHON_CLIENT_PREALLOCATE=false</code> 以便与在跑训练共存</td></tr>
+<tr><td><code>level_3_train_launch/warp.py</code> 新建</td><td><code>smoke_warp()</code>(前台冒烟)+ <code>train_detached_warp()</code>(detached,TB 开)</td></tr>
+<tr><td><code>level_3_evaluation/warp.py</code> 新建</td><td><code>evaluate_checkpoint_warp()</code>:同后端回放,EGL 无头渲染,重 import 全部推迟进函数体</td></tr>
+<tr><td><code>main.py</code> 增量</td><td><code>train-warp</code> / <code>eval-warp</code> 子命令(jax 的 train/eval 一字未动)</td></tr>
+<tr><td>三个 L20 env 配置小改</td><td><code>naccdmax=30*8192</code>;hammer <code>njmax</code> 160→256</td></tr>
+</table>
+<p><b>更新路径</b>:1.11——box 老 venv 本来就能跑,什么都没升,当天 smoke → 完整训练 → 2×2 后端等价验证;1.16——并排新 clone + <code>uv sync --extra cuda</code> + <code>uv pip install mujoco==3.12.0 mujoco-mjx[warp]==3.12.0</code>,生产 venv 全程不动,失败成本 = 删目录。</p>
+
+<h3>坑的完整清单(按疼痛排序)</h3>
+<table>
+<tr><th>#</th><th>坑</th><th>细节与教训</th></tr>
+<tr><td>1</td><td><b>naccdmax 没配(最大的坑)</b></td><td>CCD 缓冲溢出刷 4200 万行警告,三重伤害:接触静默丢弃(reorient reward 15.6 vs jax 81.3,差点误判"warp 训不动");打印本身拖慢吞吐 5 倍(40k→修复后 195k steps/s,"warp 只快 20%"是这个假象);日志按 GB 增长。<b>教训:容量三件套 naconmax/naccdmax/njmax 一个都不能少,溢出不报错、物理悄悄变假。</b></td></tr>
+<tr><td>2</td><td>版本混搭崩溃</td><td>mujoco 3.6 + warp 1.16 → mjx 类型退化成占位符(<code>GraphMode</code> 变 <code>int</code>),put_model 直接 AttributeError。<b>依赖解析器说可解析 ≠ 测试过。</b></td></tr>
+<tr><td>3</td><td><code>MUJOCO_GL=egl</code> 设晚了</td><td>MuJoCo 在 <b>import 时</b>选定 GL 后端,模块顶层 import 链提前加载 mujoco → GLFW → 无头必崩。修复:环境变量先行、重 import 推迟进函数体。</td></tr>
+<tr><td>4</td><td>uv sync 默认不带 cuda extra</td><td>新 venv 的 jax 只有 CPU("Unknown backend cuda")。要 <code>--extra cuda</code>。</td></tr>
+<tr><td>5</td><td>njmax=160 差一口气</td><td>hammer 约束行峰值实测 ~175,6687 次溢出——量小但同属静默丢物理,提到 256。</td></tr>
+<tr><td>6</td><td>margin≠0 撞上 1.16 的 MULTICCD</td><td>mjx 3.12 的 warp 后端不接受 <code>margin≠0</code> 的几何对(kitchen 带 1mm margin,报 NotImplementedError)。修法:场景 fixup 里 margin 归零(1mm margin 只是接触软化技巧,可弃)。</td></tr>
+<tr><td>7</td><td>训练完成后的渲染假失败</td><td>上游脚本收尾渲染视频,headless SSH 下崩掉污染 exit code(训练与 checkpoint 其实都完好)。smoke 加 <code>--num_videos 0</code>;回放走 eval-warp + 无 ffmpeg 时 npz 兜底 + Mac 端编码。</td></tr>
+<tr><td>8</td><td>pgrep -f 自匹配</td><td>ssh 命令行含 "trainer-shim" 字样把自己匹配成"训练在跑",两次假警报(一次差点不敢关机)。</td></tr>
+<tr><td>9</td><td><b>归因坑(认知层,比代码坑更危险)</b></td><td>300M 跑出 2198 平台期,第一反应怪 warp——2×2 对照(jax/warp × seed 1/2 → 7533/7710/7598/7380 同噪声带)证明是任务级 seed 方差。<b>换任何一层之后的异常,先做对照再归因。</b></td></tr>
+</table>
+
+<h3>成绩单</h3>
+<table>
+<tr><th>指标</th><th>简化前</th><th>XLA(jax)</th><th>Warp 1.11</th><th>Warp 1.16</th></tr>
+<tr><td>编译</td><td>小时级失败</td><td>分钟级</td><td>冷 30–90 s / 热秒级</td><td>冷 ~1 分钟 / 热秒级</td></tr>
+<tr><td>吞吐(hammer)</td><td>—</td><td>51k steps/s</td><td>177k</td><td><b>260k</b></td></tr>
+<tr><td>105.8M 步完整训练</td><td>不可行</td><td>36 分钟</td><td>10 分钟</td><td><b>约 7 分钟</b></td></tr>
+</table>
+
+<h2>四 · 瓶颈解剖:延迟受限,不是算力/显存/CPU</h2>
+<p>三档 env 探测(hammer,10M 步)把瓶颈钉死:</p>
+<table>
+<tr><th>num_envs</th><th>steps/s</th><th>10M 步 reward</th><th>GPU util / 功耗</th><th>显存</th></tr>
+<tr><td>4096(现配方)</td><td>177k</td><td><b>254.7</b></td><td>100% / 277 W</td><td>4.5 GB</td></tr>
+<tr><td>8192</td><td>188k(+6%)</td><td>216.9 ↓</td><td>100% / 301 W</td><td>4.7 GB</td></tr>
+<tr><td>16384</td><td>222k(+25%)</td><td>157.7 ↓↓</td><td>100% / 334 W</td><td>6.9 GB</td></tr>
+</table>
+<p>解读:每个物理子步是一条 ~上百个小 kernel 的依赖链(碰撞→约束→求解迭代→积分),链内严格串行;摊下来每 kernel 几十微秒,大头是启动/调度的固定成本——util 显示 100%(队列里永远有 kernel)但功耗只有 277/450 W(每个 kernel 吃不饱算力)。<b>env 翻 4 倍吞吐只涨 25%,而总步数预算固定时 env 翻倍 = 梯度更新减半,样本效率明显掉(255→158)——4096 保持不动。</b></p>
+<p><b>env 加多不需要更多 CPU</b>:CPU 每步提交固定条数的 kernel,与 env 数无关(实测训练进程恒占 1 核,31 核闲置);随 env 涨的只有显存。<b>硬件升级结论</b>:CPU 多核 ❌(1 核没跑满)、内存/显存 ❌(富余)、多 GPU ❌(链条延迟不变)、berlin H200 ❌(主频比 4090 低,延迟受限场景可能反而慢)——唯一对症的是更高频新架构单卡;而最划算的其实是软件升级(1.16 实测白捡 47%)。</p>
+
+<h2>五 · CPU 原生版为什么不卡(与 GPU 的真实分工)</h2>
+<p>实测:Mac 单核跑 L20 手,<b>每步 20 微秒,51k steps/s</b>。teleop 的 500 Hz 实时仿真只占一个核的 1%——不卡不是因为 CPU 并行能力强,是单世界的活儿太少。反直觉对比:4090 warp 在 batch 1024 下 201k steps/s,<b>摊到每个环境只有 ~196 步/秒——单看一个环境,CPU 比 GPU 快 250 倍</b>(GPU 有启动开销、要等整批同步)。GPU 赢的是总吞吐,不是延迟。分工由此天然成立:teleop 用 CPU 原生版(单世界、实时、低延迟),训练用 GPU warp(几千世界、要总吞吐)。</p>
+
+<h2>六 · 1.16 为什么有的快有的慢(源码 diff 结论)</h2>
+<p>直接 diff 两个 venv 的 mjwarp 源码(+57% 代码):新增柔性体碰撞、刚体睡眠、参数升维到 per-world(<code>wp.array2d</code>,为逐环境域随机化铺路)、CCD 改多接触且拒绝 margin。<b>证伪一个流行猜想:CUDA graph 不是 1.16 的功劳</b>——两个版本默认都是 <code>GraphMode.WARP</code>,1.11 就开着;手部 +39~47% 来自 kernel 重写。</p>
+<p><b>快慢分化的机制:不是 geom 数量,是碰撞对的"成分"。</b>专用碰撞函数表两版本一字不差,关键在哪些对不在表里:capsule/box/plane 系列全有专用快函数(手 100% 命中,吃满 1.16 优化 → +39%);cylinder 对 capsule/box/cylinder 没有专用函数,落进通用 CCD 慢路径(厨房 60% 的对,1.16 的 CCD 更准也更贵 → −4%~−15%)。附赠优化方向:kitchen fixup 时把 31 根 cylinder 换成 capsule/box,967 个 CCD 对整体搬进快路径。</p>
+
+<h2>七 · Kitchen 前瞻(多 geom 场景实测)</h2>
+<p>Franka Kitchen(去 Franka)+ L20 的合体模型已在 MjSpec 层拼通(57 body / 238 geom / nv=47,微波炉门、滑柜、旋钮 42 个关节全保留,仿真稳定)。厨房出厂即基元碰撞(89 个活动 geom 全是 box/cylinder/capsule,105 个 mesh 纯视觉)——不需要再做 L20 式简化。实测(batch 1024,物理步):</p>
+<table>
+<tr><th>模型</th><th>geom</th><th>1.11 编译 / 吞吐</th><th>1.16 编译 / 吞吐</th></tr>
+<tr><td>单 L20</td><td>44</td><td>13.1 s / 144.8k</td><td>31.9 s(冷)/ <b>201.0k</b></td></tr>
+<tr><td>单厨房</td><td>194</td><td>31.5 s / 73.8k</td><td>50.3 s / 70.7k</td></tr>
+<tr><td>厨房 + L20</td><td>238</td><td>2.5 s※ / 57.2k</td><td>6.7 s※ / 48.7k</td></tr>
+</table>
+<p class="small">※同进程复用已编 kernel——warp 增量编译的特性展示。结论:kitchen 方向编译完全不是问题(jax 上这种规模编译就劝退),吞吐 2.5× 的代价可控(100M 步 ≈ 30–60 分钟);真正的大头是 env 封装(reward/obs/任务定义)。Warp 的 kernel 缓存是版本键控的 PTX,理论可跨设备 rsync(同 warp 版本),但首编只有分钟级,实际不值得搬。</p>
+
+<h2>八 · 提出的问题 → 做的优化(对照表)</h2>
+<p>这两天的工程决策几乎都由提问驱动;特别标注:<b>#5 的对照实验设计(旧环境只换 seed)是提问者自己提出的,也是整个归因链里最关键的一步</b>。</p>
+<table>
+<tr><th>#</th><th>提出的问题</th><th>由此做的优化/实验</th><th>结果</th></tr>
+<tr><td>1</td><td>Warp 能不能解决编译慢?和 Playground 什么关系?</td><td>梳理 MJX 双后端架构;发现 vendored playground 已集成 warp;建 train-warp 平行工具链</td><td>编译分钟级→秒级,当天落地</td></tr>
+<tr><td>2</td><td>Warp 编译能否存储/跨设备?</td><td>kernel 缓存机制分析 + 固定缓存目录</td><td>版本键控 PTX,可搬但不值得;热启动秒级</td></tr>
+<tr><td>3</td><td>有训练在跑还能再跑吗?</td><td>smoke/eval 关显存预占(<code>PREALLOCATE=false</code>);实测共存</td><td>小任务可共存,第二个完整训练不建议</td></tr>
+<tr><td>4</td><td>warp 会比 jax 训练更快吗?</td><td>同 env 同超参 A/B 基准 + hammer 全管线对比</td><td>3.5–5.8×;顺带揪出 naccdmax 大坑</td></tr>
+<tr><td>5</td><td><b>为什么 reward 不一致?用旧环境换 seed 验证</b></td><td>纯净 HEAD 树对照跑(jax seed-2)+ warp seed-2 判别跑 → 2×2 矩阵</td><td>后端等价证明;300M 平台期定性为 seed 方差</td></tr>
+<tr><td>6</td><td>瓶颈在哪?加 env 要更多 CPU 吗?升什么硬件?</td><td>三档 env 探测 + CPU/GPU 占用实测 + 延迟受限解剖</td><td>4096 保持;硬件升级路线明确(单卡频率>一切)</td></tr>
+<tr><td>7</td><td>1.16 和 1.11 什么区别?为何有快有慢?</td><td>双 venv mjwarp 源码 diff + 碰撞对成分分析</td><td>机制明确;kitchen cylinder→capsule 优化方向免费获得</td></tr>
+<tr><td>8</td><td>L20 简化合理吗?牺牲精度吗?Leap 手指对撞吗?</td><td>碰撞审核 + 行业横查(Leap/Shadow/Allegro)+ 自碰撞实测</td><td>行业标准做法;自碰撞开着且实时工作</td></tr>
+<tr><td>9</td><td>kitchen + L20 能上吗?柜门还能开吗?</td><td>MjSpec 拼装 + 三模型双版本基准 + 关节/碰撞审核</td><td>全绿;margin 坑提前排掉;门可开(头显侧需按 task object 接入)</td></tr>
+<tr><td>10</td><td>CPU 原生版为什么不卡?</td><td>单核单环境实测(20 μs/步)</td><td>teleop/训练分工的量化依据</td></tr>
+</table>
+
+<div class="callout good"><b>方法论沉淀(反复兑现的三条)</b>:①静默失败比报错危险——容量溢出、缓存不写、接触丢弃都不喊一声,必须主动装哨兵;②堵作弊时先问它是不是客观上在当课程,堵坏路要同时修好路;③换任何一层(后端/积分器/reward)之后的异常,先做同条件对照实验再归因。</div>
+
+<footer>
+<a href="index.html">← 返回目录</a> · <a href="dexhand-rl.html">研究实验记录(reward 与 checkpoint)→</a> · 代码:私有仓库 Share-Control-Hand(<code>training/reinforcement_learning/</code>)
+</footer>
+</div>
+</body>
+</html>
