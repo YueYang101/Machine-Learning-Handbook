@@ -269,9 +269,20 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <h3>V5.2.4 · 出生阶梯 + 窗口 0.3 + 引导通向钉子 <span class="tag bad">仍零点火——探索采不出,须直接注入事件</span></h3>
 <p class="small">对症三刀:①<b>出生高度阶梯</b>——钉上方出生随机下移(锤面离钉 ~4–15 cm 均匀分布,实测出生 5.7–14.7 cm 全部稳定持锤),最低的出生点两三步坚决下压即可带速触钉;②<b>窗口下沿 0.4→0.3</b>——脚本握持接触 0.45–0.63,策略的粗糙首版 0.3–0.45 也能开始拿分再被 strike 收入精化(慢压带 0.01–0.1,余量 3 倍);③<b>descend × 逼近权重</b> clip(1−h/0.30):贴近钉子的下压比高处抖动多拿 ~5 倍,梯子每一级都通向钉子。双向门:握持脚本击打 2 击 244 分(探针本身补了 xy 伺服——V5.2.3 策略停偏 3.8 cm,纯竖直下压差 2 mm 错过 4 cm 门,属探针脆弱非环境问题);抛砸零分且第 6 步终结。</p>
 <p class="small"><b>V5.2.4 结果(105.8M 步)</b>:仍零点火;descend 收入如设计从 3–6 降到 1.4–2.3(高处抖动不再来钱),但策略没有转成下压。随后的边界实验推翻了"物理勉强"假说:<b>从 5.8 cm 静止出生,满舵下压 2 步即达 −0.53 m/s、开窗、进账 6.6 mm(≈66 分)</b>——物理上触手可及,4096 env × 105.8M 步的高斯探索却从未把它放大。结论升级:<b>不能等探索撞上事件,要把事件直接注入数据分布</b>。</p>
-<h3>V5.2.5 · mid-swing 出生:击中事件注入数据分布 <span class="tag warn">2026-08-22 深夜,12/12 零策略得分,训练中</span></h3>
+<h3>V5.2.5 · mid-swing 出生:击中事件注入数据分布 <span class="tag ok">真实握持挥击点火——全链条打通</span></h3>
 <p class="small">钉上方出生从"静止悬停"升级为"<b>挥击中段</b>":出生时基座+锤已带 0–0.5 m/s 下向速度,且 base-z 伺服目标已在钉顶下方 2 cm——kp=300 的伺服会<b>把挥程带完</b>(第一版只给初速度不改目标,伺服立刻把速度拽停,零策略 0/12 得分;改目标后 <b>12/12 零策略出生都完成合法击打,6.3–6.9 mm,零误终结</b>)。15% 的 episode 从出生起必然经历"击中→拿 60+ 分",价值函数无法再忽略挥击的存在;掌握价值后向前回链学习进近。这是课程哲学的最后一级:状态课程(V4 in-hand)→ 位置课程(V5.2 钉上方)→ 高度课程(V5.2.4 阶梯)→ <b>状态+速度+意图课程(V5.2.5)</b>。</p>
-<p class="small"><b>后续候选(V5.2.6+)</b>:从单击到 ~3 击打平——①拉长 episode;②退避-再击塑形;③blow_bonus 递增。之后:V5.3 握远给分,V6 抓姿先验/指腹门控。</p>
+<p><b>V5.2.5 结果(105.8M 步)——真实握持挥击点火,全链条打通</b>:strike 稳定 <b>0.39 raw ≈ 195 分/集</b>(出生注入的底线只有 ~0.02:策略在自由出生里也在砸),<b>合法击打 ~0.99 次/集</b>,drive 80/集,钉深稳定 5–7,grip 222/集 = <b>全程紧握</b>(抛砸洞封死状态下的每一分都是握持完成),掉锤 ≈0.01,总分 1868。仪表回放钉死证据:<b>接触瞬间 palm–grip 1.5 cm、−1.22 m/s 开窗</b>,15 步钉入 26.8 mm,全程 palm–grip 0.8–1.5 cm;<b>纯地面出生的自由 episode 走完整链</b>——抓锤 → 运送 → 握持下砸,钉入 28.9 mm。与 V5.2.2 假点火的本质区别:当时洞开着、grip 项不存在;这次洞封着,握持是得分的必要条件。尚差:success 0(打平需 ~3 击,当前 ~1 击/集)。</p>
+<figure style="margin:14px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;">
+<img src="assets/dexhand-rl/hammer-v525-curve.png" alt="V5.2.5 点火曲线" style="width:100%;border-radius:8px;display:block;">
+<figcaption class="small" style="margin-top:7px;">封洞后的三个小版本:V5.2.3/V5.2.4 无论怎么修门、加引导、降出生高度都是零;V5.2.5 把"击中"直接放进 15% episode 的出生状态(带速度、带意图),strike 33M 起爬升并转移到自由 episode——<b>探索缺口不是靠等,是靠注入</b>。</figcaption>
+</figure>
+<div class="videos">
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v525-fullchain.mp4"></video>
+<figcaption><b>V5.2.5 全链条</b>(纯地面出生,return 2196,钉入 28.9 mm):抓锤 → 运到钉上方 → 握持下砸——本任务的完整动作链首次在无课程辅助的 episode 里出现。</figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v525-nailbirth.mp4"></video>
+<figcaption><b>V5.2.5 钉上方出生</b>(return 2324,钉入 29.3 mm):挥击中段出生,握持完成击打并继续压入——palm–grip 全程 &lt;1.5 cm。</figcaption></figure>
+</div>
+<p class="small"><b>后续候选(V5.2.6+)</b>:从单击到 ~3 击打平(success 点火)——①拉长 episode(250→400 步,给"退避-再蓄势-再击"留时间);②退避塑形(击后 hover/descend 重新武装);③blow_bonus 递增。之后:V5.3 握远给分,V6 抓姿先验/指腹门控。</p>
 <p class="small"><b>V5.3 方向(排在挥击点火之后)</b>:"握得越远分越高"的持续项——手掌沿柄轴离锤头的距离连续给分,杠杆越长力矩越大,±2 N 握不住就掉锤终结,物理自己当惩罚;同时长杠杆放大腕转的锤面速度,与冲击窗口正协同。</p>
 
 <h3>V6 方向(已记录,含抓姿 reward 专项调研结论)</h3>
