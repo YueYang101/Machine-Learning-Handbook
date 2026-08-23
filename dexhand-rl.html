@@ -51,6 +51,11 @@ th { background:var(--code); white-space:nowrap; }
 .callout.bad { border-left-color:var(--red); }
 .callout.good { border-left-color:var(--green); }
 .small { font-size:.87rem; color:var(--sub); }
+.tasknav { display:grid; grid-template-columns:1fr; gap:12px; margin:22px 0; }
+.tasknav .tcard { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 16px; }
+.tasknav .tname { font-weight:600; }
+.tasknav .vchips { margin-top:6px; line-height:2.1; }
+.tasknav .vchips a { display:inline-block; font-size:.78rem; border:1px solid var(--line); border-radius:99px; padding:0 9px; margin-right:5px; color:var(--blue); }
 footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
 a { color:var(--blue); text-decoration:none; }
 </style>
@@ -62,7 +67,28 @@ a { color:var(--blue); text-decoration:none; }
 
 <p class="lede">平台:LinkerHand L20(21 关节 / 16 执行器,5 组欠驱动耦合)装在 6 自由度浮动基座上,MJX 大规模并行(4096 环境),brax PPO,单卡训练。两天里两个任务从"编译不出来"走到"训练收敛",hammer 的 reward 走过五个版本。本页是<b>研究记录</b>:每个 reward 版本的效果视频、具体设计、失败解剖与修改方向。训练系统本身——碰撞简化(附 mesh 对比图)、JAX→Warp 迁移、版本坑清单、瓶颈解剖——在姊妹篇 <a href="dexhand-engineering.html">工程记录</a>。</p>
 
-<h2>任务一 · L20CubePick——抓方块放到空中目标点(基线 A)</h2>
+
+<h2 style="border-top:none;margin-top:1.2em;">任务导航</h2>
+<div class="tasknav">
+<div class="tcard">
+  <div class="tname"><a href="#task-pick">任务一 · L20CubePick</a> <span class="tag ok">已收敛 5685 / 92%</span></div>
+  <div class="small">场景:地面一个 70 mm 方块 + 空中随机目标点。任务:抓起并保持在目标点(基线 A,与 LeapCubePick 逐项同超参)。</div>
+  <div class="vchips"><a href="#pick-result">结果与视频</a></div>
+</div>
+<div class="tcard">
+  <div class="tname"><a href="#task-hammer">任务二 · L20HammerNail</a> <span class="tag ok">V5.2.5 全链条打通</span></div>
+  <div class="small">场景:地面一把锤(胶囊柄+钢头)+ 矮板上竖直滑轨钉(打到哪停到哪)。任务:抓锤、运到钉上方、握持下砸把钉打进。十四个版本的 reward 演化——每一版都是一类教科书级陷阱。</div>
+  <div class="vchips">
+    <a href="#hammer-v1">v1 瞬时门</a><a href="#hammer-v21">v2.1 锁存链</a><a href="#hammer-v3">v3 合法记账</a><a href="#hammer-v4">v4 课程</a><a href="#hammer-v5">v5 冲击窗口</a><a href="#hammer-v51">V5.1 工具级手</a><a href="#hammer-v52-probe">裁判实验</a><a href="#hammer-v52">V5.2 门修正</a><a href="#hammer-v521">V5.2.1 下降引导</a><a href="#hammer-v522">V5.2.2 预算</a><a href="#hammer-v523">V5.2.3 握持</a><a href="#hammer-v524">V5.2.4 阶梯</a><a href="#hammer-v525">V5.2.5 注入</a><a href="#hammer-postmortem">形态复盘</a><a href="#hammer-v6">V6 方向</a>
+  </div>
+</div>
+<div class="tcard">
+  <div class="tname"><a href="#task-stack">任务三 · L20CubeStack</a> <span class="tag warn">V1 建立,训练中</span></div>
+  <div class="small">场景:左侧三个大小递减的方块(70/55/40 mm,三种抓握开度)+ 右侧地面槽位标记。任务:依次搬运并垒塔(大→中→小);"放好"要求手离开——抱着塔不算。</div>
+  <div class="vchips"><a href="#task-stack">场景与 reward 设计</a><a href="#stack-v1">V1</a></div>
+</div>
+</div>
+<h2 id="task-pick">任务一 · L20CubePick——抓方块放到空中目标点(基线 A)</h2>
 <p><span class="tag ok">已收敛</span><span class="tag">与 LeapCubePick 逐项同超参的孪生任务</span></p>
 <p>基线 A 的问题是"L20 这只欠驱动手到底能不能学"。参照系是上游已验证的 LeapCubePick(锚点:episode 内目标点步数 174/200 = 87%)。</p>
 
@@ -75,7 +101,7 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td>near / very_near</td><td>10 + 20</td><td>接近目标点的大额奖励</td></tr>
 </table>
 
-<h3>结果</h3>
+<h3 id="pick-result">结果</h3>
 <p>105.8M 步(berlin H200,与他人共卡):最终 eval reward <b>5685</b>,目标点步数 <b>184.7/200(92%)</b>——<b>超过 Leap 锚点本身</b>,远超合格线(Leap 的 50% = 87/200)。回放 6 种子 284–288/300 步在目标点,稳定性极高。</p>
 <div class="videos">
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/pick-best.mp4"></video>
@@ -85,11 +111,11 @@ a { color:var(--blue); text-decoration:none; }
 </div>
 <p class="small"><b>局限与方向</b>:单 seed;正式基线结论需 ≥3 seed(协议已定,warp 后每 seed 仅 ~10 分钟)。reward 本身无已知问题。</p>
 
-<h2>任务二 · L20HammerNail——拿锤子把钉子打进木板(工具使用)</h2>
+<h2 id="task-hammer">任务二 · L20HammerNail——拿锤子把钉子打进木板(工具使用)</h2>
 <p><span class="tag warn">五个 reward 版本的完整演化</span><span class="tag">首个工具任务</span></p>
 <p>场景:地面上一把锤(胶囊柄 + 钢盒头)、矮板上一根竖直滑轨钉(重力补偿,打到哪停到哪,全程 5 cm)。难点不在物理,在 reward:五个版本每一版都暴露一种教科书级的 reward 设计陷阱。</p>
 
-<h3>v1 · 瞬时二值门 <span class="tag bad">失败:零成功</span></h3>
+<h3 id="hammer-v1">v1 · 瞬时二值门 <span class="tag bad">失败:零成功</span></h3>
 <pre><code>reach     = 1 − tanh(5·‖palm − hammer‖)          # 永远在线
 lifted    = (hammer_z &gt; 5cm)                      # 瞬时二值门
 hold / face_nail / drive / success  全部 × lifted  # 藏在门后</code></pre>
@@ -102,7 +128,7 @@ hold / face_nail / drive / success  全部 × lifted  # 藏在门后</code></pre
 </div>
 <p class="small"><b>修改方向(当时定的)</b>:调研 Adroit / MetaWorld v2 / DexPBT 的三派成功配方 → 密集项永不藏在门后、阶段门用锁存不用瞬时判据。</p>
 
-<h3>v2.1 · 锁存链 staged reward <span class="tag warn">成功但作弊:手腕压钉</span></h3>
+<h3 id="hammer-v21">v2.1 · 锁存链 staged reward <span class="tag warn">成功但作弊:手腕压钉</span></h3>
 <pre><code>reach(举起后停发) + fingers(五指尖收拢,拇指×3)
   → grasp 锁存(指尖均距&lt;6cm ∧ 掌距&lt;12cm)
   → lift 斜坡(0→15cm 连续) + 首过 10cm 一次性 +25 + lifted 锁存
@@ -117,7 +143,7 @@ hold / face_nail / drive / success  全部 × lifted  # 藏在门后</code></pre
 </div>
 <p class="small"><b>修改方向</b>:给深度"记对功劳"——只有锤面造成的深度增量才计分。</p>
 
-<h3>v3 / v3.1 · 合法深度记账 <span class="tag bad">堵住作弊,却饿死了举升</span></h3>
+<h3 id="hammer-v3">v3 / v3.1 · 合法深度记账 <span class="tag bad">堵住作弊,却饿死了举升</span></h3>
 <pre><code># 合法深度累计器:每步深度增量,只有同时满足才计入 —
 #   锤面在钉顶 4cm 内 ∧ 手掌+五指尖全部离钉顶 6cm 外 ∧ lifted
 strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
@@ -126,7 +152,7 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <p>手压从此在所有通道零分——但训练平台在 ~400 分(纯"趴着抓住"的收益),举升锁存达成率只有 4–8%。<b>原因发人深省:v2.1 的作弊客观上是课程</b>——为了压钉必须先举锤,30 分/步的压钉大奖把策略拉过了举升关;堵掉之后,诚实的举后收益(3 分/步)打不过安逸趴着(2 分/步)+ 掉锤恐惧(−50)。v3.1 配平(reach 抓住即停、举后收益×3、掉锤 −50→−10)方向正确但不够:纯探索翻不过"持续举稳"这道墙。无视频(两版都在平台期被终止)。</p>
 <p class="small"><b>修改方向</b>:不能只堵坏路,要修好路——后段状态必须被直接采样到。</p>
 
-<h3>v4 · implicitfast + pregrasp 课程 <span class="tag ok">合法打平,6/6</span></h3>
+<h3 id="hammer-v4">v4 · implicitfast + pregrasp 课程 <span class="tag ok">合法打平,6/6</span></h3>
 <pre><code>① 场景积分器 Euler → implicitfast:双胶囊楔紧接触在 5 迭代 Euler 下必炸、
    implicitfast 下全稳 —— 训练 NaN 类问题根治(pick 场景保持 Euler 对齐 Leap)
 ② pregrasp 课程(TCDM/PGDM):离线搜索一个 800 步稳定的"指笼握锤"姿态
@@ -141,7 +167,7 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <figcaption><b>v4 worst</b>(seed 1005,239/300):同样成功,动作稍拖沓。 <a href="assets/dexhand-rl/hammer-v4-worst.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
 
-<h3>v4 的现存局限 → 下一轮四臂对照(已实现,待跑)</h3>
+<h3 id="hammer-v4-limits">v4 的现存局限 → 下一轮四臂对照(已实现,待跑)</h3>
 <p>四条肉眼可见的问题:①锤子只是勉强拿住;②钉子近乎一次"推"到底;③没有抡/蓄势的过程;④抓握手势不像人。对应的迭代臂(同一 env 类,<code>--env-name</code> 切换,四臂 PPO 超参逐项相同、TensorBoard 指标名一致,可直接叠图):</p>
 <table>
 <tr><th>env 名</th><th>机制</th><th>针对</th><th>文献依据</th></tr>
@@ -152,7 +178,7 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 </table>
 <p class="small">更远的方向:teleop 录制真人抓锤姿态替换指笼 pregrasp(本项目独有资产);人类包络校验(基座速度/冲量分布须"人能做");长程组合任务"开柜→放入"(PandaOpenCabinet + pick 元素,复用锁存+记账骨架)。</p>
 
-<h3>v5 · 冲击窗口 + 人类包络 + 值得抡的锤子 <span class="tag bad">拐杖姿势:静力学不可行</span></h3>
+<h3 id="hammer-v5">v5 · 冲击窗口 + 人类包络 + 值得抡的锤子 <span class="tag bad">拐杖姿势:静力学不可行</span></h3>
 <div class="callout bad"><b>两条物理路线的证伪(动手前先测,都留了数据)</b>:①<b>力阈值不可行</b>——MuJoCo 的 <code>frictionloss</code> 是交给约束求解器的软约束,本配置下输出饱和在 ~44 N,设 90 还是 900 都拦不住 50 N 慢压(最小模型连行程限位都被穿透);②<b>阻尼当力阈值也不可行且方向相反</b>——粘性力 ∝ 速度,damping 越大惩罚快冲击越狠、慢推照样推平(标定实测:damping 4000 时慢推 10 s 仍到 4.9 cm,单击反而只剩 0.9 mm)。<b>damping 的正确用法是"每击进给限制器"</b>:它管不住慢推(交给 reward),但让每一击的咬入有物理上限——多次锤击从物理里自然涌现。</div>
 <table>
 <tr><th>改动</th><th>内容</th><th>标定依据</th></tr>
@@ -178,7 +204,7 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <div class="callout bad"><b>解剖:一个被指标掩盖的物理不可行</b>。0.59 kg 锤的钢头挂在握点 12.5 cm 外,重力矩 ~0.5 N·m;±1 N 的手指提供不了悬臂端所需的 ~18 N 级切向握力——<b>这只手物理上握不住水平悬空的重锤</b>。训练学到的"举稳"实为拐杖姿势:柄端翘高满足 <code>lifted</code> 锁存(它只看锤体原点高度),锤头拄地。课程姿态实验独立证实:指笼悬空后 600 步内被下垂的锤头拽脱手。教训:<b>加难物理之前,先做"任务在该形态下是否可行"的静力学验算</b>;锁存判据要盯真正的目标量(锤头高度,不是锤体原点)。</div>
 <p class="small"><b>V5.1 候选路线</b>(2026-08-22 采纳④混合方案,见下节):① 竖持课程;② 工具级手 fork(±3 N);③ 锤回轻 + choke up;④ = ②+③ 折中:±2 N + 0.45 kg + 握点 0.08。</p>
 
-<h3>V5.1 · 混合方案:工具级手 + 0.45 kg + choke up + 锤头口径 <span class="tag ok">举升解决;挥击是下一关</span></h3>
+<h3 id="hammer-v51">V5.1 · 混合方案:工具级手 + 0.45 kg + choke up + 锤头口径 <span class="tag ok">举升解决;挥击是下一关</span></h3>
 <div class="callout"><b>静力学扫描的两个反转(2026-08-22,动手前先扫,全部留了数据)</b>:
 ①<b>指力上限根本不是当时的瓶颈</b>——kp=2 的位置伺服在指笼姿态下只输出 kp·误差 ≈ 0.6 N,forcerange ±1→±3 N 扫过去结果逐位相同:<b>力限从未被打满</b>。真正的开关是 <b>kp 2→4</b>;kp=4 之后 ±2 N 才成为决定性边界——±1 N 在 +10 cm 携带测试中甩锤(palm–grip 18 cm),±2 N 稳持近水平(1.6 cm、下垂仅 ~9°,连 0.59 kg 原锤都持得住);kp=6 又过头——合笼时把柄挤飞。
 ②<b>V5 的 in-hand 课程姿态本身就是病根</b>——检查发现它把锤头近乎竖直吊着(柄轴 z 分量 −0.83)且在缓慢滑脱:<b>课程从出生教的就是拐杖姿势</b>。V5.1 重搜:横掌 power grasp(柄沿掌宽方向、锤头拇指侧、握点 0.08 = 柄质心 → 柄自重零力矩),零重力合笼 f=0.8 → 恢复重力 2400 步沉降静止,下垂 9°,+10 cm 携带不滑。</div>
@@ -200,7 +226,7 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v51-worst.mp4"></video>
 <figcaption><b>V5.1 worst</b>(seed 1002,return 2844):与 best 几乎同一行为——策略方差塌缩到"稳定持锤悬停"这一个模式。 <a href="assets/dexhand-rl/hammer-v51-worst.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
-<h3>V5.2 前置 · 裁判实验:脚本化下砸 <span class="tag bad">两道门叠着焊死了挥击</span></h3>
+<h3 id="hammer-v52-probe">V5.2 前置 · 裁判实验:脚本化下砸 <span class="tag bad">两道门叠着焊死了挥击</span></h3>
 <p>训练前不改任何代码,先回答一个问题:<b>"砸"这个动作在当前 reward 口径下到底能不能拿到分?</b> 方法:让训好的策略先跑 75 步到它惯常的悬停位,然后接管控制,手写"全速下降 → 回抬"三个循环(基座满舵;变体加腕转),逐步记录锤面速度、手–钉距离和每道记分门的开合。</p>
 <div class="callout bad"><b>结论:策略不是"不想砸",是砸了也一分拿不到——两道门叠着焊死</b>。
 ①<b>冲击窗口下沿压在动作权限之上</b>:基座限速 0.02 m/步 ÷ 0.04 s = 0.5 m/s,恰好等于窗口下沿——纯基座下砸三次接触速度 −0.48/−0.46/−0.46 m/s,<b>每次都差 0.02–0.04 m/s,窗口从未打开</b>(而钉子被物理打进了 31.6 mm,零分);叠加腕转杠杆能到 −0.58…−0.98 m/s,窗口开了(blow_live=1)——但仍然零分,因为:
@@ -217,7 +243,7 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v52-probe-wrist.mp4"></video>
 <figcaption><b>探针 B · 基座+腕转</b>:接触速度 −0.58…−0.98 m/s,窗口打开(blow_live=1),钉子近打平 47.9 mm——仍 0 分,hand_clear 门 5 cm&lt;6 cm 拒收。 <a href="assets/dexhand-rl/hammer-v52-probe-wrist.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
-<h3>V5.2 · 门修正 + hover 预算 + 钉上方课程 <span class="tag bad">门开了,策略仍不下探——缺下降梯度</span></h3>
+<h3 id="hammer-v52">V5.2 · 门修正 + hover 预算 + 钉上方课程 <span class="tag bad">门开了,策略仍不下探——缺下降梯度</span></h3>
 <table>
 <tr><th>改动</th><th>内容</th><th>依据</th></tr>
 <tr><td>窗口下沿 0.5→0.4</td><td>接触瞬间锤面下向速度 ≥0.4 m/s 即开窗(上沿 2.5 人类包络不动)</td><td>探针实测基座权限接触速度 0.46–0.48;慢压只有 0.01–0.24,margin 保住</td></tr>
@@ -239,10 +265,10 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v52-best.mp4"></video>
 <figcaption><b>V5.2 best</b>(seed 1001,return 1983):行为与 V5.1 相同的稳定持锤悬停;高度带已把"举出画面"拉回窗内。 <a href="assets/dexhand-rl/hammer-v52-best.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
-<h3>V5.2.1 · 下降引导项 <span class="tag bad">引导被 hold 年金压制——权重打不过罚款</span></h3>
+<h3 id="hammer-v521">V5.2.1 · 下降引导项 <span class="tag bad">引导被 hold 年金压制——权重打不过罚款</span></h3>
 <p><b>设计</b>:<code>descend = lifted × 对准(xy 长尾容差) × clip(−face_vz, 0, 2.5)/2.5</code>,权重 2/步——只在举起且锤面对准钉上方时,按下向速度<b>线性</b>给分,封顶就是人类包络(2.5 m/s),超包络另有 overspeed 兜底。付的是"朝击打方向的运动",不付接触、不付深度:慢压实测 0.01–0.24 m/s,拿到的引导分≈0;防刷分析——就算学成"钉上方带速上下抖动",那本身就是准锤击动作,迟早以合规速度撞进冲击窗口触发 strike+bonus,刷分陷阱通向正确行为。仅 v5 默认臂携带(其余四臂为 0,TensorBoard 同名指标可对照)。本地验证:强制下压 10 步 descend 进账 1.5 raw、其余四臂恒 0、52 项测试全绿。<b>门测试(训前纪律)</b>:脚本下砸三次全开窗、计 2 击、strike 141 分,descend 在下砸过程进账 12.7 分——引导梯度确认存在后放行训练。</p>
 <p><b>V5.2.1 结果(105.8M 步)</b>:方向对了、剂量不够。strike 火花变频繁(66–89M 三连 eval 都有 blow_bonus,V5.2 全程只有 2 次孤立火花),descend 每集收 ~1.1 raw(小幅下探确实在发生)——但钉上方出生诊断最低仍只到 <b>13.8 cm</b>(V5.2 是 14.7),零击。<b>对抗项解剖</b>:<code>hold</code>(scale 3)按"锤子静止"给分,是又一个每集 171–193 分的年金;下砸时速度一起来,hold 从 0.77/步跌到 ~0.2——<b>下砸每步被罚 ~1.7 分,descend(scale 2)在 0.5 m/s 只补 0.4 分,引导付的钱打不过稳定项的罚款</b>,策略学成"探 1 cm 就缩回"。v4 时代教稳定携带的项,现在成了挥击的天敌——与 hover 年金完全同源的病。</p>
-<h3>V5.2.2 · hold 也改预算制 + descend 加倍 <span class="tag ok">挥击点火——策略第一次主动砸钉</span></h3>
+<h3 id="hammer-v522">V5.2.2 · hold 也改预算制 + descend 加倍 <span class="tag ok">挥击点火——策略第一次主动砸钉</span></h3>
 <p class="small">同一"预算哲学"的第二次应用:<b>hold 预算 45 raw/集</b>(≈60 步的量——稳定是学费,不是终身罚款挥击的年金);<b>descend 2→4</b>(预算耗尽后,1 m/s 的对准下砸净收益转正)。其余全部冻结。门测试:1 合法击、descend 正常进账后放行。</p>
 <p><b>V5.2.2 结果(105.8M 步)——挥击点火</b>:strike 从 33M 起持续爬升至 <b>~180 分/集</b>,<b>合法击打 ~0.86 次/集</b>(V5.2 全程为零),drive 流 64 分/集,钉深累计 6.2–6.6(钉被打进并留在深处),掉锤率仍 ~0.03、超速 0。descend 引导的轨迹印证桥梁设计:33M 达峰(5.8)后回落到 2.7——<b>策略从"收引导分"过渡到"高效击打",梯子用完自己撤了</b>。钉上方出生诊断:锤面最低 <b>−1.5 cm(真实砸中)</b>、单集钉入 <b>37.2 mm</b>——对比 V5.2 同一诊断的"14.7 cm 纹丝不动"。尚差:success 仍 0(打平需 45 mm 合法深度 ≈ 3 击,当前平均 ~1 击/集)——从"会砸"到"连砸打平"是下一小步。</p>
 <figure style="margin:14px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;">
@@ -256,7 +282,7 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <figcaption><b>V5.2.2 best</b>(seed 1004,return 1649):从地面抓锤、运到钉上方、下砸——完整链条首次出现在自由出生的episode里。 <a href="assets/dexhand-rl/hammer-v522-best.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
 <div class="callout bad"><b>回放复盘揪出的新 hacking(人看视频发现的,指标没报警)</b>:相当一部分"击打"其实是<b>松手抛砸</b>——运到钉上方后张开指笼,让锤自由落体砸钉。从 15 cm 释放接触速度 ≈1.7 m/s,轻松落在窗口正中;而握持基座下压只有 0.46–0.48 m/s 擦下沿——松手是满足速度窗口<b>物理上最省力的路</b>。且无一道门要求"击中时锤在手":lifted 是锁存、hand_clear 反被松手满足、descend 付的是锤面速度(自由落体照付)、slip 终结门槛 20 cm 够不到。抓握不稳是结果不是原因:<b>握紧在该账本下没有额外收益</b>。</div>
-<h3>V5.2.3 · 持续握持奖励 + 脱手即终结 <span class="tag warn">洞封住了——同时证明 V5.2.2 的"点火"全是抛砸</span></h3>
+<h3 id="hammer-v523">V5.2.3 · 持续握持奖励 + 脱手即终结 <span class="tag warn">洞封住了——同时证明 V5.2.2 的"点火"全是抛砸</span></h3>
 <table>
 <tr><th>改动</th><th>内容</th><th>防 hack 逻辑</th></tr>
 <tr><td><b>grip 持续项</b>(scale 1)</td><td>palm 到<b>锤柄中心</b>(0.08 = grip site)距离的连续奖励:2 cm 内满额,~10 cm 衰减到零,抓住后全程在线</td><td>握持挥击 palm–grip 只有 1.5–2.7 cm——此项<b>付满整个挥击过程</b>,不惩罚运动(与 hold 的关键区别);抛掷期间持续流血</td></tr>
@@ -266,10 +292,10 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 </table>
 <p class="small"><b>双向门测试(训前纪律,新增反门)</b>:正门——握持脚本击打照常拿分(2 击、79 分、未被误判脱手);反门——脚本化松手抛砸<b>第 6 步即被脱手终结,strike/bonus 零分、钉未被碰到</b>。两门全绿放行训练。正确抓姿的引导(指腹 touch 门控/姿态先验)按计划仍留 V6。</p>
 <p><b>V5.2.3 结果(105.8M 步)</b>:洞封得干净——grip 全程 ~222/集(锤紧握在手)、掉锤 ≈0;但 strike/blow_bonus <b>整场归零</b>:V5.2.2 的"点火"经此对照被证明<b>几乎全部是抛砸</b>。行为退回"握紧 + 钉上方高处小幅抖动收 descend"(3–6/集)。钉上方出生诊断:最低下探 <b>7.6 cm</b>——版本轨迹 14.7 → 13.8 → 7.6,握持下探在逼近,但差 7 cm 不敢触钉。三个残余原因:①descend 在高处抖动照拿分,不需要真逼近;②谨慎接近会减速,到达时低于 0.4 反而零分;③固定 15 cm 出生点要求 0.3 s 连贯满舵下压,超出探索采样能力。</p>
-<h3>V5.2.4 · 出生阶梯 + 窗口 0.3 + 引导通向钉子 <span class="tag bad">仍零点火——探索采不出,须直接注入事件</span></h3>
+<h3 id="hammer-v524">V5.2.4 · 出生阶梯 + 窗口 0.3 + 引导通向钉子 <span class="tag bad">仍零点火——探索采不出,须直接注入事件</span></h3>
 <p class="small">对症三刀:①<b>出生高度阶梯</b>——钉上方出生随机下移(锤面离钉 ~4–15 cm 均匀分布,实测出生 5.7–14.7 cm 全部稳定持锤),最低的出生点两三步坚决下压即可带速触钉;②<b>窗口下沿 0.4→0.3</b>——脚本握持接触 0.45–0.63,策略的粗糙首版 0.3–0.45 也能开始拿分再被 strike 收入精化(慢压带 0.01–0.1,余量 3 倍);③<b>descend × 逼近权重</b> clip(1−h/0.30):贴近钉子的下压比高处抖动多拿 ~5 倍,梯子每一级都通向钉子。双向门:握持脚本击打 2 击 244 分(探针本身补了 xy 伺服——V5.2.3 策略停偏 3.8 cm,纯竖直下压差 2 mm 错过 4 cm 门,属探针脆弱非环境问题);抛砸零分且第 6 步终结。</p>
 <p class="small"><b>V5.2.4 结果(105.8M 步)</b>:仍零点火;descend 收入如设计从 3–6 降到 1.4–2.3(高处抖动不再来钱),但策略没有转成下压。随后的边界实验推翻了"物理勉强"假说:<b>从 5.8 cm 静止出生,满舵下压 2 步即达 −0.53 m/s、开窗、进账 6.6 mm(≈66 分)</b>——物理上触手可及,4096 env × 105.8M 步的高斯探索却从未把它放大。结论升级:<b>不能等探索撞上事件,要把事件直接注入数据分布</b>。</p>
-<h3>V5.2.5 · mid-swing 出生:击中事件注入数据分布 <span class="tag ok">真实握持挥击点火——全链条打通</span></h3>
+<h3 id="hammer-v525">V5.2.5 · mid-swing 出生:击中事件注入数据分布 <span class="tag ok">真实握持挥击点火——全链条打通</span></h3>
 <p class="small">钉上方出生从"静止悬停"升级为"<b>挥击中段</b>":出生时基座+锤已带 0–0.5 m/s 下向速度,且 base-z 伺服目标已在钉顶下方 2 cm——kp=300 的伺服会<b>把挥程带完</b>(第一版只给初速度不改目标,伺服立刻把速度拽停,零策略 0/12 得分;改目标后 <b>12/12 零策略出生都完成合法击打,6.3–6.9 mm,零误终结</b>)。15% 的 episode 从出生起必然经历"击中→拿 60+ 分",价值函数无法再忽略挥击的存在;掌握价值后向前回链学习进近。这是课程哲学的最后一级:状态课程(V4 in-hand)→ 位置课程(V5.2 钉上方)→ 高度课程(V5.2.4 阶梯)→ <b>状态+速度+意图课程(V5.2.5)</b>。</p>
 <p><b>V5.2.5 结果(105.8M 步)——真实握持挥击点火,全链条打通</b>:strike 稳定 <b>0.39 raw ≈ 195 分/集</b>(出生注入的底线只有 ~0.02:策略在自由出生里也在砸),<b>合法击打 ~0.99 次/集</b>,drive 80/集,钉深稳定 5–7,grip 222/集 = <b>全程紧握</b>(抛砸洞封死状态下的每一分都是握持完成),掉锤 ≈0.01,总分 1868。仪表回放钉死证据:<b>接触瞬间 palm–grip 1.5 cm、−1.22 m/s 开窗</b>,15 步钉入 26.8 mm,全程 palm–grip 0.8–1.5 cm;<b>纯地面出生的自由 episode 走完整链</b>——抓锤 → 运送 → 握持下砸,钉入 28.9 mm。与 V5.2.2 假点火的本质区别:当时洞开着、grip 项不存在;这次洞封着,握持是得分的必要条件。尚差:success 0(打平需 ~3 击,当前 ~1 击/集)。</p>
 <figure style="margin:14px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;">
@@ -282,7 +308,7 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <figure><video controls loop muted playsinline preload="metadata" src="assets/dexhand-rl/hammer-v525-nailbirth.mp4"></video>
 <figcaption><b>V5.2.5 钉上方出生</b>(return 2324,钉入 29.3 mm):挥击中段出生,握持完成击打并继续压入——palm–grip 全程 &lt;1.5 cm。 <a href="assets/dexhand-rl/hammer-v525-nailbirth.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 </div>
-<h3>单击形态复盘:是"加速后按进去",不是"一下一下锤进去"</h3>
+<h3 id="hammer-postmortem">单击形态复盘:是"加速后按进去",不是"一下一下锤进去"</h3>
 <p>看回放(<a href="assets/dexhand-rl/hammer-v525-nailbirth.mp4">钉上方出生 mp4 ↗</a> / <a href="assets/dexhand-rl/hammer-v525-fullchain.mp4">全链条 mp4 ↗</a>)和逐步仪表能确认当前成功的真实形态:<b>带速到达(−1.22 m/s 开窗)之后并没有弹开-再举-再击,而是贴着钉子持续压入</b>——接触后 vz 立刻回到 ≈0,深度在接下来 15 步里从 0.5 mm 爬到 26.8 mm。这是"合规到达 + 压穿"的混合体:reward 侧 blow_cap 把<b>计分</b>封在每接触 2 cm,但<b>物理</b>上钉子被一路压深(阻尼只限速不封行程)。两个原因叠加:</p>
 <p class="small">① <b>物理没有反弹</b>:锤-钉接触是软接触(solref 0.01/1.0)+ 钉侧大阻尼(400)吸能,恢复系数≈0,锤头击中后不弹起——现实中锤子会被反作用力弹开,自然形成"退避"节奏,我们的仿真里这个免费的节拍器不存在;② <b>reward 没付"离开"的钱</b>:击后留在钉上不亏(窗口关了但不罚),抬起重新蓄势反而要重新走一遍风险,策略自然选择压着不动。</p>
 <table>
@@ -293,7 +319,7 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <p class="small">顺序建议:先线二的①(反弹)——它一刀同时提供节拍器、堵压穿、逼多击,线一的塑形做补充;两线做完 success(~3 击打平)应自然点火。之后:V5.3 握远给分,V6 抓姿先验/指腹门控。</p>
 <p class="small"><b>V5.3 方向(排在挥击点火之后)</b>:"握得越远分越高"的持续项——手掌沿柄轴离锤头的距离连续给分,杠杆越长力矩越大,±2 N 握不住就掉锤终结,物理自己当惩罚;同时长杠杆放大腕转的锤面速度,与冲击窗口正协同。</p>
 
-<h3>V6 方向(已记录,含抓姿 reward 专项调研结论)</h3>
+<h3 id="hammer-v6">V6 方向(已记录,含抓姿 reward 专项调研结论)</h3>
 <table>
 <tr><th>方向</th><th>做法</th><th>依据(代码级核对)</th></tr>
 <tr><td><b>power-grasp 姿态先验</b>(抓姿性价比第 1)</td><td>手指关节对一个真实 power grasp 参考姿态的二次型惩罚,权重 ≈ 主任务项 1/10,恒开;参考姿态用 teleop 录一次真人握锤</td><td>playground reorient <code>hand_pose=-0.5</code> vs orientation 5.0;Hora <code>poseDiffPenaltyScale=-0.3</code>(先验点 = 预计算稳定抓姿缓存)</td></tr>
@@ -304,6 +330,23 @@ strike(×500,增量) / drive / success / 评估指标  全部只读合法深度
 <tr><td class="small">不建议先试</td><td class="small">force-closure/σ_min 进 RL 回路:唯一在环先例只有 12 并行环境且依赖力传感器 readback,4096 并行下性价比垫底</td><td class="small">Chen et al. RSS 2026 workshop;DexGraspNet 的 FC 只用于离线合成</td></tr>
 </table>
 
+
+<h2 id="task-stack">任务三 · L20CubeStack——三块递减方块搬运垒塔(抓握开度泛化)</h2>
+<p><span class="tag warn">2026-08-23 建立</span><span class="tag">第三个任务 · 多阶段长程</span></p>
+<p><b>场景</b>:左侧一列三个方块——大 70 mm(即任务一验证过可抓的尺寸)、中 55 mm、小 40 mm,质量按同密度 0.108/0.052/0.020 kg;右侧地面一个绿色槽位标记。<b>任务</b>:依次把方块搬到槽位垒塔(大→中→小)。设计动机:hammer 的 reward 工程人力占比太高,回归抓取主线;三种尺寸=三种抓握开度,逼策略学出<b>多样抓姿</b>(与共享控制线"策略抓姿要能和用户对上"直接相关)。</p>
+<h3 id="stack-v1">V1 · 分阶段锁存 + "放手才算放好" <span class="tag warn">门测试通过,训练中</span></h3>
+<p class="small"><b>参考(代码级核对)</b>:robosuite <code>Stack</code>——三段式取 max(reach+grasp 0.5 / lift+align 1.5 / stack 2.0),<b>stacked 要求已松开且两块接触</b>;IsaacGymEnvs <code>FrankaCubeStack</code>——dist/lift/align/stack 分解,终态检查"到高度、对齐、<b>夹爪已离开</b>";再叠加本仓库 hammer 战役的全部教训(锁存阶段、一次性 bonus、不留无限年金、goal-state 收入只给任务本身)。</p>
+<table>
+<tr><th>项</th><th>权重</th><th>形式</th></tr>
+<tr><td>reach</td><td>0.5</td><td>手→<b>当前活动方块</b>(前面的都放好了才轮到下一块),抓到即停发</td></tr>
+<tr><td>grasp_bonus</td><td>10</td><td>一次性:指尖均距 &lt; 半边长+3.5 cm(<b>随方块尺寸自适应的开度判据</b>)∧ 掌距达标 → 锁存</td></tr>
+<tr><td>lift / transport</td><td>1 / 4</td><td>抓着的活动方块:高度斜坡 + 到自己槽位的 long-tail 距离</td></tr>
+<tr><td><b>place_bonus</b></td><td>25</td><td>一次性:方块进槽(2.5 cm)∧ <b>手已离开(&gt;10 cm)</b> ∧ 已静止——抱着塔不算放好(robosuite/Franka 规则)</td></tr>
+<tr><td>tower</td><td>1/块</td><td>已放好且仍在槽内的方块每步计分(goal-state 收入,上限 3/步)</td></tr>
+<tr><td>success</td><td>10</td><td>三块全在槽内(瞬时判据)</td></tr>
+<tr><td><b>collapse</b></td><td>−10 + 终结</td><td>任何已放好的方块离槽 &gt;5 cm = 塔塌 → episode 结束</td></tr>
+</table>
+<p class="small"><b>训前验证</b>:塔的静力学——三块叠好沉降 500 步位移 ≤0.9 mm(站得住);"上帝测试"——把方块逐一传送进槽、手移远,placed 锁存逐块点亮 → success 点亮 → tower 3/步,无误终结;52 项测试全绿。obs 92 维(手/基座状态 + 三方块位姿 + 到槽向量 + 到掌向量 + 6 个锁存位),episode 500 步,PPO 用 pick 的数字(discount 提到 0.99 供长程记账)。</p>
 <h2>训练系统与工程记录 → 已拆分至姊妹篇</h2>
 <p>训练系统的全部内容——编译危机三层根因、碰撞几何从 82 凸包到 22 基元的简化(附三个时代的 mesh 对比图)、JAX→Warp 迁移与版本坑清单(naccdmax、版本配对、EGL、MULTICCD……)、瓶颈解剖与硬件结论、1.16 vs 1.11 源码级机制分析、kitchen 场景前瞻、以及"提出的问题 → 做的优化"对照表——见 <a href="dexhand-engineering.html"><b>灵巧手 RL 工程记录</b></a>。速览:编译从小时级失败到秒级;吞吐 jax 51k → warp 1.11 177k → warp 1.16 260k+ steps/s;一次 105.8M 步完整训练 36 分钟 → 7 分钟以内。</p>
 
