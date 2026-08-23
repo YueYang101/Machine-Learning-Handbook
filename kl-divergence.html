@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KL 散度：从信息量到 loss · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap canvas { width:100%; display:block; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; }
+.ctl button { font:600 .85rem/1 inherit; color:var(--ink); background:var(--bg);
+  border:1px solid var(--line2); border-radius:7px; padding:7px 11px; cursor:pointer; }
+.ctl button:hover { border-color:var(--blue); color:var(--blue); }
+.ctl button.pri { background:var(--blue); border-color:var(--blue); color:#fff; }
+.ctl label { display:inline-flex; gap:5px; align-items:center; font-size:.85rem; color:var(--sub);
+  cursor:pointer; user-select:none; }
+.ctl input[type=range] { flex:1 1 140px; min-width:120px; accent-color:var(--blue); }
+.ctl .ro { font:.8rem/1.4 ui-monospace,Menlo,monospace; color:var(--sub); }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+.num { font:.93rem/1.7 ui-monospace,Menlo,monospace; }
+td.n, th.n { text-align:right; font-family:ui-monospace,Menlo,monospace; font-size:.9rem; }
+.pill { display:inline-block; padding:1px 7px; border-radius:20px; font-size:.8rem;
+  border:1px solid var(--line2); color:var(--sub); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="bk" href="index.html">← Machine Learning Handbook</a>
+<div class="kicker">MACHINE LEARNING HANDBOOK · INFORMATION THEORY</div>
+<h1>KL 散度：从「惊讶」到 loss<br><span style="font-size:.72em;color:var(--sub)">信息量 → 编码长度 → 熵 → 交叉熵 → KL，以及它为什么会出现在几乎每个生成模型的 loss 里</span></h1>
+
+<p class="lede">这一页把 KL 散度从<b>信息论的源头</b>一路搭到<b>机器学习的 loss</b>。核心叙事只有一句：<b>KL 散度 = 用错误的分布 $Q$ 去编码真实分布 $P$ 的数据时，平均每个样本多付的比特数</b>。理解了「多付」这两个字，「最大似然 = 最小化 KL」「cross-entropy loss 是什么」「ELBO 差在哪」「DDPM 的 loss 为什么是三组 KL」就都是同一件事的不同穿法。本页是 <a href="diffusion-policy.html#m4">Diffusion Policy §10 Loss 推导</a>的前置笔记。</p>
+
+<div class="key good">
+<b>三句话速览（不想读推导的话读这里）。</b>
+<ol>
+<li><b>信息量 = 惊讶度</b>：一件事越难猜到，它发生后带来的信息越多，$I(x)=-\log P(x)$；取 2 为底时，这个数<b>字面上</b>就是最优编码该给它留几个二进制位。</li>
+<li><b>熵是地板，交叉熵是实付</b>：按真实分布 $P$ 造码本，平均花 $H(P)$ 比特，这是谁也省不掉的下限；用猜错的 $Q$ 造码本，平均要花 $H(P,Q)$。</li>
+<li><b>KL 就是「多付的那部分」</b>：$D_{\mathrm{KL}}(P\|Q)=H(P,Q)-H(P)\ge0$，只有 $Q=P$ 时才等于 0。所以「训练模型」= 让 $Q$ 贴近 $P$ = 把多付的比特压到 0——最大似然、cross-entropy loss、DDPM 的三组 KL，全是这一句话的不同穿法。</li>
+</ol>
+</div>
+
+<div class="toc"><b>目录</b> ·
+<a href="#s1">§1 信息量</a> ·
+<a href="#s2">§2 编码长度</a> ·
+<a href="#s3">§3 熵</a> ·
+<a href="#s4">§4 交叉熵</a> ·
+<a href="#s5">§5 KL = 多付的比特</a> ·
+<a href="#s6">§6 非负性</a> ·
+<a href="#s7">§7 不对称性</a> ·
+<a href="#s8">§8 最大似然 = 最小 KL</a> ·
+<a href="#s9">§9 高斯之间的 KL</a> ·
+<a href="#s10">§10 回到 Diffusion Policy</a> ·
+<a href="#s11">§11 工程坑</a></div>
+
+<h2 id="s1"><span class="n">§ 1</span>信息量：越难猜到的事，发生后带来的信息越多</h2>
+
+<p>先不谈公式，谈直觉。下面三条消息，哪条信息量大？</p>
+
+<ul>
+<li>「明天太阳会升起」——$P\approx1$。听完你对世界的认知<b>没有任何更新</b>。信息量 $\approx0$。</li>
+<li>「明天下雨」——$P\approx0.3$。有点用，你会带伞。</li>
+<li>「明天下雪」（在广州，八月）——$P\approx10^{-6}$。听完你会把整个世界模型推翻重建。信息量巨大。</li>
+</ul>
+
+<div class="key">
+<b>信息量的定义式来自两个要求。</b>① <b>单调递减</b>：$P$ 越小，信息 $I$ 越大；$P=1$ 时 $I=0$。② <b>可加性</b>：两件<b>独立</b>的事一起发生，信息应该相加，而概率是相乘的——$P(A,B)=P(A)P(B)$，要求 $I(A,B)=I(A)+I(B)$。<br>
+把「乘法变加法」和「单调递减」这两个条件放在一起，函数形式几乎被逼死了，只能是对数的负数：
+</div>
+
+<div class="math">$$\boxed{\,I(x)=-\log P(x)\,}$$
+<p class="why">$\log$ 取 2 为底 → 单位是 <b>bit（比特）</b>；取 $e$ 为底 → 单位是 <b>nat（奈特）</b>，$1\ \text{nat}=1/\ln 2\approx1.4427\ \text{bit}$。机器学习里几乎一律用自然对数（nat），因为求导干净；信息论教材里用 bit，因为能直接对应「几位二进制」。两者只差一个常数因子，不影响任何优化结论。</p></div>
+
+<p>换个说法：$I(x)$ 衡量的是「这件事发生之后，我对世界状态的认知被更新了多少」。它<b>不是</b>「这件事有多重要」，纯粹是「有多出乎意料」。</p>
+
+<div class="figwrap">
+<div class="ctl">
+<label>事件概率 $P$</label>
+<input type="range" id="siP" min="1" max="1000" value="500">
+<span class="ro" id="siInfo"></span>
+</div>
+<canvas id="cvSurprise" height="260"></canvas>
+<div class="cap">$I=-\log_2 P$ 曲线。三个整数刻度值得记住：$P=1\to0$ bit（毫不意外，白说）；$P=\tfrac12\to1$ bit（一次抛硬币的信息）；$P=\tfrac18\to3$ bit（三次抛硬币）。$P\to0$ 时 $I\to\infty$——「不可能发生的事居然发生了」是无穷大的信息量，这个尖峰后面会变成 KL 里的<b>无穷惩罚</b>（§7）。</div>
+</div>
+
+<h2 id="s2"><span class="n">§ 2</span>编码长度：为什么「比特」不是比喻，是真的位数</h2>
+
+<p>$-\log_2 P$ 之所以能叫「比特」，是因为它<b>字面上</b>就是最优二进制编码的位数。做个具体例子：某个信源只会发出四个符号 $A,B,C,D$（在 policy 语境里可以想成四个离散动作），出现频率是</p>
+
+<div class="math">$$P(A)=\tfrac12,\quad P(B)=\tfrac14,\quad P(C)=\tfrac18,\quad P(D)=\tfrac18$$</div>
+
+<p>要把一长串符号发给对方，怎么编码最省？<b>不能等长</b>（各 2 bit，平均 2 bit/符号，浪费）。正确做法是<b>常见的给短码、罕见的给长码</b>，且要求<b>前缀码</b>（没有任何码字是另一个码字的前缀，这样接收端不用分隔符也能唯一解码）。前缀码等价于一棵二叉树，每个符号是一片叶子：</p>
+
+<div class="figwrap">
+<canvas id="cvTree" height="290"></canvas>
+<div class="cap">前缀码二叉树：每往下走一层花 1 bit（左 0 右 1），符号挂在叶子上。深度 $\ell$ 的叶子 = $\ell$ 位码字。想让平均码长最短，就得把概率大的符号放在浅处——<b>最优深度恰好是 $\ell(x)=-\log_2P(x)$</b>。这就是「信息量 = 该给它留几位」的字面含义。</div>
+</div>
+
+<div class="tw"><table>
+<tr><th>符号</th><th class="n">$P$</th><th>码字</th><th class="n">码长 $\ell=-\log_2P$</th></tr>
+<tr><td>A</td><td class="n">1/2</td><td class="num">0</td><td class="n">1</td></tr>
+<tr><td>B</td><td class="n">1/4</td><td class="num">10</td><td class="n">2</td></tr>
+<tr><td>C</td><td class="n">1/8</td><td class="num">110</td><td class="n">3</td></tr>
+<tr><td>D</td><td class="n">1/8</td><td class="num">111</td><td class="n">3</td></tr>
+</table></div>
+
+<p>解码验证：收到 <span class="num">0&nbsp;10&nbsp;110&nbsp;0&nbsp;111</span> → 从左往右读，遇到完整码字就切一刀，唯一还原成 <span class="num">A B C A D</span>，不需要任何分隔符。</p>
+
+<div class="key">
+<b>为什么码长恰好是 $-\log_2P$？</b>深度 $\ell$ 的叶子会「占掉」整棵树 $2^{-\ell}$ 的份额（Kraft 不等式 $\sum_x2^{-\ell(x)}\le1$）。把总份额 1 按概率分配给各符号，即令 $2^{-\ell(x)}=P(x)$，就得到 $\ell(x)=-\log_2P(x)$；这组码长可以证明使平均长度最小。$-\log_2P$ 不整数时用算术编码可以逼近，理论极限不变。
+</div>
+
+<h2 id="s3"><span class="n">§ 3</span>熵：这个信源的「不可压缩下限」</h2>
+
+<p>单个符号的信息量是随机的（发 $A$ 才 1 bit，发 $D$ 要 3 bit）。工程上关心的是<b>平均</b>——用最优码本发一个符号，平均要花多少比特。对 $I(x)$ 按 $P$ 取期望就是<b>熵</b>：</p>
+
+<div class="math">$$\boxed{\,H(P)=\mathbb E_{x\sim P}\big[-\log P(x)\big]=-\sum_x P(x)\log P(x)\,}$$
+<p class="why">上例：$H(P)=\tfrac12(1)+\tfrac14(2)+\tfrac18(3)+\tfrac18(3)=1.75$ bit/符号。对比等长编码的 2 bit，省了 12.5%。香农源编码定理说：<b>1.75 是下限</b>，任何无损编码都不可能平均低于它。</p></div>
+
+<p>两个极端值得记住：分布越<b>集中</b>（某个符号概率接近 1），熵越低——极端情况 $H=0$，因为对方根本不用告诉你结果，你已经知道了；分布越<b>均匀</b>，熵越高——$n$ 个等概率符号 $H=\log_2 n$，这是 $n$ 元信源的熵上限。<b>熵 = 这个分布本身固有的不确定性</b>，只跟 $P$ 有关，跟任何模型无关。</p>
+
+<h2 id="s4"><span class="n">§ 4</span>交叉熵：拿错码本会怎样</h2>
+
+<p>现在引入第二个分布。真实世界按 $P$ 发符号，但<b>你不知道 $P$</b>——你手上只有一个估计 $Q$（在机器学习里 $Q$ 就是神经网络输出的分布），你只能按 $Q$ 造码本，于是给符号 $x$ 分配的码长是 $-\log Q(x)$。</p>
+
+<p>关键点：<b>码长按 $Q$ 定，但符号出现的频率仍然按 $P$</b>——世界不会因为你猜错了就改变。所以平均码长是「按 $Q$ 定的长度，按 $P$ 加权」：</p>
+
+<div class="math">$$\boxed{\,H(P,Q)=\mathbb E_{x\sim P}\big[-\log Q(x)\big]=-\sum_x P(x)\log Q(x)\,}$$
+<p class="why">这就是<b>交叉熵</b>——名字里的「交叉」正是指「期望用 $P$、对数用 $Q$」这个错位。注意 $H(P,P)=H(P)$：码本猜对时，交叉熵退化成熵。</p></div>
+
+<p>接着上面的例子算一遍。真实 $P=(\tfrac12,\tfrac14,\tfrac18,\tfrac18)$，考虑三个模型：</p>
+
+<div class="tw"><table>
+<tr><th>模型 $Q$</th><th>码长 $-\log_2Q$（A,B,C,D）</th><th class="n">$H(P,Q)$</th><th class="n">$H(P)$</th><th class="n">$D_{\mathrm{KL}}(P\|Q)$</th></tr>
+<tr><td>$Q=P$（完美）</td><td class="num">1, 2, 3, 3</td><td class="n">1.750</td><td class="n">1.750</td><td class="n">0</td></tr>
+<tr><td>$Q=$ 均匀 $(\tfrac14,\tfrac14,\tfrac14,\tfrac14)$</td><td class="num">2, 2, 2, 2</td><td class="n">2.000</td><td class="n">1.750</td><td class="n">0.250</td></tr>
+<tr><td>$Q=(\tfrac18,\tfrac18,\tfrac14,\tfrac12)$（猜反了）</td><td class="num">3, 3, 2, 1</td><td class="n">2.625</td><td class="n">1.750</td><td class="n">0.875</td></tr>
+</table></div>
+
+<p>逐行验算第三行：$H(P,Q)=\tfrac12(3)+\tfrac14(3)+\tfrac18(2)+\tfrac18(1)=1.5+0.75+0.25+0.125=2.625$ bit。它比真正的下限 1.75 多花了 <b>0.875 bit/符号</b>——<b>这个「多花」，就是 KL 散度</b>。</p>
+
+<div class="key bad">
+<b>猜反的代价来自哪里</b>：模型以为 $A$ 罕见，给它分了 3 位长码；可 $A$ 实际上占了一半的流量。<b>把长码派给高频事件</b>是所有编码浪费的唯一来源。翻译到机器学习：<b>模型给真实高频样本分配了低概率，就要付大 loss</b>——这正是 cross-entropy loss 每天在做的事。
+</div>
+
+<h2 id="s5"><span class="n">§ 5</span>KL 散度：多付的那部分</h2>
+
+<p>把两式相减，定义就出来了：</p>
+
+<div class="math">
+$$D_{\mathrm{KL}}(P\|Q)\;=\;\underbrace{H(P,Q)}_{\text{用 }Q\text{ 的码本实际花的}}-\underbrace{H(P)}_{\text{最优码本的下限}}$$
+$$=-\sum_xP(x)\log Q(x)+\sum_xP(x)\log P(x)$$
+$$\boxed{\,D_{\mathrm{KL}}(P\|Q)=\sum_xP(x)\log\frac{P(x)}{Q(x)}=\mathbb E_{x\sim P}\!\left[\log\frac{P(x)}{Q(x)}\right]\,}$$
+<p class="why">连续情形把求和换成积分：$D_{\mathrm{KL}}(P\|Q)=\int p(x)\log\frac{p(x)}{q(x)}dx$。写成期望形式最有用——因为期望可以<b>采样估计</b>，这是它能进 loss 的技术前提。</p>
+</div>
+
+<div class="key good">
+<b>一句话记住它。</b>当真实分布是 $P$、而我们用 $Q$ 来描述数据时，<b>平均每个样本会多付出多少信息代价</b>。在机器学习中通常：$P$ = 目标分布 / 真实分布（数据、或某个解析可算的后验），$Q$ = 神经网络产生的近似分布。<b>训练 = 让 $Q$ 尽可能贴近 $P$，让「多付」趋近于 0。</b>
+</div>
+
+<p>下面这个交互把三个量同时画出来：改变 $Q$，看交叉熵怎么涨、KL 怎么涨，以及 $Q=P$ 时 KL 精确落到 0。</p>
+
+<div class="figwrap">
+<div class="ctl">
+<button class="pri" id="kbReset">让 $Q=P$</button>
+<button id="kbUni">$Q=$ 均匀</button>
+<button id="kbRev">$Q=$ 猜反</button>
+<label>拖动改变 $Q$</label>
+<input type="range" id="kbT" min="0" max="100" value="0">
+<span class="ro" id="kbInfo"></span>
+</div>
+<canvas id="cvBars" height="340"></canvas>
+<div class="cap">上排：真实分布 $P$（蓝）与模型分布 $Q$（橙），以及 $Q$ 给每个符号定的码长 $-\log_2Q$。下排：$H(P)$ 是钉死的地板（只跟 $P$ 有关，模型再好也省不掉），$H(P,Q)$ 是实际花费，两者之差就是 <span style="color:var(--red)">$D_{\mathrm{KL}}$</span>。注意 <b>$H(P,Q)$ 永远不会低于 $H(P)$</b>，也就是 KL 永远 $\ge0$，且只在 $Q=P$ 时取到 0——下一节证明这件事。</div>
+</div>
+
+<h2 id="s6"><span class="n">§ 6</span>性质一：$D_{\mathrm{KL}}\ge0$，且 $=0\iff P=Q$</h2>
+
+<p>这是 KL 能当 loss 的根本原因：它有<b>地板</b>，且地板恰好在「模型完全正确」处。证明只需要一个初等不等式 $\log t\le t-1$（等号仅在 $t=1$）：</p>
+
+<div class="math">
+$$-D_{\mathrm{KL}}(P\|Q)=\sum_xP(x)\log\frac{Q(x)}{P(x)}
+\;\le\;\sum_xP(x)\left(\frac{Q(x)}{P(x)}-1\right)
+=\sum_xQ(x)-\sum_xP(x)=1-1=0$$
+<p class="why">于是 $D_{\mathrm{KL}}(P\|Q)\ge0$（Gibbs 不等式）。等号成立要求每一项都取到 $\log t=t-1$，即 $Q(x)/P(x)=1$ 处处成立，也就是 $P=Q$。用编码语言复述：<b>你不可能用错误的码本压得比最优码本还短</b>——这在信息论里是「没有免费午餐」级别的陈述。</p></div>
+
+<div class="key">
+<b>它不是距离。</b>KL 满足非负、同一性，但<b>不满足对称性</b>（$D(P\|Q)\ne D(Q\|P)$），也<b>不满足三角不等式</b>。所以正确叫法是「散度 / divergence」而不是「距离 / distance」。真要对称版本有 Jensen–Shannon divergence（GAN 的原始目标）和 Wasserstein 距离（WGAN），但它们都比 KL 难算——KL 之所以统治 loss，是因为<b>它的期望形式可以直接被采样估计，而且对高斯有闭式解</b>（§9）。
+</div>
+
+<h2 id="s7"><span class="n">§ 7</span>性质二：不对称，而且方向直接决定模型的失败模式</h2>
+
+<p>先看数字。取两点分布 $P=(0.9,\,0.1)$、$Q=(0.5,\,0.5)$：</p>
+
+<div class="math">
+$$D_{\mathrm{KL}}(P\|Q)=0.9\log_2\tfrac{0.9}{0.5}+0.1\log_2\tfrac{0.1}{0.5}=0.763-0.232=\mathbf{0.531}\ \text{bit}$$
+$$D_{\mathrm{KL}}(Q\|P)=0.5\log_2\tfrac{0.5}{0.9}+0.5\log_2\tfrac{0.5}{0.1}=-0.424+1.161=\mathbf{0.737}\ \text{bit}$$
+</div>
+
+<p>同样两个分布，换个方向就换个数。原因藏在期望的下标里：$\mathbb E_{x\sim P}$ 意味着<b>只在 $P$ 有质量的地方算账</b>，$P$ 不去的地方模型犯什么错都不罚。两个方向因此有完全不同的脾气：</p>
+
+<div class="tw"><table>
+<tr><th></th><th>Forward KL $D(P\|Q)$<br><span class="pill">mass-covering</span></th><th>Reverse KL $D(Q\|P)$<br><span class="pill">mode-seeking</span></th></tr>
+<tr><td>按谁采样</td><td>真实分布 $P$</td><td>模型分布 $Q$</td></tr>
+<tr><td>致命惩罚</td><td>$P>0$ 而 $Q\to0$：$\log\frac{P}{Q}\to\infty$。<b>不许漏</b></td><td>$Q>0$ 而 $P\to0$：同样 $\to\infty$。<b>不许乱编</b></td></tr>
+<tr><td>被迫的行为</td><td>$Q$ 必须覆盖 $P$ 的<b>所有</b>模态，宁可摊平</td><td>$Q$ 只敢待在 $P$ 的高密度区，宁可只抱住<b>一个</b>模态</td></tr>
+<tr><td>典型出处</td><td>最大似然 / cross-entropy loss / DDPM 的 $L_{k-1}$</td><td>变分推断 (VI)、RL 里的 policy 正则、蒸馏</td></tr>
+<tr><td>失败长相</td><td>糊、过度平滑、在两个模态<b>中间</b>输出</td><td>模态坍缩，只会一种解法</td></tr>
+</table></div>
+
+<div class="figwrap">
+<div class="ctl">
+<label>两个模态的间距</label>
+<input type="range" id="asS" min="20" max="130" value="100">
+<label><input type="checkbox" id="asF" checked>forward 最优解</label>
+<label><input type="checkbox" id="asR" checked>reverse 最优解</label>
+<span class="ro" id="asInfo"></span>
+</div>
+<canvas id="cvAsym" height="322"></canvas>
+<div class="cap">同一个双峰真实分布 $P$（蓝，左峰 60% / 右峰 40%），都用<b>一个单高斯 $Q$</b> 去拟合。<span style="color:var(--orange)">橙</span>：最小化 forward KL $D(P\|Q)$——解析解是<b>矩匹配</b>（$\mu=\mathbb E_P[x]$，$\sigma^2=\mathrm{Var}_P[x]$），结果把整片区域摊平覆盖，峰值落在两个模态<b>正中间的低密度区</b>，那里其实没有任何数据。<span style="color:var(--green)">绿</span>：最小化 reverse KL $D(Q\|P)$（数值搜索），结果整个缩进较重的左模态里，右模态被完全放弃。拉开间距看两者分道扬镳。</div>
+</div>
+
+<div class="key bad">
+<b>这张图就是行为克隆（BC）会失败的那张图。</b>专家在同一个 observation 下有两种同样合理的动作（左绕 / 右绕）。用 MSE 训一个确定性策略 $\pi(o)\to a$，等价于用<b>单高斯 + forward KL</b> 拟合双峰分布——最优解是两个模态的<b>平均</b>，也就是直直撞上障碍物那个动作，训练集里从未出现过。<a href="diffusion-policy.html#g1">Diffusion Policy §1</a> 讲的正是这件事：出路不是换 KL 方向（那会丢掉一半模态），而是<b>换掉「$Q$ 是单高斯」这个假设</b>——扩散模型用去噪链隐式表示任意复杂的 $Q$，于是 forward KL 的覆盖性就从缺点变成了优点。
+</div>
+
+<h2 id="s8"><span class="n">§ 8</span>它怎么变成 loss 的：最大似然 $\equiv$ 最小化 KL</h2>
+
+<p>这一节是整页的枢纽——它解释了「训练目标是最大似然」这句话<b>不是从天上掉下来的</b>，而是最小化 KL 的必然结果。</p>
+
+<p>我们真正想要的是：模型分布 $p_\theta$ 尽量贴近数据分布 $p_{\text{data}}$。用 KL 度量「贴近」，并且方向取 forward（因为我们手上只有从 $p_{\text{data}}$ 采出来的样本，只能按 $p_{\text{data}}$ 取期望）：</p>
+
+<div class="math">
+$$\theta^\star=\arg\min_\theta\;D_{\mathrm{KL}}\big(p_{\text{data}}\,\|\,p_\theta\big)
+=\arg\min_\theta\;\mathbb E_{x\sim p_{\text{data}}}\big[\log p_{\text{data}}(x)-\log p_\theta(x)\big]$$
+<p class="why">第一项 $\mathbb E[\log p_{\text{data}}]=-H(p_{\text{data}})$ <b>完全不含 $\theta$</b>——它是数据本身的熵，那块「地板」，优化时可以整个扔掉。于是：</p>
+$$\theta^\star=\arg\max_\theta\;\mathbb E_{x\sim p_{\text{data}}}\big[\log p_\theta(x)\big]
+\;\approx\;\arg\max_\theta\;\frac1N\sum_{i=1}^N\log p_\theta(x_i)$$
+<p class="why">右边就是<b>最大似然估计（MLE）</b>：把训练集里每个样本的对数似然加起来最大化。等价地，最小化 $-\log p_\theta(x)$——这正是 <a href="diffusion-policy.html#m4">DP 推导 §10</a> 的第一行。</p>
+</div>
+
+<div class="key good">
+<b>三个名字，一件事。</b>「最小化 $D_{\mathrm{KL}}(p_{\text{data}}\|p_\theta)$」=「最小化交叉熵 $H(p_{\text{data}},p_\theta)$」=「最大似然」。它们只差一个与 $\theta$ 无关的常数 $H(p_{\text{data}})$。所以当你写下 $-\log p_\theta(x)$ 当 loss 时，你已经在做 KL 最小化了，只是那一项常数被省略了而已。
+</div>
+
+<h3>分类任务里的 cross-entropy loss 是同一个式子</h3>
+
+<p>多分类中，真实标签是 one-hot 分布 $P=(0,\dots,1,\dots,0)$（正确类 $c$ 上概率为 1），模型 softmax 输出 $Q$。代入交叉熵：</p>
+
+<div class="math">$$H(P,Q)=-\sum_i P_i\log Q_i=-\log Q_c,\qquad H(P)=0\;\Longrightarrow\;D_{\mathrm{KL}}(P\|Q)=-\log Q_c$$
+<p class="why">因为 one-hot 分布的熵是 0（毫无不确定性），此时<b>交叉熵和 KL 数值完全相等</b>——这就是为什么分类里两个词经常被混着用。但一旦标签不是 one-hot（label smoothing、知识蒸馏的软标签），$H(P)\ne0$，两者就差一个常数了：梯度相同，数值不同。</p></div>
+
+<h3>变分推断里 KL 的第二个身份：不等式的「差多少」</h3>
+
+<p>还有一个更隐蔽的用法：当似然 $\log p_\theta(x)$ 算不动（要对隐变量 $z$ 积分）时，引入一个可采样的 $q(z\mid x)$ 做变分下界。此时<b>下界与真值之间的缺口，恰好是一个 KL</b>：</p>
+
+<div class="math">
+$$\log p_\theta(x)=\underbrace{\mathbb E_{q}\!\left[\log\frac{p_\theta(x,z)}{q(z\mid x)}\right]}_{\text{ELBO}}
++\underbrace{D_{\mathrm{KL}}\big(q(z\mid x)\,\|\,p_\theta(z\mid x)\big)}_{\ge0\;\text{，缺口}}$$
+<p class="why">因为缺口非负（§6），ELBO 才成其为「下界」。这也说明<b>为什么 Jensen 不等式那一步不是白扔精度</b>：$q$ 越接近真实后验 $p_\theta(z\mid x)$，缺口越小，界越紧。扩散模型里 $z=x_{1:T}$（整条加噪链），$q$ 是<b>预先定死的正向过程</b>——不需要学，代价是缺口不为零，好处是采样极其廉价。</p>
+</div>
+
+<h2 id="s9"><span class="n">§ 9</span>两个高斯之间的 KL：闭式解</h2>
+
+<p>KL 一般要靠采样估计，但有一个极其重要的特例是<b>闭式可算</b>的：两边都是高斯。这也是扩散模型能把 loss 写成干净 MSE 的技术前提。一维推一遍：</p>
+
+<div class="math">
+$$D_{\mathrm{KL}}(q\|p)=\mathbb E_{x\sim q}\big[\log q(x)-\log p(x)\big],\qquad
+\log\mathcal N(x;\mu,\sigma^2)=-\tfrac12\log(2\pi\sigma^2)-\frac{(x-\mu)^2}{2\sigma^2}$$
+<p class="why">设 $q=\mathcal N(\mu_1,\sigma_1^2)$、$p=\mathcal N(\mu_2,\sigma_2^2)$，代入相减（$2\pi$ 相消）：</p>
+$$D_{\mathrm{KL}}=\mathbb E_q\!\left[\tfrac12\log\frac{\sigma_2^2}{\sigma_1^2}-\frac{(x-\mu_1)^2}{2\sigma_1^2}+\frac{(x-\mu_2)^2}{2\sigma_2^2}\right]$$
+<p class="why">逐项取期望。第二项：$\mathbb E_q[(x-\mu_1)^2]=\sigma_1^2$（方差定义），整项 $=\tfrac12$。第三项配方：$(x-\mu_2)^2=\big((x-\mu_1)+(\mu_1-\mu_2)\big)^2$，展开后交叉项含 $\mathbb E_q[x-\mu_1]=0$ 而消失，得 $\sigma_1^2+(\mu_1-\mu_2)^2$。代回：</p>
+$$\boxed{\,D_{\mathrm{KL}}\big(\mathcal N(\mu_1,\sigma_1^2)\,\|\,\mathcal N(\mu_2,\sigma_2^2)\big)
+=\log\frac{\sigma_2}{\sigma_1}+\frac{\sigma_1^2+(\mu_1-\mu_2)^2}{2\sigma_2^2}-\frac12\,}$$
+<p class="why">多维对角协方差直接逐维相加。检查两个边界：$\mu_1=\mu_2,\sigma_1=\sigma_2$ 时三项为 $0+\tfrac12-\tfrac12=0$ ✓；$\sigma_2\to0$（模型过度自信）时第二项 $\to\infty$ ✓。</p>
+</div>
+
+<div class="key good">
+<b>这条公式在扩散模型里的用法。</b>若<b>两边方差都是与 $\theta$ 无关的固定值</b>，含 $\sigma$ 的项全部变成常数，整个 KL 只剩下：
+$$D_{\mathrm{KL}}=\frac{(\mu_1-\mu_2)^2}{2\sigma_2^2}+\text{const}$$
+<b>KL 退化成均值之间的平方误差。</b>这就是 DDPM 里「三组 KL」最终变成一个朴素 MSE 的全部魔法——见 <a href="diffusion-policy.html#m5">DP 推导 §11</a>。
+</div>
+
+<div class="figwrap">
+<div class="ctl">
+<label>$\mu_2$</label><input type="range" id="ggM" min="-300" max="300" value="120">
+<label>$\sigma_2$</label><input type="range" id="ggS" min="30" max="300" value="65">
+<span class="ro" id="ggInfo"></span>
+</div>
+<canvas id="cvGauss" height="290"></canvas>
+<div class="cap">固定 $q=\mathcal N(0,1)$（蓝），拖动 $p=\mathcal N(\mu_2,\sigma_2^2)$（橙）。右上角同时显示两个方向的值：把 $\sigma_2$ 调小（模型比真相更「自信」）时 $D(q\|p)$ 迅速爆炸，而 $D(p\|q)$ 反应温和——不对称性在连续情形下的直观版本。当两条曲线重合，两个值同时归零。</div>
+</div>
+
+<h2 id="s10"><span class="n">§ 10</span>回到 Diffusion Policy：KL 在那条推导里出现了三次</h2>
+
+<p>带着上面的东西再看 <a href="diffusion-policy.html#m4">DP 推导 §10–§12</a>，整条链路会变得没有任何跳跃：</p>
+
+<ol>
+<li><b>起点是 KL</b>（§8）：想让 $p_\theta$ 贴近数据分布 → 最小化 $D_{\mathrm{KL}}(p_{\text{data}}\|p_\theta)$ → 等价于最小化 $-\log p_\theta(x_0)$。「训练目标是最大似然」这句话的来历就在这里。</li>
+<li><b>下界的缺口是 KL</b>（§8 末）：$-\log p_\theta(x_0)$ 的积分不可算，用正向过程 $q$ 做变分下界；Jensen 不等式那一步丢掉的精度，正好是 $D_{\mathrm{KL}}\big(q(x_{1:T}\mid x_0)\,\|\,p_\theta(x_{1:T}\mid x_0)\big)\ge0$。</li>
+<li><b>展开后每一项还是 KL</b>：把 $L$ 按马尔科夫链拆开、用贝叶斯把方向翻转、望远镜求和之后，得到三组
+$$L=\underbrace{D_{\mathrm{KL}}(q(x_T\mid x_0)\|p(x_T))}_{L_T\approx0}
++\sum_{k=2}^T\underbrace{\mathbb E_q D_{\mathrm{KL}}\big(q(x_{k-1}\mid x_k,x_0)\|p_\theta(x_{k-1}\mid x_k)\big)}_{L_{k-1}}
+\underbrace{-\,\mathbb E_q\log p_\theta(x_0\mid x_1)}_{L_0}$$
+其中训练主体 $L_{k-1}$ 的<b>两边都是高斯</b>（左边是解析后验，右边是网络的反向一步），于是 §9 的闭式解直接适用，KL 塌成均值 MSE，最后再换元成 $\|\epsilon-\epsilon_\theta\|^2$。</li>
+</ol>
+
+<div class="key">
+<b>为什么费力凑成 KL 的形式？</b>因为 KL 一旦落在两个高斯之间就有<b>闭式解</b>——不需要蒙特卡洛去估计 KL 本身，梯度方差低、训练稳。这是 DDPM 论文反复强调的工程要点：所有推导上的绕路，都是为了把「不可算的似然」换成「可解析计算的 KL」。
+</div>
+
+<p style="margin-top:1.4em"><a href="diffusion-policy.html#m4">→ 回到 Diffusion Policy §10：Loss 从 $-\log p_\theta(x_0)$ 到三组 KL</a></p>
+
+<h2 id="s11"><span class="n">§ 11</span>工程上的几个坑</h2>
+
+<ul>
+<li><b>零概率 = 无穷大。</b>$P(x)>0$ 而 $Q(x)=0$ 时 KL 发散。实现里要么给 $Q$ 加 $\epsilon$（$\log(q+10^{-8})$），要么直接对 logits 用 <span class="num">log_softmax</span> 而不是 <span class="num">log(softmax(·))</span>——后者会在饱和处溢出。</li>
+<li><b>方向别写反。</b>PyTorch 的 <span class="num">F.kl_div(input, target)</span> 中 <span class="num">input</span> 要求已经是<b>对数概率</b>，而 <span class="num">target</span> 是概率，算的是 $D_{\mathrm{KL}}(\text{target}\|\text{exp(input)})$。参数顺序与数学记号相反，是最常见的 bug 来源之一。</li>
+<li><b>bit 还是 nat。</b>代码里一律自然对数（nat）。要报告成 bit 就除以 $\ln2$。两者只差常数，不影响梯度方向，但会影响你和论文数字对不对得上。</li>
+<li><b>batch 归约。</b>多维高斯的 KL 是<b>逐维相加</b>再对 batch 取<b>平均</b>。写成 <span class="num">.mean()</span> 全平均会把维度也平均掉，导致 loss 尺度小一个数量级——KL 项和其它 loss 加权时会失衡。</li>
+<li><b>KL 不是距离。</b>不要用它做「谁离谁更近」的排序，尤其是跨方向比较；也不能在它上面用三角不等式做界。</li>
+</ul>
+
+<h2 id="refs"><span class="n">§ 12</span>延伸</h2>
+<ol style="font-size:.92rem">
+<li>Shannon. <i>A Mathematical Theory of Communication</i>. 1948——熵、源编码定理、$-\log P$ 的来历。</li>
+<li>Cover &amp; Thomas. <i>Elements of Information Theory</i>. 第 2 章——熵 / 交叉熵 / KL / Gibbs 不等式的标准处理。</li>
+<li>Kullback &amp; Leibler. <i>On Information and Sufficiency</i>. 1951——原始论文。</li>
+<li>Ho, Jain, Abbeel. <i>DDPM</i>. NeurIPS 2020. <a href="https://arxiv.org/abs/2006.11239">arXiv:2006.11239</a>——三组 KL 的分解。</li>
+<li>Kingma &amp; Welling. <i>Auto-Encoding Variational Bayes</i>. 2014. <a href="https://arxiv.org/abs/1312.6114">arXiv:1312.6114</a>——ELBO 与「缺口是 KL」。</li>
+<li>Chi et al. <i>Diffusion Policy</i>. RSS 2023. <a href="https://arxiv.org/abs/2303.04137">arXiv:2303.04137</a>——本页 §7 的多模态动机。</li>
+</ol>
+
+<footer>Machine-Learning-Handbook · KL 散度笔记，整理自个人 Obsidian《Diffusion Policy 数学推导》末节 · 配图均为按解析式实时计算的原生 canvas · 配套阅读：<a href="diffusion-policy.html">Diffusion Policy 图解与完整推导</a></footer>
+
+</div>
+<script>
+(function(){
+"use strict";
+var CS = getComputedStyle(document.documentElement);
+function V(n){ return CS.getPropertyValue(n).trim(); }
+var C={};
+function loadCols(){ CS=getComputedStyle(document.documentElement);
+  C={ ink:V('--ink'), sub:V('--sub'), muted:V('--muted'), line:V('--line'), line2:V('--line2'),
+      panel:V('--panel'), blue:V('--blue'), orange:V('--orange'), green:V('--green'),
+      red:V('--red'), magenta:V('--magenta'), yellow:V('--yellow') }; }
+loadCols();
+
+var widgets=[];
+function mk(id,render){
+  var cv=document.getElementById(id); if(!cv) return null;
+  var st={cv:cv,cx:cv.getContext('2d'),render:render};
+  var h0=+cv.getAttribute('height');
+  cv.style.height=h0+'px';
+  st.fit=function(){ var d=window.devicePixelRatio||1, w=cv.clientWidth;
+    cv.width=w*d; cv.height=h0*d; st.w=w; st.h=h0; st.cx.setTransform(d,0,0,d,0,0); };
+  st.fit(); widgets.push(st); return st;
+}
+function redrawAll(){ loadCols(); for(var i=0;i<widgets.length;i++){ widgets[i].fit(); widgets[i].render(); } }
+window.addEventListener('resize',redrawAll);
+if(window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',redrawAll);
+
+var LOG2=Math.log(2);
+function log2(x){ return Math.log(x)/LOG2; }
+function fx(v,n){ return v.toFixed(n===undefined?3:n); }
+function rr(cx,x,y,w,h,r){ if(h<0){y+=h;h=-h;} r=Math.min(r,h/2,w/2);
+  cx.beginPath(); cx.moveTo(x+r,y); cx.lineTo(x+w-r,y); cx.quadraticCurveTo(x+w,y,x+w,y+r);
+  cx.lineTo(x+w,y+h-r); cx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); cx.lineTo(x+r,y+h);
+  cx.quadraticCurveTo(x,y+h,x,y+h-r); cx.lineTo(x,y+r); cx.quadraticCurveTo(x,y,x+r,y); cx.fill(); }
+
+/* ================= §1 surprise curve ================= */
+(function(){
+  var st=mk('cvSurprise',render); if(!st) return;
+  var sl=document.getElementById('siP'), info=document.getElementById('siInfo');
+  function P(){ return Math.max(+sl.value,1)/1000; }
+  function render(){
+    var cx=st.cx,W=st.w,H=st.h; cx.clearRect(0,0,W,H);
+    var L=52,R=W-16,B=H-30,Tp=16, Imax=6;
+    var X=function(p){ return L+p*(R-L); }, Y=function(i){ return B-Math.min(i,Imax)/Imax*(B-Tp); };
+    cx.strokeStyle=C.line; cx.lineWidth=1; cx.font='11px ui-monospace,Menlo,monospace'; cx.fillStyle=C.muted;
+    for(var b=0;b<=Imax;b++){ var y=Y(b); cx.beginPath(); cx.moveTo(L,y); cx.lineTo(R,y); cx.stroke();
+      cx.fillText(b+' bit',6,y+4); }
+    cx.strokeStyle=C.line2; cx.beginPath(); cx.moveTo(L,B); cx.lineTo(R,B); cx.stroke();
+    [0,.125,.25,.5,.75,1].forEach(function(p){ cx.fillStyle=C.muted;
+      cx.fillText(p===.125?'1/8':(''+p), X(p)-10, B+16); });
+    cx.strokeStyle=C.blue; cx.lineWidth=2.2; cx.beginPath();
+    for(var i=0;i<=400;i++){ var p=0.0015+ (1-0.0015)*i/400, px=X(p), py=Y(-log2(p));
+      if(i===0)cx.moveTo(px,py); else cx.lineTo(px,py); } cx.stroke();
+    /* reference marks */
+    cx.setLineDash([3,3]); cx.lineWidth=1;
+    [[.5,1],[.125,3]].forEach(function(m){ cx.strokeStyle=C.line2;
+      cx.beginPath(); cx.moveTo(X(m[0]),B); cx.lineTo(X(m[0]),Y(m[1])); cx.lineTo(L,Y(m[1])); cx.stroke(); });
+    cx.setLineDash([]);
+    var p=P(), I=-log2(p);
+    cx.setLineDash([4,3]); cx.strokeStyle=C.orange; cx.lineWidth=1.4;
+    cx.beginPath(); cx.moveTo(X(p),B); cx.lineTo(X(p),Y(I)); cx.lineTo(L,Y(I)); cx.stroke(); cx.setLineDash([]);
+    cx.fillStyle=C.orange; cx.beginPath(); cx.arc(X(p),Y(I),5,0,7); cx.fill();
+    cx.fillStyle=C.sub; cx.font='12px system-ui';
+    cx.fillText('P（事件概率）→',R-108,B+16);
+    cx.fillStyle=C.orange; cx.font='700 13px ui-monospace,Menlo,monospace';
+    cx.fillText('I = '+fx(I,2)+' bit', Math.min(X(p)+8,W-96), Math.max(Y(I)-8,20));
+    info.textContent='P = '+fx(p,3)+'   →   I = -log₂P = '+fx(I,2)+' bit = '+fx(I*LOG2,2)+' nat';
+  }
+  sl.addEventListener('input',render); render();
+})();
+
+/* ================= §2 prefix code tree ================= */
+(function(){
+  var st=mk('cvTree',render); if(!st) return;
+  function render(){
+    var cx=st.cx,W=st.w,H=st.h; cx.clearRect(0,0,W,H);
+    var X=function(f){ return 34+f*(W-68); };
+    var N=[
+      {x:.50,y:38,t:'i'},                     /* 0 root */
+      {x:.18,y:102,t:'A',code:'0',   p:'1/2'},/* 1 */
+      {x:.66,y:102,t:'i'},                    /* 2 */
+      {x:.44,y:168,t:'B',code:'10', p:'1/4'}, /* 3 */
+      {x:.84,y:168,t:'i'},                    /* 4 */
+      {x:.68,y:230,t:'C',code:'110',p:'1/8'}, /* 5 */
+      {x:.94,y:230,t:'D',code:'111',p:'1/8'}  /* 6 */
+    ];
+    var E=[[0,1,'0'],[0,2,'1'],[2,3,'0'],[2,4,'1'],[4,5,'0'],[4,6,'1']];
+    cx.lineWidth=1.6; cx.font='11px ui-monospace,Menlo,monospace';
+    E.forEach(function(e){ var a=N[e[0]],b=N[e[1]];
+      cx.strokeStyle=C.line2; cx.beginPath(); cx.moveTo(X(a.x),a.y); cx.lineTo(X(b.x),b.y); cx.stroke();
+      cx.fillStyle=e[2]==='0'?C.blue:C.orange;
+      cx.fillText(e[2],(X(a.x)+X(b.x))/2+(e[2]==='0'?-13:6),(a.y+b.y)/2+4); });
+    N.forEach(function(n){
+      var px=X(n.x);
+      if(n.t==='i'){ cx.fillStyle=C.muted; cx.beginPath(); cx.arc(px,n.y,4.5,0,7); cx.fill(); return; }
+      cx.fillStyle=C.blue; rr(cx,px-15,n.y-13,30,26,7);
+      cx.fillStyle='#fff'; cx.font='700 14px system-ui'; cx.textAlign='center';
+      cx.fillText(n.t,px,n.y+5);
+      cx.fillStyle=C.sub; cx.font='11px ui-monospace,Menlo,monospace';
+      cx.fillText(n.code,px,n.y+28);
+      cx.fillStyle=C.muted; cx.fillText('P='+n.p,px,n.y+42);
+      cx.textAlign='left'; });
+    cx.fillStyle=C.muted; cx.font='11px system-ui';
+    cx.fillText('每下一层 = 1 bit',8,H-8);
+    cx.fillStyle=C.sub; cx.font='12px system-ui';
+    cx.fillText('平均码长 H(P) = ½·1 + ¼·2 + ⅛·3 + ⅛·3 = 1.75 bit',8,16);
+  }
+  render();
+})();
+
+/* ================= §5 P / Q / entropy bars ================= */
+(function(){
+  var st=mk('cvBars',render); if(!st) return;
+  var P=[.5,.25,.125,.125], UNI=[.25,.25,.25,.25], REV=[.125,.125,.25,.5];
+  var tgt=REV, t=0;
+  var sl=document.getElementById('kbT'), info=document.getElementById('kbInfo');
+  function Q(){ var q=[],s=0,i; for(i=0;i<4;i++){ q[i]=(1-t)*P[i]+t*tgt[i]; s+=q[i]; }
+    for(i=0;i<4;i++) q[i]/=s; return q; }
+  function render(){
+    var cx=st.cx,W=st.w,H=st.h; cx.clearRect(0,0,W,H);
+    var q=Q(), lab=['A','B','C','D'], i;
+    var Hp=0,Hpq=0;
+    for(i=0;i<4;i++){ Hp-=P[i]*log2(P[i]); Hpq-=P[i]*log2(q[i]); }
+    var kl=Hpq-Hp;
+    /* ---- top: per-symbol bars ---- */
+    var L=40,R=W-14,yB=176,hM=118;
+    cx.strokeStyle=C.line; cx.lineWidth=1; cx.font='11px ui-monospace,Menlo,monospace';
+    [0,.25,.5].forEach(function(v){ var y=yB-v/0.55*hM; cx.beginPath(); cx.moveTo(L,y); cx.lineTo(R,y); cx.stroke();
+      cx.fillStyle=C.muted; cx.fillText(v.toFixed(2),6,y+4); });
+    var gw=(R-L)/4, bw=Math.min(28,gw*0.3);
+    for(i=0;i<4;i++){
+      var cxx=L+gw*(i+0.5);
+      cx.fillStyle=C.blue; rr(cx,cxx-bw-3,yB,bw,-P[i]/0.55*hM,3);
+      cx.fillStyle=C.orange; rr(cx,cxx+3,yB,bw,-q[i]/0.55*hM,3);
+      cx.fillStyle=C.sub; cx.font='700 12px system-ui'; cx.textAlign='center';
+      cx.fillText(lab[i],cxx,yB+16);
+      cx.fillStyle=C.orange; cx.font='11px ui-monospace,Menlo,monospace';
+      cx.fillText(fx(-log2(q[i]),2)+'b',cxx+3+bw/2,yB-q[i]/0.55*hM-6);
+      cx.textAlign='left';
+    }
+    cx.fillStyle=C.blue; cx.font='700 12px system-ui'; cx.fillText('■ P 真实',L,20);
+    cx.fillStyle=C.orange; cx.fillText('■ Q 模型（数字 = 它分配的码长 -log₂Q）',L+62,20);
+    /* ---- bottom: entropy bars ---- */
+    var y0=214, bh=22, gap=10, x0=L+52, xmax=R-58, sc=(xmax-x0)/3.2;
+    function bar(y,val,col,name){
+      cx.fillStyle=C.muted; cx.font='12px system-ui'; cx.textAlign='right';
+      cx.fillText(name,x0-8,y+bh-6); cx.textAlign='left';
+      cx.fillStyle=col; rr(cx,x0,y,Math.max(val*sc,1.5),bh,4);
+      cx.fillStyle=C.sub; cx.font='700 12px ui-monospace,Menlo,monospace';
+      cx.fillText(fx(val,3)+' bit',x0+val*sc+7,y+bh-6);
+    }
+    bar(y0,Hp,C.blue,'H(P)');
+    bar(y0+bh+gap,Hpq,C.orange,'H(P,Q)');
+    bar(y0+2*(bh+gap),kl,C.red,'D_KL');
+    /* gap bracket */
+    cx.strokeStyle=C.red; cx.setLineDash([3,3]); cx.lineWidth=1;
+    cx.beginPath(); cx.moveTo(x0+Hp*sc,y0); cx.lineTo(x0+Hp*sc,y0+2*(bh+gap)+bh); cx.stroke();
+    cx.setLineDash([]);
+    cx.fillStyle=C.muted; cx.font='11px system-ui';
+    cx.fillText('地板：模型再好也省不掉',x0+Hp*sc+4,y0+2*(bh+gap)+bh+14);
+    info.textContent='H(P)='+fx(Hp)+'  H(P,Q)='+fx(Hpq)+'  KL='+fx(kl)+' bit';
+  }
+  sl.addEventListener('input',function(){ t=+sl.value/100; render(); });
+  document.getElementById('kbReset').onclick=function(){ t=0; sl.value=0; render(); };
+  document.getElementById('kbUni').onclick=function(){ tgt=UNI; t=1; sl.value=100; render(); };
+  document.getElementById('kbRev').onclick=function(){ tgt=REV; t=1; sl.value=100; render(); };
+  render();
+})();
+
+/* ================= §7 forward vs reverse KL ================= */
+(function(){
+  var st=mk('cvAsym',render); if(!st) return;
+  var sl=document.getElementById('asS'), info=document.getElementById('asInfo');
+  var ckF=document.getElementById('asF'), ckR=document.getElementById('asR');
+  var SIG=0.5, W1=0.6, W2=0.4;
+  function mix(h){ return [{w:W1,m:-h,s:SIG},{w:W2,m:h,s:SIG}]; }
+  function pdf(M,x){ var p=0; for(var i=0;i<M.length;i++){ var c=M[i];
+    p+=c.w*Math.exp(-(x-c.m)*(x-c.m)/(2*c.s*c.s))/(c.s*Math.sqrt(2*Math.PI)); } return p; }
+  function gauss(x,m,s){ return Math.exp(-(x-m)*(x-m)/(2*s*s))/(s*Math.sqrt(2*Math.PI)); }
+  function fwdOpt(M){ var m=0,e2=0,i; for(i=0;i<M.length;i++) m+=M[i].w*M[i].m;
+    for(i=0;i<M.length;i++) e2+=M[i].w*(M[i].s*M[i].s+M[i].m*M[i].m);
+    return {m:m,s:Math.sqrt(Math.max(e2-m*m,1e-6))}; }
+  function revKL(M,m,s){ var d=0.05,acc=0;
+    for(var x=m-6*s;x<=m+6*s;x+=d){ var qq=gauss(x,m,s); if(qq<1e-12) continue;
+      var pp=Math.max(pdf(M,x),1e-12); acc+=qq*Math.log(qq/pp)*d; }
+    return acc; }
+  function revOpt(M){
+    var best={m:0,s:1,v:1e9},mm,ss;
+    for(mm=-4;mm<=4.001;mm+=0.08) for(ss=0.12;ss<=3.0;ss+=0.06){
+      var v=revKL(M,mm,ss); if(v<best.v) best={m:mm,s:ss,v:v}; }
+    for(mm=best.m-0.08;mm<=best.m+0.081;mm+=0.02) for(ss=Math.max(best.s-0.06,0.08);ss<=best.s+0.061;ss+=0.015){
+      var v2=revKL(M,mm,ss); if(v2<best.v) best={m:mm,s:ss,v:v2}; }
+    return best; }
+  var cache=null,cacheKey=null;
+  function render(){
+    var cx=st.cx,W=st.w,H=st.h; cx.clearRect(0,0,W,H);
+    var h=+sl.value/50, M=mix(h);
+    if(cacheKey!==sl.value){ cache={f:fwdOpt(M),r:revOpt(M)}; cacheKey=sl.value; }
+    var f=cache.f, r=cache.r;
+    var L=16,R=W-16,B=H-46,Tp=30, x0=-5,x1=5;
+    var ymax=0; for(var i=0;i<=200;i++){ var x=x0+(x1-x0)*i/200; ymax=Math.max(ymax,pdf(M,x)); }
+    ymax=Math.max(ymax,gauss(f.m,f.m,f.s),gauss(r.m,r.m,r.s))*1.12;
+    var X=function(x){ return L+(x-x0)/(x1-x0)*(R-L); }, Y=function(y){ return B-y/ymax*(B-Tp); };
+    cx.strokeStyle=C.line2; cx.lineWidth=1; cx.beginPath(); cx.moveTo(L,B); cx.lineTo(R,B); cx.stroke();
+    cx.fillStyle=C.muted; cx.font='11px ui-monospace,Menlo,monospace';
+    [-4,-2,0,2,4].forEach(function(t){ cx.fillText((t>0?'+':'')+t,X(t)-6,B+15); });
+    function curve(fn,col,fill,dash){
+      cx.save(); if(dash) cx.setLineDash([5,4]);
+      cx.strokeStyle=col; cx.lineWidth=2.2; cx.beginPath();
+      for(var i=0;i<=400;i++){ var x=x0+(x1-x0)*i/400, px=X(x), py=Y(fn(x));
+        if(i===0)cx.moveTo(px,py); else cx.lineTo(px,py); }
+      if(fill){ cx.lineTo(X(x1),B); cx.lineTo(X(x0),B); cx.closePath();
+        cx.globalAlpha=.12; cx.fillStyle=col; cx.fill(); cx.globalAlpha=1;
+        cx.beginPath(); for(var j=0;j<=400;j++){ var xx=x0+(x1-x0)*j/400, qx=X(xx), qy=Y(fn(xx));
+          if(j===0)cx.moveTo(qx,qy); else cx.lineTo(qx,qy); } }
+      cx.stroke(); cx.restore(); }
+    curve(function(x){ return pdf(M,x); },C.blue,true,false);
+    if(ckF.checked) curve(function(x){ return gauss(x,f.m,f.s); },C.orange,false,false);
+    if(ckR.checked) curve(function(x){ return gauss(x,r.m,r.s); },C.green,false,true);
+    /* mean markers */
+    if(ckF.checked){ cx.strokeStyle=C.orange; cx.setLineDash([2,3]); cx.beginPath();
+      cx.moveTo(X(f.m),B); cx.lineTo(X(f.m),Y(gauss(f.m,f.m,f.s))); cx.stroke(); cx.setLineDash([]); }
+    cx.font='700 12px system-ui';
+    cx.fillStyle=C.blue;   cx.fillText('P 双峰真实分布',L+2,16);
+    if(ckF.checked){ cx.fillStyle=C.orange; cx.fillText('forward: μ='+fx(f.m,2)+' σ='+fx(f.s,2),L+2,H-8); }
+    if(ckR.checked){ cx.fillStyle=C.green;  cx.fillText('reverse: μ='+fx(r.m,2)+' σ='+fx(r.s,2),W-190,H-8); }
+    cx.fillStyle=C.muted; cx.font='11px system-ui';
+    if(ckF.checked) cx.fillText('峰值落在无数据区',Math.min(X(f.m)+6,W-110),Tp+2);
+    info.textContent='模态 ±'+fx(h,2)+'   forward σ='+fx(f.s,2)+'（摊平）   reverse σ='+fx(r.s,2)+'（收缩）';
+  }
+  sl.addEventListener('input',render);
+  ckF.addEventListener('change',render); ckR.addEventListener('change',render);
+  render();
+})();
+
+/* ================= §9 two Gaussians ================= */
+(function(){
+  var st=mk('cvGauss',render); if(!st) return;
+  var sm=document.getElementById('ggM'), ss=document.getElementById('ggS'), info=document.getElementById('ggInfo');
+  function gauss(x,m,s){ return Math.exp(-(x-m)*(x-m)/(2*s*s))/(s*Math.sqrt(2*Math.PI)); }
+  function render(){
+    var cx=st.cx,W=st.w,H=st.h; cx.clearRect(0,0,W,H);
+    var m1=0,s1=1,m2=+sm.value/100,s2=+ss.value/100;
+    var dqp=Math.log(s2/s1)+(s1*s1+(m1-m2)*(m1-m2))/(2*s2*s2)-0.5;
+    var dpq=Math.log(s1/s2)+(s2*s2+(m1-m2)*(m1-m2))/(2*s1*s1)-0.5;
+    var L=16,R=W-16,B=H-28,Tp=54, x0=-6,x1=6;
+    var ymax=Math.max(gauss(m1,m1,s1),gauss(m2,m2,s2))*1.1;
+    var X=function(x){ return L+(x-x0)/(x1-x0)*(R-L); }, Y=function(y){ return B-y/ymax*(B-Tp); };
+    cx.strokeStyle=C.line2; cx.lineWidth=1; cx.beginPath(); cx.moveTo(L,B); cx.lineTo(R,B); cx.stroke();
+    cx.fillStyle=C.muted; cx.font='11px ui-monospace,Menlo,monospace';
+    [-4,-2,0,2,4].forEach(function(t){ cx.fillText((t>0?'+':'')+t,X(t)-6,B+15); });
+    function curve(m,s,col){ cx.strokeStyle=col; cx.lineWidth=2.2; cx.beginPath();
+      for(var i=0;i<=400;i++){ var x=x0+(x1-x0)*i/400, px=X(x), py=Y(gauss(x,m,s));
+        if(i===0)cx.moveTo(px,py); else cx.lineTo(px,py); } cx.stroke();
+      cx.globalAlpha=.10; cx.lineTo(X(x1),B); cx.lineTo(X(x0),B); cx.closePath();
+      cx.fillStyle=col; cx.fill(); cx.globalAlpha=1; }
+    curve(m1,s1,C.blue); curve(m2,s2,C.orange);
+    cx.font='700 12px system-ui';
+    cx.fillStyle=C.blue;   cx.fillText('q = N(0, 1)',L+2,16);
+    cx.fillStyle=C.orange; cx.fillText('p = N('+fx(m2,2)+', '+fx(s2*s2,2)+')',L+2,32);
+    cx.font='700 13px ui-monospace,Menlo,monospace';
+    cx.fillStyle=C.red;     cx.fillText('D(q‖p) = '+fx(dqp,3)+' nat',W-176,18);
+    cx.fillStyle=C.magenta; cx.fillText('D(p‖q) = '+fx(dpq,3)+' nat',W-176,36);
+    cx.fillStyle=C.muted; cx.font='11px system-ui';
+    cx.fillText(Math.abs(dqp-dpq)<0.005?'σ 相同时两向恰好相等（特例）':'两个方向的数值不同 —— 不对称',W-176,52);
+    info.textContent='μ₂='+fx(m2,2)+'  σ₂='+fx(s2,2)+'   D(q‖p)='+fx(dqp,3)+'   D(p‖q)='+fx(dpq,3)+' nat';
+  }
+  sm.addEventListener('input',render); ss.addEventListener('input',render); render();
+})();
+
+})();
+</script>
+</body>
+</html>
