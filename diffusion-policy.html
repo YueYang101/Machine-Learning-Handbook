@@ -70,6 +70,12 @@ mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:10
 .duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
 .toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
   padding:10px 0; margin:1.6em 0; }
+.chain { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:1.4em 0; }
+.chain .cr { margin:2px 0; }
+.chain .cb { display:inline-block; border:1px solid var(--line2); border-radius:8px; padding:2px 12px;
+  background:var(--bg); }
+.chain .cn { color:var(--muted); font-size:.85rem; margin-left:8px; }
+.chain .ar { color:var(--sub); font-size:.85rem; margin:4px 0 4px 16px; }
 footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
 </style>
 </head>
@@ -91,8 +97,8 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <a href="#m1">§7 工具箱</a> ·
 <a href="#m2">§8 正向闭式解</a> ·
 <a href="#m3">§9 反向后验</a> ·
-<a href="#m4">§10 从 KL 到 loss</a> ·
-<a href="#m5">§11 高斯 KL</a> ·
+<a href="#m4">§10 ELBO 与 loss 分解</a> ·
+<a href="#m5">§11 高斯 KL（可算的关键）</a> ·
 <a href="#m6">§12 噪声预测 loss</a> ·
 <a href="#m7">§13 数值例子</a> ·
 <a href="#dp">§14 DP 原论文</a> ·
@@ -211,9 +217,9 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <ol>
 <li><b>§8 正向</b>：加噪链是我们自己设计的，$T$ 步能合并成一步 $x_k=\sqrt{\bar\alpha_k}x_0+\sqrt{1-\bar\alpha_k}\,\epsilon$。想要哪个噪声水平的样本，一行就能造。</li>
 <li><b>§9 反向的「标准答案」</b>：真正要的 $q(x_{k-1}\mid x_k)$ 算不动；但<b>额外告诉它真实 $x_0$</b> 之后，用贝叶斯公式就能精确倒推出 $q(x_{k-1}\mid x_k,x_0)$，而且还是个高斯。这就是训练时的标准答案。</li>
-<li><b>§10 loss</b>：让模型的反向一步 $p_\theta(x_{k-1}\mid x_k)$ 去逼近那个标准答案，两个分布的差距用 <a href="kl-divergence.html">KL 散度</a>量；最后一步（$k{=}1$）没有分布可比，改用 MSE。</li>
-<li><b>§11 化简</b>：两边都是高斯 ⇒ KL 有闭式解 ⇒ 塌成「两个均值之差的平方」。</li>
-<li><b>§12 换元</b>：那个均值只由「当初混进去的那份噪声 $\epsilon$」决定 ⇒ 干脆让网络直接猜 $\epsilon$ ⇒ loss 变成 $\|\epsilon-\epsilon_\theta\|^2$。</li>
+<li><b>§10 loss</b>：真正想最大化的 $\log p_\theta(x_0)$ 因为要对整条链积分而算不动 → 引入正向过程 $q$ 把积分变期望 → Jensen 得到 ELBO → 按 Markov + 贝叶斯展开，<b>KL 自己长出来</b>：模型的反向一步 $p_\theta(x_{k-1}\mid x_k)$ 对上标准答案，差距就是 <a href="kl-divergence.html">KL 散度</a>；$k{=}1$ 是分解的边界项，留成重建对数似然。</li>
+<li><b>§11 化简</b>：左边由贝叶斯给出闭式高斯、右边是我们定义的高斯 ⇒ KL 有闭式解（<b>整套方法能算的关键</b>）⇒ 塌成「两个均值之差的平方」。</li>
+<li><b>§12 换元</b>：那个均值只由「当初混进去的那份噪声 $\epsilon$」决定 ⇒ 干脆让网络直接猜 $\epsilon$ ⇒ 得到带权的 $w_k\|\epsilon-\epsilon_\theta\|^2$，DDPM 再把 $w_k$ 拍成 1 换成 $L_{\text{simple}}$（这一步是简化，不再是严格的界）。</li>
 </ol>
 串成一句：<b>加噪是已知的 → 用贝叶斯倒着算出标准答案 → 让网络在看不到 $x_0$ 的情况下模仿它 → 化简到最后就是「猜噪声」。</b>以下是逐步推导。
 </div>
@@ -318,18 +324,38 @@ $$\tilde\beta_k=\frac1A=\frac{1-\bar\alpha_{k-1}}{1-\bar\alpha_k}\beta_k
 <b>读一下这两个式子。</b>$\tilde\mu_k$ 是 $x_k$ 与 $x_0$ 按噪声比例的<b>加权平均</b>：知道终点（当前带噪点）和起点（干净数据），「上一步应该在哪」就是两者的插值——这就是给 $\mu_\theta$ 准备的<b>监督真值</b>。$\tilde\beta_k$ 略小于 $\beta_k$ 且与 $x$ 无关，正好拿来当反向的固定方差。弹球版本：知道球从哪来、现在在哪，就能精确说出它上一帧在哪；网络要学的是在<b>看不到 $x_0$</b> 时模仿这个答案——<b>为什么不能把这条公式直接拿去生成</b>，见 <a href="#m4">§10 开头</a>。
 </div>
 
-<h2 id="m4"><span class="n">§ 10</span>Loss：从「让 $p_\theta$ 贴近数据」到三组 KL</h2>
+<h2 id="m4"><span class="n">§ 10</span>Loss：从 $\log p_\theta(x_0)$ 一路走到 $\|\epsilon-\epsilon_\theta\|^2$</h2>
+
+<p>这一节只回答两个问题：<b>我们真正想训练的是 $p_\theta(x_0)$，它为什么不好直接算？ELBO 又是怎么把这个算不动的目标，变成后面能真正算、能真正反传的 KL / MSE？</b>整条主线如下，每一格下面都标了「为什么必须走这一步」——后面 10.1–10.9 就是逐格展开。</p>
+
+<div class="chain">
+<div class="cr"><span class="cb">$\log p_\theta(x_0)$</span><span class="cn">真正想最大化的目标（10.1）</span></div>
+<div class="ar">↓&nbsp; <b>算不动</b>：marginal 要把整条链 $x_{1:T}$ 积掉（10.2）</div>
+<div class="cr"><span class="cb">引入 $q(x_{1:T}\mid x_0)$，乘一除一</span><span class="cn">积分 → 对 $q$ 的期望，恒等变形（10.3）</span></div>
+<div class="ar">↓&nbsp; <b>Jensen</b>（$\log$ 是凹函数）</div>
+<div class="cr"><span class="cb">$\mathrm{ELBO}=\mathbb E_q\!\left[\log\frac{p_\theta(x_{0:T})}{q(x_{1:T}\mid x_0)}\right]$</span><span class="cn">可采样的下界（10.4）</span></div>
+<div class="ar">↓&nbsp; <b>缺口精确等于</b> $D_{\mathrm{KL}}\big(q(x_{1:T}\mid x_0)\,\|\,p_\theta(x_{1:T}\mid x_0)\big)\ge0$（10.5）</div>
+<div class="cr"><span class="cb">$L=-\mathrm{ELBO}$</span><span class="cn">改成最小化，$-\log p_\theta(x_0)\le L$（10.6）</span></div>
+<div class="ar">↓&nbsp; <b>Markov 分解 + Bayes 翻转 + telescoping</b>（10.7–10.8）</div>
+<div class="cr"><span class="cb">$L=L_T+\sum_{k=2}^{T}L_{k-1}+L_0$</span><span class="cn">逐 timestep 的可计算项（10.9）</span></div>
+<div class="ar">↓&nbsp; 中间项<b>按 KL 的定义</b>就是 KL，不是我们选的</div>
+<div class="cr"><span class="cb">$D_{\mathrm{KL}}\big(q(x_{k-1}\mid x_k,x_0)\,\|\,p_\theta(x_{k-1}\mid x_k)\big)$</span><span class="cn">两边都是<b>已知形式的高斯</b>（§11.1）</span></div>
+<div class="ar">↓&nbsp; 高斯 KL 有<b>闭式解</b>，方差固定 ⇒ 只剩均值项</div>
+<div class="cr"><span class="cb">$\frac{1}{2\sigma_k^2}\big\|\tilde\mu_k-\mu_\theta\big\|^2+\text{const}$</span><span class="cn">mean matching（§11.3）</span></div>
+<div class="ar">↓&nbsp; 用 $x_k=\sqrt{\bar\alpha_k}x_0+\sqrt{1-\bar\alpha_k}\epsilon$ 重参数化（§12）</div>
+<div class="cr"><span class="cb">$w_k\big\|\epsilon-\epsilon_\theta(x_k,k)\big\|^2\;\longrightarrow\;L_{\text{simple}}$</span><span class="cn">丢掉权重后的简化目标</span></div>
+</div>
 
 <div class="key good">
-<b>大白话先讲完整条 loss（这一段读懂了，后面的推导只是把它算细）。</b>
+<b>大白话先讲完（这一段读懂了，后面只是把它算细）。</b>
 <ol>
-<li><b>贝叶斯给出「标准答案」，模型去模仿它，差距用 <a href="kl-divergence.html">KL 散度</a>量。</b>正向加噪链是我们自己设计的、完全已知的高斯过程；再<b>额外给它真实的 $x_0$</b>，用贝叶斯公式就能把它倒过来，精确算出「上一帧应该在哪」的分布 $q(x_{k-1}\mid x_k,x_0)$（§9 已推完，是个高斯）。模型给出另一个反向分布 $p_\theta(x_{k-1}\mid x_k)$——注意它<b>看不到 $x_0$</b>。<b>loss 的主体就是把这两个反向分布用 KL 比一比</b>：两边都是高斯 ⇒ KL 有闭式解 ⇒ 最后塌成一个均方误差。</li>
-<li><b>最后一步（$k{=}1$）没有分布可比，用 MSE。</b>KL 是「两个分布之间」的量；但 $k{=}1$ 这步要产出的是<b>干净数据 $x_0$ 本身</b>——在 DP 里就是真正要发给机械手的那串 action，是一个确定的实值输出，不再是带噪的中间分布。所以 KL 求和只从 $k{=}2$ 算到 $T$，$k{=}1$ 单独留成重建项 $-\log p_\theta(x_0\mid x_1)$；在高斯假设下它<b>就是 $\|x_0-\hat x_0\|^2$ 这个 MSE</b>，照样加进 loss。</li>
+<li><b>贝叶斯给出「标准答案」，模型去模仿它，差距按 KL 的定义自然长成 <a href="kl-divergence.html">KL 散度</a>。</b>正向加噪链是我们自己设计的、完全已知的高斯过程；再<b>额外给它真实的 $x_0$</b>，用贝叶斯就能倒推出「上一帧应该在哪」的分布 $q(x_{k-1}\mid x_k,x_0)$（§9 已推完，是个高斯）。模型给出另一个反向分布 $p_\theta(x_{k-1}\mid x_k)$——注意它<b>看不到 $x_0$</b>。loss 的主体就是这两个反向分布之间的 KL：两边都是高斯 ⇒ 闭式解 ⇒ 塌成一个均方误差。</li>
+<li><b>最后一步（$k{=}1$）留下的是<u>重建项</u>，不是 KL——但原因不是「没有分布可比」。</b>$p_\theta(x_0\mid x_1)$ 本身就是一个正经的概率分布。真正的原因是：telescoping 展开到 $k{=}1$ 这个<b>边界</b>时，代数上剩下来的本来就是条件对数似然 $-\log p_\theta(x_0\mid x_1)$。真要硬凑成 KL 也凑不出有限值——那边的「目标」是已经把 $x_0$ 当条件的 $q(x_0\mid x_1,x_0)$，它是一个<b>点质量 $\delta$</b>，$D_{\mathrm{KL}}(\delta\,\|\,\mathcal N)=+\infty$。实践中这一项在高斯假设下就是 MSE，照样加进 loss（细节见 10.9）。</li>
 <li><b>还有一个 $L_T$，白送的。</b>正向终点 vs 先验 $\mathcal N(0,I)$ 的 KL，不含任何参数，schedule 设好后 $\approx0$，直接扔掉。</li>
 </ol>
 $$L=\underbrace{L_T}_{\text{无参数，扔掉}}
 +\underbrace{\sum_{k=2}^{T}D_{\mathrm{KL}}\big(\text{标准答案}\,\|\,\text{模型}\big)}_{\text{训练主体：高斯 KL 闭式解}\to\text{MSE}}
-+\underbrace{L_0}_{k=1\text{：重建 MSE}}$$
++\underbrace{L_0}_{k=1\text{：重建项}\to\text{MSE}}$$
 </div>
 
 <div class="key">
@@ -343,118 +369,247 @@ $$L=\underbrace{L_T}_{\text{无参数，扔掉}}
 再补一句常被追问的：$p_\theta$ 每一步都是<b>局部</b>高斯，为什么整体能表示多模态？因为多模态不在单步里，而在<b>整条链的组合</b>里——每步高斯的均值由网络按当前 $x_k$ 现算，不同的随机起点与采样噪声会被送进不同的模态（§2、§4 的动画演的就是这件事）。
 </div>
 
-<p>下面是完整推导，每一步都不是凭空的技巧，而是被同一个问题逼出来的——<b>怎么衡量「模型分布」和「数据分布」的差距</b>。很多材料直接写「训练目标是最大似然」就往下走，这一步其实是跳过的，10.1 先把它补回来。</p>
+<h3>10.1 真正的训练目标：最大似然（它本身就是 KL）</h3>
 
-<h3>10.1 源头：差距用 <a href="kl-divergence.html">KL 散度</a>来量</h3>
-
-<p>我们想要的东西一句话说得清：让模型分布 $p_\theta$ 尽量贴近数据分布 $p_{\text{data}}$（DP 里就是专家 action chunk 在给定 observation 下的条件分布）。「贴近」需要一把尺子。信息论给的那把尺子叫 <b><a href="kl-divergence.html">KL 散度（Kullback–Leibler divergence，相对熵）</a></b>——含义是：<b>真实世界按 $p_{\text{data}}$ 出数据，而你用 $p_\theta$ 去编码它，平均每个样本要多付多少信息量（比特）</b>。</p>
+<p>先把目标钉死。我们要的是：模型分布 $p_\theta$ 尽量贴近数据分布 $p_{\text{data}}$。「贴近」用<a href="kl-divergence.html">信息论的那把尺子——KL 散度</a>来量，方向取 forward（按 $p_{\text{data}}$ 取期望，因为我们手上只有从数据里采出来的样本）：</p>
 
 <div class="math">
 $$D_{\mathrm{KL}}\big(p_{\text{data}}\,\|\,p_\theta\big)
 =\mathbb E_{x_0\sim p_{\text{data}}}\!\left[\log\frac{p_{\text{data}}(x_0)}{p_\theta(x_0)}\right]
 =\underbrace{\mathbb E_{p_{\text{data}}}\big[\log p_{\text{data}}(x_0)\big]}_{-H(p_{\text{data}})\;\text{，与 }\theta\text{ 无关}}
 -\;\mathbb E_{p_{\text{data}}}\big[\log p_\theta(x_0)\big]$$
-<p class="why">选它当尺子有两个硬理由：① <b>$D_{\mathrm{KL}}\ge0$，且 $=0$ 当且仅当两个分布完全相同</b>（Gibbs 不等式）——有地板，且地板正好在「模型完全正确」处，这是能当 loss 的前提；② 它是个<b>期望</b>，可以用训练集样本直接估计。方向取 forward（按 $p_{\text{data}}$ 取期望）也不是随便选的：我们手上只有从数据里采出来的样本，只有这个方向能算。</p>
-<p class="why">第一项是数据自身的熵，是一块「模型再好也省不掉的地板」，不含 $\theta$，优化时整块扔掉。剩下的就是：</p>
+<p class="why">选它当尺子有两个硬理由：① $D_{\mathrm{KL}}\ge0$，且 $=0$ 当且仅当两个分布完全相同（Gibbs 不等式）——有地板，且地板正好在「模型完全正确」处；② 它是个<b>期望</b>，可以用训练集样本直接估计。第一项是数据自身的熵，是「模型再好也省不掉的地板」，不含 $\theta$，优化时整块扔掉，于是：</p>
 $$\arg\min_\theta D_{\mathrm{KL}}(p_{\text{data}}\|p_\theta)
 =\arg\max_\theta\;\mathbb E_{p_{\text{data}}}\big[\log p_\theta(x_0)\big]
 =\arg\min_\theta\;\mathbb E_{p_{\text{data}}}\big[-\log p_\theta(x_0)\big]$$
 </div>
 
 <div class="key good">
-<b>「最大似然」不是另起炉灶，它就是 KL。</b>「最小化 $D_{\mathrm{KL}}(p_{\text{data}}\|p_\theta)$」=「最小化交叉熵 $H(p_{\text{data}},p_\theta)$」=「最大似然 / 最小化 $-\log p_\theta(x_0)$」，三者只差一个与 $\theta$ 无关的常数。所以本节标题里的 $-\log p_\theta(x_0)$ 是<b>从 KL 掉下来的</b>，不是天上掉下来的——KL 在这条推导里一共出现三次，这是第一次。信息论那一侧的完整来龙去脉（信息量 $-\log P$、编码长度、熵、交叉熵、非负性证明、forward / reverse 的区别）在<a href="kl-divergence.html">这一页</a>。
+<b>这个式子在说什么（用大白话读一遍）。</b>化简到最后，训练要做的只有一件事：<b>把训练集里每一个真实样本 $x_0$，在模型眼里的「出现可能性」拉到最大</b>。$p_\theta(x_0)$ 就是「模型认为这条真实的专家 action chunk 有多可能被自己生成出来」；$\log$ 只是为了把连乘变连加、数值稳定，不改变谁大谁小。<b>所以「最小化 KL」「最小化交叉熵」「最大似然」「让 $-\log p_\theta(x_0)$ 最小」这四句话说的是同一件事</b>——真实数据的输出概率越大越好。后面所有推导，都只是在解决一个技术问题：<b>$p_\theta(x_0)$ 本身算不出来。</b>
 </div>
 
-<h3>10.2 卡点：$-\log p_\theta(x_0)$ 根本算不出来</h3>
+<h3>10.2 卡点在哪：不是网络算不出，是 marginal 积不动</h3>
 
-<p>目标有了，麻烦马上来。网络定义的是<b>逐步</b>的反向条件分布 $p_\theta(x_{k-1}\mid x_k)$；要拿到干净数据 $x_0$ 的<b>边缘</b>概率，必须把所有可能的中间路径都积掉：</p>
+<p>这里必须说清楚困难的<b>准确位置</b>，否则后面每一步绕路都会显得莫名其妙。</p>
+
+<div class="duo">
+<div class="algo"><div class="t">✓ 能算的：单步条件分布</div>
+<p style="margin:.4em 0">$p_\theta(x_{k-1}\mid x_k)=\mathcal N\big(x_{k-1};\mu_\theta(x_k,k),\sigma_k^2I\big)$</p>
+<p style="margin:.4em 0;font-size:.92rem;color:var(--sub)">给定 $x_k$ 和 $k$，网络前向一次就吐出均值，密度值可以直接代公式算。<b>这一层没有任何困难。</b></p></div>
+<div class="algo"><div class="t">✗ 算不了的：边缘似然</div>
+<p style="margin:.4em 0">$p_\theta(x_0)=\displaystyle\int p_\theta(x_{0:T})\,dx_{1:T}$</p>
+<p style="margin:.4em 0;font-size:.92rem;color:var(--sub)">要得到 $x_0$ 的概率，必须把<b>所有可能的中间路径</b>都积掉。</p></div>
+</div>
 
 <div class="math">$$p_\theta(x_0)=\int p_\theta(x_{0:T})\,dx_{1:T}
-=\int p(x_T)\prod_{k=1}^{T}p_\theta(x_{k-1}\mid x_k)\;dx_1\cdots dx_T$$
-<p class="why">$T=100$、$x\in\mathbb R^{320}$ 时这是 $100$ 层、共 $32000$ 维的嵌套积分：没有闭式解，蒙特卡洛也估不准（随机撒的链几乎不可能落到 $x_0$ 附近，方差爆炸）。<b>这就是整节所有绕路的唯一原因。</b></p></div>
+=\int p(x_T)\prod_{k=1}^{T}p_\theta(x_{k-1}\mid x_k)\;dx_1\,dx_2\cdots dx_T$$
+<p class="why">困难有两层，都要点破：<br>
+① <b>维度</b>：$T=100$、$x\in\mathbb R^{320}$（20 DOF × 16 步 chunk）时，这是 $100$ 层、共 $32000$ 维的嵌套积分，没有闭式解。<br>
+② <b>朴素蒙特卡洛也救不了</b>：想用「从 $p(x_T)$ 随机撒链、看有多少落在 $x_0$ 附近」来估计，命中率低到可以忽略——绝大多数随机链走到最后跟目标 $x_0$ 毫无关系，估计量方差爆炸，梯度全是噪声。<br>
+所以问题<b>不是</b>「神经网络算不出 $p_\theta$」，而是<b>marginalization 本身不可行</b>。$\log p_\theta(x_0)$ 写得出来，但求不出、更求不了梯度。</p></div>
 
-<h3>10.3 绕道：塞一个「已知且可采样」的分布进去</h3>
+<h3>10.3 第一步绕道：把积分改写成对 $q$ 的期望</h3>
 
-<p>算不了就不算它，改成优化一个<b>可算的上界</b>。手法叫「乘一除一」：往积分里塞进正向过程 $q(x_{1:T}\mid x_0)$——它由 schedule 完全定死、不含参数、任意一步都能一步采样（§8 的闭式解），是这里唯一现成可用的分布。<b>$q$ 在 loss 里的角色，就是这个采样分布。</b></p>
+<p>积分算不动，就不要硬算——先把它变成一个<b>期望</b>，因为期望可以采样估计。手法就是「乘一除一」：往积分里塞进一个我们自己说了算的分布。塞谁？<b>正向加噪过程 $q(x_{1:T}\mid x_0)$</b>——它由 schedule 完全定死、不含任何参数、任意一步都能一步采样（§8 闭式解）。这是手上唯一现成可用的分布，<b>这也就是 $q$ 在 loss 里的全部角色</b>。</p>
 
 <div class="math">
-$$p_\theta(x_0)=\int q(x_{1:T}\mid x_0)\,\frac{p_\theta(x_{0:T})}{q(x_{1:T}\mid x_0)}\,dx_{1:T}
+$$p_\theta(x_0)=\int p_\theta(x_{0:T})\,dx_{1:T}
+=\int q(x_{1:T}\mid x_0)\,\frac{p_\theta(x_{0:T})}{q(x_{1:T}\mid x_0)}\,dx_{1:T}
 =\mathbb E_{q(x_{1:T}\mid x_0)}\!\left[\frac{p_\theta(x_{0:T})}{q(x_{1:T}\mid x_0)}\right]$$
-<p class="why">积分变成了期望——可采样了，但外面还套着 $-\log$，而 $-\log$ 的期望才好估，期望的 $-\log$ 不好估。用 <b>Jensen 不等式</b>把两者换个位置（$-\log$ 是凸函数，凸函数的期望 $\ge$ 期望的凸函数）：</p>
-$$-\log p_\theta(x_0)
-=-\log\,\mathbb E_{q(x_{1:T}\mid x_0)}\!\left[\frac{p_\theta(x_{0:T})}{q(x_{1:T}\mid x_0)}\right]
-\;\le\;
-\underbrace{\mathbb E_{q(x_{1:T}\mid x_0)}\!\left[\log\frac{q(x_{1:T}\mid x_0)}{p_\theta(x_{0:T})}\right]}_{=:L\;\text{（variational bound，}-\text{ELBO）}}$$
-<p class="why">于是<b>最小化 $L$ 就是在压低真实 loss 的上界</b>。$L$ 里每一项都能用 $q$ 采样估计，可以真的送进反向传播。</p>
+<p class="why">注意这一步<b>是恒等变形，没有任何近似</b>：乘上 $q$ 再除以 $q$ 而已（只要 $q>0$ 处覆盖被积区域）。但收益是本质的——原来是「对所有 latent 状态积分」，现在变成「按 $q$ 采一条链，算一个比值，取平均」。而 $q$ 是<b>我们自己设计的、可解析、可一步采样</b>的 forward process：<br>
+$\;\;$• 采样廉价：$x_k=\sqrt{\bar\alpha_k}x_0+\sqrt{1-\bar\alpha_k}\epsilon$，一行代码；<br>
+$\;\;$• 而且 $q$ 采出来的链<b>天然经过 $x_0$ 附近</b>（它就是从 $x_0$ 加噪出来的），彻底解决了 10.2 里「随机撒链命中率为零」的问题——这就是重要性采样的思想。</p>
+</div>
+
+<h3>10.4 第二步：Jensen 不等式 → ELBO</h3>
+
+<p>还差一步：我们要的是 $\log p_\theta(x_0)=\log\mathbb E_q[\cdot]$，可「期望的 $\log$」没法用采样估计（$\log$ 不能进期望里面）。用 <b>Jensen 不等式</b>把两者换个位置——$\log$ 是<b>凹</b>函数，所以 $\log\mathbb E[X]\ge\mathbb E[\log X]$：</p>
+
+<div class="math">
+$$\log p_\theta(x_0)=\log\,\mathbb E_{q(x_{1:T}\mid x_0)}\!\left[\frac{p_\theta(x_{0:T})}{q(x_{1:T}\mid x_0)}\right]
+\;\ge\;
+\mathbb E_{q(x_{1:T}\mid x_0)}\!\left[\log\frac{p_\theta(x_{0:T})}{q(x_{1:T}\mid x_0)}\right]$$
+<p class="why">右边这个东西第一次得到名字：</p>
+$$\boxed{\;\mathrm{ELBO}(\theta):=\mathbb E_{q(x_{1:T}\mid x_0)}\!\left[\log\frac{p_\theta(x_{0:T})}{q(x_{1:T}\mid x_0)}\right]\;}
+\qquad\text{（evidence lower bound）}$$
+<p class="why">现在它每一项都能用 $q$ 采样估计、能对 $\theta$ 求梯度。</p>
+</div>
+
+<div class="key good">
+<b>ELBO 不是有人拍脑袋设计出来的 loss。</b>它是被逼出来的：<b>原目标 $\log p_\theta(x_0)$ 因为 marginalization 而算不动 → 引入可采样的 $q$ 把积分变期望 → Jensen 把 $\log$ 挪进期望里</b>，最后落下来的那个可处理的下界，就叫 ELBO。名字里的 evidence 指的就是 $p_\theta(x_0)$（贝叶斯里管边缘似然叫 evidence），lower bound 指的就是这个 $\ge$。
+</div>
+
+<h3>10.5 这个界差多少？缺口<b>精确</b>等于一个 KL</h3>
+
+<p>Jensen 只告诉我们 $\mathrm{ELBO}\le\log p_\theta(x_0)$，没说差多少。把差值算出来——从 KL 的定义一步步展开，不跳步：</p>
+
+<div class="math">
+$$D_{\mathrm{KL}}\big(q(x_{1:T}\mid x_0)\,\big\|\,p_\theta(x_{1:T}\mid x_0)\big)
+=\mathbb E_q\!\left[\log\frac{q(x_{1:T}\mid x_0)}{p_\theta(x_{1:T}\mid x_0)}\right]$$
+<p class="why">关键代换：模型的后验可以用联合分布写出来（条件概率的定义），$p_\theta(x_{1:T}\mid x_0)=\dfrac{p_\theta(x_{0:T})}{p_\theta(x_0)}$。代进去：</p>
+$$=\mathbb E_q\!\left[\log\frac{q(x_{1:T}\mid x_0)\;p_\theta(x_0)}{p_\theta(x_{0:T})}\right]
+=\underbrace{\mathbb E_q\!\left[\log\frac{q(x_{1:T}\mid x_0)}{p_\theta(x_{0:T})}\right]}_{=\,-\mathrm{ELBO}}
++\;\underbrace{\mathbb E_q\big[\log p_\theta(x_0)\big]}_{\text{不含 }x_{1:T}\text{，期望白取}=\log p_\theta(x_0)}$$
+<p class="why">即 $D_{\mathrm{KL}}=\log p_\theta(x_0)-\mathrm{ELBO}$。移项：</p>
+$$\boxed{\;\log p_\theta(x_0)=\mathrm{ELBO}+\underbrace{D_{\mathrm{KL}}\big(q(x_{1:T}\mid x_0)\,\|\,p_\theta(x_{1:T}\mid x_0)\big)}_{\ge0\;\text{（Gibbs）}}\;}$$
 </div>
 
 <div class="key">
-<b>这个不等式差了多少？答案还是 KL（第二次出现）。</b>把 $p_\theta(x_{0:T})=p_\theta(x_{1:T}\mid x_0)\,p_\theta(x_0)$ 代进 $L$ 就能看出缺口的精确形式：
-$$L=-\log p_\theta(x_0)+\underbrace{D_{\mathrm{KL}}\big(q(x_{1:T}\mid x_0)\,\|\,p_\theta(x_{1:T}\mid x_0)\big)}_{\ge0\;\text{，被丢掉的精度}}$$
-所以 Jensen 那一步<b>不是白扔精度</b>：缺口正是「我们塞进去的正向链」和「模型自己的反向链」之间的 KL；两者越像，界越紧。扩散模型选择<b>不学</b> $q$（VAE 是要学的），代价是缺口不为零，回报是 $q$ 极其廉价且解析可算。
+<b>这一节的作用，和上一节分工很清楚。</b>Jensen 告诉我们 $\mathrm{ELBO}\le\log p_\theta(x_0)$（<b>方向</b>）；KL 分解进一步告诉我们 $\log p_\theta(x_0)-\mathrm{ELBO}$ <b>究竟差多少</b>——答案正好是一个 KL 散度，而且由 $D_{\mathrm{KL}}\ge0$ 顺带把 Jensen 的结论<b>重新证明了一遍</b>。<br>
+读法：缺口是「我们塞进去的正向链 $q$」与「模型自己的反向链 $p_\theta(\cdot\mid x_0)$」之间的距离。两者越像，界越紧。VAE 会去<b>学</b>这个 $q$ 来收紧缺口；扩散模型选择<b>不学</b>——$q$ 由 schedule 定死，代价是缺口不为零，回报是 $q$ 极其廉价且处处解析可算。
 </div>
 
-<h3>10.4 展开：把两条链按马尔科夫拆成逐步的项</h3>
+<h3>10.6 换个符号：训练时最小化 $L=-\mathrm{ELBO}$</h3>
 
-<p>$L$ 里的两条链都是马尔科夫链，各自拆成连乘，$\log$ 把连乘变成求和：</p>
+<p>ELBO 是要<b>最大化</b>的（它是 $\log$ 似然的下界）；但训练框架的习惯是<b>最小化</b> loss。所以 DDPM 原文直接写负号版本。这里专门对照一次，避免后面被正负号绕晕：</p>
+
+<div class="tw"><table>
+<tr><th></th><th>ELBO（最大化）</th><th>$L=-\mathrm{ELBO}$（最小化，DDPM 用这个）</th></tr>
+<tr><td>表达式</td><td>$\mathbb E_q\!\left[\log\dfrac{p_\theta(x_{0:T})}{q(x_{1:T}\mid x_0)}\right]$</td><td>$\mathbb E_q\!\left[\log\dfrac{q(x_{1:T}\mid x_0)}{p_\theta(x_{0:T})}\right]$</td></tr>
+<tr><td>与似然的关系</td><td>$\mathrm{ELBO}\le\log p_\theta(x_0)$</td><td>$L\ge-\log p_\theta(x_0)$</td></tr>
+<tr><td>一句话</td><td>似然的<b>下</b>界</td><td>负对数似然（NLL）的<b>上</b>界</td></tr>
+</table></div>
+
+<div class="math">$$-\log p_\theta(x_0)\;\le\;L=\mathbb E_{q(x_{1:T}\mid x_0)}\!\left[\log\frac{q(x_{1:T}\mid x_0)}{p_\theta(x_{0:T})}\right]$$
+<p class="why">所以「最小化 $L$」就是在<b>压低真实 NLL 的上界</b>——压得越低，真实 loss 被夹得越紧。后面所有推导都在 $L$ 上进行。</p></div>
+
+<h3>10.7 有了 $L$ 还不够：为什么必须继续拆</h3>
+
+<p>$L$ 现在可采样了，但它仍然是<b>整条 trajectory 的一个大期望</b>，直接这么用有两个问题：</p>
+
+<ul>
+<li><b>每次更新都要跑完整条链</b>：$p_\theta(x_{0:T})$ 是 $T$ 个因子的乘积，一次估计要前向 $T$ 次网络。$T=100$ 时训练慢一百倍。</li>
+<li><b>方差大</b>：整条链的对数比值是 $T$ 个随机项相加，噪声累积，梯度抖。</li>
+</ul>
+
+<p>目标因此很明确：<b>把「整条轨迹的一个期望」拆成「一个个 timestep 的、各自可解析计算的项」</b>，这样每次训练随机抽一个 $k$ 就能更新。手上有三样工具，正好够用：</p>
+
+<ol>
+<li>$q$ 的 <b>Markov 结构</b>（正向逐步）；</li>
+<li>$p_\theta$ 的 <b>reverse Markov 结构</b>（反向逐步）；</li>
+<li><b>贝叶斯定理</b>（把正向的一步翻转成反向的一步）。</li>
+</ol>
+
+<p>这是从「一个抽象的 variational bound」走向「能写进训练代码的 diffusion loss」的关键一段。</p>
+
+<h3>10.8 展开：Markov 分解 → Bayes 翻转 → telescoping</h3>
+
+<p><b>第一步，两条链各自按 Markov 拆成连乘</b>，$\log$ 把连乘变连加：</p>
+
 <div class="math">
-$$q(x_{1:T}\mid x_0)=\prod_{k=1}^Tq(x_k\mid x_{k-1}),\qquad
-p_\theta(x_{0:T})=p(x_T)\prod_{k=1}^Tp_\theta(x_{k-1}\mid x_k)$$
-$$L=\mathbb E_q\!\left[-\log p(x_T)+\sum_{k=1}^T\log\frac{q(x_k\mid x_{k-1})}{p_\theta(x_{k-1}\mid x_k)}\right]$$
-<p class="why">形式上已经「逐步」了，但这个和式<b>还不能用</b>：每一项的分子是<b>正向</b>一步（$k-1\to k$），分母是<b>反向</b>一步（$k\to k-1$），方向相反，凑不成任何一个 KL；而且分子 $q(x_k\mid x_{k-1})$ 的方差很大，直接采样估计会很不稳。</p>
+$$q(x_{1:T}\mid x_0)=\prod_{k=1}^{T}q(x_k\mid x_{k-1}),\qquad
+p_\theta(x_{0:T})=p(x_T)\prod_{k=1}^{T}p_\theta(x_{k-1}\mid x_k)$$
+<p class="why">代进 $L$：</p>
+$$L=\mathbb E_q\!\left[\log\frac{\prod_{k=1}^{T}q(x_k\mid x_{k-1})}{p(x_T)\prod_{k=1}^{T}p_\theta(x_{k-1}\mid x_k)}\right]
+=\mathbb E_q\!\left[-\log p(x_T)+\sum_{k=1}^{T}\log\frac{q(x_k\mid x_{k-1})}{p_\theta(x_{k-1}\mid x_k)}\right]$$
+<p class="why">形式上「逐步」了，但<b>还不能用</b>：每一项的分子是<b>正向</b>一步（$x_{k-1}\to x_k$），分母是<b>反向</b>一步（$x_k\to x_{k-1}$），两者方向相反，凑不成任何一个 KL；而且分子 $q(x_k\mid x_{k-1})$ 只依赖前一步，方差大。</p>
 </div>
 
-<h3>10.5 关键一步：用贝叶斯把分子也翻转成反向</h3>
-
-<p>这是全节最容易卡住的一步，动机很直白：<b>要让分子分母朝同一个方向，才能凑成 KL</b>。对 $k\ge2$ 的每一项，用贝叶斯翻转分子——注意要<b>多挂一个条件 $x_0$</b>（马尔科夫性保证 $q(x_k\mid x_{k-1})=q(x_k\mid x_{k-1},x_0)$，挂上去不改变任何值），因为只有挂了 $x_0$ 的后验才是 §9 那个<b>解析可算的高斯</b>：</p>
+<p><b>第二步，用贝叶斯把分子也翻转成反向。</b>对 $k\ge2$ 的每一项做（$k{=}1$ 项先单独留着，后面会看到它就是边界）。注意要<b>额外挂一个条件 $x_0$</b>：由马尔科夫性 $q(x_k\mid x_{k-1})=q(x_k\mid x_{k-1},x_0)$，挂上去不改变任何值，但挂上之后才能用到 §9 那个<b>解析可算</b>的后验：</p>
 
 <div class="math">
 $$q(x_k\mid x_{k-1})=q(x_k\mid x_{k-1},x_0)
 =\frac{q(x_{k-1}\mid x_k,x_0)\;q(x_k\mid x_0)}{q(x_{k-1}\mid x_0)}$$
-<p class="why">代回求和（$k{=}1$ 那项先单独放着）。多出来的 $\frac{q(x_k\mid x_0)}{q(x_{k-1}\mid x_0)}$ 在求和里形成一段「望远镜」连乘：$\frac{q(x_2\mid x_0)}{q(x_1\mid x_0)}\cdot\frac{q(x_3\mid x_0)}{q(x_2\mid x_0)}\cdots\frac{q(x_T\mid x_0)}{q(x_{T-1}\mid x_0)}$，相邻项逐个相消，只剩首尾：</p>
-$$\sum_{k=2}^T\log\frac{q(x_k\mid x_{k-1})}{p_\theta(x_{k-1}\mid x_k)}
-=\sum_{k=2}^T\log\frac{q(x_{k-1}\mid x_k,x_0)}{p_\theta(x_{k-1}\mid x_k)}
-+\underbrace{\log\frac{q(x_T\mid x_0)}{q(x_1\mid x_0)}}_{\text{telescoping 之后只剩这个}}$$
-<p class="why">再把刚才留着的 $k{=}1$ 项 $\log\frac{q(x_1\mid x_0)}{p_\theta(x_0\mid x_1)}$ 合并进来——分母的 $q(x_1\mid x_0)$ 与它恰好相消，$-\log p(x_T)$ 与 $\log q(x_T\mid x_0)$ 并成一项：</p>
-$$L=\mathbb E_q\!\left[\log\frac{q(x_T\mid x_0)}{p(x_T)}
-+\sum_{k=2}^T\log\frac{q(x_{k-1}\mid x_k,x_0)}{p_\theta(x_{k-1}\mid x_k)}
--\log p_\theta(x_0\mid x_1)\right]$$
+<p class="why">代回 $k\ge2$ 的求和，把它拆成两个和：</p>
+$$\sum_{k=2}^{T}\log\frac{q(x_k\mid x_{k-1})}{p_\theta(x_{k-1}\mid x_k)}
+=\underbrace{\sum_{k=2}^{T}\log\frac{q(x_{k-1}\mid x_k,x_0)}{p_\theta(x_{k-1}\mid x_k)}}_{\text{方向一致了}}
++\underbrace{\sum_{k=2}^{T}\log\frac{q(x_k\mid x_0)}{q(x_{k-1}\mid x_0)}}_{\text{要 telescoping 的部分}}$$
+<p class="why"><b>第三步，telescoping。</b>把第二个和逐项写开——它是一串首尾相接的比值，相邻项分子分母逐个抵消：</p>
+$$\sum_{k=2}^{T}\log\frac{q(x_k\mid x_0)}{q(x_{k-1}\mid x_0)}
+=\log\left[\frac{\cancel{q(x_2\mid x_0)}}{q(x_1\mid x_0)}\cdot\frac{\cancel{q(x_3\mid x_0)}}{\cancel{q(x_2\mid x_0)}}\cdots\frac{q(x_T\mid x_0)}{\cancel{q(x_{T-1}\mid x_0)}}\right]
+=\log\frac{q(x_T\mid x_0)}{q(x_1\mid x_0)}$$
+<p class="why">中间 $T-2$ 项全部消掉，<b>只剩首尾两个</b>。<b>第四步，把留着的 $k{=}1$ 项接回来</b>：它是 $\log\dfrac{q(x_1\mid x_0)}{p_\theta(x_0\mid x_1)}$，其中的 $q(x_1\mid x_0)$ 正好与上式分母相消：</p>
+$$\underbrace{\log\frac{q(x_T\mid x_0)}{\cancel{q(x_1\mid x_0)}}}_{\text{telescoping 剩下}}
++\underbrace{\log\frac{\cancel{q(x_1\mid x_0)}}{p_\theta(x_0\mid x_1)}}_{k=1\text{ 项}}
+=\log q(x_T\mid x_0)-\log p_\theta(x_0\mid x_1)$$
+<p class="why">再把最前面的 $-\log p(x_T)$ 与 $\log q(x_T\mid x_0)$ 并成一项，全部装回去：</p>
+$$L=\mathbb E_q\!\left[\;\log\frac{q(x_T\mid x_0)}{p(x_T)}
+\;+\;\sum_{k=2}^{T}\log\frac{q(x_{k-1}\mid x_k,x_0)}{p_\theta(x_{k-1}\mid x_k)}
+\;-\;\log p_\theta(x_0\mid x_1)\;\right]$$
 </div>
 
-<h3>10.6 收口：每一项按定义都是一个 KL（第三次出现）</h3>
+<h3>10.9 结果：三类项，KL 是<b>自然长出来的</b></h3>
 
-<p>现在每一项都是「同方向的两个分布之比取对数，再按前一个分布取期望」，这正是 KL 的定义 $D_{\mathrm{KL}}(q\|p)=\mathbb E_q[\log\frac qp]$。直接按定义收口：</p>
+<p>看上式的前两块：每一块都是「同方向的两个分布之比取对数，再按前一个分布取期望」。而 KL 的定义就是 $D_{\mathrm{KL}}(q\|p)=\mathbb E_q\!\left[\log\frac qp\right]$。所以什么都不用做，按定义读出来即可：</p>
 
 <div class="math">
-$$\boxed{\,L=\underbrace{D_{\mathrm{KL}}\big(q(x_T\mid x_0)\,\|\,p(x_T)\big)}_{L_T\;\text{无参数，}\approx0}
-+\sum_{k=2}^T\underbrace{\mathbb E_q\,D_{\mathrm{KL}}\big(q(x_{k-1}\mid x_k,x_0)\,\|\,p_\theta(x_{k-1}\mid x_k)\big)}_{L_{k-1}\;\text{训练主体}}
-\;\underbrace{-\;\mathbb E_q\log p_\theta(x_0\mid x_1)}_{L_0\;\text{重建项}}\,}$$
+$$\boxed{\;\begin{aligned}
+L=\;&\underbrace{D_{\mathrm{KL}}\big(q(x_T\mid x_0)\,\|\,p(x_T)\big)}_{L_T}\\[4pt]
+&+\sum_{k=2}^{T}\underbrace{\mathbb E_q\,D_{\mathrm{KL}}\big(q(x_{k-1}\mid x_k,x_0)\,\|\,p_\theta(x_{k-1}\mid x_k)\big)}_{L_{k-1}}\\[4pt]
+&\underbrace{-\;\mathbb E_q\log p_\theta(x_0\mid x_1)}_{L_0}
+\end{aligned}\;}$$
 </div>
 
-<div class="key">
-<b>三块各自的下场。</b>$L_T$：正向终点 vs 先验 $\mathcal N(0,I)$，schedule 固定后不含 $\theta$ 且 $\bar\alpha_T\to0$ 时 $\approx0$——扔掉。$L_{k-1}$：训练主体，「§9 的解析后验」vs「网络的反向一步」——<b>两边都是高斯</b>，这正是费力挂上 $x_0$ 的回报：KL 有闭式解（<a href="#m5">§11</a>，信息论背景见 <a href="kl-divergence.html">KL 散度笔记</a>），不需要蒙特卡洛估计 KL 本身，方差低、训练稳（DDPM 强调的点）。$L_0$：最后一步（$k{=}1$）的重建似然。它没有 KL 的形式，因为要产出的是<b>干净数据本身</b>而不是中间分布；连续动作（DP 的场景）下 $p_\theta(x_0\mid x_1)$ 就取高斯，于是 $-\log p_\theta(x_0\mid x_1)=\frac{1}{2\sigma_1^2}\|x_0-\mu_\theta(x_1,1)\|^2+\text{const}$——<b>就是一个 MSE</b>（DDPM 处理图像时因为像素离散，改用离散化解码器，形式上仍与 $L_{k-1}$ 统一）。
+<div class="key good">
+<b>请注意因果方向：我们从来没有「决定用 KL 当 loss」。</b>整条路只有三个动作——引入 $q$、用 Jensen、按 Markov + Bayes 展开——KL 是这套<b>代数展开的产物</b>，是被算出来的，不是被选中的。这也解释了为什么扩散模型的 loss 长得那么「巧」：它不是设计出来的，是最大似然在这个模型结构下化简的必然结果。
 </div>
 
-<h2 id="m5"><span class="n">§ 11</span>两个高斯之间的 KL：把公式推出来</h2>
+<h4 style="margin:1.6em 0 .4em;font-size:1rem">$L_T$：白送的一项</h4>
+<p>正向终点 $q(x_T\mid x_0)=\mathcal N(\sqrt{\bar\alpha_T}x_0,(1-\bar\alpha_T)I)$ 对上先验 $p(x_T)=\mathcal N(0,I)$。schedule 固定后这一项<b>完全不含 $\theta$</b>，而且设计成 $\bar\alpha_T\to0$ 时 $q(x_T\mid x_0)\to\mathcal N(0,I)$，于是 $L_T\approx0$——训练时直接扔掉。</p>
 
-<p>$L_{k-1}$ 要算 $D_{\mathrm{KL}}(\mathcal N(\mu_1,\sigma_1^2)\,\|\,\mathcal N(\mu_2,\sigma_2^2))$。<a href="kl-divergence.html">KL 散度</a>一般只能靠采样估计，但<b>两边都是高斯</b>时有闭式解——这正是 §9 费力把 $x_0$ 挂上去换来的回报。一维推一遍（对角协方差 = 各维相加）：</p>
+<h4 style="margin:1.6em 0 .4em;font-size:1rem">$L_0$：为什么它不是一个 KL</h4>
+<p>这里要说准确，避免一个流传很广的过度简化说法（「因为 $x_0$ 是确定值，没有分布可比」）。真实情况分三层：</p>
+<ol>
+<li><b>结构上的原因（最根本）</b>：$L_0$ 是 telescoping 展开到 $k{=}1$ 时的<b>边界项</b>。上面第四步看得很清楚——$k{=}1$ 那项的 $q(x_1\mid x_0)$ 被 telescoping 的尾巴消掉了，剩下的自然就是 $-\log p_\theta(x_0\mid x_1)$。<b>ELBO 分解的边界项在代数上本来就是一个条件对数似然</b>，不是 KL。$p_\theta(x_0\mid x_1)$ 本身<b>依然是一个正经的概率分布</b>（DDPM 里就是一个高斯 / 离散化高斯），它并不缺少「分布」这个身份。</li>
+<li><b>就算想硬凑成 KL，也凑不出有限值</b>：中间项 $L_{k-1}$ 的比较对象是 $q(x_{k-1}\mid x_k,x_0)$；照葫芦画瓢，$k{=}1$ 处的对象应是 $q(x_0\mid x_1,x_0)$——但 $x_0$ 已经在条件里了，这是一个<b>点质量</b> $\delta(\cdot-x_0)$。而 $D_{\mathrm{KL}}(\delta\,\|\,\mathcal N)=+\infty$（$\delta$ 的微分熵是 $-\infty$）。所以那个位置根本没有有限的 KL 可写，自然只能保留对数似然本身。</li>
+<li><b>「概率」还是「概率密度」要分清</b>：连续分布在任意<b>单点</b>上的概率是 $0$，若把 $p_\theta(x_0\mid x_1)$ 当概率读，$-\log 0=+\infty$ 直接爆掉。所以这里读的是<b>概率密度</b>。DDPM 处理 8-bit 图像时干脆把密度在像素格子上积分，变成货真价实的概率（离散化解码器），既躲开这个问题，也让 $L_0$ 和 $L_{k-1}$ 的量纲统一。</li>
+</ol>
+<div class="math"><p class="why">在 DP 这种<b>连续 action</b> 的场景里就简单了：取 $p_\theta(x_0\mid x_1)=\mathcal N\big(x_0;\mu_\theta(x_1,1),\sigma_1^2I\big)$，于是</p>
+$$L_0=-\log p_\theta(x_0\mid x_1)=\frac{1}{2\sigma_1^2}\big\|x_0-\mu_\theta(x_1,1)\big\|^2+\underbrace{\tfrac{d}{2}\log(2\pi\sigma_1^2)}_{\text{常数}}$$
+<p class="why">——<b>就是一个 MSE</b>，形式与 $L_{k-1}$ 完全统一，实现上并入同一个 loss（$\sigma_1$ 固定不学，否则 $\sigma_1\to0$ 会让密度趋于无穷、目标无下界）。</p></div>
+
+<h2 id="m5"><span class="n">§ 11</span>ELBO 真正「可算」的地方：两个高斯之间的 KL</h2>
+
+<p>上一节把 $L$ 拆成了三类项，但拆出来只是<b>形式</b>上的进步——KL 一般是要靠采样估计的，方差高、训练不稳。这一节讲的才是让整套方法真正落地的一步。</p>
+
+<h3>11.1 为什么这些 KL 是可计算的（关键）</h3>
+
+<p>盯住训练主体 $L_{k-1}=D_{\mathrm{KL}}\big(q(x_{k-1}\mid x_k,x_0)\,\|\,p_\theta(x_{k-1}\mid x_k)\big)$，把左右两边分别看清楚：</p>
+
+<div class="duo">
+<div class="algo"><div class="t">左边 $q(x_{k-1}\mid x_k,x_0)$</div>
+<p style="margin:.4em 0;font-size:.93rem">名字叫 reverse posterior，听着像是不可算的东西。但<b>正向过程是我们人为规定的高斯</b>，所以用贝叶斯（§9 已推）能得到<b>闭式解</b>：</p>
+<p style="margin:.4em 0">$=\mathcal N\big(x_{k-1};\,\tilde\mu_k(x_k,x_0),\,\tilde\beta_kI\big)$</p>
+<p style="margin:.4em 0;font-size:.92rem;color:var(--sub)">$\tilde\mu_k,\tilde\beta_k$ 都是 schedule 与 $(x_k,x_0)$ 的显式表达式，不含任何未知量。</p></div>
+<div class="algo"><div class="t">右边 $p_\theta(x_{k-1}\mid x_k)$</div>
+<p style="margin:.4em 0;font-size:.93rem">是<b>我们自己定义</b>成高斯的（§9 开头：$\beta_k$ 足够小时真实反向趋于高斯，所以这么假设合理）：</p>
+<p style="margin:.4em 0">$=\mathcal N\big(x_{k-1};\,\mu_\theta(x_k,k),\,\sigma_k^2I\big)$</p>
+<p style="margin:.4em 0;font-size:.92rem;color:var(--sub)">网络只负责吐出这个高斯的参数（均值），方差取固定值。</p></div>
+</div>
+
+<div class="key good">
+<b>ELBO 真正变得「可计算」的关键就在这里。</b>不是笼统的一句「ELBO 可算」，而是：<b>因为正向过程被我们规定成高斯，左边有闭式解；因为反向分布被我们定义成高斯，右边也是显式的——于是 $L_{k-1}$ 变成了「已知高斯 ‖ 模型高斯」的 KL，而两个高斯之间的 KL 有闭式解。</b>整个 loss 因此<b>完全不需要蒙特卡洛去估计 KL 本身</b>，只需要对 $(x_0,k,\epsilon)$ 采样，KL 的值和梯度都是解析的——方差低、训练稳，这正是 DDPM 反复强调的工程要点，也是 §10 里「费力把 $x_0$ 挂到条件上」的全部回报。
+</div>
+
+<h3>11.2 把高斯 KL 的公式推出来</h3>
+
+<p>一维推一遍（对角协方差 = 各维相加）：</p>
 <div class="math">
 $$D_{\mathrm{KL}}(q\|p)=\mathbb E_{x\sim q}\big[\log q(x)-\log p(x)\big],\qquad
 \log\mathcal N(x;\mu,\sigma^2)=-\tfrac12\log(2\pi\sigma^2)-\frac{(x-\mu)^2}{2\sigma^2}$$
+<p class="why">设 $q=\mathcal N(\mu_1,\sigma_1^2)$、$p=\mathcal N(\mu_2,\sigma_2^2)$，代入相减（$2\pi$ 相消）：</p>
 $$D_{\mathrm{KL}}=\mathbb E_q\!\left[\tfrac12\log\frac{\sigma_2^2}{\sigma_1^2}
 -\frac{(x-\mu_1)^2}{2\sigma_1^2}+\frac{(x-\mu_2)^2}{2\sigma_2^2}\right]$$
-<p class="why">逐项取期望：$\mathbb E_q[(x-\mu_1)^2]=\sigma_1^2$（方差定义）；第三项展开 $(x-\mu_2)^2=(x-\mu_1+\mu_1-\mu_2)^2$，交叉项期望为 0，得 $\mathbb E_q[(x-\mu_2)^2]=\sigma_1^2+(\mu_1-\mu_2)^2$。代回：</p>
+<p class="why">逐项取期望：$\mathbb E_q[(x-\mu_1)^2]=\sigma_1^2$（方差定义）；第三项展开 $(x-\mu_2)^2=\big((x-\mu_1)+(\mu_1-\mu_2)\big)^2$，交叉项含 $\mathbb E_q[x-\mu_1]=0$ 而消失，得 $\sigma_1^2+(\mu_1-\mu_2)^2$。代回：</p>
 $$\boxed{\,D_{\mathrm{KL}}\big(\mathcal N(\mu_1,\sigma_1^2)\,\|\,\mathcal N(\mu_2,\sigma_2^2)\big)
 =\log\frac{\sigma_2}{\sigma_1}+\frac{\sigma_1^2+(\mu_1-\mu_2)^2}{2\sigma_2^2}-\frac12\,}$$
 </div>
 
-<p>代入 $L_{k-1}$：$q$ 侧是 $\mathcal N(\tilde\mu_k,\tilde\beta_kI)$，$p_\theta$ 侧是 $\mathcal N(\mu_\theta,\sigma_k^2I)$。两边方差都是固定数，KL 里含方差的项全不依赖 $\theta$——<b>只剩均值差的平方</b>：</p>
-<div class="math">$$L_{k-1}=\mathbb E_q\!\left[\frac{1}{2\sigma_k^2}\big\|\tilde\mu_k(x_k,x_0)-\mu_\theta(x_k,k)\big\|^2\right]+\text{const}$$
-<p class="why">loss 的语义至此完全清楚：<b>网络的反向均值，回归解析后验的均值</b>。KL divergence 的使命到此结束，剩下是纯代数化简。</p></div>
+<h3>11.3 高斯 KL → mean matching：只剩均值的 MSE</h3>
+
+<p>把 $L_{k-1}$ 的两边代进去：$q$ 侧 $(\mu_1,\sigma_1^2)=(\tilde\mu_k,\tilde\beta_k)$，$p_\theta$ 侧 $(\mu_2,\sigma_2^2)=(\mu_\theta,\sigma_k^2)$。<b>关键前提：$\tilde\beta_k$ 和 $\sigma_k^2$ 都是与 $\theta$ 无关的固定数</b>（$\tilde\beta_k$ 由 schedule 决定，$\sigma_k^2$ DDPM 取 $\beta_k$ 或 $\tilde\beta_k$，不学）。于是：</p>
+
+<div class="math">
+$$L_{k-1}=\underbrace{\frac{1}{2\sigma_k^2}\big\|\tilde\mu_k(x_k,x_0)-\mu_\theta(x_k,k)\big\|^2}_{\text{唯一含 }\theta\text{ 的部分}}
++\underbrace{\log\frac{\sigma_k}{\sqrt{\tilde\beta_k}}+\frac{\tilde\beta_k}{2\sigma_k^2}-\frac12}_{C_k\;\text{：只由 schedule 决定的常数}}$$
+<p class="why">为什么常数项训练时可以忽略？因为 $\nabla_\theta C_k=0$——它对每个 $k$ 是个定值，加不加只是把 loss 曲线整体上下平移，<b>梯度、最优解、参数更新全都一模一样</b>。（要报告真实的 NLL bound 数值时才需要把它们加回去。）扔掉常数后：</p>
+$$\boxed{\,L_{k-1}\;\dot=\;\mathbb E_q\!\left[\frac{1}{2\sigma_k^2}\big\|\tilde\mu_k(x_k,x_0)-\mu_\theta(x_k,k)\big\|^2\right]\,}$$
+<p class="why">（$\dot=$ 表示「相差一个与 $\theta$ 无关的常数」。）loss 的语义至此完全清楚：<b>网络输出的反向均值，去回归解析后验的均值</b>——KL 的使命到此结束，剩下的全是纯代数化简。</p>
+</div>
 
 <h2 id="m6"><span class="n">§ 12</span>参数化成噪声预测：得到 $L_{\text{simple}}$</h2>
 
-<p>直接回归 $\tilde\mu_k$ 可以，但 DDPM 发现换个参数化更好。用 §8 闭式解反解 $x_0$ 并代入 $\tilde\mu_k$，目标：消掉 $x_0$，只留 $x_k$ 和 $\epsilon$。</p>
+<p>§11 把 loss 化到了 $\|\tilde\mu_k-\mu_\theta\|^2$——直接让网络回归 $\tilde\mu_k$ 是可以的，但 DDPM 发现换个参数化更好。用 §8 的闭式解反解 $x_0$ 并代回 $\tilde\mu_k$，目标：<b>消掉 $x_0$，只留 $x_k$ 和 $\epsilon$</b>。</p>
 <div class="math">
 $$x_0=\frac{x_k-\sqrt{1-\bar\alpha_k}\,\epsilon}{\sqrt{\bar\alpha_k}},\qquad
 \sqrt{\bar\alpha_{k-1}}=\frac{\sqrt{\bar\alpha_k}}{\sqrt{\alpha_k}}$$
@@ -469,18 +624,32 @@ $$\mu_\theta(x_k,k):=\frac{1}{\sqrt{\alpha_k}}\left(x_k-\frac{\beta_k}{\sqrt{1-\
 <p class="why">代回 $L_{k-1}$，两个同形状表达式相减，$x_k$ 项抵消，只剩 $\epsilon$ 差：</p>
 $$L_{k-1}=\mathbb E_{x_0,\epsilon}\!\left[\frac{\beta_k^2}{2\sigma_k^2\alpha_k(1-\bar\alpha_k)}
 \Big\|\epsilon-\epsilon_\theta\big(\underbrace{\sqrt{\bar\alpha_k}x_0+\sqrt{1-\bar\alpha_k}\,\epsilon}_{x_k\text{，一步采样}},\,k\big)\Big\|^2\right]$$
-<p class="why">DDPM 最后一个动作：把权重<b>整个扔掉</b>（实验发现不加权更好——相当于降低小 $k$ 步的权重，逼网络多花力气在高噪声难题上），对 $k$ 均匀抽样：</p>
+<p class="why">写成带权形式，把那一坨系数记作 $w_k$——注意<b>到这里为止都还是严格的 variational bound</b>（只差与 $\theta$ 无关的常数）：</p>
+$$L_{\text{bound}}\;\dot=\;\mathbb E_{k,x_0,\epsilon}\Big[\,w_k\,\big\|\epsilon-\epsilon_\theta(x_k,k)\big\|^2\Big],
+\qquad w_k=\frac{\beta_k^2}{2\sigma_k^2\alpha_k(1-\bar\alpha_k)}$$
+<p class="why">DDPM 的最后一个动作是<b>把 $w_k$ 整个换成 1</b>，并对 $k$ 均匀抽样：</p>
 $$\boxed{\,L_{\text{simple}}=\mathbb E_{k\sim\mathcal U\{1..T\},\,x_0,\,\epsilon\sim\mathcal N(0,I)}
-\Big[\big\|\epsilon-\epsilon_\theta\big(\sqrt{\bar\alpha_k}x_0+\sqrt{1-\bar\alpha_k}\,\epsilon,\;k\big)\big\|^2\Big]\,}$$
+\Big[\big\|\epsilon-\epsilon_\theta\big(\underbrace{\sqrt{\bar\alpha_k}x_0+\sqrt{1-\bar\alpha_k}\,\epsilon}_{x_k},\;k\big)\big\|^2\Big]\,}$$
+</div>
+
+<div class="key warn">
+<b>这一步必须说清楚：$L_{\text{simple}}\ne L_{\text{bound}}$。</b>前面每一步（Jensen、Bayes 翻转、telescoping、高斯 KL 闭式解）都是<b>等式或严格的界</b>，扔掉的只是与 $\theta$ 无关的常数；但把 $w_k$ 换成 1 是一次<b>重新加权（reweighting）</b>——它改变了各个 $k$ 在 loss 里的相对话语权，因此 $L_{\text{simple}}$ <b>不再是 negative log-likelihood 的上界</b>，而是 Ho et al. 经验上选的一个简化目标。
+<ul>
+<li><b>为什么这么做</b>：$w_k$ 在小 $k$（低噪声）处很大，会把训练力气全压在「几乎已经干净、只需微调」的简单任务上。令 $w_k=1$ 相当于<b>相对降低小 $k$ 的权重</b>，逼网络多花力气在高噪声的难题上——论文实测样本质量明显更好（代价是 log-likelihood 指标变差，这是一次有意识的取舍）。</li>
+<li><b>$L_0$ 去哪了</b>：$k{=}1$ 代进同一条公式即可，与 $L_{k-1}$ 共用一套实现（§10.9 已说明它在连续数据下就是同形状的 MSE）；$L_T$ 无参数，直接丢。所以最终代码里只剩<b>一个</b> loss。</li>
+<li>后续工作（Improved DDPM、Min-SNR 等）又把 $w_k$ 拿回来重新设计，说明这个权重是一个<b>可调设计维度</b>，不是定理。</li>
+</ul>
 </div>
 
 <div class="key good">
-<b>整条推导链一屏回看。</b>
-$$-\log p_\theta(x_0)\xrightarrow{\text{Jensen}}L
-\xrightarrow{\text{贝叶斯翻转+望远镜}}\textstyle\sum_kD_{\mathrm{KL}}
-\xrightarrow{\text{两边都是高斯}}\|\tilde\mu-\mu_\theta\|^2
-\xrightarrow{\text{重参数化}}\|\epsilon-\epsilon_\theta\|^2$$
-最大似然训练一路化简，最后只剩「加噪，然后猜噪声」的 MSE。这也回收了 §2：$\epsilon_\theta$ 的方向 $\propto-\nabla_{x_k}\log q(x_k\mid x_0)$，学 $\epsilon_\theta$ 就是在学各噪声水平的 score field——「球在哪儿往哪滚」。
+<b>整条推导链一屏回看（对应 §10 开头那张主线图）。</b>
+$$\log p_\theta(x_0)\xrightarrow[\text{marginal 算不动}]{\text{引入 }q}\log\mathbb E_q[\cdot]
+\xrightarrow{\text{Jensen}}\mathrm{ELBO}\xrightarrow{\;-1\;}L
+\xrightarrow[\text{+望远镜}]{\text{Markov+Bayes}}\textstyle L_T+\sum_kL_{k-1}+L_0$$
+$$\xrightarrow{\text{两边都是高斯}}\tfrac{1}{2\sigma_k^2}\|\tilde\mu_k-\mu_\theta\|^2
+\xrightarrow{\text{重参数化}}w_k\|\epsilon-\epsilon_\theta\|^2
+\xrightarrow{\;w_k\to1\;}L_{\text{simple}}$$
+最大似然训练一路化简，最后只剩「加噪，然后猜噪声」的 MSE。<b>其中只有最后一个箭头不是严格的等式/界</b>。这也回收了 §2：$\epsilon_\theta$ 的方向 $\propto-\nabla_{x_k}\log q(x_k\mid x_0)$，学 $\epsilon_\theta$ 就是在学各噪声水平的 score field——「球在哪儿往哪滚」。
 </div>
 
 <div class="duo">
