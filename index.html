@@ -82,7 +82,11 @@ footer a { color:var(--blue); text-decoration:none; }
 </div>
 
 <h3>研究路线</h3>
-<p class="note">读论文 + 对照自己的架构，还没到实验阶段。</p>
+<p class="note">论文地图 + 自己的架构与实验设计，方案已定但还没跑出数据。</p>
+<a class="card" href="l20-robust-grasp.html">
+  <div class="t">L20 Robust Grasp：V1 实验路线<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">方案稿</span></div>
+  <div class="d">把 shared control 降为应用层，研究问题收敛为「人类抓姿 → L20 retarget → joint teacher → 外生 wrist 适配 → finger student」· 训练控 wrist / 部署人控 wrist 的 mismatch 与决定性对照 · 九类需求拆成可证伪问题 · 三个先验库分开报告「像人」与「稳」· 触觉消融阶梯 · V1 Robust Hold Benchmark 协议、基线与统计</div>
+</a>
 <a class="card" href="shared-control.html">
   <div class="t">共享控制路线：从 To the Noise and Back 到 EMG 灵巧手</div>
   <div class="d">参照论文的完整流程与它的实验设计 · 部分扩散（partial diffusion）演示 · 我们的架构映射与当前进度</div>

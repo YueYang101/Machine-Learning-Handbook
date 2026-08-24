@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>L20 Robust Grasp：V1 实验路线 · Machine Learning Handbook</title>
+  <style>
+    :root {
+      --ink: #172026;
+      --muted: #60707a;
+      --paper: #fbfaf6;
+      --card: #ffffff;
+      --line: #dce2e4;
+      --teal: #087b78;
+      --teal-soft: #e6f4f2;
+      --blue: #355e9a;
+      --blue-soft: #eaf0f8;
+      --orange: #ae5b19;
+      --orange-soft: #fff1df;
+      --red: #a43f42;
+      --red-soft: #fbe9e9;
+      --green: #247349;
+      --green-soft: #e8f4ed;
+      --shadow: 0 12px 34px rgba(29, 43, 51, .07);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% -10%, rgba(8,123,120,.10), transparent 32rem),
+        radial-gradient(circle at 95% 2%, rgba(53,94,154,.09), transparent 30rem),
+        var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+    a { color: var(--blue); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    code, pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    .wrap { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    header { padding: 72px 0 46px; border-bottom: 1px solid var(--line); }
+    .kicker { color: var(--teal); font-size: .78rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 12px 0 14px; max-width: 940px; font-size: clamp(2.25rem, 6vw, 5rem); line-height: 1.02; letter-spacing: -.045em; }
+    .lead { max-width: 900px; color: #42515a; font-size: clamp(1.05rem, 2vw, 1.35rem); }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+    .tag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid #cbd8da; border-radius: 999px; background: rgba(255,255,255,.68); color: #3e535c; font-size: .8rem; font-weight: 700; }
+    .tag.proposal { border-color: #f0c697; color: #8c4918; background: var(--orange-soft); }
+    nav { position: sticky; top: 0; z-index: 10; overflow-x: auto; background: rgba(251,250,246,.92); border-bottom: 1px solid var(--line); backdrop-filter: blur(12px); }
+    nav .wrap { display: flex; gap: 22px; padding: 12px 0; white-space: nowrap; }
+    nav a { color: #41525b; font-size: .86rem; font-weight: 700; text-decoration: none; }
+    main { padding: 34px 0 88px; }
+    section { scroll-margin-top: 64px; padding: 38px 0; border-bottom: 1px solid var(--line); }
+    section:last-child { border-bottom: 0; }
+    h2 { margin: 0 0 8px; font-size: clamp(1.55rem, 3vw, 2.2rem); letter-spacing: -.025em; }
+    h3 { margin: 28px 0 10px; font-size: 1.15rem; }
+    p { margin: 9px 0; }
+    .sub { max-width: 900px; color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-top: 20px; }
+    .card { grid-column: span 4; padding: 20px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+    .card.wide { grid-column: span 6; }
+    .card.full { grid-column: 1 / -1; }
+    .card h3 { margin-top: 0; }
+    .num { display: inline-grid; place-items: center; width: 28px; height: 28px; margin-right: 7px; border-radius: 8px; color: white; background: var(--teal); font-size: .8rem; }
+    .callout { margin: 22px 0; padding: 18px 20px; border-left: 5px solid var(--teal); border-radius: 4px 14px 14px 4px; background: var(--teal-soft); }
+    .callout.warn { border-color: var(--orange); background: var(--orange-soft); }
+    .callout.danger { border-color: var(--red); background: var(--red-soft); }
+    .callout.good { border-color: var(--green); background: var(--green-soft); }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .verdict { display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; margin-top: 24px; }
+    .verdict > div { padding: 24px; border-radius: 18px; }
+    .verdict .primary { color: white; background: linear-gradient(135deg, #087b78, #255a77); box-shadow: var(--shadow); }
+    .verdict .secondary { background: white; border: 1px solid var(--line); }
+    .big { margin: 0; font-size: clamp(1.35rem, 3vw, 2rem); line-height: 1.25; letter-spacing: -.02em; }
+    table { width: 100%; margin: 18px 0; border-collapse: separate; border-spacing: 0; overflow: hidden; background: white; border: 1px solid var(--line); border-radius: 14px; font-size: .9rem; }
+    th, td { padding: 12px 13px; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+    th { color: #30454f; background: #f0f4f4; font-size: .78rem; letter-spacing: .045em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    ul, ol { margin: 9px 0 9px 1.2rem; padding: 0; }
+    li { margin: 5px 0; }
+    .status { display: inline-block; min-width: 62px; padding: 3px 7px; border-radius: 6px; font-size: .72rem; font-weight: 800; text-align: center; }
+    .status.red { color: #8a3035; background: var(--red-soft); }
+    .status.amber { color: #8b4c18; background: var(--orange-soft); }
+    .status.green { color: #1f6842; background: var(--green-soft); }
+    .formula { margin: 14px 0; padding: 15px 17px; overflow-x: auto; border: 1px solid #d3dedf; border-radius: 12px; background: #f5f8f8; color: #173d43; font-size: .9rem; white-space: pre-wrap; }
+    pre { margin: 14px 0; padding: 16px; overflow-x: auto; color: #e5f4f3; background: #15272d; border-radius: 12px; font-size: .82rem; line-height: 1.55; }
+    .pipeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+    .step { position: relative; min-height: 120px; padding: 16px; border: 1px solid var(--line); border-radius: 13px; background: white; }
+    .step:not(:last-child)::after { content: "→"; position: absolute; right: -17px; top: 42px; z-index: 2; color: var(--teal); font-size: 1.5rem; font-weight: 900; }
+    .step b { display: block; margin-bottom: 6px; color: var(--teal); }
+    .phase { display: grid; grid-template-columns: 90px 1fr; gap: 16px; padding: 17px 0; border-bottom: 1px dashed #cbd5d7; }
+    .phase:last-child { border-bottom: 0; }
+    .phase-id { font-weight: 900; color: var(--teal); }
+    .small { color: var(--muted); font-size: .84rem; }
+    .checklist { columns: 2; column-gap: 36px; }
+    .checklist li { break-inside: avoid; }
+    .refs { font-size: .88rem; }
+    footer { padding: 26px 0 44px; color: var(--muted); font-size: .84rem; border-top: 1px solid var(--line); }
+    .bk{display:inline-block;color:var(--muted);font-size:14px;text-decoration:none;margin-bottom:10px}
+    .bk:hover{color:var(--blue)}
+    @media (max-width: 850px) {
+      .card, .card.wide { grid-column: 1 / -1; }
+      .verdict { grid-template-columns: 1fr; }
+      .pipeline { grid-template-columns: 1fr 1fr; }
+      .step:nth-child(2)::after { display: none; }
+      .checklist { columns: 1; }
+    }
+    @media (max-width: 520px) {
+      .wrap { width: min(100% - 24px, 1180px); }
+      header { padding-top: 50px; }
+      .pipeline { grid-template-columns: 1fr; }
+      .step::after { display: none; }
+      table { display: block; overflow-x: auto; white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <a class="bk" href="index.html">← Machine Learning Handbook</a>
+      <div class="kicker">Machine Learning Handbook · Experimental Route</div>
+      <h1>L20 Robust Grasp<br>V1 实验路线</h1>
+      <p class="lead">把 shared control 降为应用层，把核心研究问题收敛为：人类参考抓姿经过 L20 retarget 后，能否通过 joint teacher、外生 wrist 适配和 finger student，形成稳定、自然且可迁移的抓持。</p>
+      <div class="meta">
+        <span class="tag proposal">方案稿 · 尚未跑实验</span>
+        <span class="tag">L20 · 21 joints / 16 actuators</span>
+        <span class="tag">MuJoCo-only physics</span>
+        <span class="tag">2026-08-24</span>
+      </div>
+    </div>
+  </header>
+
+  <nav>
+    <div class="wrap">
+      <a href="#decision">核心判断</a>
+      <a href="#mismatch">Wrist mismatch</a>
+      <a href="#problem">任务边界</a>
+      <a href="#grasp-prior">人类抓姿先验</a>
+      <a href="#architecture">Teacher / student</a>
+      <a href="#tactile">触觉仿真</a>
+      <a href="#v1">V1 协议</a>
+      <a href="#baselines">基线与指标</a>
+      <a href="#roadmap">后续版本</a>
+      <a href="#compute">算力之外</a>
+      <a href="#references">资料</a>
+    </div>
+  </nav>
+
+  <main class="wrap">
+    <p class="sub" style="margin-top:18px;font-size:15px">
+      与 <a href="shared-control.html"><b>共享控制路线</b></a> 的关系：那一页把 shared control 当作研究主线；
+      本页<b>把 shared control 降为应用层</b>，研究问题收敛到「人类抓姿 → L20 retarget → teacher/student → 稳定抓持」。
+      两页可以对照着读，看同一套硬件下研究问题是怎么被重新切分的。
+      强化学习侧的方法背景见 <a href="ppo-learning.html">PPO 学习路线</a> 与 <a href="ppo-variants-research.html">PPO 局限与变体</a>。
+    </p>
+    <section id="decision">
+      <h2>0. 核心判断</h2>
+      <p class="sub">以下是项目决策，不是已经得到的实验结果。</p>
+      <div class="verdict">
+        <div class="primary">
+          <p class="big"><b>联合训练可保留，但不能把“部署时直接丢掉 wrist action”当作默认可迁移。</b></p>
+          <p>现有 joint wrist+finger PPO 最有价值的角色是 teacher、抓姿与轨迹数据生成器，以及 full-control upper bound。部署控制器应显式地在“人控 wrist”闭环里训练或蒸馏。</p>
+        </div>
+        <div class="secondary">
+          <b>V1 的实验主线</b>
+          <p>L20 grasp bank → joint teacher → wrist-intervention teacher → exogenous-wrist finger student；再以 mask-conditioned policy 作为结构较小的对照。</p>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>研究对象</h3>
+          <p>不是“shared control 算法”，而是 <b>human-motion-conditioned grasp stabilization</b>。</p>
+        </div>
+        <div class="card">
+          <h3>最可能的贡献</h3>
+          <p>L20 欠驱动手 + 真实人腕轨迹 benchmark + 低维触觉历史 + tail-risk 鲁棒执行。</p>
+        </div>
+        <div class="card">
+          <h3>不能靠什么解决</h3>
+          <p>仅增加物体数、摩擦随机化和 PPO steps，无法修复 action mismatch、不可观测动力学与 sim-to-real 误差。</p>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <strong>论文新颖性警告</strong>
+        “多物体 + 摩擦随机化 + 外力扰动 + PPO”已经不足以形成强方法贡献。RobustDexGrasp、Grasp-to-Act、TacDexGrasp 与假肢共享控制工作已经覆盖了其中大部分元素。你们需要把 <b>人控 wrist 的执行分布、L20 传感器约束、低尾鲁棒性和真实硬件验证</b> 做成不可替代的部分。
+      </div>
+    </section>
+
+    <section id="mismatch">
+      <h2>1. 训练控 wrist、部署人控 wrist：会不会崩？</h2>
+      <p class="sub">答案是：网络不会因为“少执行 6 个输出”而数值崩溃，但闭环行为可能突然失效。问题发生在动力学和 credit assignment，而不只是 action tensor 的形状。</p>
+
+      <div class="formula">训练：aᵗ = [aᵂ_π, aᶠ_π]，sₜ₊₁ ~ P(sₜ, aᵂ_π, aᶠ_π)
+部署：aᵗ = [aᵂ_H, aᶠ_π]，sₜ₊₁ ~ P(sₜ, aᵂ_H, aᶠ_π)
+
+P_train ≠ P_deploy。即使 finger head 的代码完全不变，它看到的状态分布也已经改变。</div>
+
+      <table>
+        <thead><tr><th>风险</th><th>具体表现</th><th>如何检测</th></tr></thead>
+        <tbody>
+          <tr><td><b>腕部“抢功”</b></td><td>策略用 wrist 对齐、减速或反向补偿，手指只提供最低限度夹持。</td><td>冻结 finger / wrist 分别做 action ablation，测 reward 和保持率的下降。</td></tr>
+          <tr><td><b>状态分布外移</b></td><td>人的 jerk、相位和停止方式不在 joint policy 自己产生的轨迹上。</td><td>在冻结人腕 test bank 上比较特征距离、失败率和不确定度。</td></tr>
+          <tr><td><b>动作协同被切断</b></td><td>手指动作通过长期状态与 wrist 策略共同形成；丢弃 wrist 后，原有时序协同消失。</td><td>保持初始状态相同，逐步增加 wrist override 比例，绘制性能曲线。</td></tr>
+          <tr><td><b>共享表示干扰</b></td><td>共享 trunk 更偏向优化高回报、易控制的 wrist action，finger 表示不足。</td><td>比较 monolithic head、shared trunk + two heads、完全独立 encoders。</td></tr>
+          <tr><td><b>反应太晚</b></td><td>只有 wrist pose、没有速度/加速度或即将执行的命令，惯性载荷出现后才补救。</td><td>ablate actual kinematics、command preview 和 0.2 s history。</td></tr>
+        </tbody>
+      </table>
+
+      <h3>三种实施方式</h3>
+      <table>
+        <thead><tr><th>方案</th><th>训练</th><th>部署</th><th>判断</th></tr></thead>
+        <tbody>
+          <tr><td>A. 直接丢弃</td><td>100% 由一个策略执行 wrist + finger</td><td>只执行 finger，wrist 输出丢弃</td><td><span class="status red">高风险</span> 只能作为 zero-shot baseline，不能作为主方法。</td></tr>
+          <tr><td>B. Mask-conditioned joint policy</td><td>策略仍输出全部 action；按 episode 随机由策略或外部轨迹执行 wrist，并把 mask 告诉策略</td><td>mask 固定为 human，执行外部 wrist + policy finger</td><td><span class="status amber">可行</span> 保留你的联合训练设定，最小改动。</td></tr>
+          <tr><td>C. Joint teacher → finger student</td><td>先全控制训练 teacher；student 在实际会遇到的外生 wrist 闭环里蒸馏并 RL fine-tune</td><td>student 只输出 16D finger residual</td><td><span class="status green">推荐</span> 部署接口与训练接口一致，最容易解释。</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout danger">
+        <strong>若“训练时 100% 必须由模型执行 wrist”是不可改的硬约束</strong>
+        那么只能诚实地把它当作 domain-transfer 假设，并依赖零样本压力测试；没有算法能从原则上保证在人类 wrist 分布下仍稳定。至少需要：分离 wrist/finger 网络头、把真实 wrist 状态作为 finger 输入、对 wrist action 加强随机扰动，并预先规定可接受的人体运动包络。
+      </div>
+
+      <h3>推荐的混合执行公式</h3>
+      <div class="formula">m ~ Bernoulli(p)   # 以 episode / phase 采样，不逐 timestep 闪烁
+aᵂ_exec = m · aᵂ_π + (1-m) · aᵂ_exo
+aᶠ_exec = aᶠ_ref(g) + clip(Δaᶠ_π, -δ, δ)
+
+训练课程：p = 1.0 → 0.7 → 0.3 → 0.0；最后阶段 100% rollout 使用完整外生 wrist 轨迹。
+部署：p = 0，aᵂ_exo 来自 Quest / 人体；finger policy 总是读取实际 wrist 运动。</div>
+
+      <p>不要逐 timestep 随机抖动 mask；那会制造不真实的控制权切换。以 episode 或明确 phase 为单位切换，并在策略输入中提供 <code>control_mode</code>。人的 wrist 应通过动态 wrist body 的 servo / soft constraint 实现，不要直接覆写 <code>qpos</code>。</p>
+
+      <div class="callout warn">
+        <strong>PPO 实现细节：只优化实际执行的 action</strong>
+        AUTO 模式可在 wrist + finger 全维度上计算 PPO log-prob / entropy / ratio；HUMAN 模式中，wrist 输出没有进入环境，PPO loss 必须只在 16 个 active finger 维度上计算。否则未执行的 wrist 随机维度会影响 clipping 和梯度，却没有对应的因果回报。建议使用两个 action heads 和显式 active-dimension mask，而不是事后把一个 monolithic distribution 的 wrist 维度置零。
+      </div>
+
+      <h3>V1 新增的决定性对照</h3>
+      <table>
+        <thead><tr><th>ID</th><th>方法</th><th>回答的问题</th></tr></thead>
+        <tbody>
+          <tr><td>W0</td><td>Joint PPO，joint-control eval</td><td>原策略在自己控制全部自由度时的上界。</td></tr>
+          <tr><td>W1</td><td>同一 Joint PPO，human-wrist override，直接丢弃 wrist output</td><td>实际 deployment gap 有多大。</td></tr>
+          <tr><td>W2</td><td>Joint PPO + wrist dynamics/noise DR，再 override</td><td>一般随机化是否足够。</td></tr>
+          <tr><td>W3</td><td>Mask-conditioned joint policy</td><td>训练期控制权随机化是否解决 mismatch。</td></tr>
+          <tr><td>W4</td><td>Joint teacher → recurrent finger student</td><td>结构化解耦是否更稳定。</td></tr>
+          <tr><td>W5</td><td>Finger-only from scratch</td><td>teacher / joint pretraining 是否真的带来样本效率。</td></tr>
+        </tbody>
+      </table>
+
+      <p>在重训前先对旧 checkpoint 扫一次 <code>β ∈ {0, .25, .5, .75, 1}</code>，其中 <code>aᵂ_exec=(1−β)aᵂ_π+βaᵂ_exo</code>。wrist source 分成：policy closed-loop、policy wrist 轨迹 open-loop replay、train Quest 和 held-out Quest。若曲线在 β=.75→1 出现性能悬崖，就是强 co-adaptation 的直接证据。</p>
+
+      <div class="callout good">
+        <strong>部署门槛（项目门槛，不是行业标准）</strong>
+        先定义 <code>Δoverride = Success(W0) − Success(W1)</code>。只有当 ID 上 ≤5 percentage points、OOD 人腕轨迹上 ≤10 points，且峰值抓力不增加，才可以考虑直接复用 joint policy；否则进入 W3/W4。主方法应至少比 W1 提升 10 points，paired 95% CI 不跨 0。
+      </div>
+    </section>
+
+    <section id="problem">
+      <h2>2. 把九类需求拆成可证伪问题</h2>
+      <table>
+        <thead><tr><th>需求</th><th>V1 怎么处理</th><th>后续版本 / 边界</th></tr></thead>
+        <tbody>
+          <tr><td>1. 不同物体</td><td>按几何 family 分层；train / instance-OOD / category-OOD 严格隔离。</td><td>视觉与开放世界 proposal 后置。</td></tr>
+          <tr><td>2. 不同摩擦</td><td>domain randomization + held-out 低摩擦 corner；用触觉历史隐式估计。</td><td>真实 friction cone 估计需可靠 shear。</td></tr>
+          <tr><td>3. L20 触觉</td><td>先硬件审计；MuJoCo 先输出每指 contact flag + Fn + CoP。</td><td>验证空间分布有增益后再上 6×12 taxel grid。</td></tr>
+          <tr><td>4. 瓶中水</td><td>V1 不称为液体；只做 static COM 与 time-varying wrench 压测。</td><td>V3 用 internal pendulum / sliding mass surrogate，再考虑粒子流体。</td></tr>
+          <tr><td>5. 人腕晃动</td><td>这是 V1 主变量；procedural + 冻结真实 Quest 轨迹 test bank。</td><td>任意剧烈运动无法保证，只能测 feasible envelope。</td></tr>
+          <tr><td>6. 多抓姿</td><td>grasp seed bank + goal-conditioned residual policy，报告 cluster coverage。</td><td>语义选择抓姿后置。</td></tr>
+          <tr><td>7. 筷子/锤子/叉子</td><td>V1 仅将细长物体作为“拿住”测试。</td><td>功能性抓取需要 grasp-mode / task token；筷子是独立双物体操作项目。</td></tr>
+          <tr><td>8. 纸杯</td><td>V1 只报告 force，不声称无损。</td><td>V3 用 force safety constraint / CBF / CMDP；需要 F_safe 或保守模式。</td></tr>
+          <tr><td>9. 行业 gap</td><td>补齐 fixed grip、slip reflex、grasp optimizer、uniform DR、oracle 与真实硬件基线。</td><td>应用层再对比现有假肢 shared-control 用户研究。</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warn">
+        <strong>两个不可回避的任务歧义</strong>
+        “拿稳锤子”可能抓住锤头；“正确使用锤子”必须抓柄。“不捏坏纸杯”也必须知道安全压力上限。完全没有语义、任务 token 或安全参数时，这两类最优抓取并不唯一，因此应放到后续版本。
+      </div>
+    </section>
+
+    <section id="grasp-prior">
+      <h2>3. 人类参考抓姿何时进入？从 teacher 训练之前进入</h2>
+      <p class="sub">答案是“需要尽早用”，但准确角色不是直接给最终策略做行为克隆。先把人手数据转换成 L20 原生、物理可行的 grasp goal / seed bank，之后 teacher 与 student 都围绕同一目标学习。</p>
+
+      <div class="callout good">
+        <strong>关键结论</strong>
+        人类数据应在<b>离线抓姿库阶段</b>进入：先按人和物体拆分数据，再做 L20 retarget 与 MuJoCo 物理筛选。它给出自然的 mode、contact 与目标姿态；PPO 负责把这些目标变成动态可执行轨迹。若等 teacher 训练完才加入自然度，teacher 很可能已经收敛到稳定但机械化、接触模式单一的局部最优。
+      </div>
+
+      <div class="pipeline">
+        <div class="step"><b>G0 · Split</b>按 human subject + object instance 先拆 train / val / test；保存 intent、object-frame contacts 与 pregrasp。</div>
+        <div class="step"><b>G1 · Retarget</b>只优化 L20 的 16 个 active joints；5 个 passive joints 由真实 coupling 函数生成。</div>
+        <div class="step"><b>G2 · Screen</b>检查可达、穿透、关节余量、重力保持、12 方向 wrench、力与电流上限。</div>
+        <div class="step"><b>G3 · Bank</b>按 mode + contact + palm + joints 聚类，每个 object / mode 固定保留 3–5 个候选。</div>
+      </div>
+
+      <h3>先保存“物体坐标系里的意图”，不要保存人手关节角答案</h3>
+      <div class="formula">每条记录 = {intent / mode, q_pre, q_goal, object-local contacts,
+            palm pose, fingertip / phalange vectors, source,
+            naturalness score, robustness score}
+
+q_passive = coupling_L20(q_active)
+min_{T,q_active} λc E_contact + λf E_fingertip + λp E_palm
+                 + λo E_orientation + λj E_joint-margin
+                 + λs E_self-collision + λx E_penetration</div>
+      <p>MANO、Shadow Hand 与 L20 的骨长、关节轴、拇指工作空间和耦合关系不同；直接最小化 human joint-angle MSE 会得到“数值接近、接触错误”的姿势。主目标应是 object-frame 接触锚点、掌—物体变换、指尖/指节相对几何和 grasp mode。</p>
+
+      <h3>三个先验库必须分开，才能回答“像人”和“稳”各自贡献了什么</h3>
+      <table>
+        <thead><tr><th>先验</th><th>构造方式</th><th>它隔离的变量</th></tr></thead>
+        <tbody>
+          <tr><td><b>PH · Human-feasible</b></td><td>人类 retarget 后只过 hard feasibility：无穿透、可达、低速闭合、重力保持 2 s、不过硬件限值。</td><td>保留人类自然度，不用 robustness score 把它再次“机器人化”。</td></tr>
+          <tr><td><b>PR · Robot-stable</b></td><td>现有 PPO 成功末态、DexGraspNet / Linker 映射或 force-closure optimizer，同样通过 hard filter。</td><td>机器人稳定先验；不要求接近人类分布。</td></tr>
+          <tr><td><b>PM · Mixed / Pareto</b></td><td>在 <code>d_nat(q,q_H) ≤ ε</code> 的 trust region 内，对 mass / friction / COM / wrench 做 robust refinement。</td><td>检验能否在自然度非劣约束下接近 PR 的稳定性。</td></tr>
+        </tbody>
+      </table>
+
+      <h3>数据源不是越多越好：按用途接入</h3>
+      <table>
+        <thead><tr><th>来源</th><th>最适合提供什么</th><th>V1 用法</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://contactpose.cc.gatech.edu/">ContactPose</a></td><td>use / handoff 条件、物体侧 contact map、手—物体姿态</td><td><b>首选 pilot</b>；用同一物体比较 hold / handoff 或 drink / handoff。</td></tr>
+          <tr><td><a href="https://oakink.net/">OakInk</a></td><td>intent、affordance 与多样化人手—物体交互</td><td>扩 grasp mode 与自然姿态覆盖。</td></tr>
+          <tr><td><a href="https://grab.is.tue.mpg.de/">GRAB</a></td><td>完整人体/手/物体时序和接触</td><td>补 pregrasp→contact→hold 的时间结构；注意许可和注册。</td></tr>
+          <tr><td><a href="https://dex-ycb.github.io/">DexYCB</a></td><td>YCB 物体上的 MANO、object pose 与 RGB-D 序列</td><td>可复现的小物体集合与视觉对齐；V1 先只取 pose/contact。</td></tr>
+          <tr><td><a href="https://pku-epic.github.io/Dexonomy/">Dexonomy</a></td><td>大规模 taxonomy-conditioned retarget pipeline</td><td>后续做 mode coverage；不是 V1 必需。</td></tr>
+          <tr><td><a href="https://pku-epic.github.io/DexGraspNet/">DexGraspNet</a> / <a href="https://pku-epic.github.io/UniDexGrasp/">UniDexGrasp</a></td><td>物理稳定候选和 goal-conditioned proposal / execution 范式</td><td>构造 PR；不可把 Shadow Hand joint angles 直接当 L20 标签。</td></tr>
+        </tbody>
+      </table>
+
+      <h3>先验如何进入 teacher / student</h3>
+      <div class="phase"><div class="phase-id">T0</div><div><b>Goal-conditioned joint teacher</b>：每回合从 PH / PR / PM 采样 <code>g=(q_pre,q_goal,contacts,mode)</code>。可有 20–30% 回合从 pregrasp 邻域启动；其余仍从完整初始状态。接触前弱 pose/contact shaping，接触后快速衰减，允许为稳定而偏离人类目标。</div></div>
+      <div class="phase"><div class="phase-id">T1</div><div><b>Wrist-intervention teacher</b>：逐步提高外生 wrist 比例。用于 student 的专家动作只从高 intervention、尤其 100% human-wrist rollout 采集；不能用 teacher 自己选 wrist 时的 finger action 直接监督 student。</div></div>
+      <div class="phase"><div class="phase-id">S0</div><div><b>Distillation warm start</b>：student 读取部署可得的 proprio、tactile、actual wrist history 与 goal，只输出 16D finger residual。人类 pose 仍是 goal，不是强 action label。</div></div>
+      <div class="phase"><div class="phase-id">S1</div><div><b>External-wrist on-policy fine-tune</b>：在 100% 外生 wrist 闭环继续 RL / DAgger 式迭代并退火 imitation loss；最终优化部署状态分布。</div></div>
+
+      <div class="callout warn">
+        <strong>与现有 PPO → diffusion 流程的接口</strong>
+        若后续 diffusion / flow policy 学“递水”和“喝水”的多模态 nominal action，训练数据也应来自 T1 的 100% 外生 wrist rollout：保留与用户 wrist、mode、goal 配对的 finger trajectory，丢弃 teacher wrist action。生成模型负责多模态名义抓姿/动作段，低层 recurrent tactile student 负责闭环稳定；不要让 diffusion 同时承担选意图、跟人腕和防滑三件事。
+      </div>
+
+      <h3>最小无关键混杂矩阵：4 种先验 × 2 个控制终点</h3>
+      <table>
+        <thead><tr><th>Prior row</th><th>唯一变化</th><th>Joint endpoint</th><th>Deployment endpoint</th></tr></thead>
+        <tbody>
+          <tr><td>P0 · None</td><td>goal mask=0；纯 task reward</td><td>T0 β=0 / 直接 β=1 / T1 β=1</td><td>external-wrist finger student</td></tr>
+          <tr><td>PH · Human</td><td>human-feasible goal / seed bank</td><td>同网络、reward、预算</td><td>同 student 与 wrist bank</td></tr>
+          <tr><td>PR · Robot</td><td>robot-stable goal / seed bank</td><td>同网络、reward、预算</td><td>同 student 与 wrist bank</td></tr>
+          <tr><td>PM · Mixed</td><td>human-constrained robust bank</td><td>同网络、reward、预算</td><td>同 student 与 wrist bank</td></tr>
+        </tbody>
+      </table>
+      <p class="small">Pilot：8–12 个物体 × 2 个 mode × 每 mode 3–5 个 goal × 3 seeds。所有 row 固定对象 split、候选数、initial-state mixture、physics randomization 和 environment-step budget。这样比较的是先验性质，而不是数据库大小。</p>
+
+      <h3>稳定、自然、多样性分开报告</h3>
+      <table>
+        <thead><tr><th>轴</th><th>主指标</th><th>避免的误判</th></tr></thead>
+        <tbody>
+          <tr><td>Robustness</td><td>acquisition / 5–10 s hold、OOD success、time-to-slip、wrist acceleration/jerk envelope、CVaR10、峰值/积分触觉力</td><td>平均成功率掩盖危险长尾。</td></tr>
+          <tr><td>Naturalness</td><td>held-out human 的 object-frame key-vector 距离、contact-map F1 / geodesic、mode / Feix-family 一致率、盲评 A/B</td><td>用训练集或 raw joint MSE 自我打分。</td></tr>
+          <tr><td>Diversity</td><td>每 object / mode 的成功 grasp clusters、pairwise contact / palm distance、相对人类分布的 JS divergence</td><td>只学到一个“看起来不错”的姿势却宣称多模态。</td></tr>
+        </tbody>
+      </table>
+      <p><b>PM 的预注册判据：</b>相对 PR 的稳定成功率下降不超过 5 percentage points，同时自然度显著优于 PR，才可称为混合先验成功；阈值应在看测试集前冻结。</p>
+    </section>
+
+    <section id="architecture">
+      <h2>4. Teacher / student 控制实验</h2>
+      <p class="sub">保留 current joint policy 的价值，同时让最终 hand controller 的训练闭环与 inference 对齐。</p>
+      <div class="pipeline">
+        <div class="step"><b>T0 · Joint teacher</b>控制 wrist + fingers，以 L20 grasp bank 为 goal，建立 full-control upper bound。</div>
+        <div class="step"><b>T1 · Intervention</b>外生 wrist 从 β=0 逐步升到 β=1；teacher 适应人的闭环状态分布。</div>
+        <div class="step"><b>S0/S1 · Student</b>蒸馏 β=1 的 finger action，再在 100% external wrist 下 on-policy fine-tune。</div>
+        <div class="step"><b>Deployment</b>人的 wrist 被实际执行；student 只输出 16D finger residual 在线稳定。</div>
+      </div>
+
+      <p>从旧 checkpoint 迁移时，可以拷贝 finger encoder/head 作为初始化，但 joint teacher 的 critic 必须重训或重置：wrist 被干预后 transition 和 return 都已改变。teacher finger action 只作为早期、逐步衰减的 imitation prior；仅在 teacher-controlled wrist 状态上做离线 BC，仍会保留 occupancy mismatch。</p>
+
+      <div class="formula">Δaᶠₜ ~ πθ(o_deploy, hₜ, g)
+o_deploy = [q₂₁, q̇₂₁, aᶠₜ₋₁, tactile, wrist pose/vel/acc, tracking error, control_mode]
+qᶠ_target = qᶠ_grasp(g) + Δaᶠₜ
+
+Privileged critic only = [object pose/velocity, μ, mass, COM, contacts, disturbance wrench]</div>
+
+      <div class="formula">a_w^exec = (1 − β) a_w^T + β a_w^human,  β: 0 → 1
+
+β = 1 时：wrist head 可保留作 auxiliary prediction，
+但 PPO log-prob / ratio / entropy 只计算实际执行的 16D finger action。</div>
+
+      <div class="callout danger">
+        <strong>不能从 T0 自动 wrist 轨迹直接蒸馏 student</strong>
+        那些 finger action 与 teacher 自己选择的 wrist 强耦合。Student 的 action label 必须来自 T1 高 β、尤其 β=1 的 rollout，或在 student 自己诱导的 external-wrist 状态上通过 DAgger / on-policy correction 重新收集。
+      </div>
+
+      <div class="grid">
+        <div class="card wide">
+          <h3>为什么用 residual</h3>
+          <ul>
+            <li>保留 pose library 的多样性和自然度；</li>
+            <li>限制探索范围，避免“少数手指硬夹”的仿真局部最优；</li>
+            <li>与 L20 的 16 个可执行 position targets 一致。</li>
+          </ul>
+        </div>
+        <div class="card wide">
+          <h3>为什么用 GRU / history</h3>
+          <ul>
+            <li>质量、摩擦、COM 与触觉延迟是 hidden state；</li>
+            <li>瞬时观测无法区分“刚开始滑”和“稳定轻触”；</li>
+            <li>0.1–0.3 s 历史可作为小型 online system identifier。</li>
+          </ul>
+        </div>
+      </div>
+
+      <p>若 Quest 的未来目标能在物理执行前获得，可额外输入 50–100 ms command preview 做 feed-forward。必须同时输入实际 wrist kinematics 和 target-tracking error，不能把被丢弃的 policy wrist action 当作“实际 wrist”。</p>
+    </section>
+
+    <section id="tactile">
+      <h2>5. L20 触觉在 MuJoCo 里的实现</h2>
+      <p class="sub">难点不在“能不能读 contact force”，而在于真实 L20 批次的传感器规格不透明，以及如何把仿真接触降维到真实可部署的信号。</p>
+
+      <h3>先做硬件审计</h3>
+      <p>官方公开接口存在至少两类表示：旧式每指聚合的 20 维 force/proximity 数据，以及矩阵式 4×10 或 6×12 数据；当前 C++ 文档示例为五指 5×6×12、共 360 个 uint8 值。公开文档没有给出可靠的 N/LSB、带宽、滞后、漂移、串扰和温度曲线。因此先确认你们实际批次的 <code>touch_type</code>、topic shape 和 timestamp，不能从 SDK shape 推断物理精度。</p>
+
+      <table>
+        <thead><tr><th>MuJoCo 方案</th><th>得到什么</th><th>成本</th><th>建议</th></tr></thead>
+        <tbody>
+          <tr><td><code>&lt;touch&gt;</code></td><td>site 体积内法向接触力之和</td><td>低</td><td>可作最简 Fn baseline；没有 shear / CoP。</td></tr>
+          <tr><td><code>&lt;contact reduce="netforce"&gt;</code></td><td>聚合 contact wrench、位置等固定输出</td><td>低</td><td><b>V1 推荐</b>；转到每个 fingertip site 的局部坐标。</td></tr>
+          <tr><td><code>mj_contactForce</code></td><td>逐 contact 读取 6D wrench，自行聚合</td><td>低–中</td><td>旧版 MuJoCo 或需要自定义筛选时使用。</td></tr>
+          <tr><td><code>touch_grid</code> plugin</td><td>空间 grid，可输出 normal / tangent / torsional channels</td><td>中</td><td>V2；当前 MJX-Warp 对 sensor plugin 的支持是关键阻塞。</td></tr>
+          <tr><td>SDF tactile / flex skin</td><td>更稠密的几何压力或软皮肤近似</td><td>高</td><td>只有当皮肤力学本身是研究贡献时才做。</td></tr>
+        </tbody>
+      </table>
+
+      <pre>&lt;site name="thumb_pad" type="box" pos="..." quat="..." size="..."/&gt;
+&lt;sensor&gt;
+  &lt;contact name="thumb_tactile"
+           site="thumb_pad"
+           data="found force torque pos"
+           reduce="netforce"/&gt;
+&lt;/sensor&gt;</pre>
+
+      <p>V1 每指只给策略 4 个派生量：<code>[contact, log(1+Fn), CoP_x, CoP_y]</code>，五指共 20 维。若真实切向信号完成标定，再加入 <code>Ft_x, Ft_y</code>。Dense matrix 的现实映射可写成：</p>
+      <div class="formula">pᵢⱼ = max(0, gᵢⱼ(rawᵢⱼ − bᵢⱼ))
+Fn = Σ pᵢⱼ
+CoP = Σ(pᵢⱼ · rᵢⱼ) / (Fn + ε)</div>
+
+      <p>sensor wrapper 必须模拟：sample-and-hold、FIFO latency/jitter、低通、per-taxel gain/bias、deadzone、8-bit quantization/saturation、dead taxel、dropout 与相关噪声。MuJoCo XML 的 sensor <code>noise</code> 字段不能替代完整运行时噪声注入。</p>
+
+      <h3>触觉消融阶梯</h3>
+      <ol>
+        <li>Proprio only；</li>
+        <li>binary contact；</li>
+        <li>五指 normal force；</li>
+        <li>normal + CoP（V1 主方案）；</li>
+        <li>normal + CoP + shear；</li>
+        <li>6×12 spatial tactile + CNN（只有前一步证明有必要才做）。</li>
+      </ol>
+      <p>这条阶梯能回答“高分辨率触觉是否真有用”，避免先投入高成本皮肤仿真，最后只学到总压力。</p>
+    </section>
+
+    <section id="v1">
+      <h2>6. V1：L20 Robust Hold Benchmark</h2>
+      <p class="sub">目标是先做一个最小但足够难、可复现、能暴露 action mismatch 的刚体抓持实验。所有数字都是建议的起始协议，需被真实 L20 额定负载和 Quest 轨迹校准。</p>
+
+      <h3>V1 明确包含</h3>
+      <ul class="checklist">
+        <li>单个刚性、非易碎物体；</li>
+        <li>外部给定 grasp reference / pre-grasp；</li>
+        <li>联合 teacher 控 wrist+finger；</li>
+        <li>外生 wrist student / override eval；</li>
+        <li>几何、质量、摩擦、static COM；</li>
+        <li>程序化和真实人腕轨迹；</li>
+        <li>16D finger residual action；</li>
+        <li>低维 fingertip tactile ladder；</li>
+        <li>严格 ID / OOD / corner splits；</li>
+        <li>MuJoCo 为唯一物理权威。</li>
+      </ul>
+
+      <h3>V1 明确不包含</h3>
+      <p>高保真液体、可变形纸杯、功能性工具使用、筷子双物体操作、视觉语义和端到端任意位置抓取。它们不是不重要，而是与 V1 的 failure cause 不可同时辨识。</p>
+
+      <h3>统一物理设置</h3>
+      <pre>physics_dt: 0.002              # 500 Hz
+policy_hz: 50                  # decimation = 10
+integrator: implicitfast
+cone: elliptic
+solver: Newton
+gravity: [0, 0, -9.81]
+finger_action: 16 position-target residuals
+wrist_driver: dynamic body + servo / soft constraint
+episode: 0.8 s close + 1.0 s lift + 5.0 s hold/disturb</pre>
+
+      <div class="callout">
+        <strong>训练 backend 与正式评估分开</strong>
+        当前 MJX-Warp 可以继续用于吞吐量训练，但所有方法必须在上面的单一正式 MuJoCo 配置下复评。另做一次 <code>dt=0.001</code> sensitivity audit；若方法排名反转或成功率变化超过 10 points，说明策略可能在利用数值 artifact。
+      </div>
+
+      <h3>对象与参数 split</h3>
+      <table>
+        <thead><tr><th>维度</th><th>训练建议</th><th>OOD 压测</th></tr></thead>
+        <tbody>
+          <tr><td>对象</td><td>48 train / 12 val，覆盖 cylinder、cuboid、ellipsoid、tapered、handled/asymmetric、irregular</td><td>24 instance-OOD + 12 category-OOD；同系列 mesh 不可跨 split</td></tr>
+          <tr><td>抓姿</td><td>每物体 4–8 个候选；按 taxonomy 与 contact map 去重</td><td>未见 grasp candidate 与长尾 grasp family</td></tr>
+          <tr><td>滑动摩擦 μ</td><td>0.35–1.0</td><td>0.20–0.35；以及 low μ + high mass + high jerk 组合角落</td></tr>
+          <tr><td>质量</td><td>真实安全负载的 10–60%</td><td>60–80%；绝不超过硬件安全范围</td></tr>
+          <tr><td>static COM</td><td>characteristic length 的 ±5%</td><td>5–10%</td></tr>
+          <tr><td>actuator</td><td>gain/damping/coupling ±10%，delay 0–20 ms</td><td>delay 20–40 ms 与 held-out 组合</td></tr>
+          <tr><td>wrist motion</td><td>0.25–2 Hz，0–3 m/s²，0–8 rad/s²</td><td>2–3 Hz，3–5 m/s²，8–15 rad/s²；最终以真人数据重定范围</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Wrist trajectory bank</h3>
+      <ul>
+        <li>minimum-jerk lift / translate / rotate；</li>
+        <li>band-limited Fourier shake 与 chirp；</li>
+        <li>突然停止、方向切换、短 impulse；</li>
+        <li>冻结的真实 Quest traces：静止、走路式周期、搬运、摇晃、非周期操作；</li>
+        <li>train person / test person 分开；若涉及多人公开数据，提前确认 ethics。</li>
+      </ul>
+
+      <h3>课程</h3>
+      <div class="phase"><div class="phase-id">C0</div><div><b>冻结体检</b>：现有 joint PPO 在 nominal 环境 ≥90%，并测 T0 β=0 / 直接 β=1 mismatch。</div></div>
+      <div class="phase"><div class="phase-id">C1</div><div><b>离线先验</b>：冻结 subject / object split，构建等大小 PH / PR / PM grasp banks；完成 retarget 与 hard physics filter。</div></div>
+      <div class="phase"><div class="phase-id">C2</div><div><b>T0 goal-conditioned teacher</b>：先只训练 closure / lift / hold；P0/PH/PR/PM 使用相同网络、reward 与预算。</div></div>
+      <div class="phase"><div class="phase-id">C3</div><div><b>静态 dynamics</b>：逐步加入 geometry、mass、friction、COM、actuator model，保持四个 prior rows 的采样一致。</div></div>
+      <div class="phase"><div class="phase-id">C4</div><div><b>T1 控制权干预</b>：β 从 0 到 1；policy wrist → procedural / Quest override；只从 β=1 rollout 生成 student expert data。</div></div>
+      <div class="phase"><div class="phase-id">C5</div><div><b>S0/S1 student</b>：蒸馏 warm start → 100% external-wrist on-policy fine-tune；触觉逐步加入 latency、quantization、gain、dropout。</div></div>
+      <div class="phase"><div class="phase-id">C6</div><div><b>低尾课程</b>：根据 scenario-bin 失败 EMA 提高困难组合采样，但保留 uniform floor。</div></div>
+
+      <div class="formula">pᵢ ∝ ε + (1 − ŝᵢ)^β
+ŝᵢ = scenario bin i 的近期成功率；所有 baseline 保持相同 environment-step budget。</div>
+
+      <h3>Reward：先稳住，再谈最小力</h3>
+      <div class="formula">rₜ = w_hold·I(held)
+   + w_p·exp(−||e_position||/σp)
+   + w_R·exp(−θ_rotation/σR)
+   − w_v·||v_object/palm||²
+   − w_Δa·||aₜ − aₜ₋₁||²
+   − W_drop·I(drop)
+   − w_over·Σ[Fn − F_hardware]₊²</div>
+      <p>不要在 V1 把“最小抓力”设为主奖励：模拟器可能允许非常慢的滑移。object pose、slip 与 privileged contact 可以用于 reward / critic，但不能进入 deployable actor。自然度单独画 robustness–naturalness Pareto，不与稳定性混成一个分数。</p>
+    </section>
+
+    <section id="baselines">
+      <h2>7. Baselines、消融与统计</h2>
+      <h3>必须有的控制基线</h3>
+      <table>
+        <thead><tr><th>组</th><th>方法</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td>B0</td><td>Fixed PD / tuned fixed grip</td><td>最简单的部署 sanity baseline。</td></tr>
+          <tr><td>B1</td><td>Max-safe closure</td><td>若它已达到 95%，RL 的 rigid-hold 贡献会很弱。</td></tr>
+          <tr><td>B2</td><td>Static grasp optimizer + PD/impedance</td><td>分离“好抓姿”与“动态学习”的贡献。</td></tr>
+          <tr><td>B3</td><td>当前 nominal joint PPO</td><td>复用现有结果，跑 T0 β=0 / direct β=1。</td></tr>
+          <tr><td>B4</td><td>PPO + uniform domain randomization</td><td>“堆场景/算力”基线。</td></tr>
+          <tr><td>B5</td><td>Tactile slip reflex</td><td>假肢/工业上非常强的规则控制基线。</td></tr>
+          <tr><td>B6</td><td>Mask-conditioned joint residual PPO</td><td>最小架构修改。</td></tr>
+          <tr><td>B7</td><td>Joint teacher → recurrent finger student</td><td>推荐主方法。</td></tr>
+          <tr><td>B8</td><td>Privileged oracle actor</td><td>只做上界；判断 observation 是否不足。</td></tr>
+          <tr><td>B9</td><td>SOCP friction-cone controller</td><td>只有 L20 有可靠 3D shear 时才完整实现。</td></tr>
+        </tbody>
+      </table>
+
+      <h3>核心消融</h3>
+      <ul class="checklist">
+        <li>no wrist kinematics；</li>
+        <li>no command preview；</li>
+        <li>no history / GRU；</li>
+        <li>absolute vs residual finger action；</li>
+        <li>P0 None vs PH Human vs PR Robot vs PM Mixed；</li>
+        <li>no friction DR；</li>
+        <li>no wrist override training；</li>
+        <li>uniform vs failure-aware sampling；</li>
+        <li>symmetric vs privileged critic；</li>
+        <li>contact → Fn → Fn+CoP → shear。</li>
+      </ul>
+
+      <h3>严格成功定义</h3>
+      <ul>
+        <li>抬升 0.10 m、无桌面或环境支撑，之后保持 5 s；</li>
+        <li>settling 0.25 s 后，object–palm translation drift &lt;20 mm；</li>
+        <li>rotation drift &lt;15°；对称物体使用 symmetry-aware angle；</li>
+        <li>无持续 actuator saturation、接触穿透异常或力安全违规；</li>
+        <li>同时报告宽松的 no-drop success，不能只报 reward。</li>
+      </ul>
+
+      <h3>主指标</h3>
+      <table>
+        <thead><tr><th>类别</th><th>指标</th></tr></thead>
+        <tbody>
+          <tr><td>成功</td><td>acquisition、lift、strict 5 s hold 分开；time-to-slip / drop。</td></tr>
+          <tr><td>人腕鲁棒性</td><td>success–severity curve；critical linear/angular acceleration、jerk 与冲击恢复率。</td></tr>
+          <tr><td>低尾</td><td>worst-group、lower quartile、worst 10% strata / CVaR、ID→OOD gap。</td></tr>
+          <tr><td>物理</td><td>relative translation/rotation slip、最大 external wrench、contact-loss frequency。</td></tr>
+          <tr><td>安全</td><td>每指 peak/P95 Fn、force integral、超限时间、current/energy、saturation fraction。</td></tr>
+          <tr><td>多样性</td><td>成功 grasp cluster 数、taxonomy coverage、cluster entropy、best-of-K 与 average-over-K。</td></tr>
+          <tr><td>自然度</td><td>held-out human 的 object-frame key-vector distance、contact-map F1 / geodesic、mode consistency、joint margin、blind A/B。</td></tr>
+          <tr><td>迁移</td><td>sensor sim–real error、zero/few-shot real success、real/sim ratio。</td></tr>
+        </tbody>
+      </table>
+
+      <p>正式实验建议至少 5 个 training seeds；冻结 test scenario bank；每 method / seed 约 2,000 个 held-out episodes；paired evaluation；以 object 为第一层、trajectory 为第二层做 hierarchical bootstrap，报告 95% CI。</p>
+
+      <h3>Go / no-go gates</h3>
+      <table>
+        <thead><tr><th>Gate</th><th>门槛</th><th>失败后做什么</th></tr></thead>
+        <tbody>
+          <tr><td>G0 环境有效</td><td>nominal ≥90%；官方 solver 下无异常能量；dt audit 不改变排名。</td><td>先修 MJCF / contact / actuator，不训练新方法。</td></tr>
+          <tr><td>G1 学习必要</td><td>fixed/max-safe baseline &lt;95% stress success。</td><td>若 ≥95%，转向 fragile / minimum-force / tactile recovery。</td></tr>
+          <tr><td>G2 mismatch</td><td>T0 direct β=1 对 T0 β=0 的 gap 在 ID ≤5 points、OOD ≤10 points。</td><td>超标则 T1 intervention adaptation / finger student 必须进入部署路线。</td></tr>
+          <tr><td>G3 方法有效</td><td>ID ≥85%、OOD ≥70%、worst 10% ≥50–60%；相对 uniform DR ≥10 points 或 failure 降 ≥30%。</td><td>检查 curriculum、history 与 wrist distribution。</td></tr>
+          <tr><td>G4 observation</td><td>oracle 对 deployable actor gap ≤15 points。</td><td>超标说明缺 sensor / latent estimator，不是缺更多 PPO steps。</td></tr>
+          <tr><td>G5 grasp prior</td><td>PH 提高 held-out 自然度；PR 给稳定上界；PM 在相对 PR ≤5 points 的 non-inferiority margin 内显著提高自然度。</td><td>若 PH/PM 无自然度或 diversity 增益，不扩大真人采集；先检查 retarget / metric。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="roadmap">
+      <h2>8. 慢慢做加法：版本路线图</h2>
+      <div class="phase"><div class="phase-id">V0</div><div><b>Hardware audit & system ID</b><br>触觉版本、带宽、时延、迟滞；actuator current→torque、deadband、backlash；Quest wrist 数据与 servo 实际响应。</div></div>
+      <div class="phase"><div class="phase-id">V1</div><div><b>Rigid robust hold + wrist mismatch</b><br>刚体、静态 COM、多摩擦、grasp bank、joint teacher、mask policy、finger student、低维 tactile ladder。</div></div>
+      <div class="phase"><div class="phase-id">V2</div><div><b>Tactile sim-to-real & recovery</b><br>真实标定噪声；privileged teacher→sensor student；传统 slip reflex 和 friction-cone controller 基线；少量 real correction。</div></div>
+      <div class="phase"><div class="phase-id">V3A</div><div><b>Moving COM / liquid surrogate</b><br>先 random external wrench，再 rigid shell + 2-DoF pendulum/sliding mass；随机 fill ratio、阻尼、相位。MuJoCo 的 fluid force 模型不是瓶内晃液。</div></div>
+      <div class="phase"><div class="phase-id">V3B</div><div><b>Fragile objects</b><br>把安全压力作为硬约束而非 soft reward；CMDP / CBF / action projection；需要 F_safe、材料 token 或保守模式。</div></div>
+      <div class="phase"><div class="phase-id">V3C</div><div><b>Slender objects & tools</b><br>先拿稳细杆和偏心工具；再加入 affordance / task wrench。筷子独立建项。</div></div>
+      <div class="phase"><div class="phase-id">V4</div><div><b>Shared-control application</b><br>gesture / semantics / grasp-family selector / long-horizon planning；低层 robust grip controller 保持独立。</div></div>
+
+      <h3>液体与易碎物体的物理边界</h3>
+      <div class="formula">F_required ≈ ||F_tangential|| / μ
+可行条件：F_required ≤ F_damage
+
+若人的加速度使防滑所需法向力超过损坏阈值，任何 RL 都无法同时满足“不掉”和“不坏”。
+只能换抓姿 / 增加接触面积与顺应性 / 降低腕部加速度 / 给用户反馈。</div>
+    </section>
+
+    <section id="compute">
+      <h2>9. 这不是只堆算力的问题</h2>
+      <div class="grid">
+        <div class="card"><h3><span class="num">1</span>POMDP</h3><p>μ、质量、COM、液体相位不可直接观测。需要 history / recurrent belief 或显式 latent dynamics estimator。</p></div>
+        <div class="card"><h3><span class="num">2</span>Risk</h3><p>平均成功率会掩盖重物体+低摩擦+高 jerk 的组合失败。优化和报告 CVaR / worst-group。</p></div>
+        <div class="card"><h3><span class="num">3</span>Constraint</h3><p>fragile 不是 reward tuning；需要 force constraint、CBF、QP/SOCP 或 action projection。</p></div>
+        <div class="card"><h3><span class="num">4</span>System ID</h3><p>触觉、actuator、delay、backlash 和 wrist servo 的真实测量，比盲目扩 domain 更关键。</p></div>
+        <div class="card"><h3><span class="num">5</span>Structure</h3><p>joint teacher、finger student、grasp prior 与 residual action 给出正确 inductive bias，减少局部最优。</p></div>
+        <div class="card"><h3><span class="num">6</span>Real data</h3><p>真实 wrist distribution 和少量 on-hardware correction 决定是否能跨过 sim-to-real，而不是 GPU 数量。</p></div>
+      </div>
+
+      <h3>一个小型 scaling 实验即可回答“算力是否足够”</h3>
+      <p>训练物体数量取 25% / 50% / 100%，wrist trajectory bank 取 25% / 50% / 100%，同时固定 environment-step budget；再做 50M / 100M / 200M steps 曲线。若数据翻倍只提升 1–3 points，而 oracle gap 或 W0→W1 gap 仍大，继续堆算力不是答案。</p>
+
+      <div class="callout">
+        <strong>推荐的数学主方法候选</strong>
+        asymmetric recurrent actor-critic + goal-conditioned residual action + failure-aware sampler；论文后续可加入 CVaR objective。fragile 版本再引入 constrained RL / CBF。先不要同时上 diffusion、foundation model 和高分辨率触觉，否则无法知道提升来自哪里。
+      </div>
+    </section>
+
+    <section id="next">
+      <h2>10. 从明天开始的执行清单</h2>
+      <ol>
+        <li><b>先冻结数据 split</b>：human subject + object instance + wrist performer 同时隔离；禁止 retarget 后再随机切分。</li>
+        <li><b>冻结 current PPO checkpoint</b>，不再调 reward；先补 T0 β=0 与直接 β=1 两个 mismatch 端点。</li>
+        <li><b>做 8–12 物体的 grasp-bank pilot</b>：每个物体 2 modes、每 mode 3–5 goals，分别构建 PH / PR / PM 并固定候选数。</li>
+        <li><b>完成 L20 retarget + hard filter</b>：16 active + 真实 coupling；穿透、关节余量、2 s hold、力/电流和 12-direction wrench。</li>
+        <li><b>建立 100–200 条 wrist test bank</b>：程序化一半、Quest 真实轨迹一半；训练和测试人物/轨迹严格隔离。</li>
+        <li><b>做 L20 tactile audit</b>：型号、shape、timestamp、空载 60 s、已知法向载荷、切向 ramp、step response、饱和与温漂。</li>
+        <li><b>实现 exogenous wrist driver 与 T1</b>：β 从 0 到 1，记录 desired / realized kinematics；β=1 时 PPO loss 只算 finger active dims。</li>
+        <li><b>只用 T1 β=1 rollout 蒸馏 S0</b>，随后在 100% external wrist 下做 S1 on-policy fine-tune；imitation loss 逐步退火。</li>
+        <li><b>实现 tactile ladder</b>，先 <code>contact/netforce → Fn+CoP</code>，不做 dense skin。</li>
+        <li><b>跑 4 prior × 2 endpoints × 3 seeds</b>，同时报告 robustness / naturalness / diversity；通过 pilot gate 后才扩对象与 step budget。</li>
+        <li><b>真实 L20 小规模闭环</b>：10 个对象 × 5 条 wrist traces；记录 sim/real gap，而不是只挑成功视频。</li>
+      </ol>
+    </section>
+
+    <section id="references">
+      <h2>11. 关键一手资料</h2>
+      <div class="refs">
+        <h3>最接近本问题的方法与边界</h3>
+        <ul>
+          <li><a href="https://arxiv.org/html/2602.20466v1">Grasp-to-Act (2026)</a> — 人类轨迹、physics screening 与 recurrent finger residual。</li>
+          <li><a href="https://arxiv.org/html/2511.00139v1">DexGrasp-VLA / Shared Autonomy (2025)</a> — 人控 arm、策略控 hand 的 macro–micro 分工。</li>
+          <li><a href="https://arxiv.org/html/2606.23680v1">CoorDex (2026)</a> — 分离 body/wrist placement 与 finger prior，避免 monolithic action collapse。</li>
+          <li><a href="https://arxiv.org/html/2607.06438v1">WristMimic (2026)</a> — wrist kinematic guidance 与 contact-driven fingers 的显式解耦。</li>
+          <li><a href="https://arxiv.org/html/2607.11481v1">TeleDexter (2026)</a> — 独立 wrist tracking、finger policy 与训练期 action masking。</li>
+          <li><a href="https://proceedings.mlr.press/v15/ross11a.html">DAgger (2011)</a> — student 必须在自己诱导的状态分布上收集监督的经典依据。</li>
+          <li><a href="https://arxiv.org/html/2405.10315v3">TRANSIC (2024)</a> — action-space distillation 与少量真实 correction，而非静默删 action 维度。</li>
+          <li><a href="https://arxiv.org/html/2504.05287v2">RobustDexGrasp (2025)</a> — privileged visual-tactile teacher、IL→RL 和大规模未知对象基线。</li>
+          <li><a href="https://arxiv.org/html/2603.07040v1">TacDexGrasp (2026)</a> — 3D tactile force + SOCP 最小抓力 / 摩擦锥基线。</li>
+          <li><a href="https://www.nature.com/articles/s41467-025-65965-9">Shared human–machine control of an intelligent bionic hand (2025)</a> — 假肢应用层强基线。</li>
+          <li><a href="https://www.nature.com/articles/s42256-025-01062-2">Bioinspired trajectory modulation (2025)</a> — 力受限时必须考虑轨迹调制的物理边界。</li>
+        </ul>
+
+        <h3>抓姿与示范</h3>
+        <ul>
+          <li><a href="https://pku-epic.github.io/DexGraspNet/">DexGraspNet</a> · <a href="https://pku-epic.github.io/UniDexGrasp/">UniDexGrasp</a> · <a href="https://pku-epic.github.io/Dexonomy/">Dexonomy</a> · <a href="https://arxiv.org/html/2410.23701v1">Get a Grip</a></li>
+          <li><a href="https://contactpose.cc.gatech.edu/">ContactPose</a> · <a href="https://oakink.net/">OakInk</a> · <a href="https://grab.is.tue.mpg.de/">GRAB</a> · <a href="https://dex-ycb.github.io/">DexYCB</a></li>
+          <li><a href="https://github.com/dexsuite/dex-retargeting">dex-retargeting</a> — object-frame vector optimization 与多种灵巧手 retarget 实现参考。</li>
+          <li><a href="https://arxiv.org/html/2312.02975v1">Dexterous Functional Grasping</a> · <a href="https://arxiv.org/abs/2205.14313">Learning to Use Chopsticks</a></li>
+        </ul>
+
+        <h3>L20 与 MuJoCo</h3>
+        <ul>
+          <li><a href="https://github.com/linker-bot/linkerhand-cpp-sdk/blob/main/docs/API-Reference.md">L20 C++ SDK API</a> · <a href="https://github.com/linker-bot/linkerhand-ros2-sdk/blob/main/doc/Topic-Reference.md">ROS2 topic reference</a></li>
+          <li><a href="https://mujoco.readthedocs.io/en/latest/XMLreference.html">MuJoCo XML sensor reference</a> · <a href="https://github.com/google-deepmind/mujoco/blob/main/plugin/sensor/README.md">MuJoCo touch-grid plugin</a></li>
+          <li><a href="https://mujoco.readthedocs.io/en/stable/mjx.html">MJX / MJX-Warp feature parity</a> · <a href="https://mujoco.readthedocs.io/en/stable/computation/fluid.html">MuJoCo fluid forces</a></li>
+          <li><a href="https://www.nist.gov/el/intelligent-systems-division-73500/robotic-grasping-and-manipulation-assembly/grasping">NIST robotic grasping performance metrics</a></li>
+        </ul>
+      </div>
+      <p class="small">说明：本页中的成功率门槛、参数范围和 step budget 是实验设计建议，不是已取得结果，也不是行业统一标准；正式值应由 L20 硬件标定与 pilot curve 冻结。</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">L20 Robust Grasp · V1 experimental route · Updated with human-prior → L20 retarget → teacher/student evaluation. ·
+      <a href="index.html">← Machine Learning Handbook</a> ·
+      <a href="shared-control.html">共享控制路线</a></div>
+  </footer>
+</body>
+</html>
