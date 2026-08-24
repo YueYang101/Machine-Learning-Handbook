@@ -1,9 +1,16 @@
 # Machine-Learning-Handbook
 
-个人机器学习笔记，单文件 HTML，可直接在浏览器打开（公式用 MathJax，动画为原生 canvas，无构建步骤）。
+个人机器学习笔记站，使用纯静态 HTML，可直接在浏览器打开；公式由 MathJax 渲染，交互图使用原生 canvas，实验图片与视频存放在本地 `assets/`，没有构建步骤。
 
-**在线阅读：** https://yueyang101.github.io/Machine-Learning-Handbook/
-**编写规则：** [STYLE.md](STYLE.md) —— 分类、跳转、样式与写作约定，改动前先读。
+- **在线阅读：** [yueyang101.github.io/Machine-Learning-Handbook](https://yueyang101.github.io/Machine-Learning-Handbook/)
+- **唯一编写规范：** [STYLE.md](STYLE.md)
+- **工具入口：** [AGENTS.md](AGENTS.md) 与 [CLAUDE.md](CLAUDE.md) 仅负责指向 `STYLE.md`，不重复维护规则。
+
+## 站点入口
+
+| 页面 | 内容 |
+|---|---|
+| [index.html](index.html) | GitHub Pages 首页与公开导航；分类层级与本索引保持同步 |
 
 ## 理论
 
@@ -20,8 +27,8 @@
 | 页面 | 内容 |
 |---|---|
 | [diffusion-policy.html](diffusion-policy.html) | Diffusion Policy 图解与完整推导：误区纠正、弹球比喻与方向场动画、正向/反向过程、从 $\log p_\theta(x_0)$ 到 $L_{\text{simple}}$ 的完整 loss 推导、DP 原论文要点、Flow Matching 对比 |
-| [ppo-learning.html](ppo-learning.html) | PPO 学习路线：MDP → Bellman → MC/TD → Policy Gradient → Actor-Critic → GAE → TRPO → PPO（Stage 1 已完成） |
-| [ppo-variants-research.html](ppo-variants-research.html) | *相关研究* · PPO 的局限、变体与灵巧抓取证据地图 |
+| [ppo-learning.html](ppo-learning.html) | 强化学习到 PPO：三支流演进、Policy Gradient / Actor-Critic / GAE / Natural Gradient / TRPO / PPO 完整推导、5 个交互图、连续控制实现与训练诊断 |
+| ↳ [ppo-variants-research.html](ppo-variants-research.html) | **PPO 相关研究**：局限、变体与灵巧抓取证据地图；从 ratio / clip / advantage 已知处继续，不重复基础推导 |
 
 ### 研究路线
 

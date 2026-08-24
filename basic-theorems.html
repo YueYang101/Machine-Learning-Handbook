@@ -242,7 +242,7 @@ Q^*(s,a)=\mathbb E_{s'}\Big[r(s,a)+\gamma\max_{a'}Q^*(s',a')\Big]$$
 </div>
 
 <div class="used">
-<b>用在哪：</b><a href="ppo-learning.html">PPO 学习路线</a> Stage 2 起的全部内容——Value / Q / Policy Evaluation / Policy Improvement / TD error / GAE，都是这条原则的展开。它同时也依赖 <a href="#t2">马尔科夫性质</a>：递归之所以只需要 $s'$ 而不需要整条历史，正因为 $s'$ 已经是充分的。
+<b>用在哪：</b><a href="ppo-learning.html#value">PPO 学习手册 §3–§5</a> 的 Value / Q / Bellman / TD / GAE，都是这条原则的展开。它同时也依赖 <a href="#t2">马尔科夫性质</a>：递归之所以只需要 $s'$ 而不需要整条历史，正因为 $s'$ 已经是充分的。
 </div>
 
 <h2 id="t5"><span class="n">④</span>高斯的 $\propto\exp$ 形式：把配方法当成读数器</h2>
