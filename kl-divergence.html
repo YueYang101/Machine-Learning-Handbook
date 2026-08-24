@@ -82,8 +82,8 @@ td.n, th.n { text-align:right; font-family:ui-monospace,Menlo,monospace; font-si
 <body>
 <div class="wrap">
 
-<a class="bk" href="index.html">← Machine Learning Handbook</a>
-<div class="kicker">MACHINE LEARNING HANDBOOK · INFORMATION THEORY</div>
+<a class="bk" href="foundations.html">← 基础概念清单</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
+<div class="kicker">MACHINE LEARNING HANDBOOK · 理论 / 基础概念</div>
 <h1>KL 散度：从「惊讶」到 loss<br><span style="font-size:.72em;color:var(--sub)">信息量 → 编码长度 → 熵 → 交叉熵 → KL，以及它为什么会出现在几乎每个生成模型的 loss 里</span></h1>
 
 <p class="lede">这一页把 KL 散度从<b>信息论的源头</b>一路搭到<b>机器学习的 loss</b>。核心叙事只有一句：<b>KL 散度 = 用错误的分布 $Q$ 去编码真实分布 $P$ 的数据时，平均每个样本多付的比特数</b>。理解了「多付」这两个字，「最大似然 = 最小化 KL」「cross-entropy loss 是什么」「ELBO 差在哪」「DDPM 的 loss 为什么是三组 KL」就都是同一件事的不同穿法。本页是 <a href="diffusion-policy.html#m4">Diffusion Policy §10 Loss 推导</a>的前置笔记。</p>
@@ -387,7 +387,7 @@ $$L=\underbrace{D_{\mathrm{KL}}(q(x_T\mid x_0)\|p(x_T))}_{L_T\approx0}
 <li>Chi et al. <i>Diffusion Policy</i>. RSS 2023. <a href="https://arxiv.org/abs/2303.04137">arXiv:2303.04137</a>——本页 §7 的多模态动机。</li>
 </ol>
 
-<footer>Machine-Learning-Handbook · KL 散度笔记，整理自个人 Obsidian《Diffusion Policy 数学推导》末节 · 配图均为按解析式实时计算的原生 canvas · 配套阅读：<a href="diffusion-policy.html">Diffusion Policy 图解与完整推导</a></footer>
+<footer><a href="index.html">← Machine Learning Handbook</a> · <a href="foundations.html">基础概念清单</a> · KL 散度笔记，整理自个人 Obsidian《Diffusion Policy 数学推导》末节 · 配图均为按解析式实时计算的原生 canvas · 配套阅读：<a href="diffusion-policy.html">Diffusion Policy 图解与完整推导</a></footer>
 
 </div>
 <script>

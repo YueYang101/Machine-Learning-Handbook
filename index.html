@@ -8,25 +8,36 @@
 :root {
   color-scheme: light;
   --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
-  --line:#e1e0d9; --blue:#2a78d6;
+  --line:#e1e0d9; --line2:#c3c2b7; --blue:#2a78d6;
 }
 @media (prefers-color-scheme: dark) {
   :root { color-scheme: dark;
     --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
-    --line:#2c2c2a; --blue:#3987e5; }
+    --line:#2c2c2a; --line2:#383835; --blue:#3987e5; }
 }
 * { box-sizing:border-box; }
 body { margin:0; background:var(--bg); color:var(--ink);
   font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
-.wrap { max-width:720px; margin:0 auto; padding:56px 20px 100px; }
+.wrap { max-width:760px; margin:0 auto; padding:56px 20px 100px; }
 .kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
 h1 { font-size:1.9rem; margin:.3em 0 .3em; }
 .lede { color:var(--sub); }
+h2 { font-size:1.15rem; margin:2.6em 0 .2em; padding-bottom:8px; border-bottom:1px solid var(--line); }
+h2 .en { color:var(--muted); font-size:.78rem; font-weight:400; letter-spacing:.08em; margin-left:8px; }
+h3 { font-size:.9rem; color:var(--muted); font-weight:600; letter-spacing:.04em;
+  margin:1.8em 0 .2em; text-transform:uppercase; }
+p.note { color:var(--muted); font-size:.9rem; margin:.4em 0 0; }
 a.card { display:block; background:var(--panel); border:1px solid var(--line); border-radius:12px;
-  padding:18px 20px; margin:22px 0; text-decoration:none; color:var(--ink); }
+  padding:16px 20px; margin:14px 0; text-decoration:none; color:var(--ink); }
 a.card:hover { border-color:var(--blue); }
-a.card .t { font-weight:700; font-size:1.1rem; color:var(--blue); }
-a.card .d { color:var(--sub); font-size:.93rem; margin-top:4px; }
+a.card .t { font-weight:700; font-size:1.06rem; color:var(--blue); }
+a.card .d { color:var(--sub); font-size:.92rem; margin-top:4px; }
+.sub { margin:-6px 0 14px 22px; padding-left:16px; border-left:2px solid var(--line2); }
+.sub a { display:block; text-decoration:none; color:var(--ink); padding:7px 0; font-size:.94rem; }
+.sub a:hover .t2 { color:var(--blue); }
+.sub .t2 { font-weight:600; }
+.sub .d2 { color:var(--muted); font-size:.86rem; }
+.sub .rel { color:var(--muted); font-size:.78rem; letter-spacing:.06em; }
 footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
 footer a { color:var(--blue); text-decoration:none; }
 </style>
@@ -35,30 +46,64 @@ footer a { color:var(--blue); text-decoration:none; }
 <div class="wrap">
 <div class="kicker">YUE YANG · NOTES</div>
 <h1>Machine Learning Handbook</h1>
-<p class="lede">个人机器学习笔记。单文件 HTML，手机可读，公式 MathJax，动画为按解析解实时模拟的原生 canvas。</p>
+<p class="lede">个人机器学习笔记。单文件 HTML，手机可读，公式 MathJax，动画为按解析解实时模拟的原生 canvas。<br>
+分两类：<b>理论</b>（概念、推导、论文地图）与<b>实验</b>（自己跑出来的记录）。</p>
 
-<p class="kicker" style="margin-top:34px">理论</p>
-<a class="card" href="kl-divergence.html">
-  <div class="t">KL 散度：从「惊讶」到 loss</div>
-  <div class="d">信息量 −log P 的两条公理（乘法变加法 + 单调递减）· 前缀码二叉树：「比特」不是比喻是真的位数 · 熵 / 交叉熵 / KL 三层关系与可拖动的「编码浪费」图 · Gibbs 非负性证明 · forward vs reverse KL 的失败模式（摊平 vs 模态坍缩，交互拟合动画，也就是 BC 用 MSE 会撞墙的那张图）· 最大似然 ≡ 最小 KL ≡ 交叉熵 · 高斯闭式解 · 回到 DDPM 三组 KL</div>
+<h2>理论<span class="en">THEORY &amp; RESEARCH</span></h2>
+
+<h3>基础概念</h3>
+<p class="note">被多篇笔记反复调用的底层工具，一条一页。</p>
+<a class="card" href="foundations.html">
+  <div class="t">基础概念清单 →</div>
+  <div class="d">KL 散度（信息量 → 编码长度 → 熵 → 交叉熵 → KL，含 5 张交互图）· 基本定理（贝叶斯变换 / 马尔科夫性质与 POMDP / Bellman 最优性原则 / 高斯的 ∝exp 形式）· 以及计划中的条目清单</div>
 </a>
+<div class="sub">
+  <a href="kl-divergence.html"><span class="t2">KL 散度：从「惊讶」到 loss</span><br>
+    <span class="d2">信息量的两条公理 · 前缀码二叉树 · Gibbs 非负性证明 · forward vs reverse KL 的失败模式 · 最大似然 ≡ 最小 KL · 高斯闭式解</span></a>
+  <a href="basic-theorems.html"><span class="t2">基本定理：贝叶斯 · 马尔科夫 · Bellman · 高斯</span><br>
+    <span class="d2">四件在 DP 与 PPO 两条主线里反复出现的工具，每条都标了「谁在用它」</span></a>
+</div>
+
+<h3>主流理论</h3>
+<p class="note">一个方法从头推到尾，配图解与交互动画。</p>
+
 <a class="card" href="diffusion-policy.html">
   <div class="t">Diffusion Policy：图解与完整推导</div>
-  <div class="d">误区纠正（不是爬峰、不是对曲线加噪）· 弹球比喻与方向场交互动画 · 正向/反向过程 · loss 从 KL 出发的完整推导（ELBO 缺口 = KL、三组 KL 分解、噪声预测） · DP 操纵原论文要点 · Flow Matching 对比</div>
+  <div class="d">误区纠正（不是爬峰、不是对曲线加噪）· 弹球比喻与方向场交互动画 · 正向/反向过程 · loss 从 KL 出发的完整推导（ELBO 缺口 = KL、三组 KL 分解、噪声预测）· DP 操纵原论文要点 · Flow Matching 对比</div>
 </a>
 
-<p class="kicker" style="margin-top:34px">实验</p>
-<a class="card" href="hand-control.html">
-  <div class="t">Hand Control 技术路线手册</div>
-  <div class="d">EMG + Quest 手部追踪 + L20 遥操作 · V1 自研薄渲染链路（已实现）→ V2 Quest 本地物理 / V3 4090 串流（进行中）→ V4 Mac 串流（判死）· 踩坑史：90° 扭转、hold-flat、clutch 之死 · retargeting vector vs angle 对比与小拇指侧摆问题解剖</div>
+<a class="card" href="ppo-learning.html">
+  <div class="t">PPO 学习路线：从 RL 基础一路推到 PPO</div>
+  <div class="d">Stage 1–8 总路线（MDP → Bellman → MC/TD → Policy Gradient → Actor-Critic → GAE → TRPO → PPO）· 当前已写 Stage 1：state / action / reward / transition / policy / trajectory / return / γ 逐个讲透，以及「RL 到底在优化什么」</div>
 </a>
+<div class="sub">
+  <a href="ppo-variants-research.html"><span class="rel">相关研究 ·</span> <span class="t2">PPO 的局限、变体与灵巧抓取证据地图</span><br>
+    <span class="d2">十类局限的机制/症状/研究方向 · 代表变体各自解决什么 · 灵巧手论文改的是哪一层 · PPO expert → Diffusion Policy 的接口问题 · 先跑诊断再选 variant · 一手资料与证据成熟度</span></a>
+</div>
+
+<h3>研究路线</h3>
+<p class="note">读论文 + 对照自己的架构，还没到实验阶段。</p>
+<a class="card" href="shared-control.html">
+  <div class="t">共享控制路线：从 To the Noise and Back 到 EMG 灵巧手</div>
+  <div class="d">参照论文的完整流程与它的实验设计 · 部分扩散（partial diffusion）演示 · 我们的架构映射与当前进度</div>
+</a>
+
+<h2>实验<span class="en">EXPERIMENTS</span></h2>
+<p class="note">自己跑出来的东西：版本、曲线、视频、失败解剖。</p>
+
 <a class="card" href="dexhand-rl.html">
   <div class="t">灵巧手 RL 实验记录：锤钉与抓取</div>
-  <div class="d">L20 欠驱动手 + MJX/brax PPO · 每个 reward 版本的效果视频与失败解剖（瞬时门 → 锁存链 → 合法记账 → pregrasp 课程 → 冲击窗口 → 工具级手）· V5 拐杖姿势解剖、V5.1 静力学反转（kp 才是开关）、V5.2 裁判实验 → V5.2.5 真实握持挥击点火（封抛砸 + mid-swing 出生注入）· 下一步：多次锤击与物理反弹拟真· 抓姿 reward 专项调研</div>
+  <div class="d">L20 欠驱动手 + MJX/brax PPO · 每个 reward 版本的效果视频与失败解剖（瞬时门 → 锁存链 → 合法记账 → pregrasp 课程 → 冲击窗口 → 工具级手）· V5 拐杖姿势解剖、V5.1 静力学反转（kp 才是开关）、V5.2 裁判实验 → V5.2.5 真实握持挥击点火（封抛砸 + mid-swing 出生注入）· 下一步：多次锤击与物理反弹拟真 · 抓姿 reward 专项调研</div>
 </a>
+
 <a class="card" href="dexhand-engineering.html">
   <div class="t">灵巧手 RL 工程记录：碰撞简化与 Warp 迁移</div>
   <div class="d">碰撞几何 82 凸包 → 22 基元（三个时代 mesh 对比图）· JAX→Warp 迁移与九坑清单（naccdmax、版本配对、EGL、MULTICCD…）· 瓶颈解剖：延迟受限与硬件结论 · CPU 20 μs/步 vs GPU 吞吐 · 1.16 vs 1.11 源码级机制 · kitchen 前瞻 · 问题 → 优化对照表</div>
+</a>
+
+<a class="card" href="hand-control.html">
+  <div class="t">Hand Control 技术路线手册</div>
+  <div class="d">EMG + Quest 手部追踪 + L20 遥操作 · V1 自研薄渲染链路（已实现）→ V2 Quest 本地物理 / V3 4090 串流（进行中）→ V4 Mac 串流（判死）· 踩坑史：90° 扭转、hold-flat、clutch 之死 · retargeting vector vs angle 对比与小拇指侧摆问题解剖</div>
 </a>
 
 <footer><a href="https://github.com/YueYang101/Machine-Learning-Handbook">GitHub 仓库</a></footer>

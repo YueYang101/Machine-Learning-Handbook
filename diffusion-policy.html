@@ -76,12 +76,15 @@ mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:10
   background:var(--bg); }
 .chain .cn { color:var(--muted); font-size:.85rem; margin-left:8px; }
 .chain .ar { color:var(--sub); font-size:.85rem; margin:4px 0 4px 16px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
 footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
 </style>
 </head>
 <body>
 <div class="wrap">
 
+<a class="bk" href="index.html">← Machine Learning Handbook</a>
 <div class="kicker">MACHINE LEARNING HANDBOOK · IMITATION LEARNING</div>
 <h1>Diffusion Policy：图解与完整推导<br><span style="font-size:.72em;color:var(--sub)">它到底在加噪去噪什么，以及 loss 是怎么一步步推出来的</span></h1>
 
@@ -225,6 +228,8 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 </div>
 
 <h2 id="m1"><span class="n">§ 7</span>推导前的工具箱：四件武器</h2>
+
+<p class="lede" style="font-size:.95rem">这四件工具在 PPO 那条线上也会反复出现，已经单独整理成一页：<a href="basic-theorems.html">基本定理：贝叶斯 · 马尔科夫 · Bellman · 高斯</a>。下面只保留扩散推导直接要用的部分。</p>
 
 <p class="lede" style="font-size:.95rem">下面进入数学部分。符号约定：$k$ 是<b>扩散步</b>（$k{=}0$ 干净数据，$k{=}T$ 纯噪声）；$x_0$ 是数据样本——在 DP 里就是整段 action chunk $A$；$\alpha_k\in(0,1)$ 是保留系数，$\beta_k=1-\alpha_k$，$\bar\alpha_k=\prod_{i=1}^k\alpha_i$。向量情形按逐元素读（协方差均为 $\sigma^2 I$）。</p>
 
@@ -754,7 +759,7 @@ $$L_{\mathrm{FM}}=\mathbb E_{t,z,x_1}\Big[\big\|v_\theta(x_t,\,t,\,O_t)-(x_1-z)\
 <li>Black et al. <i>π0: A Vision-Language-Action Flow Model</i>. 2024. <a href="https://arxiv.org/abs/2410.24164">arXiv:2410.24164</a>——FM 做 action expert 的实例。</li>
 </ol>
 
-<footer>配套笔记：<a href="kl-divergence.html">KL 散度：从信息量到 loss</a> · Machine-Learning-Handbook · 前半观点整理自个人 Obsidian 笔记《DP 的真正优势》《Diffusion Policy 数学推导》《基本定理》 · 动画均按解析解实时模拟（cosine schedule，$T=60$）。</footer>
+<footer><a href="index.html">← Machine Learning Handbook</a> · 配套笔记：<a href="kl-divergence.html">KL 散度：从信息量到 loss</a> · Machine-Learning-Handbook · 前半观点整理自个人 Obsidian 笔记《DP 的真正优势》《Diffusion Policy 数学推导》《基本定理》 · 动画均按解析解实时模拟（cosine schedule，$T=60$）。</footer>
 
 </div>
 <script>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>基本定理：贝叶斯 · 马尔科夫 · Bellman · 高斯 · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap canvas { width:100%; display:block; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; }
+.ctl button { font:600 .85rem/1 inherit; color:var(--ink); background:var(--bg);
+  border:1px solid var(--line2); border-radius:7px; padding:7px 11px; cursor:pointer; }
+.ctl button:hover { border-color:var(--blue); color:var(--blue); }
+.ctl button.pri { background:var(--blue); border-color:var(--blue); color:#fff; }
+.ctl label { display:inline-flex; gap:5px; align-items:center; font-size:.85rem; color:var(--sub);
+  cursor:pointer; user-select:none; }
+.ctl input[type=range] { flex:1 1 140px; min-width:120px; accent-color:var(--blue); }
+.ctl .ro { font:.8rem/1.4 ui-monospace,Menlo,monospace; color:var(--sub); }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+.chain { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:1.4em 0; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+.num { font:.93rem/1.7 ui-monospace,Menlo,monospace; }
+figure { margin:1.4em 0; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 12px; }
+figure svg { display:block; width:100%; height:auto; }
+figcaption { color:var(--sub); font-size:.9rem; line-height:1.65; margin-top:10px; }
+.used { border-left:3px solid var(--green); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:8px 14px; margin:1em 0; font-size:.93rem; color:var(--sub); }
+.used b { color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="bk" href="foundations.html">← 基础概念清单</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
+<div class="kicker">MACHINE LEARNING HANDBOOK · 基础概念</div>
+<h1>基本定理：四件反复出现的工具<br><span style="font-size:.72em;color:var(--sub)">贝叶斯变换 · 马尔科夫性质（与 POMDP）· Bellman 最优性原则 · 高斯的 ∝exp 形式</span></h1>
+
+<p class="lede">这一页不讲任何具体算法，只把<b>会在别的笔记里反复被调用的四件工具</b>集中放好，并且每一条都写清楚「它在哪里被用到」。<a href="diffusion-policy.html#m1">Diffusion Policy 的推导</a>用了 ①②④，<a href="ppo-learning.html">PPO 学习路线</a>用了 ②③，POMDP 那一节解释了为什么灵巧手任务里要给策略喂 history。</p>
+
+<div class="toc"><b>目录</b> ·
+<a href="#t1">① 贝叶斯变换</a> ·
+<a href="#t2">② 马尔科夫性质</a> ·
+<a href="#t3">②′ POMDP</a> ·
+<a href="#t4">③ Bellman 最优性原则</a> ·
+<a href="#t5">④ 高斯的 ∝exp 形式</a></div>
+
+<h2 id="t1"><span class="n">①</span>贝叶斯变换：把「因果方向」倒过来</h2>
+
+<div class="math">
+$$P(A\mid B)=\frac{P(B\mid A)\,P(A)}{P(B)}
+\qquad\Longleftrightarrow\qquad
+\text{后验}=\frac{\text{似然}\times\text{先验}}{\text{证据}}$$
+$$\text{Posterior}=\frac{\text{Likelihood}\times\text{Prior}}{\text{Evidence}}$$
+</div>
+
+<p>四个名字各自的含义，用一句话对齐：</p>
+
+<div class="tw"><table>
+<tr><th>项</th><th>读法</th><th>在推导里的角色</th></tr>
+<tr><td>先验 $P(A)$</td><td>看到证据<b>之前</b>，我认为 $A$ 有多可能</td><td>通常是我们自己设定的模型假设</td></tr>
+<tr><td>似然 $P(B\mid A)$</td><td>如果 $A$ 成立，观测到 $B$ 的可能性</td><td>正向的、容易写出来的那个方向</td></tr>
+<tr><td>证据 $P(B)$</td><td>不管 $A$ 是什么，$B$ 本身的总概率</td><td>归一化常数，比较形状时常整个扔掉</td></tr>
+<tr><td>后验 $P(A\mid B)$</td><td>看到 $B$ <b>之后</b>，对 $A$ 的更新</td><td>真正想要、但难直接写的那个方向</td></tr>
+</table></div>
+
+<div class="key">
+<b>它的全部价值：把难写的方向换成好写的方向。</b>很多问题里「反向」是你要的、「正向」是你能写的。贝叶斯就是这两者之间的兑换公式。分母 $P(B)$ 不含 $A$，所以只要不需要绝对数值、只需要比较 $A$ 的不同取值谁更可能，就可以写成
+$$P(A\mid B)\;\propto\;P(B\mid A)\,P(A)$$
+——这个「$\propto$ 写法」是后面工具 ④ 的入场券。
+</div>
+
+<div class="used">
+<b>用在哪：</b><a href="diffusion-policy.html#m3">Diffusion Policy §9</a>——正向加噪 $q(x_k\mid x_{k-1})$ 好写（是我们自己设计的），但生成需要的是反向 $q(x_{k-1}\mid x_k)$。贝叶斯把它翻过来，配合工具 ④ 直接读出一个高斯。<a href="diffusion-policy.html#m4">§10.8</a> 里把 loss 中每一项的分子从正向翻成反向，用的也是同一招。
+</div>
+
+<h2 id="t2"><span class="n">②</span>马尔科夫性质：知道现在，就不必知道过去</h2>
+
+<div class="math">
+$$P\big(s_{t+1}\mid s_0,s_1,\cdots,s_t\big)=P\big(s_{t+1}\mid s_t\big)$$
+<p class="why">带上动作的版本（RL 里真正用的那个）：</p>
+$$P\big(s_{t+1}\mid s_0,a_0,\cdots,s_t,a_t\big)=P\big(s_{t+1}\mid s_t,a_t\big)$$
+</div>
+
+<figure>
+<svg viewBox="0 0 660 150" role="img" aria-label="马尔科夫链示意">
+  <defs>
+    <marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="currentColor" stroke-width="1.6" opacity=".45" marker-end="url(#ah)">
+    <line x1="72" y1="58" x2="140" y2="58"/>
+    <line x1="204" y1="58" x2="272" y2="58"/>
+    <line x1="336" y1="58" x2="404" y2="58"/>
+    <line x1="468" y1="58" x2="536" y2="58"/>
+  </g>
+  <g font-size="15" font-family="ui-monospace,Menlo,monospace" text-anchor="middle">
+    <circle cx="44"  cy="58" r="26" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".35"/>
+    <circle cx="172" cy="58" r="26" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".35"/>
+    <circle cx="304" cy="58" r="26" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".35"/>
+    <circle cx="436" cy="58" r="27" fill="none" stroke="currentColor" stroke-width="2.4"/>
+    <circle cx="568" cy="58" r="26" fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="4 3"/>
+    <text x="44"  y="63" fill="currentColor" opacity=".45">s₀</text>
+    <text x="172" y="63" fill="currentColor" opacity=".45">s₁</text>
+    <text x="304" y="63" fill="currentColor" opacity=".45">s₂</text>
+    <text x="436" y="63" fill="currentColor">sₜ</text>
+    <text x="568" y="63" fill="currentColor">sₜ₊₁</text>
+  </g>
+  <g font-size="12.5" text-anchor="middle" fill="currentColor">
+    <text x="174" y="122" opacity=".45">这一整段历史 —— 预测 sₜ₊₁ 时全部不需要</text>
+    <text x="502" y="122">只有这一步进入预测</text>
+  </g>
+  <path d="M436 92 L436 106 L568 106 L568 92" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".8"/>
+  <path d="M20 92 L20 106 L330 106" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".35" stroke-dasharray="4 3"/>
+</svg>
+<figcaption>马尔科夫性质说的是：只要 $s_t$ 写得足够完整，$s_0\cdots s_{t-1}$ 对预测 $s_{t+1}$ 就<b>不再提供任何额外信息</b>。注意它并不是说「历史不重要」，而是说「历史的全部有用信息都已经被压进 $s_t$ 里了」。</figcaption>
+</figure>
+
+<div class="key warn">
+<b>它不是宇宙真理，是建模时主动选的假设。</b>同一个物理系统，$s_t$ 写法不同，马尔科夫性质可能成立也可能不成立。经典例子：只用「位置」当 state，小球的运动不是马尔科夫的（同一位置可能在上升也可能在下落）；把 state 改成「位置 + 速度」，它就是马尔科夫的了。<b>所以「这个问题满不满足马尔科夫」这句话本身是不完整的——必须先说清 state 怎么定义。</b>工程上遇到「策略学不动、行为看起来精神分裂」，第一件该怀疑的事往往就是 state 漏了关键量。
+</div>
+
+<div class="used">
+<b>用在哪：</b>① <a href="ppo-learning.html">PPO 学习路线</a>——整个 MDP 框架建立在它上面，没有它就没有「只看当前 state 决策」的 policy $\pi(a\mid s)$，也没有 Bellman 递归。② <a href="diffusion-policy.html#m2">Diffusion Policy §8–§10</a>——正向加噪链是<b>按它构造</b>的，所以 $q(x_{1:T}\mid x_0)=\prod_k q(x_k\mid x_{k-1})$ 能拆开；§10.8 里 $q(x_k\mid x_{k-1})=q(x_k\mid x_{k-1},x_0)$ 这个「白挂一个条件」的动作，靠的也是它。
+</div>
+
+<h2 id="t3"><span class="n">②′</span>POMDP：当 state 看不全的时候</h2>
+
+<p>现实里我们常常拿不到真正的 $s_t$，只能拿到一个观测 $o_t$。此时问题从 MDP 变成 <b>POMDP（Partially Observable Markov Decision Process，部分可观测马尔可夫决策过程）</b>：</p>
+
+<div class="tw"><table>
+<tr><th></th><th>MDP</th><th>POMDP</th></tr>
+<tr><td>手上有什么</td><td>真实 state $s_t$</td><td>观测 $o_t\sim O(\cdot\mid s_t)$，$s_t$ 不可见</td></tr>
+<tr><td>马尔科夫性</td><td>对 $s_t$ 成立</td><td>对 $o_t$ <b>不</b>成立</td></tr>
+<tr><td>策略输入</td><td>$\pi(a\mid s_t)$ 就够</td><td>要 $\pi(a\mid o_{0:t},a_{0:t-1})$，或对 belief $b_t=P(s_t\mid\text{history})$ 决策</td></tr>
+<tr><td>实现手段</td><td>MLP 直接吃 state</td><td>喂一段 history（frame stacking）、上 RNN/Transformer，或显式估计 belief</td></tr>
+</table></div>
+
+<div class="key">
+<b>关键洞察：POMDP 对 <u>belief state</u> 恢复了马尔科夫性。</b>$b_t$ 是「在看过全部历史之后，我认为真实 state 的概率分布」，它的更新恰好是一次<a href="#t1">贝叶斯</a>：$b_{t+1}\propto O(o_{t+1}\mid s')\sum_s P(s'\mid s,a_t)\,b_t(s)$。也就是说 POMDP 是「belief 空间上的 MDP」——代价是这个空间是连续的、维度极高，所以实践中几乎都用「喂 history 让网络自己学一个隐式 belief」来近似。
+</div>
+
+<div class="used">
+<b>用在哪：</b>灵巧手任务是典型 POMDP——物体质量、摩擦系数、内部惯量都<b>观测不到</b>，但会决定该用多大力。这就是 <a href="ppo-variants-research.html">PPO 局限与变体</a>那页里「未知参数需要 history」以及 RMA / 域随机化 + adaptation 一类方法的根源：<b>不是策略不够强，是 state 本来就不完整</b>。
+</div>
+
+<h2 id="t4"><span class="n">③</span>Bellman 最优性原则：最优的尾巴还是最优的</h2>
+
+<blockquote style="border-left:3px solid var(--line2);margin:1.2em 0;padding:2px 16px;color:var(--sub)">
+一条最优策略的剩余部分，从任何中间状态开始，也<b>必须仍然是最优的</b>。
+</blockquote>
+
+<figure>
+<svg viewBox="0 0 660 168" role="img" aria-label="最优子结构示意">
+  <g font-size="13" font-family="system-ui" text-anchor="middle" fill="currentColor">
+    <g fill="none" stroke="currentColor" stroke-width="2.6">
+      <path d="M56 52 L200 52 L344 52 L488 52 L604 52"/>
+    </g>
+    <g fill="none" stroke="currentColor" stroke-width="1.4" opacity=".3" stroke-dasharray="5 4">
+      <path d="M200 52 C 270 108, 300 118, 344 118 C 420 118, 450 80, 488 52"/>
+    </g>
+    <g>
+      <circle cx="56"  cy="52" r="7" fill="currentColor"/>
+      <circle cx="200" cy="52" r="7" fill="currentColor"/>
+      <circle cx="344" cy="52" r="7" fill="currentColor"/>
+      <circle cx="488" cy="52" r="7" fill="currentColor"/>
+      <circle cx="604" cy="52" r="7" fill="currentColor"/>
+    </g>
+    <text x="56"  y="34">s₀</text>
+    <text x="200" y="34">s₁</text>
+    <text x="344" y="34">s₂</text>
+    <text x="488" y="34">s₃</text>
+    <text x="604" y="34">终点</text>
+    <text x="330" y="150" opacity=".55">若这条绕路更好 → 整条也会更好 → 原路径就不是最优（矛盾）</text>
+  </g>
+  <path d="M200 68 L200 84 L604 84 L604 68" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".8"/>
+  <text x="402" y="100" font-size="13" text-anchor="middle" fill="currentColor">这一段（尾巴）本身必须也是从 s₁ 出发的最优路径</text>
+</svg>
+<figcaption>证明是一行反证：如果从 $s_1$ 到终点存在更好的走法，把它接到 $s_0\to s_1$ 后面，就得到一条比「原最优路径」更好的路径——与「原路径最优」矛盾。所以最优解的任何后缀都必须最优，这叫<b>最优子结构</b>。</figcaption>
+</figure>
+
+<div class="key good">
+<b>为什么这条原则这么重要：它把「在所有轨迹上做优化」变成「一步一步递推」。</b>没有它，求最优策略就得枚举指数多条轨迹；有了它，可以写成递归——这就是 Bellman 方程：
+$$V^\pi(s)=\mathbb E_{a\sim\pi,\,s'\sim P}\big[r(s,a)+\gamma V^\pi(s')\big]$$
+$$V^*(s)=\max_a\;\mathbb E_{s'}\big[r(s,a)+\gamma V^*(s')\big],\qquad
+Q^*(s,a)=\mathbb E_{s'}\Big[r(s,a)+\gamma\max_{a'}Q^*(s',a')\Big]$$
+「当前一步的即时 reward + 剩下那段的最优值」——右边那个 $V^*(s')$ 之所以能直接写成「最优值」，靠的正是最优子结构。<b>动态规划、value iteration、Q-learning、TD、Actor-Critic 的 critic，全部建立在这一条上。</b>
+</div>
+
+<div class="used">
+<b>用在哪：</b><a href="ppo-learning.html">PPO 学习路线</a> Stage 2 起的全部内容——Value / Q / Policy Evaluation / Policy Improvement / TD error / GAE，都是这条原则的展开。它同时也依赖 <a href="#t2">马尔科夫性质</a>：递归之所以只需要 $s'$ 而不需要整条历史，正因为 $s'$ 已经是充分的。
+</div>
+
+<h2 id="t5"><span class="n">④</span>高斯的 $\propto\exp$ 形式：把配方法当成读数器</h2>
+
+<div class="math">
+$$p(x)=\frac{1}{\sqrt{2\pi\sigma^2}}\exp\!\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)
+\qquad\Longrightarrow\qquad
+\mathcal N(x;\mu,\sigma^2)\;\propto\;\exp\!\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)$$
+<p class="why">归一化常数 $\frac{1}{\sqrt{2\pi\sigma^2}}$ 不含 $x$，所以在「比较形状 / 求某个 $x$ 的条件分布」时可以整个扔掉。但真正好用的是<b>反过来读</b>：</p>
+$$\exp\!\Big(-\tfrac12\big(Ax^2-2Bx\big)+\text{与 }x\text{ 无关的项}\Big)
+\;\Longrightarrow\;
+x\sim\mathcal N\!\left(\frac BA,\;\frac1A\right)$$
+<p class="why">也就是说：<b>任何能整理成「$x$ 的二次型的负指数」的表达式，必然是一个高斯</b>，而且把它按 $x^2$ 和 $x$ 的系数配平之后，均值和方差可以<b>直接读出来</b>，完全不需要做积分。</p>
+</div>
+
+<p>验证一下这个读数规则：把 $\mathcal N(\mu,\sigma^2)$ 的指数展开，</p>
+<div class="math">$$-\frac{(x-\mu)^2}{2\sigma^2}=-\frac12\left(\frac{1}{\sigma^2}x^2-2\cdot\frac{\mu}{\sigma^2}x\right)+\text{const}
+\;\Longrightarrow\;A=\frac1{\sigma^2},\;B=\frac{\mu}{\sigma^2}
+\;\Longrightarrow\;\frac1A=\sigma^2,\;\frac BA=\mu\;\checkmark$$</div>
+
+<div class="used">
+<b>用在哪：</b><a href="diffusion-policy.html#m3">Diffusion Policy §9</a> 的核心一步——把三个高斯（正向单步、两个闭式解）的指数加加减减，整理成 $x_{k-1}$ 的二次型，然后直接读出反向后验 $q(x_{k-1}\mid x_k,x_0)=\mathcal N(\tilde\mu_k,\tilde\beta_kI)$。这也是「贝叶斯变换到高斯分布」这句话真正落地的地方：<a href="#t1">工具 ①</a>负责翻方向，工具 ④ 负责把翻出来的东西认出来。
+</div>
+
+<div class="key">
+<b>配套的一条：独立高斯的线性组合仍是高斯。</b>$X\sim\mathcal N(\mu_1,\sigma_1^2)$、$Y\sim\mathcal N(\mu_2,\sigma_2^2)$ 独立，则
+$$aX+bY\sim\mathcal N\!\big(a\mu_1+b\mu_2,\;a^2\sigma_1^2+b^2\sigma_2^2\big)$$
+用矩母函数三行就能证（<a href="diffusion-policy.html#m1">DP §7 工具 ④</a> 有完整推导）。DDPM 的正向闭式解 $x_k=\sqrt{\bar\alpha_k}x_0+\sqrt{1-\bar\alpha_k}\epsilon$ 就是靠反复用这一条把 $T$ 步噪声合并成一步的。
+</div>
+
+<footer>Machine-Learning-Handbook · 整理自个人 Obsidian《基本定理》 · 上级页：<a href="foundations.html">基础概念清单</a> · <a href="index.html">Machine Learning Handbook</a></footer>
+
+</div>
+</body>
+</html>

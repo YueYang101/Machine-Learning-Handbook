@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PPO 学习路线 · Machine Learning Handbook</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121a2f;
+      --panel2:#17223d;
+      --text:#edf2ff;
+      --muted:#aebbd5;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#86efac;
+      --warn:#fde68a;
+      --line:#283656;
+      --code:#0a0f1d;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;
+      background:linear-gradient(180deg,#09101f 0%,#0b1020 100%);
+      color:var(--text);
+      line-height:1.75;
+    }
+    .wrap{max-width:1120px;margin:auto;padding:42px 22px 80px}
+    h1,h2,h3{line-height:1.25;margin-top:0}
+    h1{font-size:40px;margin-bottom:10px}
+    h2{font-size:28px;margin-top:52px;border-bottom:1px solid var(--line);padding-bottom:12px}
+    h3{font-size:21px;margin-top:30px}
+    p{margin:10px 0}
+    .lead{color:var(--muted);font-size:18px;max-width:860px}
+    .badge{
+      display:inline-block;
+      background:#193253;
+      color:var(--accent);
+      border:1px solid #315177;
+      padding:4px 10px;
+      border-radius:999px;
+      font-size:13px;
+      margin-bottom:16px;
+    }
+    .route{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:14px;
+      margin-top:24px;
+    }
+    .step{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:18px;
+      min-height:126px;
+      position:relative;
+    }
+    .step.active{
+      border-color:#3b82f6;
+      box-shadow:0 0 0 1px rgba(59,130,246,.25) inset;
+      background:linear-gradient(180deg,#152846,#111b31);
+    }
+    .num{
+      font-size:12px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .step b{display:block;font-size:18px;margin:4px 0 4px}
+    .step span{color:var(--muted);font-size:14px}
+    .arrowline{
+      text-align:center;
+      color:#6f87ad;
+      font-size:22px;
+      letter-spacing:5px;
+      margin:12px 0 4px;
+    }
+    .card{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:22px;
+      margin:16px 0;
+    }
+    .card.em{
+      background:linear-gradient(180deg,#13253d,#11192b);
+      border-color:#315177;
+    }
+    .formula{
+      background:var(--code);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:16px 18px;
+      margin:14px 0;
+      font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+      overflow-x:auto;
+      color:#dbeafe;
+    }
+    .k{
+      color:var(--accent);
+      font-weight:700;
+    }
+    .purple{color:var(--accent2);font-weight:700}
+    .good{color:var(--good);font-weight:700}
+    .warn{color:var(--warn);font-weight:700}
+    ul{padding-left:22px}
+    li{margin:6px 0}
+    .two{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin:16px 0;
+      background:var(--panel);
+      border:1px solid var(--line);
+    }
+    th,td{
+      padding:12px 14px;
+      text-align:left;
+      border-bottom:1px solid var(--line);
+      vertical-align:top;
+    }
+    th{background:var(--panel2);color:#dbeafe}
+    code{
+      background:#0d1628;
+      padding:2px 6px;
+      border-radius:6px;
+      color:#d8e6ff;
+    }
+    .checkpoint{
+      border-left:4px solid var(--good);
+      background:#10251c;
+      padding:16px 18px;
+      border-radius:10px;
+      margin:16px 0;
+    }
+    .note{
+      border-left:4px solid var(--accent);
+      background:#102036;
+      padding:16px 18px;
+      border-radius:10px;
+      margin:16px 0;
+    }
+    .footer{
+      color:var(--muted);
+      margin-top:54px;
+      font-size:14px;
+      text-align:center;
+    }
+    @media (max-width:800px){
+      h1{font-size:32px}
+      .route{grid-template-columns:1fr 1fr}
+      .two{grid-template-columns:1fr}
+    }
+    .bk{display:inline-block;color:var(--muted);font-size:14px;text-decoration:none;margin-bottom:14px}
+    .bk:hover{color:var(--accent)}
+    .xref{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--accent2);
+      border-radius:12px;padding:14px 18px;margin:26px 0}
+    .xref a{color:var(--accent);text-decoration:none;font-weight:600}
+    .xref a:hover{text-decoration:underline}
+    @media (max-width:520px){
+      .route{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="bk" href="index.html">← Machine Learning Handbook</a>
+  <div class="badge">PPO Learning Handbook · Stage 1</div>
+  <h1>从 RL 基础一路推到 PPO</h1>
+  <p class="lead">
+    目标不是“会调用 PPO”，而是理解：<b>每一代方法为什么出现、它解决了上一代什么问题，
+    最后为什么会演化成 PPO 这种迭代更新形式。</b>
+  </p>
+
+  <h2>总学习路线</h2>
+
+  <div class="route">
+    <div class="step active">
+      <div class="num">Stage 1</div>
+      <b>MDP 与 RL 问题定义</b>
+      <span>State / Action / Reward / Transition / Policy / Return</span>
+    </div>
+    <div class="step">
+      <div class="num">Stage 2</div>
+      <b>Bellman 与 Policy Iteration</b>
+      <span>Value、Q、Policy Evaluation、Policy Improvement</span>
+    </div>
+    <div class="step">
+      <div class="num">Stage 3</div>
+      <b>MC / TD / Q-learning 基础</b>
+      <span>Return、Bootstrap、TD Error</span>
+    </div>
+    <div class="step">
+      <div class="num">Stage 4</div>
+      <b>Policy Gradient</b>
+      <span>J(θ)、log trick、Policy Gradient Theorem</span>
+    </div>
+
+    <div class="step">
+      <div class="num">Stage 5</div>
+      <b>REINFORCE → Actor-Critic</b>
+      <span>Baseline、Advantage、Critic</span>
+    </div>
+    <div class="step">
+      <div class="num">Stage 6</div>
+      <b>GAE</b>
+      <span>δₜ、λ、bias–variance trade-off</span>
+    </div>
+    <div class="step">
+      <div class="num">Stage 7</div>
+      <b>TRPO</b>
+      <span>Importance Sampling、KL、Trust Region</span>
+    </div>
+    <div class="step">
+      <div class="num">Stage 8</div>
+      <b>PPO</b>
+      <span>Ratio、Clip、Minibatch、Multiple Epochs</span>
+    </div>
+  </div>
+
+  <div class="arrowline">MDP → Bellman → PG → AC → GAE → TRPO → PPO</div>
+
+  <div class="note">
+    <b>这一阶段先不关心神经网络。</b>
+    Stage 1 的目标是先把“RL 到底在优化什么、环境里每个变量分别是什么”建立清楚。
+    如果这里模糊，后面的 Value、Advantage、PPO ratio 都会变成只记公式。
+  </div>
+
+  <div class="xref">
+    <b>配套 research 页：</b>这条学习路线讲的是「PPO 为什么长成这样」；
+    <a href="ppo-variants-research.html">PPO 的局限、变体与灵巧抓取证据地图 →</a>
+    讲的是「PPO 在真实任务里会在哪些地方失效、学界改了哪一层」。
+    建议先把 Stage 1–8 走完再看，否则那页的分类标签会没有抓手。
+  </div>
+
+  <h2>Stage 1 — MDP 与 RL 的基本问题</h2>
+
+  <h3>1. RL 到底和普通监督学习有什么不同？</h3>
+
+  <div class="two">
+    <div class="card">
+      <span class="k">监督学习</span>
+      <p>你通常直接拿到：</p>
+      <div class="formula">输入 x → 正确答案 y</div>
+      <p>模型输出 <code>ŷ</code>，直接和 <code>y</code> 算 loss。</p>
+    </div>
+    <div class="card">
+      <span class="purple">强化学习</span>
+      <p>你通常只有：</p>
+      <div class="formula">状态 sₜ → 动作 aₜ → 环境变化 → 奖励 rₜ</div>
+      <p>没有人在每一步直接告诉你：“这个动作的正确答案是什么”。</p>
+    </div>
+  </div>
+
+  <p>
+    所以 RL 的核心问题不是分类或回归，而是：
+  </p>
+
+  <div class="card em">
+    <b>在一个会持续变化的环境中，应该选择什么动作，才能让未来累计获得的 reward 最大？</b>
+  </div>
+
+  <h3>2. 为什么需要 MDP？</h3>
+
+  <p>
+    MDP，全名 <b>Markov Decision Process</b>，可以看成是对 RL 环境的一套数学描述。
+    最常见的写法是：
+  </p>
+
+  <div class="formula">MDP = (S, A, P, R, γ)</div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>符号</th>
+        <th>名称</th>
+        <th>它回答什么问题？</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>S</b></td>
+        <td>State space</td>
+        <td>环境现在是什么状态？</td>
+      </tr>
+      <tr>
+        <td><b>A</b></td>
+        <td>Action space</td>
+        <td>Agent 可以做什么？</td>
+      </tr>
+      <tr>
+        <td><b>P</b></td>
+        <td>Transition</td>
+        <td>做完动作以后，环境会怎么变化？</td>
+      </tr>
+      <tr>
+        <td><b>R</b></td>
+        <td>Reward</td>
+        <td>这个结果好不好？</td>
+      </tr>
+      <tr>
+        <td><b>γ</b></td>
+        <td>Discount factor</td>
+        <td>未来的 reward 要看多重？</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>3. State：sₜ 到底是什么？</h3>
+
+  <p>
+    <code>sₜ</code> 表示时间 <code>t</code> 时，Agent 用来决定动作的信息。
+  </p>
+
+  <p>例如一个机械手抓取任务，state 可能包含：</p>
+
+  <div class="formula">
+sₜ = [
+  hand joint positions,
+  hand joint velocities,
+  object position,
+  object orientation,
+  target position
+]
+  </div>
+
+  <p>
+    在纯 state-based 仿真里，它不一定需要图像。只要这些状态变量已经足够描述任务，就可以直接作为 policy 输入。
+  </p>
+
+  <div class="checkpoint">
+    <b>关键理解：</b>
+    State 不是“所有历史数据”，而是我们希望它已经包含了做下一步决策需要的信息。
+  </div>
+
+  <h3>4. Markov Property：为什么只看当前 state？</h3>
+
+  <p>Markov property 的核心写法是：</p>
+
+  <div class="formula">
+P(sₜ₊₁ | s₀, a₀, s₁, a₁, ..., sₜ, aₜ)
+=
+P(sₜ₊₁ | sₜ, aₜ)
+  </div>
+
+  <p>
+    它并不是说“历史不存在”，而是说：
+  </p>
+
+  <div class="card">
+    <b>一旦当前状态 sₜ 已知，更早的历史信息就不应该再额外影响下一步状态的概率。</b>
+  </div>
+
+  <p>
+    举个机械手例子：如果 <code>sₜ</code> 已经包含当前每个关节的位置、速度和物体姿态，
+    那么预测下一时刻时，理论上不需要再单独知道“1 秒前关节在哪里”。
+  </p>
+
+  <h3>5. Action：aₜ 是什么？</h3>
+
+  <p>
+    Policy 根据 state 选择 action：
+  </p>
+
+  <div class="formula">sₜ → policy → aₜ</div>
+
+  <p>对于机器人，action 可能是：</p>
+
+  <ul>
+    <li>joint torque</li>
+    <li>joint velocity command</li>
+    <li>joint position target</li>
+    <li>end-effector delta pose</li>
+  </ul>
+
+  <p>例如：</p>
+
+  <div class="formula">aₜ = [τ₁, τ₂, τ₃, ..., τ₂₀]</div>
+
+  <p>表示 20 个关节的 torque command。</p>
+
+  <h3>6. Transition：P(sₜ₊₁ | sₜ, aₜ)</h3>
+
+  <p>
+    这一项描述：
+  </p>
+
+  <div class="formula">
+当前 sₜ
++ 执行动作 aₜ
+→ 下一状态 sₜ₊₁
+  </div>
+
+  <p>
+    在 MuJoCo / Isaac Sim 中，这个 transition 很大一部分就是 physics engine 在帮你计算。
+  </p>
+
+  <p>
+    理论写法通常是：
+  </p>
+
+  <div class="formula">P(sₜ₊₁ | sₜ, aₜ)</div>
+
+  <p>
+    之所以写成概率，是因为真实环境中可能存在噪声和不确定性。
+  </p>
+
+  <h3>7. Reward：rₜ 到底是什么？</h3>
+
+  <p>
+    Reward 是环境给 Agent 的一个标量反馈：
+  </p>
+
+  <div class="formula">rₜ = R(sₜ, aₜ, sₜ₊₁)</div>
+
+  <p>例如抓取任务：</p>
+
+  <div class="formula">
+rₜ =
+- distance(hand, object)
++ 10 × grasp_success
++ 50 × lift_success
+  </div>
+
+  <p>
+    注意：reward 不是“正确 action”。
+  </p>
+
+  <div class="card em">
+    Reward 只是在告诉 Agent：<b>这个结果有多好。</b><br/>
+    它没有直接告诉 Agent：“下一步应该把第 3 个关节旋转 0.2 rad。”
+  </div>
+
+  <h3>8. Policy：π(a | s) 是什么？</h3>
+
+  <p>
+    Policy 是 RL 中真正负责“做决定”的东西。
+  </p>
+
+  <div class="formula">π(a | s)</div>
+
+  <p>意思是：</p>
+
+  <div class="formula">在 state = s 的条件下，选择 action = a 的概率</div>
+
+  <p>
+    对连续控制，常见做法不是直接输出唯一动作，而是输出一个概率分布，例如：
+  </p>
+
+  <div class="formula">πθ(a | s) = Normal( μθ(s), σθ(s) )</div>
+
+  <p>
+    然后：
+  </p>
+
+  <div class="formula">aₜ ~ πθ(a | sₜ)</div>
+
+  <p>
+    这就是后面 PPO 里面为什么会不断出现：
+  </p>
+
+  <div class="formula">
+πθ(aₜ | sₜ)
+log πθ(aₜ | sₜ)
+πnew(aₜ | sₜ) / πold(aₜ | sₜ)
+  </div>
+
+  <div class="checkpoint">
+    <b>非常重要：</b>
+    PPO 优化的核心不是“把网络输出的动作直接和某个标准动作做 MSE”，而是改变这个 policy distribution，
+    让高 Advantage 的动作以后更容易被采到。
+  </div>
+
+  <h3>9. Trajectory：一次完整交互是什么？</h3>
+
+  <p>
+    从一个初始状态开始，不断：
+  </p>
+
+  <div class="formula">
+s₀
+→ a₀
+→ r₀
+→ s₁
+→ a₁
+→ r₁
+→ s₂
+→ ...
+  </div>
+
+  <p>
+    这一整条序列叫 trajectory：
+  </p>
+
+  <div class="formula">
+τ = (s₀, a₀, r₀, s₁, a₁, r₁, ..., s_T)
+  </div>
+
+  <p>
+    后面你看到的 <code>rollout</code>，本质上就是拿当前 policy 去环境里采 trajectory。
+  </p>
+
+  <h3>10. Return：为什么不能只看当前 reward？</h3>
+
+  <p>
+    假设机械手为了抓到物体，前 30 步都没有成功奖励，直到最后一步才：
+  </p>
+
+  <div class="formula">r₃₀ = +100</div>
+
+  <p>
+    那么前面的动作是不是完全没有价值？
+  </p>
+
+  <p>当然不是。</p>
+
+  <p>
+    所以 RL 不只看 <code>rₜ</code>，而看从这一刻开始的累计未来奖励：
+  </p>
+
+  <div class="formula">
+Gₜ =
+rₜ
++ γ rₜ₊₁
++ γ² rₜ₊₂
++ γ³ rₜ₊₃
++ ...
+  </div>
+
+  <p>
+    这个 <code>Gₜ</code> 就是 <b>Return</b>。
+  </p>
+
+  <h3>11. γ：Discount Factor 为什么存在？</h3>
+
+  <div class="formula">0 ≤ γ ≤ 1</div>
+
+  <p>例如：</p>
+
+  <div class="formula">γ = 0.99</div>
+
+  <p>意味着未来 reward 会逐渐折扣。</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Reward 时间</th>
+        <th>对当前 Gₜ 的权重</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>现在</td><td>1</td></tr>
+      <tr><td>下一步</td><td>γ</td></tr>
+      <tr><td>2 步以后</td><td>γ²</td></tr>
+      <tr><td>100 步以后</td><td>γ¹⁰⁰</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    γ 有两个作用：
+  </p>
+
+  <ul>
+    <li>让更近的 reward 通常更重要；</li>
+    <li>在无限时间问题中，让 return 更容易保持有限。</li>
+  </ul>
+
+  <h3>12. RL 真正优化的对象</h3>
+
+  <p>
+    现在我们终于可以写出强化学习最核心的目标：
+  </p>
+
+  <div class="formula">
+找到一个 policy π，
+让它产生的 trajectory 的期望 return 最大。
+  </div>
+
+  <p>数学上可以先粗略写成：</p>
+
+  <div class="formula">
+maximize&nbsp;&nbsp; J(π) = E[ G₀ ]
+  </div>
+
+  <p>
+    后面当 policy 由神经网络参数 <code>θ</code> 控制时，就会变成：
+  </p>
+
+  <div class="formula">
+maximize&nbsp;&nbsp; J(θ)
+  </div>
+
+  <p>
+    而这正是后面 <b>Policy Gradient</b> 要开始解决的问题：
+  </p>
+
+  <div class="card em">
+    <b>既然我要让 J(θ) 变大，那我应该怎样对 θ 求梯度？</b>
+  </div>
+
+  <h2>Stage 1 最后你应该真正掌握什么</h2>
+
+  <div class="checkpoint">
+    <b>Checkpoint 1</b><br/>
+    看到 <code>sₜ, aₜ, rₜ, sₜ₊₁</code> 时，能够立即知道四者分别表示什么。
+  </div>
+
+  <div class="checkpoint">
+    <b>Checkpoint 2</b><br/>
+    能解释为什么 RL 没有每一步的标准答案，而只有 reward。
+  </div>
+
+  <div class="checkpoint">
+    <b>Checkpoint 3</b><br/>
+    能解释 reward 和 return 的区别：
+    <code>rₜ</code> 是一步反馈，<code>Gₜ</code> 是未来累计回报。
+  </div>
+
+  <div class="checkpoint">
+    <b>Checkpoint 4</b><br/>
+    能解释 <code>π(a|s)</code> 是动作分布，而不是固定动作。
+  </div>
+
+  <div class="checkpoint">
+    <b>Checkpoint 5</b><br/>
+    知道 PPO 后面训练的最终目的仍然只有一个：
+    <b>改变 policy，使期望 return 增大。</b>
+  </div>
+
+  <h2>下一阶段</h2>
+
+  <p>
+    下一步应该进入：
+  </p>
+
+  <div class="formula">
+Stage 2:
+Return
+→ Value Vπ(s)
+→ Qπ(s,a)
+→ Bellman Equation
+→ Policy Evaluation
+→ Policy Improvement
+→ Policy Iteration
+  </div>
+
+  <p>
+    这一阶段会第一次回答一个关键问题：
+  </p>
+
+  <div class="card em">
+    <b>既然最终 reward 可能很久以后才出现，我们怎么判断“当前这个 state / action 到底有多好”？</b>
+  </div>
+
+  <div class="footer">
+    PPO Learning Handbook · Stage 1 · MDP Foundations ·
+    <a href="index.html" style="color:var(--accent);text-decoration:none">← Machine Learning Handbook</a> ·
+    <a href="ppo-variants-research.html" style="color:var(--accent);text-decoration:none">PPO 局限与变体 (research) →</a>
+  </div>
+
+</div>
+</body>
+</html>

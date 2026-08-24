@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>基础概念清单 · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap canvas { width:100%; display:block; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; }
+.ctl button { font:600 .85rem/1 inherit; color:var(--ink); background:var(--bg);
+  border:1px solid var(--line2); border-radius:7px; padding:7px 11px; cursor:pointer; }
+.ctl button:hover { border-color:var(--blue); color:var(--blue); }
+.ctl button.pri { background:var(--blue); border-color:var(--blue); color:#fff; }
+.ctl label { display:inline-flex; gap:5px; align-items:center; font-size:.85rem; color:var(--sub);
+  cursor:pointer; user-select:none; }
+.ctl input[type=range] { flex:1 1 140px; min-width:120px; accent-color:var(--blue); }
+.ctl .ro { font:.8rem/1.4 ui-monospace,Menlo,monospace; color:var(--sub); }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+.chain { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:1.4em 0; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+a.item { display:block; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:14px 18px; margin:12px 0; text-decoration:none; color:var(--ink); }
+a.item:hover { border-color:var(--blue); text-decoration:none; }
+a.item .t { font-weight:700; color:var(--blue); }
+a.item .d { color:var(--sub); font-size:.92rem; margin-top:3px; line-height:1.7; }
+a.item .u { color:var(--muted); font-size:.85rem; margin-top:5px; }
+.todo { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:14px 18px; margin:12px 0; color:var(--muted); }
+.todo .t { font-weight:700; color:var(--sub); }
+.todo .d { font-size:.92rem; margin-top:3px; line-height:1.7; }
+.tagx { display:inline-block; font-size:.75rem; padding:1px 8px; border-radius:20px;
+  border:1px solid var(--line2); color:var(--muted); margin-left:8px; vertical-align:2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="bk" href="index.html">← Machine Learning Handbook</a>
+<div class="kicker">MACHINE LEARNING HANDBOOK · 理论 / 基础概念</div>
+<h1>基础概念清单<br><span style="font-size:.72em;color:var(--sub)">被别的笔记反复调用的那些定义与定理，一条一页，不挤在一起</span></h1>
+
+<p class="lede">这里放的不是某个具体方法，而是<b>会在多个方法里被重复用到的底层工具</b>：信息论的度量、概率论的几条变换、RL 的几条结构性假设。每一条独立成页，其它笔记需要时直接跳转，避免同一段推导在每篇里各写一遍。<b>下方每一项都标了「谁在用它」</b>，可以反过来当索引读。</p>
+
+<h2>已完成</h2>
+
+<a class="item" href="kl-divergence.html">
+  <div class="t">KL 散度：从「惊讶」到 loss</div>
+  <div class="d">信息量 −log P 的两条公理 · 前缀码二叉树（「比特」就是位数）· 熵 / 交叉熵 / KL 三层关系 · Gibbs 非负性证明 · forward vs reverse KL 的两种失败模式 · 最大似然 ≡ 最小 KL ≡ 交叉熵 · 两个高斯的闭式解 · 5 张交互图</div>
+  <div class="u">被用在 → Diffusion Policy §10–§11（loss 的来源与化简）· 行为克隆为什么会在多模态上失败 · 分类任务的 cross-entropy loss · TRPO / PPO 的 trust region</div>
+</a>
+
+<a class="item" href="basic-theorems.html">
+  <div class="t">基本定理：贝叶斯 · 马尔科夫 · Bellman · 高斯</div>
+  <div class="d">① 贝叶斯变换（把难写的方向换成好写的方向）· ② 马尔科夫性质（它是<b>假设</b>不是真理）· ②′ POMDP 与 belief state · ③ Bellman 最优性原则（最优子结构 → 递归 → 动态规划）· ④ 高斯的 ∝exp 形式与配方法读参数</div>
+  <div class="u">被用在 → Diffusion Policy §7 工具箱 / §9 反向后验 / §10.8 贝叶斯翻转 · PPO 学习路线 Stage 1–2 · 灵巧手为什么需要 history（POMDP）</div>
+</a>
+
+<h2>计划中</h2>
+
+<p class="lede" style="font-size:.95rem">下面这些概念目前散落在各篇笔记内部，等它们被第三次用到时再单独抽出来成页——先在这里挂号，避免重复造轮子。</p>
+
+<div class="todo">
+  <div class="t">矩母函数与高斯的线性组合<span class="tagx">暂存于 DP §7 工具 ④</span></div>
+  <div class="d">$M_X(t)=E[e^{tX}]$ · 为什么它方便处理「随机变量相加」· $aX+bY\sim\mathcal N(a\mu_1+b\mu_2,a^2\sigma_1^2+b^2\sigma_2^2)$ 的三行证明。DDPM 正向闭式解全靠它。</div>
+</div>
+
+<div class="todo">
+  <div class="t">Jensen 不等式与变分下界<span class="tagx">暂存于 DP §10.4–10.5</span></div>
+  <div class="d">凸/凹函数与期望的交换方向 · ELBO 的一般构造 · 「下界的缺口恰好是一个 KL」这个结论在 VAE / 扩散 / 变分推断里的统一形式。</div>
+</div>
+
+<div class="todo">
+  <div class="t">重要性采样<span class="tagx">DP §10.3 与 PPO ratio 共用</span></div>
+  <div class="d">$\mathbb E_p[f]=\mathbb E_q[\tfrac pq f]$ · 为什么方差会爆炸、什么时候能用 · 它同时是扩散模型「塞一个 $q$ 进积分」和 PPO「用旧策略的数据更新新策略」的共同底座——这是两条主线难得的交汇点。</div>
+</div>
+
+<div class="todo">
+  <div class="t">熵、互信息与探索<span class="tagx">未写</span></div>
+  <div class="d">熵正则为什么能防止策略过早坍缩 · 最大熵 RL（SAC）的目标函数 · 与 KL 页 §3 的衔接。</div>
+</div>
+
+<footer>Machine-Learning-Handbook · 基础概念索引 · 整理自个人 Obsidian《基本定理》《Diffusion Policy 数学推导》 · <a href="index.html">← 返回主页</a></footer>
+
+</div>
+</body>
+</html>
