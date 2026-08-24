@@ -238,7 +238,7 @@ footer { color:var(--muted); font-size:.84rem; border-top:1px solid var(--line);
 
 <h2 id="map"><span class="n">§ 1</span>先画对地图：PPO 是三支流的汇合，不是单线王朝</h2>
 
-<p>教学材料常画出 <code>Q-learning → REINFORCE → Actor-Critic → TRPO → PPO</code>，这会制造两个误解：一是价值方法仿佛被策略方法淘汰；二是 A2C/A3C、GAE 与 TRPO 仿佛只是 PPO 前面的旧版本。更准确的图景是三条支流各自解决不同问题，最后在 2017 年的 PPO 实现里汇合：</p>
+<p>教学材料常画出 <code><a href="#qlearning">Q-learning</a> → REINFORCE → Actor-Critic → TRPO → PPO</code>，这会制造两个误解：一是价值方法仿佛被策略方法淘汰；二是 A2C/A3C、GAE 与 TRPO 仿佛只是 PPO 前面的旧版本。更准确的图景是三条支流各自解决不同问题，最后在 2017 年的 PPO 实现里汇合：</p>
 
 <div class="lineage">
   <div class="lineage-grid">
@@ -330,13 +330,50 @@ $$A_\gamma^\pi(s,a)=Q_\gamma^\pi(s,a)-V_\gamma^\pi(s).$$
 <tr><td>GAE</td><td>TD residual 的指数加权和</td><td>直接为 actor 产生低方差优势</td><td>$\gamma,\lambda$ 与 critic 误差共同决定偏差/方差</td></tr>
 </tbody></table></div>
 
-<h3>3.1 Bellman → TD → Q-learning：策略梯度之外的另一条活支线</h3>
-<div class="math">
-$$V^\pi(s)=\mathbb E_\pi[r_t+\gamma V^\pi(s_{t+1})\mid s_t=s],$$
-$$Q(s_t,a_t)\leftarrow Q(s_t,a_t)+\alpha\Big[r_t+\gamma\max_{a'}Q(s_{t+1},a')-Q(s_t,a_t)\Big].$$
-<div class="why">Bellman 把长期回报拆成“一步奖励 + 剩余价值”；TD 用样本和 bootstrap 逼近这个递归；Q-learning 再用 greedy target 做 off-policy control。SARSA 则用当前行为策略实际选择的下一动作，是 on-policy control。</div>
+<h3 id="qlearning">3.1 Bellman → TD → Q-learning：策略梯度之外的另一条活支线</h3>
+
+<div class="key">
+<b>先用一句话说清 Q-learning 在干什么。</b>维护一张表 $Q(s,a)$——「在状态 $s$ 做动作 $a$，往后总共能拿到多少回报」。每走一步就用<b>刚看到的这一步真实奖励</b>去修正表里对应的那一格；表修准了，策略就是「每个状态挑 $Q$ 最大的动作」。它<b>完全不需要显式的策略网络</b>，这就是它和后面策略梯度支流的根本分工。
 </div>
-<p>DQN 用神经网络表示 $Q$，再加入 replay buffer 与 target network 缓解相关数据和移动 target。它在离散动作上非常重要，但连续机械手动作里 $\arg\max_aQ(s,a)$ 难算，随机策略也不自然；这正是“直接参数化 policy”支流的动机，而不是说 policy gradient 淘汰了 Q-learning。</p>
+
+<p>起点是 <a href="basic-theorems.html#t4">Bellman 最优性原则</a>：最优解的任何后缀仍然最优，所以长期回报能拆成「一步奖励 + 剩余价值」的递归。</p>
+
+<div class="math">
+$$V^\pi(s)=\mathbb E_\pi\big[r_t+\gamma V^\pi(s_{t+1})\mid s_t=s\big]$$
+<div class="why">真实期望算不出来（要知道环境的转移概率），所以 TD 的做法是：<b>用采样到的一条 transition 代替期望，用当前估计代替未知的未来</b>（bootstrap）。把这个思路用在 $Q$ 上，并且把「未来怎么走」固定成贪心，就得到 Q-learning 的更新式：</div>
+$$Q(s_t,a_t)\;\leftarrow\;Q(s_t,a_t)+\alpha\Big[\underbrace{r_t+\gamma\max_{a'}Q(s_{t+1},a')}_{\text{TD target：这一格「应该」是多少}}-\underbrace{Q(s_t,a_t)}_{\text{现在表里是多少}}\Big]$$
+<div class="why">中括号整体叫 <b>TD error</b> $\delta$：目标与现值之差，也就是「这次经历让我惊讶了多少」。$\alpha\in(0,1]$ 是学习率，决定每次朝目标挪多少——$\alpha=1$ 就是直接覆盖，$\alpha$ 小则慢慢平均掉噪声。整条式子读作：<b>新估计 = 旧估计 + 学习率 × 惊讶度</b>。</div>
+</div>
+
+<div class="algo">
+<div class="t">走一步的具体算例</div>
+<p class="small" style="margin:.4em 0">设 $\alpha=0.5$、$\gamma=0.9$。当前表里 $Q(s,a)=2.0$。执行 $a$ 后拿到 $r=1$，落到 $s'$，而 $s'$ 上两个动作的现有估计是 $Q(s',a_1)=3.0$、$Q(s',a_2)=5.0$。</p>
+<div class="math" style="margin:.6em 0">
+$$\max_{a'}Q(s',a')=5.0
+\;\Rightarrow\;\text{TD target}=1+0.9\times5.0=5.5$$
+$$\delta=5.5-2.0=3.5
+\;\Rightarrow\;Q(s,a)\leftarrow2.0+0.5\times3.5=\mathbf{3.75}$$
+</div>
+<p class="small" style="margin:.4em 0">这一格从 2.0 涨到 3.75：这次经历比原来以为的好，所以把它调高，但只走了差距的一半（$\alpha=0.5$）。</p>
+</div>
+
+<p><b>「off-policy」的含义就藏在那个 $\max$ 里。</b>更新时用的是「下一状态<b>最好</b>的动作值」，而不是「实际下一步真正选了哪个动作」。所以哪怕行为策略正在 $\varepsilon$-greedy 地乱探索，学到的仍然是<b>最优</b>策略的 $Q$——采数据的策略和被学习的策略可以不是同一个。把 $\max$ 换成「实际选中的那个动作」，就变成 on-policy 的 SARSA：</p>
+
+<div class="tw"><table>
+<caption class="sr-only">Q-learning 与 SARSA 在同一条 transition 上的更新对比</caption>
+<thead><tr><th></th><th>Q-learning（off-policy）</th><th>SARSA（on-policy）</th></tr></thead>
+<tbody>
+<tr><td>target 用哪个动作</td><td>$\max_{a'}Q(s',a')$，假想的最优动作</td><td>$Q(s',a_{t+1})$，行为策略<b>实际选中</b>的动作</td></tr>
+<tr><td>接上面算例（若探索实际选了 $a_1$）</td><td>target $=1+0.9\times5.0=5.5$ → $Q\leftarrow3.75$</td><td>target $=1+0.9\times3.0=3.7$ → $Q\leftarrow2.85$</td></tr>
+<tr><td>学到的是</td><td>最优策略（不管你怎么探索）</td><td>「含探索在内」的当前策略</td></tr>
+<tr><td>性格</td><td>激进：按最好情况估值</td><td>保守：探索的代价会体现在估值里（悬崖边会绕远）</td></tr>
+</tbody></table></div>
+
+<div class="key warn">
+<b>收敛的前提别忽略。</b>表格型 Q-learning 收敛到最优 $Q^\star$ 需要：每个 $(s,a)$ 都被访问无限多次，且学习率满足 $\sum\alpha=\infty$、$\sum\alpha^2&lt;\infty$。「所有 $(s,a)$ 都要访问到」正是探索必须存在的原因，也是它一上到大状态空间就困难的地方——表根本填不满。
+</div>
+
+<p>DQN 用神经网络表示 $Q$ 来替代那张表，再加入 replay buffer 与 target network 缓解数据相关性和移动 target。它在离散动作上非常重要，但连续机械手动作里 $\arg\max_aQ(s,a)$ 本身就是一个每步都要解的优化问题（难算），输出也天然是确定性的、不适合需要随机性的任务；这正是“直接参数化 policy”支流（<a href="#pg">§6</a>）的动机，而不是说 policy gradient 淘汰了 Q-learning。<b>本页后面走的是策略梯度那一支，Q-learning 到此为止</b>——列在这里是为了说明它是并行的活支线，不是被淘汰的旧版本。</p>
 
 <h2 id="gamma"><span class="n">§ 4</span>交互：$\gamma$ 不是“耐心”两个字，它决定有效时间尺度</h2>
 
