@@ -2,10 +2,11 @@
 
 > 本文件是本仓库**唯一的规则来源**，面向所有 AI coding agent 与人类协作者。
 > 根目录的 `AGENTS.md`（Codex 等）与 `CLAUDE.md`（Claude Code）只是自动加载用的指针，
-> 内容以本文件为准；改规则改这里，不要改指针。
+> `README.md` 与 `index.html` 只维护页面索引；内容以本文件为准。改规则只改这里，不在指针或索引中复制摘要。
 
 个人机器学习笔记站，GitHub Pages 直接发布（push 到 `main` 即上线）。
-**每个页面都是一个自包含的单文件 HTML**，放在仓库根目录，没有构建步骤、没有框架、没有外部 JS 依赖（MathJax CDN 除外）。
+页面是放在仓库根目录的纯静态 HTML，CSS 与页面逻辑内联；实验图片和视频可以放在本地 `assets/<page-slug>/`。
+没有构建步骤、没有框架；MathJax CDN 是唯一默认允许的外部运行时依赖，不引图表库或外链图床。
 
 改动这个仓库前先读完本文件。下面的规则不是建议，是约定——破坏其中任何一条都会让站点在导航、风格或可读性上出现裂缝。
 
@@ -47,7 +48,7 @@
 
 ## 2. 跳转规则（导航契约）
 
-**`index.html` 是唯一入口。任何新页面必须在同一次改动里登记进 index，否则等于没发布。**
+**`index.html` 是公开站点入口。任何新增、重命名、删除或重新分类的页面，都必须在同一次改动里同步 `index.html` 与 `README.md`；两处分类和描述必须一致，否则等于没发布。**
 
 ### 每一页都必须有的两个回链
 
@@ -85,6 +86,12 @@ footer 里再放一次回主页链接。两处都要，因为长页读到底不�
 
 ## 3. 页面结构模板
 
+### 页面家族
+
+- 新建理论/基础页面默认采用下述**手册标准样式**：浅色与暗色 token、840px 阅读栏、编号章节、解释框、公式与交互图。
+- 已有研究 dossier、深色课程页和工程实验日志可以保留自洽主题，但不得因此绕过导航、响应式、无障碍与证据规则。
+- 同一页面只保留一个稳定 URL。升级旧内容时优先原地替换，除非新旧页面有明确不同的阅读任务。
+
 新建**手册标准样式**的页面时，直接把 `diffusion-policy.html` 或 `kl-divergence.html` 从第 1 行复制到 `</style>` 之前（不要写死行号，它会随样式增补而漂移），只改 `<title>`，然后追加本页特有的样式再收尾 `</style></head><body>`。这样全站配色、暗色模式、MathJax 配置自动一致。
 
 ```bash
@@ -110,7 +117,7 @@ sed -n "1,$(($(grep -n '</style>' kl-divergence.html | head -1 | cut -d: -f1) - 
 
 ### 共享 CSS 变量（不要引入新的颜色字面量）
 
-`--bg --panel --ink --sub --muted --line --line2 --blue --orange --green --red --magenta --yellow`
+`--bg --panel --panel2 --ink --sub --muted --line --line2 --blue --blue-fill --focus --orange --green --red --magenta --yellow --violet --cyan`
 每个都在 `:root` 和 `@media (prefers-color-scheme: dark)` 下各定义一次。**任何颜色都必须走变量**，否则暗色模式会破。
 
 ### 通用 class
@@ -128,6 +135,15 @@ sed -n "1,$(($(grep -n '</style>' kl-divergence.html | head -1 | cut -d: -f1) - 
 | `.used` | 「被用在哪」标注（基础概念页） |
 | `.chain` | 推导主线流程图（`.cr` 行 / `.cb` 方框 / `.ar` 箭头注） |
 
+### 响应式与无障碍契约
+
+- 正常文字与背景对比度至少 4.5:1；焦点轮廓与相邻背景至少 3:1。链接不能只靠很接近正文的颜色区分。
+- 使用语义化 `nav`、`main`、heading、`label`、`caption` / `figcaption`；装饰性元素不进入键盘焦点序列。
+- 原生按钮和主要控件的触控高度至少 44px，必须有 `:focus-visible`；range 使用原生键盘行为并保留可读 label。
+- Canvas 必须有可读的 `role` / `aria-label`、正文图注和无 2D context 时的降级说明；可交互数据不能只靠颜色表达。
+- 表格放进可横向滚动容器；多栏 grid 在窄屏降为单栏；Canvas 按 client width 与 DPR 重建 backing bitmap，DPR 上限 2。
+- 动画遵守 `prefers-reduced-motion`，页面隐藏或图离屏时停止调度；恢复时重置时间基准，不能永久空跑 `requestAnimationFrame`。
+
 ---
 
 ## 4. 写作规则
@@ -137,7 +153,7 @@ sed -n "1,$(($(grep -n '</style>' kl-divergence.html | head -1 | cut -d: -f1) - 
 3. **宁可多写一层，也不用错误的简化说法。** 例：不能说「$L_0$ 因为 $x_0$ 是确定值所以没有分布可比」——正确说法是它是 telescoping 的边界项，且硬凑 KL 的对象是点质量、KL 发散。遇到流传很广但不准确的解释，**明确指出它错在哪**。
 4. **每个概念标「用在哪」。** 基础概念页尤其：写完定义后必须说清哪几页在用它、用在第几节。清单页可以反过来当索引读。
 5. **数字必须可核对。** 引用实验数字要能追到曲线/视频/代码常量；引用论文结论要给链接。推导里的算例先自己算一遍再写。
-6. **动画按解析解实时模拟，不用示意贴图。** 这是本站的一条硬标准，图里画的必须是真算出来的。
+6. **数据图和模拟按真实公式计算，不用伪造贴图。** 能解析计算的动画必须实时计算；纯流程示意必须明确标注“示意”，不能伪装成实验结果。
 7. **中文为主，术语保留英文。** `policy`、`advantage`、`trust region`、`telescoping` 这类词不翻译，避免和文献对不上。
 8. **失败要写。** 实验记录里失败版本的解剖比成功结果更有价值，不要只留最终版。
 
@@ -145,7 +161,7 @@ sed -n "1,$(($(grep -n '</style>' kl-divergence.html | head -1 | cut -d: -f1) - 
 
 ## 5. 图表规则
 
-- **交互 / 模拟** → 原生 `<canvas>` + JS，读 CSS 变量取色（`getComputedStyle` 读 `--blue` 等），监听 `resize` 和 `prefers-color-scheme` 重绘。参考 `kl-divergence.html` 末尾的 `mk()` / `redrawAll()` 骨架。
+- **交互 / 模拟** → 原生 `<canvas>` + JS，读 CSS 变量取色（`getComputedStyle` 读 `--blue` 等），监听容器尺寸和 `prefers-color-scheme` 重绘；离屏、后台与 reduced-motion 状态必须停动。参考 `ppo-learning.html` 的 Canvas 生命周期。
 - **静态结构示意** → 内联 `<svg>`，用 `currentColor` + `opacity` 取色，`viewBox` + `width:100%` 自适应。参考 `basic-theorems.html`。
 - 不引任何图表库，不用外部图片托管。
 - 图注（`.cap` / `<figcaption>`）要写**这张图在说什么**，不是重复标题。
@@ -159,7 +175,7 @@ sed -n "1,$(($(grep -n '</style>' kl-divergence.html | head -1 | cut -d: -f1) - 
 - **保留原配色**，不强行改成手册主题——它们自成体系，改一半反而更乱。
 - 但**必须补齐导航契约**：顶部 `.bk` 回链（用该页自己的 CSS 变量写样式）、footer 回链、以及与相关页面的双向链接。
 - 文件名改成 kebab-case 的语义化名字（`ppo_learning_stage1.html` → `ppo-learning.html`），因为文件名会进 URL。
-- 源文件从 `~/Downloads` 移进仓库后删掉原件，避免两份漂移。**移动前先 diff 确认仓库副本包含全部原始内容。**
+- 导入前后先 diff，确认仓库副本包含全部原始内容。移动或删除 `~/Downloads` 等仓库外原件必须得到明确授权；默认只复制并报告来源，不能替用户清理。
 
 ---
 
@@ -176,11 +192,14 @@ sed -n "1,$(($(grep -n '</style>' kl-divergence.html | head -1 | cut -d: -f1) - 
 
 ```
 □ index.html 里登记了新页面，归类正确
+□ README.md 与 index.html 同步，根目录每个内容页各登记一次
 □ 顶部 .bk 回链 + footer 回链都在
 □ 相关研究 / 上下级页面双向链接已建立
 □ 链接与锚点校验通过（脚本见下）
 □ 本地 python3 -m http.server 预览过，深色浅色都看过
-□ 公式渲染正常，表格在窄屏能横向滚动
+□ 375px 与桌面宽度均检查；公式渲染正常，表格在窄屏能横向滚动
+□ 键盘、focus、文字对比度、reduced-motion 与 Canvas 降级路径检查过
+□ 控制台无 error/warning，页面 hidden/离屏时动画不会继续空跑
 □ 数字与结论自己核对过
 ```
 
@@ -200,6 +219,11 @@ for f in sorted(glob.glob('*.html')):
         if a not in ids[os.path.basename(f)]: print('BROKEN ANCHOR', f, '#' + a); bad += 1
     for t, a in set(re.findall(r'href="([a-z0-9\-_]+\.html)#([^"]+)"', s)):
         if a not in ids.get(t, set()): print('BROKEN XANCHOR', f, '->', t + '#' + a); bad += 1
+content_pages = set(ids) - {'index.html'}
+for catalogue in ('index.html', 'README.md'):
+    linked = set(re.findall(r'([a-z0-9\-]+\.html)', open(catalogue).read()))
+    for page in sorted(content_pages - linked):
+        print('MISSING FROM INDEX', catalogue, '->', page); bad += 1
 print('broken:', bad)
 ```
 
