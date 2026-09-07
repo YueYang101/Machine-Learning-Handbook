@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retargeting 的局限与候选解法 · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; overflow-wrap:break-word; }
+code { font:.9em/1.5 ui-monospace,Menlo,monospace; overflow-wrap:anywhere; background:var(--panel);
+  border:1px solid var(--line); border-radius:4px; padding:1px 5px; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.tw table { min-width:600px; }
+.tw table.nw1 td:first-child { white-space:nowrap; }
+.tw table.cand td:last-child { white-space:nowrap; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+figure { margin:1.4em 0; background:var(--panel); border:1px solid var(--line);
+  border-radius:10px; padding:14px; }
+figure svg { width:100%; height:auto; display:block; color:var(--sub); }
+figcaption { color:var(--sub); font-size:.9rem; margin-top:10px; line-height:1.65; }
+.tag { display:inline-block; white-space:nowrap; font-size:.78rem; letter-spacing:.02em; padding:0 7px; border-radius:20px;
+  border:1px solid var(--line2); color:var(--sub); margin-right:6px; vertical-align:1px; }
+.tag.ok { color:var(--green); border-color:var(--green); }
+.tag.bad { color:var(--red); border-color:var(--red); }
+.tag.warn { color:var(--yellow); border-color:var(--yellow); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<a class="bk" href="hand-control.html">← Hand Control 技术路线手册</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
+<div class="kicker">MACHINE LEARNING HANDBOOK · 相关研究 · 2026-09-07</div>
+<h1>Retargeting 的局限与候选解法<br><span style="font-size:.72em;color:var(--sub)">小指为什么伸不直也摆不开 · AnyTeleop / dex-retargeting 能不能治 · 六个待验证方案</span></h1>
+
+<p class="lede">这一页只做两件事：把 L20 retargeting 目前<b>已知但未修</b>的缺陷收敛成一个统一的根因描述，然后把可能的修法排成一张<b>可证伪的候选清单</b>——每一条都写清它针对哪个根因、代价是什么、用什么判据判它成功。AnyTeleop 是清单里的一条，不是这一页的主题。</p>
+
+<p><b>前置阅读</b>：<a href="hand-control.html">Hand Control 技术路线手册</a> 的 <a href="hand-control.html#v1">§2.3 六个 retargeter 实现与 vector/angle 实测对比</a>、<a href="hand-control.html#pinky">§2.4 小拇指侧摆</a>、<a href="hand-control.html#pitfalls">§3.4 小拇指 curl</a>。那一页记录的是<b>现象与代码机制</b>；这一页从那里接着往前走，讲<b>怎么修</b>，两页不重复推导。</p>
+
+<div class="key good">
+<b>三十秒版本。</b>小指的两个毛病——平手时伸不直（curl）、侧摆在头显里看不见（splay）——不是两个 bug，是<b>同一个目标函数写法</b>的两种表现：目标里只有指尖向量、缩放只有一个全局标量、而 L20 的小指按比例比人的长得多且不能反向伸展。<br>
+AnyTeleop（RSS 2023）用的是<b>和我们同一条公式</b>，而且它的缩放因子是单标量——所以<b>它自己也有这个毛病，整包引进解决不了小指</b>。它真正值钱的是两个可以单独抄过来的做法：Shadow Hand 配置里的<b>中间关节向量</b>（结构性地修 curl），以及 DexPilot 的<b>捏合距离门控投影</b>（修的是另一个问题——精密抓取，且有副作用）。
+</div>
+
+<div class="toc"><b>目录</b> · <a href="#s1">§1 一个根因，两个症状</a> · <a href="#s2">§2 候选解法清单</a> · <a href="#s3">§3 AnyTeleop / dex-retargeting 详档</a> · <a href="#s4">§4 验证顺序与出口条件</a> · <a href="#s5">§5 参考</a></div>
+
+<h2 id="s1"><span class="n">§ 1</span>一个根因，两个症状</h2>
+
+<h3>1.1 我们在解的到底是什么</h3>
+
+<p>出货路径 <code>L20VectorRetargeter</code> 每帧解这个问题（<code>level_1_retargeting/vector.py</code> + <code>l20.py</code>）：</p>
+
+<div class="math">
+$$\min_{q}\ \sum_{i=1}^{9} w_i \left\| R_{\text{palm}}\big(p_{b_i}(q)-p_{a_i}(q)\big) \;-\; s\cdot s_i\, v_i^{\text{human}} \right\|^2 \;+\; \lambda\left\|q-q_{\text{prev}}\right\|^2$$
+<div class="why">$q$ 是 16 个主动关节；$p_{a},p_{b}$ 是机器人侧两个 site 的位置，经耦合矩阵 $J_{21}\!\cdot\! C$ 求导；$v_i^{\text{human}}$ 是人手对应两点的向量；$R_{\text{palm}}$ 把两边都放进各自的掌坐标系，使匹配与手的朝向无关；$s$ 是<b>全局</b>尺度，$s_i$ 是<b>逐任务</b>尺度，$\lambda$ 拉向上一帧。Gauss–Newton + LM 阻尼，固定 8 次迭代（<code>tol=0</code>，求解时间不许依赖数据）。</div>
+</div>
+
+<p>九条任务向量是：5 条 <code>palm→指尖</code>（权重 1.0，无名指/小指 0.8）+ 4 条 <code>thumb→指尖</code> 捏合向量（权重 4.0，无名指 2.5、小指 1.5）。</p>
+
+<h3>1.2 三个叠加的根因</h3>
+
+<figure>
+<svg viewBox="0 0 760 240" role="img" aria-label="三个根因汇聚成小指的两个症状：目标只有指尖向量、单一全局缩放、L20 小指比例偏长且不能反向伸展，分别导致平手 curl 与侧摆不可见">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+  <g font-size="13" font-family="system-ui,sans-serif">
+    <rect x="8" y="14" width="228" height="52" rx="8" fill="none" stroke="currentColor" opacity=".55"/>
+    <text x="22" y="36" fill="currentColor"><tspan font-weight="700">根因 A</tspan> 目标只有指尖向量</text>
+    <text x="22" y="55" fill="currentColor" opacity=".8">屈曲怎么分配到 MCP/PIP 无人约束</text>
+
+    <rect x="8" y="94" width="228" height="52" rx="8" fill="none" stroke="currentColor" opacity=".55"/>
+    <text x="22" y="116" fill="currentColor"><tspan font-weight="700">根因 B</tspan> 缩放只有一个全局标量</text>
+    <text x="22" y="135" fill="currentColor" opacity=".8">按食指/中指定的 s 对小指是错的</text>
+
+    <rect x="8" y="174" width="228" height="52" rx="8" fill="none" stroke="currentColor" opacity=".55"/>
+    <text x="22" y="196" fill="currentColor"><tspan font-weight="700">根因 C</tspan> L20 小指 1.44 掌宽</text>
+    <text x="22" y="215" fill="currentColor" opacity=".8">人 1.17；且 MCP 不能反向伸展</text>
+
+    <path d="M240,40 L316,60" stroke="currentColor" fill="none" opacity=".6" marker-end="url(#ar)"/>
+    <path d="M240,120 L316,70" stroke="currentColor" fill="none" opacity=".6" marker-end="url(#ar)"/>
+    <path d="M240,200 L316,80" stroke="currentColor" fill="none" opacity=".6" marker-end="url(#ar)"/>
+    <path d="M240,120 L316,168" stroke="currentColor" fill="none" opacity=".6" marker-end="url(#ar)"/>
+    <path d="M240,200 L316,180" stroke="currentColor" fill="none" opacity=".6" marker-end="url(#ar)"/>
+
+    <rect x="322" y="42" width="200" height="56" rx="8" fill="none" stroke="currentColor" opacity=".55"/>
+    <text x="336" y="64" fill="currentColor"><tspan font-weight="700">症状 1 · curl</tspan></text>
+    <text x="336" y="83" fill="currentColor" opacity=".8">平手时 pinky_pip = 63.6°</text>
+
+    <rect x="322" y="152" width="200" height="56" rx="8" fill="none" stroke="currentColor" opacity=".55"/>
+    <text x="336" y="174" fill="currentColor"><tspan font-weight="700">症状 2 · splay</tspan></text>
+    <text x="336" y="193" fill="currentColor" opacity=".8">mcp_roll 长期钉在 ±13° 限位</text>
+
+    <path d="M526,70 L596,70" stroke="currentColor" fill="none" opacity=".6" marker-end="url(#ar)"/>
+    <path d="M526,180 L596,180" stroke="currentColor" fill="none" opacity=".6" marker-end="url(#ar)"/>
+
+    <rect x="602" y="42" width="150" height="56" rx="8" fill="none" stroke="currentColor" opacity=".35"/>
+    <text x="614" y="64" fill="currentColor" opacity=".85">已缓解</text>
+    <text x="614" y="83" fill="currentColor" opacity=".7">little_scale 后残 23°</text>
+
+    <rect x="602" y="152" width="150" height="56" rx="8" fill="none" stroke="currentColor" opacity=".35"/>
+    <text x="614" y="174" fill="currentColor" opacity=".85">未修</text>
+    <text x="614" y="193" fill="currentColor" opacity=".7">且被缓解措施加重</text>
+  </g>
+</svg>
+<figcaption>示意图（非实验数据）。注意右下那条：修 curl 的 <code>little_scale=1.35</code> 把整条向量放大，横向分量也跟着放大，于是<b>加重了 splay</b>——两个症状共享根因 B，一个的解法是另一个的病因。这是为什么它们必须一起修。<b>这条因果链沿用手册 §2.4 的机制分析，那里标为「待实测确认」</b>，本页 <a href="#s4">§4 第 1 步</a>就是去证它。</figcaption>
+</figure>
+
+<div class="tw"><table class="nw1">
+<tr><th>根因</th><th>具体是什么</th><th>可核对的出处</th></tr>
+<tr><td><b>A</b> 目标只有指尖</td><td>九条任务向量的头全是指尖（<code>*_tip</code>），没有任何 PIP/DIP 的约束。总长度误差要靠哪个关节吸收，完全由求解器自己挑</td><td><code>l20.py::l20_tasks</code></td></tr>
+<tr><td><b>B</b> 单一全局缩放</td><td>$s$ 是一个数，从掌宽量出来。掌宽比例对食指/中指对，对小指不对</td><td><code>L20Kinematics.scale_for</code></td></tr>
+<tr><td><b>C</b> 机构比例</td><td>L20 小指与其余三指等长，102 mm = 1.44 掌宽；人手实测 72 mm / 62 mm = 1.17 掌宽。<code>pinky_mcp_pitch</code> 范围 <code>[0, 1.22]</code> rad——<b>不能反向伸展</b>；<code>pinky_mcp_roll</code> 仅 ±0.23 rad = ±13°，人 ±21°</td><td>MJCF <code>linkerhand_l20_right.xml</code></td></tr>
+</table></div>
+
+<p><b>A + B + C 合起来的必然结果</b>：一条按比例偏短的目标向量，落在一根偏长的手指上，而 MCP 已经顶在 0° 停止位——唯一还能缩短「掌心到指尖」距离的自由度，就是把 PIP 卷起来。session <code>20260816_191302</code> 的平手帧上，命令是 <code>pinky_pip = 63.6°</code>、<code>pinky_mcp_pitch</code> 钉在 0°、耦合的 <code>pinky_dip</code> 跟到 57°——就是肉眼看到的那截弯指。</p>
+
+<h3>1.3 现在的缓解措施，和它的代价</h3>
+
+<p><code>l20_tasks</code> 里的两个常数（<code>little_scale=1.35</code>、<code>little_pinch_weight=1.5</code>）是针对根因 B 的<b>局部补丁</b>：把小指那两条目标向量单独放大，让操作者的小指「要求」的长度接近机器人小指「能给」的长度。<code>little_pinch_weight</code> 从 2.5 降到 1.5 是因为被放大的 <code>thumb→pinky</code> 会把拇指拽走，牺牲拇指–食指闭合。</p>
+
+<div class="tw"><table>
+<tr><th>配置</th><th>平手 <code>pinky_pip</code></th><th>握拳 <code>pinky_pip</code></th><th>拇指–食指间隙</th></tr>
+<tr><td>不放大（baseline）</td><td>63°</td><td>80.7°</td><td>3.2 mm</td></tr>
+<tr><td>scale 1.35 / weight 2.5</td><td>26°</td><td>79.9°</td><td>5.0 mm</td></tr>
+<tr><td><b>scale 1.35 / weight 1.5</b>（当前）</td><td><b>23°</b></td><td>78.0°</td><td><b>4.6 mm</b></td></tr>
+<tr><td>scale 1.45</td><td>13°</td><td>—</td><td>&gt; 5 mm</td></tr>
+</table></div>
+
+<p>读法：补丁把 63° 压到 23°，<b>但没有归零</b>，而且再往上加就开始拿捏合精度换直度。原因是它没碰根因 A——只要屈曲的分配无人约束，缩放就只能在「整体够不够长」这一个维度上讨价还价。</p>
+
+<div class="key warn">
+<b>不是元凶的两件事，写下来免得再查一遍。</b><br>
+<b>（一）归一化不是元凶。</b>全局尺度取自<b>掌宽</b>，MCP 排的位置在手指蜷曲时不动，所以握拳量出的 $s$ 和平手量出的一致，有测试钉住。<br>
+<b>（二）上游那个「按平均向量长度自动定标」的机制在 L20 上是<b>关掉</b>的</b>（<code>L20VectorRetargeter.__init__</code> 传 <code>auto_scale=False</code>）。理由写在代码注释里：L20 的 <code>qpos=0</code> 是一只完全张开、拇指外伸 144 mm 的手，在捏合帧上按平均长度定标会得到 2.48，求解器会把八个关节推进限位。<b>因此 <code>little_scale</code> 不会通过自动定标反过来影响其它手指的全局尺度</b>——两者互不相干。<code>--scale</code> 的作用是让两个 session 可比（钉死后进 config hash），不是为了规避耦合。
+</div>
+
+<h3>1.4 第二个症状：侧摆</h3>
+
+<p>机制分析在 <a href="hand-control.html#pinky">手册 §2.4</a>，这里只记与本页清单相关的部分：四个叠加环节里，<b>环节 2 正是上面那个补丁</b>——<code>little_scale</code> 乘的是整条向量，包含横向分量，于是把本来就只有 ±13° 的侧摆天花板又推高 35%，操作者还没摆到自己极限，<code>pinky_mcp_roll</code> 已经压死在限位。手册推断这也是 <code>--compare</code> 里 vector「平均 3.7 个关节在限位」的主要来源——<b>同样标为待实测确认</b>，四个环节各自贡献多少还没有量过。两页的分工：手册那节讲<b>四个环节各是什么</b>，本页讲<b>候选修法与判据</b>。</p>
+
+<h2 id="s2"><span class="n">§ 2</span>候选解法清单</h2>
+
+<p>六条。前四条针对小指，第五条针对另一个未修问题（<a href="hand-control.html#issues">手册问题表 #2</a>：pinch 任务全线失败），第六条是「整包引进」的裁决。<b>全部都还没跑</b>——这一页的状态栏没有一个「已验证」，等有数据了要按 <a href="hand-control.html">手册</a> 的分类搬过去。</p>
+
+<div class="tw"><table class="cand">
+<tr><th>#</th><th>候选</th><th>治哪个根因</th><th>代价</th><th>验证判据</th><th>状态</th></tr>
+<tr>
+  <td>a</td>
+  <td><b>加中间关节向量</b><br>在 <code>palm→指尖</code> 之外再加 <code>palm→PIP</code>（人侧 landmark 18）</td>
+  <td><b>A</b>（唯一一条真正治 A 的）</td>
+  <td>任务数 9 → 10~13，求解时间按比例涨（现 8 迭代 ~0.9 ms）；需在 MJCF 上加近节 site</td>
+  <td>平手 <code>pinky_pip</code> 残留 &lt; 10°，<b>且</b> 捏合回归表（index / middle / ring / tripod）四项均不退化超过 0.5 mm</td>
+  <td><span class="tag warn">首选</span>未跑</td>
+</tr>
+<tr>
+  <td>b</td>
+  <td><b><code>little_scale</code> 只作用于纵向分量</b><br>沿指方向分解后再缩放，横向分量不动</td>
+  <td><b>B</b> 的精细化</td>
+  <td>任务向量的缩放变成各向异性，<code>to_dict()</code> / config hash 要跟着改；数学上不再是单纯的「向量匹配」</td>
+  <td>全外展时 <code>pinky_mcp_roll</code> 不再长期钉在 ±0.23，<b>且</b>平手 <code>pinky_pip</code> 不回升到 23° 以上</td>
+  <td><span class="tag warn">两症同治</span>未跑</td>
+</tr>
+<tr>
+  <td>c</td>
+  <td><b>抬高 <code>palm→pinky</code> 权重</b><br>让侧摆意图压过「离拇指多远」</td>
+  <td>症状 2 的权重倒挂</td>
+  <td>小指捏合会变松；要重跑捏合回归表</td>
+  <td>只做小指开合的 session 里，<code>q[pinky_mcp_roll]</code> 的时间序列幅度与操作者输入成比例，而非方波</td>
+  <td><span class="tag">便宜</span>未跑</td>
+</tr>
+<tr>
+  <td>d</td>
+  <td><b>roll 单独增益补偿</b><br>抵消 <code>mcp_roll</code> 指尖增益仅 ~0.099 m/rad 带来的相对阻尼劣势</td>
+  <td>症状 2 的环节 4</td>
+  <td>等于在目标函数外面挂一个手调常数，最不「干净」的一条</td>
+  <td>同 c，但要先由 c 排除权重倒挂——否则分不清是谁的功劳</td>
+  <td><span class="tag">兜底</span>未跑</td>
+</tr>
+<tr>
+  <td>e</td>
+  <td><b>DexPilot 捏合距离门控投影</b><br>见 <a href="#s3">§3.4</a></td>
+  <td>都不治。针对的是 pinch 任务失败（问题 #2）</td>
+  <td>3–5 cm 迟滞死区；捏合区内人手的精细张合被抹平；任务向量数翻倍</td>
+  <td>bead(⌀16) / coin(⌀22×3) / peg(⌀10×40) 的 <code>--autograsp</code> baseline 通过率<b>且</b>操作者主观不报告「粘滞」</td>
+  <td><span class="tag bad">先上 bench</span>未跑</td>
+</tr>
+<tr>
+  <td>f</td>
+  <td><b>整包引进 dex-retargeting</b></td>
+  <td>都不治（见 <a href="#s3">§3.2</a>）</td>
+  <td>四个阻塞点，见 <a href="#s3">§3.5</a></td>
+  <td>—</td>
+  <td><span class="tag bad">裁决：不做</span></td>
+</tr>
+</table></div>
+
+<div class="key">
+<b>为什么 a 排在最前。</b>b/c/d 三条都是在<b>根因 B 和权重</b>上继续腾挪，而 §1.3 那张表已经显示这条路走到头了——再加大缩放就开始拿捏合换直度。只有 a 动了根因 A：给近节指骨一个独立约束，总长误差就被分摊到两段，不会全部由远端屈曲吸收。它也是唯一一条<b>已经在别人的生产配置里跑过</b>的（Shadow Hand，见 <a href="#s3">§3.3</a>）。
+</div>
+
+<h2 id="s3"><span class="n">§ 3</span>AnyTeleop / dex-retargeting 详档</h2>
+
+<p><a href="https://arxiv.org/abs/2307.04577">AnyTeleop: A General Vision-Based Dexterous Robot Arm-Hand Teleoperation System</a>（Qin et al., RSS 2023），开源实现 <a href="https://github.com/dexsuite/dex-retargeting">dexsuite/dex-retargeting</a>（本页依据 commit <code>3f56141b</code> / v0.5.0，MIT 许可）。</p>
+
+<div class="key warn"><b>先说清分工</b>：AnyTeleop 的 retargeting 模块<b>只管手指</b>，手腕与手臂交给 CuRobo 单独规划——论文原话 “this module only considers the robot hand”。所以它和我们的对照只发生在手指这一层，我们的腕部对齐链路不在比较范围内。</div>
+
+<h3 id="s31">3.1 它和我们是同一条公式</h3>
+
+<div class="math">
+$$\min_{q_t}\ \sum_{i=0}^{N}\big\|\,\alpha\, v_t^i - f_i(q_t)\,\big\|^2 \;+\; \beta\,\|q_t-q_{t-1}\|^2 \qquad \text{s.t.}\quad q_l \le q_t \le q_u$$
+<div class="why">$v_t^i$ 是人手关键点向量，$f_i$ 是机器人侧对应向量的正运动学，$\alpha$ 是「补偿两只手尺寸差异」的缩放因子，$\beta$ 是拉向上一帧的时间正则。把它和 <a href="#s1">§1.1</a> 那条并排看：<b>逐项对应</b>——向量匹配、全局缩放、时间正则、关节限位为盒约束。我们多出来的是 $w_i$（逐任务权重）与 $s_i$（逐任务缩放），以及为 L20 的 equality 耦合准备的 $J\!\cdot\!C$。</div>
+</div>
+
+<p>换句话说，<code>L20VectorRetargeter</code> 实质上<b>已经是</b> AnyTeleop 的 vector 模式，且在两个地方比它多一个自由度。论文与实现之间有若干差异（实现用 Huber 而非平方 L2、$\delta=0.02$ m），但形式是同一族。</p>
+
+<h3 id="s32">3.2 $\alpha$ 是单标量——所以它自己也有小指问题</h3>
+
+<p><code>RetargetingConfig.scaling_factor</code> 是<b>一个 float</b>，schema 里没有逐指 / 逐向量的字段（<code>position</code> 模式甚至完全没有缩放这个概念）。仓库内的取值：Allegro 1.6、LEAP 1.6、Panda 夹爪 1.5、Shadow 1.2、Schunk SVH 1.2、Inspire 1.15、Ability 1.0——都是照着食指/中指的比例定的。</p>
+
+<p>把 <a href="#s1">§1.2</a> 的推理套上去：设人手某指伸直时腕→尖距离 $L_h$、机器人该指伸直时可达最大 $L_r^{\max}$，目标向量的模长是 $\alpha L_h$。若 $L_r^{\max} > \alpha L_h$，机器人「够不着这么短的目标」，唯一手段是弯曲——<b>摊平手时该指仍是屈的</b>；若 $L_r^{\max} < \alpha L_h$，伸直也够不到，被限位钳住，表现为该指长期贴着限位、动态范围被压缩。任何相对指长比例与人不同的手指都会落进其中一种。</p>
+
+<p><b>论文没有讨论这个问题</b>，也没有提逐指缩放；它对形态差异的全部说明是「差异很大时（如 DClaw）需要手工指定关键点向量的对应关系」。我们的 <code>little_scale</code> 就是它 schema 里缺的那个旋钮。</p>
+
+<p class="lede" style="font-size:.95rem">补充一点公平的：它的 Huber 损失（作用在残差模长上）确实能限制「某根离谱的手指把整体带偏」的串扰，因为残差超过 $\delta$ 后梯度被截断为常数。但 <b>Huber 不改变最优点的位置</b>——只要弯曲能减小该行残差，最优解还是会弯。缓解串扰，不修正比例。</p>
+
+<h3 id="s33">3.3 Shadow 的 10 向量配置：我们缺的那个结构性杠杆</h3>
+
+<p>这是本页从这篇论文里拿到的<b>最有用的一条</b>。dex-retargeting 里绝大多数手的配置都是「腕/掌 → 各指尖」，向量数等于手指数；<b>Shadow Hand 是例外，它用 10 条</b>：</p>
+
+<div class="tw"><table>
+<tr><th>手</th><th>向量数</th><th>组成</th></tr>
+<tr><td>Allegro / LEAP</td><td>4</td><td>base → 4 指尖</td></tr>
+<tr><td>Ability / Inspire / Schunk SVH</td><td>5</td><td>base → 5 指尖</td></tr>
+<tr><td><b>Shadow</b></td><td><b>10</b></td><td>palm → 5 指尖 <b>+ palm → 5 个中节关节</b>（<code>thmiddle/ffmiddle/mfmiddle/rfmiddle/lfmiddle</code>，人侧 landmark 2/6/10/14/18）</td></tr>
+<tr><td>Panda 二指夹爪</td><td>1</td><td><code>leftfinger→rightfinger</code> ↔ 人手拇指尖→食指尖</td></tr>
+</table></div>
+
+<p>那 5 条 <code>palm→中节</code> 正是<b>候选 a</b>：给近端指节一个独立约束，让「总长度误差」分摊到两段，而不是全部由远端屈曲吸收——直击我们的根因 A。人侧索引也现成：MediaPipe 的 18 号点就是小指 PIP，与我们 <code>FINGER_LANDMARKS["pinky"] = (17,18,19,20)</code> 的第二个点是同一个关节（HTS 的 21 点布局与 MediaPipe 逐点对应）。</p>
+
+<p>对我们而言这条几乎是<b>免费</b>的：往 <code>l20_tasks</code> 里加 <code>VectorTask</code>、在 MJCF 上补一个近节 site，求解器一行不用改。代价只有求解时间——Shadow 的 10 向量对 Allegro 的 4 向量，实测约 +80%（1.54 ms vs 0.84 ms，见下）。</p>
+
+<h3 id="s34">3.4 DexPilot 捏合投影：机制与代价</h3>
+
+<p>治的不是小指，是<b>精密抓取</b>（手册问题表 #2）。做法：对<b>人手</b>的指尖间距做带迟滞的开关，一旦判定为「在捏」，就把参考向量换成「同方向、固定极小长度」，并把权重抬两个数量级。</p>
+
+<div class="duo">
+<div class="algo">
+<div class="t">开关（迟滞）</div>
+<ol>
+<li>拇指↔各指：人手距离 &lt; <b>0.03 m</b> → 进入投影</li>
+<li>&gt; <b>0.05 m</b> → 退出；两者之间保持上一状态</li>
+<li>非拇指两两：仅当其对应的两条拇指对<b>都</b>已投影且距离 ≤ 0.03 时才投影</li>
+</ol>
+</div>
+<div class="algo">
+<div class="t">投影后</div>
+<ol>
+<li>参考向量长度：拇指对 $\eta_1=10^{-4}$ m，非拇指对 $\eta_2=3\times10^{-2}$ m</li>
+<li>权重：1 → <b>200</b>（拇指对）/ <b>400</b>（非拇指对）</li>
+<li>掌→指尖那几条权重恒定为「投影行数 + 指数」</li>
+</ol>
+</div>
+</div>
+
+<p><b>物理含义</b>：人手捏合时，视觉估计的指尖间距误差有几毫米，足以让机器人指尖差之毫厘抓空。投影把「人手 &lt; 3 cm」直接翻译成「机器人指尖 0.1 mm 接触」，把感知误差从闭合环节里整个移除。论文的真机数据支持它：Two Cup Stacking 0.7 vs 0.3（对比 Robotic Telekinesis 的网络式 retargeting）。非拇指对的耦合条件也考究——食指–中指那一对只有在「拇指–食指」和「拇指–中指」都已进入捏合时才收拢，即只在<b>多指同捏一个物体</b>时才生效。</p>
+
+<div class="key bad">
+<b>代价，以及为什么必须先上 bench。</b>3–5 cm 是迟滞死区，必须张开到 5 cm 以上才解除；捏合区内人手的精细张合被完全抹掉——想「轻轻夹住但留 1 cm 缝」做不到。<b>这和我们 2026-08-16 退役 clutch 手势时观察到的「一捏就粘住」是同一类交互副作用</b>（当时 14/14 次触发都发生在抓握中途，平均冻结 14.7 s）。所以判据里必须带上操作者的主观报告，不能只看通过率。
+</div>
+
+<h3 id="s35">3.5 整包引进的四个阻塞点</h3>
+
+<p>当初 <code>dex.py</code> 把 dex-retargeting 列为 Phase-2 的选项 1、最后选了选项 2（直接对着 MJCF 写自己的求解器），当时的三条理由现在逐条被证实，而且更严重：</p>
+
+<div class="tw"><table>
+<tr><th>阻塞点</th><th>事实</th><th>撞上我们的哪条约束</th></tr>
+<tr><td>只吃 URDF</td><td>vendored <code>yourdfpy</code> + pinocchio <code>buildModelFromUrdf</code>，<b>没有 MJCF loader</b>；且 <code>model.nv != model.nq</code> 直接 <code>NotImplementedError</code></td><td>我们只有 L20 的 MJCF，且它是仿真器实际在跑的那个模型</td></tr>
+<tr><td>求解时间无上界</td><td>NLopt <code>LD_SLSQP</code>，<b>没有设置 <code>maxeval</code> / <code>maxtime</code></b>，只有 <code>ftol_abs=1e-6</code></td><td>I3：100 Hz 路径不许 stall。我们的固定 8 次迭代 + <code>tol=0</code> 正是为此</td></tr>
+<tr><td>隐藏状态</td><td>热启动 <code>last_qpos</code> 与 <code>LPFilter</code> 都挂在 <code>self</code> 上</td><td>I5：同样的 landmark + 同样的 config 离线重跑必须逐位相同</td></tr>
+<tr><td>手指零碰撞处理</td><td><code>RobotWrapper.__init__</code> 里 <code>if use_visual or use_collision: raise NotImplementedError</code>。论文里的 “collision-free” 指的是 CuRobo 管的<b>手臂</b></td><td>与我们现状同级（我们也没有），不是退步但也不是收益</td></tr>
+</table></div>
+
+<p class="lede" style="font-size:.95rem">杂项，都可绕开但要知道：<code>torch</code> 是隐藏依赖（不在 <code>dependencies</code> 里，但 <code>__init__.py</code> 第一件事就是检查它）；Python 需 <code>&lt;3.13</code>；机器人 URDF 在 git submodule 里，pip 包不含；每个手 × 左右 × 类型各需一个 yaml（仓库内 39 个）。</p>
+
+<p><b>耗时的两组数字</b>，供我们的预算对照：论文 Table II 报 retargeting <b>9±7 ms</b>（desktop，各模块同机并跑），并说明检测模块上限 25 Hz、retargeting 跟着跑在 25 Hz。本页作者 2026-09-07 在 M4 Max 上按仓库自带的 <code>example/profiling/profile_online_retargeting.py</code> 实测（621 帧真实轨迹，<code>OMP_NUM_THREADS=1</code>）：Allegro vector 中位 0.65 ms / p99 2.10 / max 19.74；Shadow vector 中位 1.53 / p99 3.98；Shadow dexpilot 中位 1.96 / p99 4.71。<b>500 Hz 在论文和仓库里都从未被演示过</b>——这与「无迭代上限」是同一件事的两面。</p>
+
+<h3 id="s36">3.6 两处论文与实现不一致</h3>
+
+<div class="key warn">
+<b>标注为不确定——现象可核对，作者意图未知。</b><br>
+<b>（一）</b>三个 optimizer 的 <code>objective()</code> 里，时间正则项 $\beta\|q_t-q_{t-1}\|^2$ <b>只被加进梯度、没有加进返回的目标函数值</b>（<code>result = huber_distance...</code> 那一行不含它）。也就是说交给 SLSQP 的梯度不是所报告目标的梯度。实际效果更像是对搜索方向的阻尼，而非 line search 能看见的代价项。<br>
+<b>（二）</b><code>huber_delta</code> / <code>normal_delta</code> 这两个 yaml 字段在 <code>dexpilot</code> 类型下<b>根本不被读取</b>（<code>build()</code> 的 dexpilot 分支不传它们），永远用构造函数默认值 0.03 / 4e-3。<br>
+另：Ability hand 被 <code>tests/test_optimizer.py</code> 的 DexPilot 测试显式排除，仓库未说明原因。
+</div>
+
+<h2 id="s4"><span class="n">§ 4</span>验证顺序与出口条件</h2>
+
+<div class="algo">
+<div class="t">建议顺序（每一步都是一天级的小实验，全部在 synthetic bench 上做完再上 rig）</div>
+<ol>
+<li><b>先量，再修。</b>跑一段只做小指开合的 session，看 <code>q[pinky_mcp_roll]</code> 时间序列与 <code>n_at_limit</code>：长时间钉在 ±0.23 则症状 2 的环节 1+2 确认；中段来回但幅度远小于 ±0.23 则环节 4 主导。<b>这一步决定 c/d 要不要做</b>，不做会在两个候选之间瞎猜。</li>
+<li><b>候选 a</b>（加 <code>palm→PIP</code> 向量）。判据见清单。同时记录求解时间 p95 的涨幅——它是这条的唯一硬代价。</li>
+<li><b>候选 b</b>（纵向分量缩放）。只有在 a 之后做才说得清功劳归属：a 若把 curl 修到 10° 以下，<code>little_scale</code> 就可以往回退，症状 2 自动缓解，b 可能根本不需要。</li>
+<li><b>候选 e</b>（DexPilot 投影）独立于上面三条，可并行，但<b>必须带主观报告</b>。</li>
+</ol>
+</div>
+
+<div class="key">
+<b>出口条件。</b>任何一条候选跑出数据之后，结果（曲线、回归表、视频）搬进 <a href="hand-control.html">Hand Control 技术路线手册</a>，这一页在对应行留一句指过去的话。这一页永远只放<b>还没有数据</b>的东西——它是清单，不是记录。
+</div>
+
+<h2 id="s5"><span class="n">§ 5</span>参考</h2>
+<ul style="font-size:.9rem;color:var(--sub)">
+<li>论文：<a href="https://arxiv.org/abs/2307.04577">arXiv:2307.04577</a> · 项目页 <a href="https://yzqin.github.io/anyteleop/">yzqin.github.io/anyteleop</a>。公式与「只管手」的说明在 §Hand Pose Retargeting；耗时表是 Table II；Failure Modes 一节只承认两条（快速运动跟丢、自遮挡下位姿不可靠）。</li>
+<li>实现：<a href="https://github.com/dexsuite/dex-retargeting">dexsuite/dex-retargeting</a> @ <code>3f56141b</code>（v0.5.0，MIT）。本页引用的常数在 <code>src/dex_retargeting/optimizer.py</code>、<code>retargeting_config.py</code>、<code>optimizer_utils.py</code>、<code>robot_wrapper.py</code> 与 <code>configs/teleop/*.yml</code>。</li>
+<li>DexPilot 原作：<a href="https://arxiv.org/abs/1910.03135">arXiv:1910.03135</a>（Handa et al., Kuka + Allegro）。注意 dex-retargeting 的实现把正则目标从原版的「张开手」改成了「上一帧」。</li>
+<li>我们这边：<code>hand_control/services/level_1_retargeting/</code>（<code>vector.py</code> 求解器 · <code>l20.py</code> 任务集与常数 · <code>dex.py</code> 当年的选型记录）· session <code>20260816_191302</code>（curl 与 clutch 两组数字的来源）。</li>
+</ul>
+
+<footer><a href="hand-control.html">← Hand Control 技术路线手册</a> · <a href="index.html">Machine Learning Handbook</a> · retargeting-research.html · 2026-09-07 · 清单页，全部候选均未跑；数字出自代码常量、session 实测与上述一手资料</footer>
+</div>
+</body>
+</html>

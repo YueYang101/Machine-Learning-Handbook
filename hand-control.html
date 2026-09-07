@@ -65,8 +65,8 @@ a { color:var(--blue); text-decoration:none; }
 <p>先看这张表再看别的。状态含义：<span class="tag bad">未修</span>坑还在；<span class="tag warn">刻意</span>是权衡后接受的代价，有逃生口；<span class="tag">平台</span>受 OS/硬件限制无法修。</p>
 <table>
 <tr><th>#</th><th>模块</th><th>位置</th><th>问题</th><th>影响</th><th>状态</th></tr>
-<tr><td>1</td><td><b>retarget 小拇指侧摆</b></td><td><code>level_1_retargeting/l20.py::l20_tasks</code></td><td><code>pinky_mcp_roll</code> 限位仅 ±13°（人 ±21°），且 <code>little_scale=1.35</code> 把横向目标同比放大 → 长期钉在限位；小指尖横向由 <code>thumb→pinky</code>(w=1.5) 而非 <code>palm→pinky</code>(w=0.8) 主导</td><td>侧摆活动范围在头显里基本不可见</td><td><span class="tag bad">未修</span>机制分析见 §3.4，待实测确认</td></tr>
-<tr><td>2</td><td>pinch 任务全线失败</td><td><code>l20_scene.py</code> pinch task</td><td>bead(⌀16)、coin(⌀22×3)、peg(⌀10×40) 上 vector 与 angle 的 <code>--autograsp</code> baseline 全部失败</td><td>小物体精密抓取未跑通</td><td><span class="tag bad">未修</span></td></tr>
+<tr><td>1</td><td><b>retarget 小拇指侧摆</b></td><td><code>level_1_retargeting/l20.py::l20_tasks</code></td><td><code>pinky_mcp_roll</code> 限位仅 ±13°（人 ±21°），且 <code>little_scale=1.35</code> 把横向目标同比放大 → 长期钉在限位；小指尖横向由 <code>thumb→pinky</code>(w=1.5) 而非 <code>palm→pinky</code>(w=0.8) 主导</td><td>侧摆活动范围在头显里基本不可见</td><td><span class="tag bad">未修</span>机制分析见 §2.4；候选修法与判据见 <a href="retargeting-research.html">retargeting 相关研究</a></td></tr>
+<tr><td>2</td><td>pinch 任务全线失败</td><td><code>l20_scene.py</code> pinch task</td><td>bead(⌀16)、coin(⌀22×3)、peg(⌀10×40) 上 vector 与 angle 的 <code>--autograsp</code> baseline 全部失败</td><td>小物体精密抓取未跑通</td><td><span class="tag bad">未修</span>候选：<a href="retargeting-research.html#s34">DexPilot 捏合投影</a>（待验证）</td></tr>
 <tr><td>3</td><td>vector 关节撞限位</td><td><code>--compare</code> 输出</td><td>平均 3.7 个关节在限位（angle 是 0.0），jerk 363 vs 251 rad/s³</td><td>与 #1 同源——"人的位姿机构够不到"的数据表现</td><td><span class="tag warn">已测量、已接受</span></td></tr>
 <tr><td>4</td><td><code>--attach wrist</code> 指尖误差</td><td><code>palm_align.py</code> / <code>teleop.py</code></td><td>L20 base 杠杆 148 mm vs 人腕 93 mm：30° 腕转 ≈ 26 mm 指尖误差</td><td>精密抓取可达性下降</td><td><span class="tag warn">刻意</span>具身感换精度；<code>--attach palm</code> 是逃生口</td></tr>
 <tr><td>5</td><td>换场景需重建 APK</td><td><code>export_l20_meshes.py</code></td><td>头显画烘焙 mesh，<code>--scene</code> 换了必须重导出 + 重建 APK（~12 min），否则 arena 在头显里不存在；当前 APK 烘的是 <code>robosuite_table</code></td><td>烘焙网格过期 → 看到的 ≠ 物理算的</td><td><span class="tag bad">有流程无自动化</span>V2/V3 的动机之一</td></tr>
@@ -145,7 +145,7 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td><code>MujocoVectorRetargeter</code></td><td>通用求解器（HTS SDK 移植，Gauss–Newton + LM 阻尼 + posture 项）</td><td><span class="tag ok">底座</span></td></tr>
 <tr><td><code>OrcaVectorRetargeter</code></td><td>同一求解器指向 ORCA v1（17 关节无耦合，wrist 归手臂）</td><td><span class="tag ok">已实现</span></td></tr>
 <tr><td><code>IdentityRetargeter</code></td><td>直读人手关节角，I5"逐位相同"测试的唯一参照物</td><td><span class="tag">夹具</span></td></tr>
-<tr><td><code>DexRetargeter</code></td><td>dex-retargeting 包装</td><td><span class="tag bad">stub</span>调用即 raise；依赖决策仍开放</td></tr>
+<tr><td><code>DexRetargeter</code></td><td>dex-retargeting 包装</td><td><span class="tag bad">stub</span>调用即 raise；<a href="retargeting-research.html#s35">整包引进已裁决为「不做」</a>，但其中两个做法值得单抄</td></tr>
 </table>
 
 <p><b>vector 的核心思想</b>：匹配"两点之间的向量"而非任一点的绝对位置——<code>robot(b−a) ≈ scale·human(b−a)</code>。绝对匹配要求两只手共享原点和尺寸；向量匹配只要求共享<b>形状</b>，而形状正是遥操作真正想传递的东西。相对上游的四处刻意偏离（每一处都对应一类静默错误）：耦合矩阵 <code>J·C</code>（L20 有 5 个 equality 耦合关节，切列会让求解器"收敛到错的位姿"）；无状态 <code>step()</code>（热启动挂 self 违反 I5）；<code>tol=0</code> 永不早停（求解时间不许依赖数据）；在 palm site 坐标系里匹配（朝向无关，上游只有 home 朝向恰好对时才成立）。</p>
@@ -171,6 +171,7 @@ a { color:var(--blue); text-decoration:none; }
 <li><b>小增益方向被正则压制</b>：<code>mcp_roll</code> 指尖增益仅 ~0.099 m/rad（该指最小），在 LM 阻尼 + posture 项下拿到最大的相对阻尼份额，加上 <code>max_iters=8</code> + 热启动，每帧只挪一点。</li>
 </ol>
 <p class="small"><b>验证判据</b>：跑一段只做小指开合的 session，看 <code>q[pinky_mcp_roll]</code> 时间序列与 <code>n_at_limit</code>——长时间钉在 ±0.23 则环节 1+2 确认；中段来回但幅度远小于 ±0.23 则环节 4 主导。<b>归一化不是元凶</b>（掌宽 scale 姿态无关，有测试钉住）；真正的放大器是 little_scale 作用于整条向量。可能的修法方向：little_scale 只作用于纵向分量（沿指方向分解后再缩放）、把 palm→pinky 权重抬回主导、或给 roll 单独的增益补偿——三者都要先过 pinch 回归表再上 rig。</p>
+<p><b>配套 research 页</b>：<a href="retargeting-research.html">Retargeting 的局限与候选解法</a>——把这里的侧摆与 §3.4 的 curl 收敛成同一组根因，排出六条待验证候选（含判据），并评估 AnyTeleop / dex-retargeting 能不能治。<b>本节讲四个环节各是什么，那一页讲怎么修。</b></p>
 
 <h2 id="pitfalls">3 · 踩坑史（现象 → 根因 → 解法）</h2>
 <p>每一条都值一次 session。前四条是大案，后面的收进速查表。</p>
@@ -195,6 +196,7 @@ a { color:var(--blue); text-decoration:none; }
 <h3>3.4 小拇指 curl：1.44 个掌宽的手指</h3>
 <p><span class="tag bad">现象</span>平手时小指末节明显弯曲（<code>pinky_pip</code> 63.6°）。</p>
 <p><b>根因</b>：比例不匹配且全局 scale 无法表达——L20 小指与其他三指等长（1.44 掌宽），人的小指短得多（1.17 掌宽）。求解器要匹配一个比例上偏短的目标，唯一手段是卷起来。</p>
+<p class="small">当前补丁把 63.6° 压到 <b>23°</b> 但没有归零，再加大缩放就开始拿捏合精度换直度——残留部分与 §2.4 的侧摆同源，修法清单见 <a href="retargeting-research.html#s2">retargeting 相关研究 §2</a>。</p>
 <p><b>解法</b>：<code>little_scale=1.35</code>（straight pip 63°→23°）+ <code>little_pinch_weight</code> 2.5→1.5（否则放大的 thumb→little 向量拖走拇指、thumb–index 闭合变差）。1.45 更直但 pinch 超 5 mm，停在 1.35。测试：<code>test_a_flat_hand_does_not_curl_the_little_finger</code>；参考位姿重生成并钉住。<b>但这个修正是 §2.4 侧摆问题的放大器之一——按下葫芦浮起瓢的完整案例。</b></p>
 
 <h3>3.5 坐标基混用：不存在的 94°</h3>
@@ -280,6 +282,7 @@ a { color:var(--blue); text-decoration:none; }
 
 <h2 id="refs">8 · 参考</h2>
 <ul class="small">
+<li>本站：<a href="retargeting-research.html">Retargeting 的局限与候选解法</a>（相关研究页：根因、候选清单、AnyTeleop 详档）</li>
 <li>仓库内：<code>PROJECT_SPEC.md</code> · <code>hand_control/plan/transformations-and-alignment.md</code>（每个坐标变换与三个高度机制）· <code>hand_control/plan/l20_shared_control_phase1.md</code>（下一阶段 plan of record）· <code>plan/architecture/layers.py</code>（分层唯一权威表）</li>
 <li>MuJoCo Unity 插件：<a href="https://mujoco.readthedocs.io/en/latest/unity.html">官方文档</a> · <a href="https://github.com/google-deepmind/mujoco/discussions/1638">Discussion #1638（Android/Quest 编译）</a> · <a href="https://github.com/joanllobera/mujoco-bin">joanllobera/mujoco-bin（arm64 预编译）</a> · <a href="https://github.com/Balint-H/modular-agents">Balint-H/modular-agents（Quest 2 参考工程）</a></li>
 <li>串流：<a href="https://github.com/alvr-org/ALVR">ALVR</a> · <a href="https://github.com/alvr-org/ALVR/wiki/ALVR-wired-setup-(ALVR-over-USB)">ALVR USB 有线</a> · <a href="https://github.com/alvr-org/ALVR/wiki/Linux-encoders-requirements">Linux 编码器要求</a> · <a href="https://blog.nicholas.clooney.io/notes/quest-pcvr-on-mac-notes/">Quest PCVR on Apple Silicon 验尸笔记</a></li>
