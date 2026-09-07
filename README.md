@@ -10,7 +10,7 @@
 
 | 页面 | 内容 |
 |---|---|
-| [index.html](index.html) | GitHub Pages 首页与公开导航；分类层级与本索引保持同步 |
+| [index.html](index.html) | GitHub Pages 首页与公开导航；理论/实验两个标签页（`#theory` / `#experiments` 可直接分享），分类层级与本索引保持同步 |
 
 ## 理论
 
