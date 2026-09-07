@@ -10,7 +10,7 @@
 
 | 页面 | 内容 |
 |---|---|
-| [index.html](index.html) | GitHub Pages 首页与公开导航；理论/实验两个标签页（`#theory` / `#experiments` 可直接分享），分类层级与本索引保持同步 |
+| [index.html](index.html) | GitHub Pages 首页与公开导航；理论 / 实验计划 / 实验记录 三个标签页（`#theory` / `#plans` / `#experiments` 可直接分享），分类层级与本索引及 `STYLE.md` §1 保持同步 |
 
 ## 理论
 
@@ -30,6 +30,10 @@
 | [ppo-learning.html](ppo-learning.html) | 强化学习到 PPO：三支流演进、Policy Gradient / Actor-Critic / GAE / Natural Gradient / TRPO / PPO 完整推导、5 个交互图、连续控制实现与训练诊断 |
 | ↳ [ppo-variants-research.html](ppo-variants-research.html) | **PPO 相关研究**：局限、变体与灵巧抓取证据地图；从 ratio / clip / advantage 已知处继续，不重复基础推导 |
 
+## 实验计划
+
+方案与判据已定，还没有数据。跑出数据后移进「实验记录」。
+
 ### 研究路线
 
 | 页面 | 内容 |
@@ -37,11 +41,16 @@
 | [l20-robust-grasp.html](l20-robust-grasp.html) | L20 Robust Grasp V1 实验路线（方案稿）：人类抓姿 → L20 retarget → joint teacher → 外生 wrist 适配 → finger student |
 | [shared-control.html](shared-control.html) | 共享控制路线：从 To the Noise and Back 到 EMG 灵巧手 |
 
-## 实验
+### 待验证方案
+
+| 页面 | 内容 |
+|---|---|
+| [retargeting-research.html](retargeting-research.html) | Retargeting 的局限与候选解法（配套 [hand-control.html](hand-control.html)）：小指 curl 与侧摆的统一根因 · 六条待验证候选与判据 · AnyTeleop / dex-retargeting 详档与整包引进的裁决 |
+
+## 实验记录
 
 | 页面 | 内容 |
 |---|---|
 | [dexhand-rl.html](dexhand-rl.html) | 灵巧手 RL 实验记录：锤钉与抓取，每个 reward 版本的视频与失败解剖 |
 | [dexhand-engineering.html](dexhand-engineering.html) | 灵巧手 RL 工程记录：碰撞简化与 JAX→Warp 迁移 |
 | [hand-control.html](hand-control.html) | Hand Control 技术路线手册：EMG + Quest 手部追踪 + L20 遥操作 |
-| ↳ [retargeting-research.html](retargeting-research.html) | **Retargeting 相关研究**：小指 curl 与侧摆的统一根因 · 六条待验证候选与判据 · AnyTeleop / dex-retargeting 详档与整包引进的裁决 |

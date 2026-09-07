@@ -56,19 +56,21 @@ footer a { color:var(--blue); text-decoration:none; }
 <div class="kicker">YUE YANG · NOTES</div>
 <h1>Machine Learning Handbook</h1>
 <p class="lede">个人机器学习笔记。单文件 HTML，手机可读，公式 MathJax，动画为按解析解实时模拟的原生 canvas。<br>
-分两类：<b>理论</b>（概念、推导、论文地图）与<b>实验</b>（自己跑出来的记录）。下面的标签页只切换显示哪一类，链接可直接分享（<code>#theory</code> / <code>#experiments</code>）。</p>
+分三类：<b>理论</b>（概念与推导）·<b>实验计划</b>（方案与判据已定，还没跑出数据）·<b>实验记录</b>（跑出来的曲线、视频、失败解剖）。下面的标签页只切换显示哪一类，链接可直接分享（<code>#theory</code> / <code>#plans</code> / <code>#experiments</code>）。</p>
 
 <nav aria-label="内容分类">
   <div class="tabs" role="tablist" aria-label="内容分类">
     <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="true" tabindex="0">理论<span class="cnt">6</span></button>
-    <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验<span class="cnt">3</span></button>
+    <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">3</span></button>
+    <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验记录<span class="cnt">3</span></button>
   </div>
 </nav>
 
 <main>
 <section id="panel-theory" role="tabpanel" aria-labelledby="tab-theory" tabindex="0">
 
-<h2>理论<span class="en">THEORY &amp; RESEARCH</span></h2>
+<h2>理论<span class="en">THEORY</span></h2>
+<p class="note">概念、推导、别人方法的局限与变体地图。不含我们自己的实验设计。</p>
 
 <h3>基础概念</h3>
 <p class="note">被多篇笔记反复调用的底层工具，一条一页。</p>
@@ -100,8 +102,16 @@ footer a { color:var(--blue); text-decoration:none; }
     <span class="d2">十类局限的机制/症状/研究方向 · 代表变体各自解决什么 · 灵巧手论文改的是哪一层 · PPO expert → Diffusion Policy 的接口问题 · 先跑诊断再选 variant · 一手资料与证据成熟度</span></a>
 </div>
 
+
+</section>
+
+<section id="panel-plans" role="tabpanel" aria-labelledby="tab-plans" tabindex="0">
+
+<h2>实验计划<span class="en">PLANNED</span></h2>
+<p class="note">方案与判据已经定下来，但还没有跑出数据。跑出来之后按结果搬进「实验记录」，原位留一句指过去的话。</p>
+
 <h3>研究路线</h3>
-<p class="note">论文地图 + 自己的架构与实验设计，方案已定但还没跑出数据。</p>
+<p class="note">论文地图 + 自己的架构与实验设计。</p>
 <a class="card" href="l20-robust-grasp.html">
   <div class="t">L20 Robust Grasp：V1 实验路线<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">方案稿</span></div>
   <div class="d">把 shared control 降为应用层，研究问题收敛为「人类抓姿 → L20 retarget → joint teacher → 外生 wrist 适配 → finger student」· 训练控 wrist / 部署人控 wrist 的 mismatch 与决定性对照 · 九类需求拆成可证伪问题 · 三个先验库分开报告「像人」与「稳」· 触觉消融阶梯 · V1 Robust Hold Benchmark 协议、基线与统计</div>
@@ -111,11 +121,18 @@ footer a { color:var(--blue); text-decoration:none; }
   <div class="d">参照论文的完整流程与它的实验设计 · 部分扩散（partial diffusion）演示 · 我们的架构映射与当前进度</div>
 </a>
 
+<h3>待验证方案</h3>
+<p class="note">针对某个已知缺陷排出来的候选清单，每条都带验证判据，状态全是「未跑」。</p>
+<a class="card" href="retargeting-research.html">
+  <div class="t">Retargeting 的局限与候选解法<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">六条全部未跑</span></div>
+  <div class="d">前置阅读「Hand Control 技术路线手册」（在<b>实验记录</b>标签页）· 小指 curl 与侧摆收敛成同一组根因（目标只有指尖向量 / 单一全局缩放 / L20 小指 1.44 掌宽且不能反向伸展）· 六条待验证候选与各自的判据 · AnyTeleop 详档：同一条公式、单标量 α、Shadow 的中间关节向量、DexPilot 捏合投影与它的死区 · 整包引进的四个阻塞点</div>
+</a>
+
 </section>
 
 <section id="panel-experiments" role="tabpanel" aria-labelledby="tab-experiments" tabindex="0">
 
-<h2>实验<span class="en">EXPERIMENTS</span></h2>
+<h2>实验记录<span class="en">EXPERIMENTS</span></h2>
 <p class="note">自己跑出来的东西：版本、曲线、视频、失败解剖。</p>
 
 <a class="card" href="dexhand-rl.html">
@@ -132,11 +149,6 @@ footer a { color:var(--blue); text-decoration:none; }
   <div class="t">Hand Control 技术路线手册</div>
   <div class="d">EMG + Quest 手部追踪 + L20 遥操作 · V1 自研薄渲染链路（已实现）→ V2 Quest 本地物理 / V3 4090 串流（进行中）→ V4 Mac 串流（判死）· 踩坑史：90° 扭转、hold-flat、clutch 之死 · retargeting vector vs angle 对比与小拇指侧摆问题解剖</div>
 </a>
-<div class="sub">
-  <a href="retargeting-research.html"><span class="rel">相关研究 ·</span> <span class="t2">Retargeting 的局限与候选解法</span><br>
-    <span class="d2">小指 curl 与侧摆收敛成同一组根因（目标只有指尖向量 / 单一全局缩放 / L20 小指 1.44 掌宽且不能反向伸展）· 六条待验证候选与各自的判据 · AnyTeleop 详档：同一条公式、单标量 α、Shadow 的中间关节向量、DexPilot 捏合投影与它的死区 · 整包引进的四个阻塞点</span></a>
-</div>
-
 </section>
 </main>
 
@@ -147,7 +159,8 @@ footer a { color:var(--blue); text-decoration:none; }
 (function () {
   var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
   if (!tabs.length) return;                       // 无 JS / 结构变动时两栏都留在页面上
-  var byHash = { '#theory': 0, '#experiments': 1 };
+  var byHash = { '#theory': 0, '#plans': 1, '#experiments': 2 };
+  var hashOf = ['#theory', '#plans', '#experiments'];
 
   function select(i, focus) {
     tabs.forEach(function (tab, j) {
@@ -162,7 +175,7 @@ footer a { color:var(--blue); text-decoration:none; }
   tabs.forEach(function (tab, i) {
     tab.addEventListener('click', function () {
       // 写 hash 而不是直接切，让 hashchange 成为唯一的状态入口
-      location.hash = i === 0 ? '#theory' : '#experiments';
+      location.hash = hashOf[i];
       select(i, false);
     });
     tab.addEventListener('keydown', function (e) {
