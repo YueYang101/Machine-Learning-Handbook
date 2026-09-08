@@ -141,15 +141,15 @@
 <section id="long-term">
 <h2 id="long-term-stages">主线只有三步</h2>
 <ol>
-<li><b>抓姿基线：</b>用已有 L20 retarget 得到包握姿态，固定 PD 抓住一个方块。</li>
+<li><b>意图与抓姿 PoC：</b>只用一个 cube，生成多样抓姿，用回归预测用户想要的姿态；回归不满足需求再考虑分类。</li>
 <li><b>稳定持物：</b>移动手腕、施加外力，观察滑移和掉落；再训练手指微调，与固定 PD 比较。</li>
 <li><b>共享控制：</b>人控制运动和释放，策略辅助拿稳，再接完整 pick 和更多物体／任务。</li>
 </ol>
 </section>
 <section id="current">
 <h2>当前只推进第一步</h2>
-<p>不先训练生成模型。先交付<b>一个能重复承重的 L20 抓姿和一段验证视频</b>，具体见 <a href="l20-robust-grasp-stage1.html">Stage 1.1：固定抓姿基线</a>。</p>
-<p>这样起步的依据：L20 retarget 已有实现；旧 BODex 主流程针对 ORCA，尚需适配。先利用现有 L20 路径取得基线，不把多条移植任务同时展开。</p>
+<p>先验证<b>同一个 cube，不同用户意图能否得到不同抓姿</b>，具体见 <a href="l20-robust-grasp-stage1.html">Stage 1.1：Cube 多样抓姿与意图回归</a>。</p>
+<p>当前不考虑承重、稳定性、抗扰或 pick；这些属于后续 robust grasp。已有 L20 retarget 可用于准备抓姿数据，不把多条方法移植同时展开。</p>
 </section>
 <section id="reading">
 <h2>文献按需查，问题发生后再记</h2>

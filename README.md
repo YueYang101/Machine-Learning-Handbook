@@ -38,8 +38,8 @@
 
 | 页面 | 内容 |
 |---|---|
-| [l20-robust-grasp.html](l20-robust-grasp.html) | L20 Robust Grasp 三步主计划：固定抓姿基线 → 稳定持物 → 共享控制；当前只推进第一步，文献独立查阅，实际实验后再补日志 |
-| [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | Stage 1.1 当前第一步（待执行）：已有 L20 retarget／人工调整 → 固定 PD 方块承重 → 重复记录；只交付可复用抓姿、实际参数、视频与结果，不预设训练配置 |
+| [l20-robust-grasp.html](l20-robust-grasp.html) | L20 Robust Grasp 三步主计划：意图与抓姿 PoC → 稳定持物 → 共享控制；当前只做单一 cube 的多样抓姿与意图回归，不考核稳定性 |
+| [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | Stage 1.1（待执行）：cube 多样抓姿与配对输入 → 连续抓姿回归 → 预测与多样性验证；回归不满足需求再考虑分类，不做承重、抗扰或 pick |
 | ↳ [l20-grasp-sources-review.html](l20-grasp-sources-review.html) | 配套项目选型综述（计划）：人类数据库与几何／捏合／接触／物理 retarget；模型生成与数学优化；既有 ORCA BODex 资产审计、L20 适配缺口；GraspADMM / DexEvolve / CoToGrasp 等近期进展；可用性与后续接口备忘；是独立文献库，不是并行待办 |
 | [shared-control.html](shared-control.html) | 共享控制路线：从 To the Noise and Back 到 EMG 灵巧手 |
 

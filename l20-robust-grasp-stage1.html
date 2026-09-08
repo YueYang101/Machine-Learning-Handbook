@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>L20 Stage 1.1：固定抓姿基线 · Machine Learning Handbook</title>
+<title>L20 Stage 1.1：Cube 多样抓姿与意图回归 · Machine Learning Handbook</title>
 <style>
 :root {
   color-scheme: light;
@@ -111,26 +111,27 @@ ol, ul { padding-left:1.5em; }
 <main class="wrap">
 <a class="bk" href="l20-robust-grasp.html">← 三步主计划</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
 <div class="kicker">实验计划 · 当前第一步 · 2026-09-08</div>
-<h1>Stage 1.1：固定抓姿基线</h1>
-<p class="lede" id="scope">只做一件事：让 L20 用固定 PD 拿住一个方块。先不训练模型，也不同时比较全部抓姿来源。</p>
-<p class="meta">状态：待执行；本次只精简文档，没有新增实验结果。</p>
+<h1>Stage 1.1：Cube 多样抓姿与意图回归</h1>
+<p class="lede" id="scope">单一 task 的 proof of concept：同一个 cube，生成丰富的抓取姿态，并根据用户输入预测其想要的抓姿。先用回归，不先做分类。</p>
+<p class="meta">状态：待执行。按最新目标替换固定 PD 承重方案；没有新增实验结果。</p>
 
 <h2 id="runbook">现在做这三件事</h2>
 <ol>
-<li id="source-steps"><b>取得抓姿。</b>用已有 L20 vector retarget 得到一个包握姿态，必要时人工调整；记录来源和最终手指目标。</li>
-<li id="protocol"><b>验证承重。</b>用固定流程闭合并抬起现有 70 mm / 108 g 方块，不学习 pick。物体脱离桌面及其他支撑后，固定手腕和手指目标保持 8 秒，不能靠物体固定约束承重。</li>
-<li id="evaluation"><b>重复并记录。</b>从相同条件重复，保存成功次数／总尝试次数和视频；记录滑移、掉落或抓起失败，不只留成功片段。</li>
+<li id="source-steps"><b>准备多样抓姿。</b>固定同一个 cube 与 L20，利用已有 retarget／人工示教准备不同抓取方向和手形，配对记录用户输入与目标抓姿；抓姿包含手相对 cube 的位姿和手指姿态。</li>
+<li id="protocol"><b>先做意图回归。</b>用用户输入预测连续的目标抓姿，让模型随不同意图输出不同姿态。输入信号与姿态表示在采集时确定并记录；本轮不预设离散抓姿类别。</li>
+<li id="evaluation"><b>验证预测和多样性。</b>用独立留出的示教比较目标与预测，记录姿态误差、输出覆盖的不同抓姿及可视化；检查是否总输出近似同一姿态。按示教序列划分，避免相邻帧跨训练／测试。</li>
 </ol>
 
 <h2 id="checklist">这一轮交付什么？</h2>
-<p><b>一个可重复使用的抓姿、实际控制参数、一段承重视频和简短结果记录。</b>记录至少包含日期、模型／代码版本、尝试次数和结果位置；没运行就不填成绩。</p>
+<p><b>一组 cube 多样抓姿及配对输入、一个回归基线、预测对照视频和简短结果记录。</b>记录实际输入／输出定义、数据划分、模型版本与测试样本数；没运行就不填成绩。</p>
 <p>抓姿／优化工作在 <code>Dex_Hand/grasping</code>，控制与实验在 <code>Dex_Hand/human_machine_interaction</code>。Handbook 只保留计划与结果摘要。</p>
 
-<h2 id="next">完成后才推进下一步</h2>
-<p>能重复拿住后，再测试手腕运动和外力下是否稳定，决定手指补偿策略怎么训练。BODex、生成模型、人类数据库保留在 <a href="l20-grasp-sources-review.html">文献库</a>，暂不同时展开。</p>
+<h2 id="next">本轮边界与后续</h2>
+<p><b>不做稳定性、承重、抗扰或 pick。</b>只检查姿态的基本几何合理性，不把“能生成抓姿”当作“能稳定抓取”。回归经验证不能满足意图预测需求时，再考虑分类；robust grasp 留到后续。</p>
+<p>多样性指不同意图能得到不同抓姿，不要求同一个输入随机生成多个结果。抓姿来源按需查 <a href="l20-grasp-sources-review.html">文献库</a>，不同时开展全部方法。</p>
 
 <div class="meta"><span id="prior" aria-hidden="true"></span><span id="control" aria-hidden="true"></span><span id="observation" aria-hidden="true"></span><span id="disturbance" aria-hidden="true"></span><span id="reward" aria-hidden="true"></span><span id="termination" aria-hidden="true"></span><span id="baselines" aria-hidden="true"></span><span id="training" aria-hidden="true"></span><span id="evidence" aria-hidden="true"></span>
-<p>旧 S00–S09 清单、reward 权重、训练预算及预设故障分支已退出当前要求；实际需要时再依据实验补充。<a href="https://github.com/YueYang101/Machine-Learning-Handbook/blob/6e9f473/l20-robust-grasp-stage1.html">旧稿保留在 Git 历史</a>，不作为已验证配置。</p>
+<p>旧固定 PD 承重方案已退出 Stage 1.1，<a href="https://github.com/YueYang101/Machine-Learning-Handbook/blob/fa552aa/l20-robust-grasp-stage1.html">旧稿保留在 Git 历史</a>，不是本轮验收要求。</p>
 </div>
 <footer><a href="l20-robust-grasp.html">← 三步主计划</a> · <a href="index.html">Machine Learning Handbook</a></footer>
 </main>

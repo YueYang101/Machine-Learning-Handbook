@@ -102,8 +102,8 @@ caption { text-align:left; margin:8px 0; }
 <h1>抓姿从哪里来？<small>人手 retarget · 模型生成 · 数学优化，以及我们已经做过的 BODex</small></h1>
 <p class="lede">本页给 L20 robust grasp 选择 reference / 初态来源，不替代持物控制器。回答数据库怎么选、retarget 有哪些方向、哪些实现值得复用，以及三类候选如何进入同一套物理测试。</p>
 <p class="meta">核验日期：2026-09-08。范围是与本项目接口相关的代表方法与近期进展，不声称穷尽所有论文或给出统一 SOTA 排名。公开代码／下载入口已核对，未在本轮安装、下载整库或运行作者实验。</p>
-<div class="key good"><b>当前只做：</b>已有 L20 vector retarget／人工调整 → 固定 PD 方块承重基线。本页是文献库，不是同时执行的任务清单；其他 retarget 方法、BODex 与生成模型均保留为备选。</div>
-<p><a href="l20-robust-grasp-stage1.html#runbook">Stage 1.1 当前第一步</a>只写固定抓姿基线的三个动作与交付物；<a href="l20-robust-grasp.html#long-term">长线路线</a>写持物 → pick/carry/release → 共享控制 → 跨任务；本页只维护选型依据与来源接口。已有 retarget 的小指问题另见<a href="retargeting-research.html">缺陷与候选修法</a>，不要因引入新库抹掉旧诊断。</p>
+<div class="key good"><b>当前只做：</b>单一 cube 的多样抓姿与意图回归 PoC，不考核稳定性。已有 L20 retarget／人工示教可用于准备配对数据；其他方法按需选用，不同时展开。</div>
+<p><a href="l20-robust-grasp-stage1.html#runbook">Stage 1.1 当前第一步</a>写多样抓姿 → 意图回归 → 预测验证；<a href="l20-robust-grasp.html#long-term">长线路线</a>再接 robust grasp 与共享控制。本页保留抓姿来源文献与后续物理评测备忘，承重要求不适用于当前 PoC。已有 retarget 的小指问题另见<a href="retargeting-research.html">缺陷与候选修法</a>。</p>
 <nav class="toc" aria-label="本页目录"><b>目录</b> · <a href="#routes">1 三类路线</a> · <a href="#local">2 本地资产审计</a> · <a href="#datasets">3 人类数据库</a> · <a href="#retarget">4 Retarget 方向</a> · <a href="#generators">5 模型生成</a> · <a href="#optimization">6 数学优化</a> · <a href="#contract">7 统一接口</a> · <a href="#selection">8 如何使用文献库</a></nav>
 
 <h2 id="routes"><span class="n">§ 1</span>三个入口成立，但并不互斥</h2>
@@ -115,7 +115,7 @@ caption { text-align:left; margin:8px 0; }
 <tr><td>O：数学 / 仿真优化</td><td>手、物体、候选接触和初值 → 优化后的 grasp / squeeze</td><td>通常不需要学习模型；需要优化计算</td><td>force closure / QP 分数不是动态持物成功率</td></tr>
 </tbody></table></div>
 <p>例如 <b>Dexonomy 是人工类型模板 + 优化（H+O）</b>，GenDexGrasp 是神经接触图 + 优化（G+O），人类姿态经 BODex 修正属于 H+O。保留 source、retargeter、refiner 三个字段，不能一修正就把人类来源改成“纯优化”。</p>
-<p>本轮最终链路是：<b>来源 → 统一 candidate → 固定闭合与承重检查 → 合格初态 → 同一持物 controller → 统一扰动评测</b>。下一阶段在前面增加 approach / acquisition，在后面增加 carry / release；长程调度器或 VLA 调用这个局部能力，不需要从第一天端到端学完整任务。</p>
+<p>后续 robust grasp 的参考链路是：<b>来源 → 统一 candidate → 固定闭合与承重检查 → 合格初态 → 同一持物 controller → 统一扰动评测</b>。这是物理控制阶段的备忘，不是当前 Stage 1.1 的任务。</p>
 
 <h2 id="local"><span class="n">§ 2</span>已有 grasping：能省掉哪些工作？</h2>
 <p>只读核验根目录：<code>/Users/yang/Desktop/Projects/Education/Dex_Hand/grasping</code>。下面路径均相对此目录。结论来自代码、配置与原始记录，不仅来自 README。本轮没有改这个项目，也没有重跑旧实验。</p>
@@ -124,14 +124,14 @@ caption { text-align:left; margin:8px 0; }
 <thead><tr><th>资产 / 证据定位</th><th>核实到什么</th><th>复用方式与限制</th></tr></thead><tbody>
 <tr><td><code>optimization/planner/README.md</code><br><code>optimization/planner/cost_functions/</code><br><code>config.yaml</code></td><td>CPU BODex-style：MuJoCo FK、GJK 接触、内层 friction-cone QP、有限差分外层优化；coarse → fine → final → grasp → test。默认 ORCA、17 手指关节</td><td>复用阶段划分、距离／穿透／力学成本、失败报告。不是官方 GPU 算法逐数值复现。必须替换本体关节映射、接触面、耦合及模型，不是只换 XML</td></tr>
 <tr><td><code>optimization/planner/principle_summary_20260703-111714.csv</code><br>以及同日其他 summary</td><td>该文件 test=SUCCESS、n_pass=6、physics_version=2、force-only；同日既有 6/6，也有 4/6、0/6 和未到 test 的记录</td><td>证明已有成功案例，纠正 6 月 README “还未完成 6/6”的过时状态。不是跨物体统计，也不是 L20 成绩；复现前找齐当时配置／状态，不能用当前 YAML 反推历史参数</td></tr>
-<tr><td><code>optimization/planner/eval_ssr.py</code><br><code>evaluate_tabletop()</code></td><td>除六向重力评测外，已有桌面闭合 → 抬起 → 六方向移动手腕；mocap + compliant weld 驱动手，以掌坐标相对误差测滑移</td><td><b>与我们的问题直接相关，优先复用评测结构。</b>该函数不是每帧覆写腕部 qpos；但方向、加速度、阈值、计分起点需换成 Stage 1.1。尚未找到可归为当前 L20 tabletop 协议的成绩</td></tr>
+<tr><td><code>optimization/planner/eval_ssr.py</code><br><code>evaluate_tabletop()</code></td><td>除六向重力评测外，已有桌面闭合 → 抬起 → 六方向移动手腕；mocap + compliant weld 驱动手，以掌坐标相对误差测滑移</td><td>后续 robust grasp 可参考其评测结构，不属于当前意图 PoC。该函数不是每帧覆写腕部 qpos；迁移时再确定方向、加速度、阈值与计分起点。尚未找到已验证的 L20 tabletop 成绩</td></tr>
 <tr><td><code>optimization/planner/config.yaml</code> 的 eval</td><td>当前配置含 grip_kp_boost=8、forcerange=1.0、平移阈值 5 cm、旋转 15°；桌面 shake 5 cm / 0.3 s</td><td>这些是旧评测控制条件，不是本轮安全值。迁移时取消隐式增益加倍，冻结实际生效的执行器参数；六向重力、六向移动、十二向 wrench 各自单列</td></tr>
 <tr><td><code>studio/README.md</code><br><code>studio/REMOTE_CUROBO_PLAN.md</code><br><code>third_party/bodex/</code></td><td>已有配置界面、hash 缓存、种子排序、官方 BODex/cuRobo 与 DexGraspBench 的集成记录；官方 clone remote 为 JYChen18/BODex</td><td>复用候选管理和 native ORCA 回归路径。远端环境是否仍可用本轮未连机验证；历史不同 run 的成功率不合并。CPU/GPU 成本对拍的宽容差检查不等于逐数值一致</td></tr>
 <tr><td><code>studio/_runs/1daa98d403d1/bottle/seed000/result.json</code></td><td>真实失败样本：<code>post_final_infeasible_skipped</code>、success=false、n_pass=0，并保存穿透与 gap 等诊断</td><td>复用“生成失败也入账”的 schema。该例没有进入有效持物测试，不能把它叫作一个正常动态掉落 episode</td></tr>
 <tr><td><code>assets/linkerhand_l20_right/</code><br><code>scripts/grasp_synth_simple.py</code><br><code>optimization/planner/known_good_grasp.py</code></td><td>有 L20 网格／碰撞资产和简单／人工 seed 路径；存在资产不证明主 planner 已支持 L20。known-good 脚本逐步锁定腕部 qpos，并含关闭桌面碰撞后的静态承重检查</td><td>人工种子可作初始化参考；关闭桌面碰撞后的保持不能当真实桌面 pick 成绩。旧 ORCA 抓姿角度不能直接灌给 L20</td></tr>
 </tbody></table></div>
 <p>另一条现成路径在 <code>human_machine_interaction/hand_control/services/level_1_retargeting/</code>：L20 vector / angle 已有实现，vector 有针对 5 组耦合的处理。<a href="hand-control.html#v1">已有工程记录</a>同时记载小指 curl、限位与小物体 pinch 失败；所以“vector 跟踪较准”不等于“已经抓得稳”。</p>
-<div class="key warn"><b>继承结论：</b>我们不是从零做 grasp synthesis，也没有已经能直接运行的 L20 BODex baseline。先保留一条旧 ORCA 回归用于检查移植是否破坏原流程，再在 L20 上重新生成、重新承重、重新测扰动。旧文件的 test 状态不写进 Stage 1.1 的执行台账。</div>
+<div class="key warn"><b>继承结论：</b>我们不是从零做 grasp synthesis，也没有已经能直接运行的 L20 BODex baseline。若后续移植，保留旧 ORCA 回归测试并重新验证 L20。旧文件的 test 状态不写进 Stage 1.1 的执行台账。</div>
 
 <h2 id="datasets"><span class="n">§ 3</span>人类数据库：有，但保存的不是机器人控制命令</h2>
 <div class="tw" tabindex="0" role="region" aria-label="人类抓取数据库"><table>
@@ -139,16 +139,16 @@ caption { text-align:left; margin:8px 0; }
 <thead><tr><th>文献 / 作者 / 年份 / 来源</th><th>能拿到什么</th><th>本项目用途</th><th>获取与限制</th></tr></thead><tbody>
 <tr><td><a href="https://contactpose.cc.gatech.edu/">ContactPose: A Dataset of Grasps with Object Contact and Hand Pose</a><br>Brahmbhatt 等，ECCV 2020</td><td>手／物体位姿、物体表面接触与 RGB-D；静态功能抓取</td><td>最直接的“手形 + 接触区域”模板参考。先挑一个有匹配 mesh 的物体，抽稳定抓取，不先下载所有图片</td><td><a href="https://github.com/facebookresearch/ContactPose">官方代码与更新</a>：原 Dropbox 入口失效，迁至 IEEE DataPort，另有 Google Drive 样例。接触图不是接触力；物体模型逐项看 license</td></tr>
 <tr><td><a href="https://oakink.net/">OakInk: A Large-scale Knowledge Repository for Understanding Hand-Object Interaction</a><br>Yang / Li / Zhan 等，CVPR 2022</td><td>OakInk-Shape 的 MANO 手物几何、抓姿；Image 序列与 intent / affordance 信息</td><td>需要“按用途抓”时优先：保留 hold / use / handoff 等原标签，不自己把不同 intent 混成同一包握</td><td>官方提供 Hugging Face、toolkit；部分 annotation 仍列有表单入口。人类生成模型输出仍是人手，不是 L20。核对 annotation 版本</td></tr>
-<tr><td><a href="https://grab.is.tue.mpg.de/">GRAB: A Dataset of Whole-Body Human Grasping of Objects</a><br>Taheri 等，ECCV 2020</td><td>全身、手与物体交互序列，接触关系；GrabNet 人手生成模型</td><td>Stage 1.2 的 approach / close / carry / release 轨迹与功能抓取先验</td><td>下载注册与研究许可、SMPL-X/MANO 依赖分别核对。不是现成机器人示教或抗扰力标签</td></tr>
+<tr><td><a href="https://grab.is.tue.mpg.de/">GRAB: A Dataset of Whole-Body Human Grasping of Objects</a><br>Taheri 等，ECCV 2020</td><td>全身、手与物体交互序列，接触关系；GrabNet 人手生成模型</td><td>后续 approach / close / carry / release 轨迹与功能抓取先验</td><td>下载注册与研究许可、SMPL-X/MANO 依赖分别核对。不是现成机器人示教或抗扰力标签</td></tr>
 <tr><td><a href="https://dex-ycb.github.io/">DexYCB: A Benchmark for Capturing Hand Grasping of Objects</a><br>Chao 等，CVPR 2021</td><td>YCB 物体 mesh、RGB-D、3D 手姿与 6D 物体姿态</td><td>已使用 YCB 同款资产时便于对齐；后续视觉、handover 与手物位姿估计</td><td>官方 toolkit；数据 CC BY-NC 4.0。它主要是感知／交接 benchmark，不提供可直接下发的 L20 力控轨迹</td></tr>
-<tr><td><a href="https://oakink.net/v2/">OakInk 2: A Dataset of Bimanual Hands-Object Manipulation in Complex Task Completion</a><br>Zhan / Yang 等，CVPR 2024</td><td>双手长任务、物体状态、primitive 描述与依赖图</td><td>长期 pick → use → place 分解、意图与局部技能接口</td><td>官方页面仍注明 preview、标注可能更新；固定下载版本。当前 8 s 单手持物不依赖它</td></tr>
+<tr><td><a href="https://oakink.net/v2/">OakInk 2: A Dataset of Bimanual Hands-Object Manipulation in Complex Task Completion</a><br>Zhan / Yang 等，CVPR 2024</td><td>双手长任务、物体状态、primitive 描述与依赖图</td><td>长期 pick → use → place 分解、意图与局部技能接口</td><td>官方页面仍注明 preview、标注可能更新；固定下载版本。当前单一 cube PoC 不依赖它</td></tr>
 </tbody></table></div>
 <h3>先把“一条数据”读通，不先建一个大数据库</h3>
 <ol>
 <li>登记许可、dataset version、subject / object / sequence / frame ID，取右手与对应物体 mesh；保留米／毫米、坐标系和 MANO 版本信息。</li>
 <li>把手与物体变到同一 object frame；可视化掌面、拇指、关键点及接触。确认不是左手镜像错误或不匹配的物体尺度。</li>
 <li>固定同一输入，对 angle、vector、DexPilot 分别输出 L20 reference；只调整训练／开发样本上的 mapping、scale 和约束。</li>
-<li>导出物体相对掌位姿、主动关节目标、接触／类型标签，再通过<a href="#contract">统一合同</a>和 Stage 1.1 承重检查。保存失败样本，不仅留好看的。</li>
+<li>导出物体相对掌位姿、主动关节目标、接触／类型标签。当前 PoC 检查几何合理性并配对用户输入；后续物理控制再参考<a href="#contract">统一合同</a>做承重检查。保存失败样本，不仅留好看的。</li>
 </ol>
 <p><b>70 mm cube 的特殊限制：</b>不能把 ContactPose 的某个 bottle 抓姿缩一缩便声称是“原始人类方块示教”。第一轮 cube 的人类来源用本地采集或明确标记的人工 L20 模板；公共库接入先在它自己的匹配 mesh 上做一个独立 adapter 验收。若要把该物体纳入正式比较，建立新的 object manifest，三类来源都使用同一物体与尺度，不偷换当前 cube benchmark。</p>
 <p>在人／物／序列层面先切分，再截帧、retarget 和增强。同一段视频的相邻帧、同一源抓姿的微扰不能横跨训练与测试。公开数据仅给先验，不给本项目的动力学真值。</p>
@@ -219,9 +219,9 @@ caption { text-align:left; margin:8px 0; }
 <p>若比较“直接 retarget”和“retarget + optimizer”，保留为两列；纯自动方法不能只挑最漂亮视频与人工反复修好的一个模板比赛。跨方法场景与预算统一，但各自合格初态不同，因此来源表不是 controller 能力归因。</p>
 
 <h2 id="selection"><span class="n">§ 8</span>如何使用这份文献库</h2>
-<p>当前执行 <a href="l20-robust-grasp-stage1.html">L20 固定抓姿基线</a>。这里的数据库、retarget、优化器和生成模型都是备选，不预排下一轮移植顺序；实际实验出现需求后再回来选方法。</p>
+<p>当前执行 <a href="l20-robust-grasp-stage1.html">Cube 多样抓姿与意图回归 PoC</a>，回归不满足需求再考虑分类。这里的数据库、retarget、优化器和生成模型是来源备选，不预排移植顺序；有实际需求后再选方法。</p>
 <p><b>对 SOTA / “大家常用”的结论：</b>没有可核验的统一使用量统计，不能诚实地选出“行业用得最多的一篇”。更可操作的工程参照是：dex-retargeting 有独立库与视频／HOI 示例；DexGraspNet 系列提供被后续方法使用的数据与比较基准；BODex / DexGraspBench / Dexonomy 有连续的合成、评测与类型扩展链。它们属于可复用的基础参照，<b>不是因较老就过时，也不是因有代码就已成熟适配 L20</b>。</p>
-<p>近期变化不是一律“训练一个再蒸馏”：还有不训练的优化、接触／类型条件生成、跨本体表示、物理轨迹 retarget 和进化筛选。当前我们先把这些方法接到同一个 candidate / controller 边界，而不是选一个最大模型统一替代全部模块。三条来源最后都服务于<b>符合用户选择的局部 pick/hold 策略</b>；是否引入 VLA 是长程调度层的独立决定。</p>
+<p>近期变化不是一律“训练一个再蒸馏”：还有不训练的优化、接触／类型条件生成、跨本体表示、物理轨迹 retarget 和进化筛选。后续可通过 candidate / controller 边界复用这些方法，最终服务于<b>符合用户选择的局部 pick/hold 策略</b>；当前 PoC 不要求接齐这些模块，是否引入 VLA 是长程调度层的独立决定。</p>
 <p class="meta">检索记录：paper-search CLI 的 arXiv / CrossRef 请求受网络解析限制，返回空结果不代表没有论文；本页据论文页面、作者项目、官方代码逐项交叉核验。作者自报性能未移植为本项目分数；本轮仅做文档和既有资产核验。</p>
 <footer>项目选型综述 · 2026-09-08 · <a href="l20-robust-grasp-stage1.html#runbook">Stage 1.1 操作说明 →</a> · <a href="l20-robust-grasp.html">长线路线</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
 </main>
