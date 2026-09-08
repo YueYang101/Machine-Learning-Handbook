@@ -103,7 +103,7 @@ caption { text-align:left; margin:8px 0; }
 <p class="lede">本页给 L20 robust grasp 选择 reference / 初态来源，不替代持物控制器。回答数据库怎么选、retarget 有哪些方向、哪些实现值得复用，以及三类候选如何进入同一套物理测试。</p>
 <p class="meta">核验日期：2026-09-08。范围是与本项目接口相关的代表方法与近期进展，不声称穷尽所有论文或给出统一 SOTA 排名。公开代码／下载入口已核对，未在本轮安装、下载整库或运行作者实验。</p>
 <div class="key good"><b>当前只做：</b>单一 cube 的多样抓姿与意图回归 PoC，不考核稳定性。已有 L20 retarget／人工示教可用于准备配对数据；其他方法按需选用，不同时展开。</div>
-<p><a href="l20-robust-grasp-stage1.html#runbook">Stage 1.1 当前第一步</a>写多样抓姿 → 意图回归 → 预测验证；<a href="l20-robust-grasp.html#long-term">长线路线</a>再接 robust grasp 与共享控制。本页保留抓姿来源文献与后续物理评测备忘，承重要求不适用于当前 PoC。已有 retarget 的小指问题另见<a href="retargeting-research.html">缺陷与候选修法</a>。</p>
+<p><a href="l20-robust-grasp-stage1.html#runbook">Stage 1.1 短期 PoC</a>写多样抓姿 → 意图回归 → 预测验证；<a href="l20-robust-grasp.html#long-term">长期路线</a>独立保留稳定持物、完整局部抓取、用户共享、动态辅助与跨任务目标。本页保留抓姿来源文献与后续物理评测备忘，承重要求不适用于当前 PoC。已有 retarget 的小指问题另见<a href="retargeting-research.html">缺陷与候选修法</a>。</p>
 <nav class="toc" aria-label="本页目录"><b>目录</b> · <a href="#routes">1 三类路线</a> · <a href="#local">2 本地资产审计</a> · <a href="#datasets">3 人类数据库</a> · <a href="#retarget">4 Retarget 方向</a> · <a href="#generators">5 模型生成</a> · <a href="#optimization">6 数学优化</a> · <a href="#contract">7 统一接口</a> · <a href="#selection">8 如何使用文献库</a></nav>
 
 <h2 id="routes"><span class="n">§ 1</span>三个入口成立，但并不互斥</h2>

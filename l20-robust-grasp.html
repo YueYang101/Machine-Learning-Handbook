@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>L20 Robust Grasp：三步主计划 · Machine Learning Handbook</title>
+  <title>L20 Robust Grasp：长期路线与研究候选 · Machine Learning Handbook</title>
   <style>
     :root {
       --ink: #172026;
@@ -134,32 +134,36 @@
 <header><div class="wrap">
 <a class="bk" href="index.html">← Machine Learning Handbook</a>
 <div class="kicker">实验计划 · 精简版 · 2026-09-08</div>
-<h1>L20 Robust Grasp：三步主计划</h1>
-<p class="lead">最终目标：跨物体、跨任务的稳定抓取共享控制。人决定怎么操作，系统辅助拿稳。</p>
+<h1>L20 Robust Grasp：长期路线与研究候选</h1>
+<p class="lead">最终目标：跨物体、跨任务的全程人机共享控制，根据人的意图与操作风险动态调整辅助。Robust grasp 是其中一项底层能力，不是整个长期目标。</p>
 </div></header>
 <main class="wrap">
 <section id="long-term">
-<h2 id="long-term-stages">主线只有三步</h2>
+<h2 id="long-term-stages">长期路线：恢复原有能力主线</h2>
+<p>系统能否理解并保留人的抓取意图，在必要时提供有界、动态的辅助，让物体拿得稳、操作可完成、主动释放不被阻拦？“全程共享”不等于全程接管，也不预设一个网络端到端完成。</p>
 <ol>
-<li><b>意图与抓姿 PoC：</b>只用一个 cube，生成多样抓姿，用回归预测用户想要的姿态；回归不满足需求再考虑分类。</li>
-<li><b>稳定持物：</b>移动手腕、施加外力，观察滑移和掉落；再训练手指微调，与固定 PD 比较。</li>
-<li><b>共享控制：</b>人控制运动和释放，策略辅助拿稳，再接完整 pick 和更多物体／任务。</li>
+<li><b>稳定持物（robust grasp）：</b>外部控腕条件下拿稳物体，验证滑移、掉落与抗扰能力。</li>
+<li><b>完整局部抓取：</b>接 pregrasp → closure → lift → carry → release，逐步增加物体与抓姿变化。</li>
+<li><b>用户共享：</b>接入在线用户与手指 reference，保留人的操作和释放意图，先验证固定／规则辅助。</li>
+<li><b>动态辅助权重：</b>根据风险、不确定性与用户意图调节辅助，减少不必要介入。</li>
+<li><b>跨物体、跨任务评估：</b>从搬运扩展到倾倒／工具使用，分别检验未见对象、任务与用户。</li>
 </ol>
+<p>跨本体、触觉与 teacher/student 保留为条件分支，按实际缺口引入，不作为起步前提。真实部署与安全验证贯穿各阶段。</p>
 </section>
 <section id="current">
-<h2>当前只推进第一步</h2>
+<h2 id="current-poc">当前短期 PoC（与长期路线分开）</h2>
 <p>先验证<b>同一个 cube，不同用户意图能否得到不同抓姿</b>，具体见 <a href="l20-robust-grasp-stage1.html">Stage 1.1：Cube 多样抓姿与意图回归</a>。</p>
-<p>当前不考虑承重、稳定性、抗扰或 pick；这些属于后续 robust grasp。已有 L20 retarget 可用于准备抓姿数据，不把多条方法移植同时展开。</p>
+<p>本轮不考核承重、稳定性、抗扰或 pick；这是当前实验范围的减法，不是删除或重排长期目标。Stage 1.1 的调整只更新短期实验页。</p>
 </section>
 <section id="reading">
-<h2>文献按需查，问题发生后再记</h2>
+<h2 id="research-reading">研究候选：保留，按需启用</h2>
 <p>BODex、生成模型、人类数据库都是后续改善抓姿的备选，资料保留在 <a href="l20-grasp-sources-review.html">独立文献库</a>；共享控制背景见 <a href="shared-control.html">系统路线</a>。</p>
 <p>实验运行后再记录实际参数、结果和下一步，不预设所有问题。Handbook 只写计划和记录，代码与实验在对应实现项目。</p>
 </section>
 <div class="small"><span id="decision" aria-hidden="true"></span><span id="mismatch" aria-hidden="true"></span><span id="problem" aria-hidden="true"></span><span id="grasp-prior" aria-hidden="true"></span><span id="architecture" aria-hidden="true"></span><span id="tactile" aria-hidden="true"></span><span id="v1" aria-hidden="true"></span><span id="baselines" aria-hidden="true"></span><span id="roadmap" aria-hidden="true"></span><span id="compute" aria-hidden="true"></span><span id="next" aria-hidden="true"></span><span id="references" aria-hidden="true"></span>
-<p>旧版大规模路线与预设协议已退出当前计划，可从 <a href="https://github.com/YueYang101/Machine-Learning-Handbook/blob/6e9f473/l20-robust-grasp.html">Git 历史</a>查阅；它们不是实验结果。</p>
+<p>旧 V1 的 teacher/student、wrist mismatch、触觉与扩展场景论证保留在 <a href="https://github.com/YueYang101/Machine-Learning-Handbook/blob/6e9f473/l20-robust-grasp.html">原版研究候选</a>，是备选研究，不是当前执行清单或实验结果。</p>
 </div>
 </main>
-<footer><div class="wrap"><a href="index.html">← Machine Learning Handbook</a> · <a href="l20-robust-grasp-stage1.html">当前第一步 →</a></div></footer>
+<footer><div class="wrap"><a href="index.html">← Machine Learning Handbook</a> · <a href="l20-robust-grasp-stage1.html">当前短期 PoC →</a></div></footer>
 </body>
 </html>
