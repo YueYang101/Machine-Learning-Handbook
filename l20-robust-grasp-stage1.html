@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L20 Robust Grasp · Stage 1.1 实验步骤 · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap canvas { width:100%; display:block; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; }
+.ctl button { font:600 .85rem/1 inherit; color:var(--ink); background:var(--bg);
+  border:1px solid var(--line2); border-radius:7px; padding:7px 11px; cursor:pointer; }
+.ctl button:hover { border-color:var(--blue); color:var(--blue); }
+.ctl button.pri { background:var(--blue); border-color:var(--blue); color:var(--bg); }
+.ctl label { display:inline-flex; gap:5px; align-items:center; font-size:.85rem; color:var(--sub);
+  cursor:pointer; user-select:none; }
+.ctl input[type=range] { flex:1 1 140px; min-width:120px; accent-color:var(--blue); }
+.ctl .ro { font:.8rem/1.4 ui-monospace,Menlo,monospace; color:var(--sub); }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+.chain { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:1.4em 0; }
+.chain .cr { margin:2px 0; }
+.chain .cb { display:inline-block; border:1px solid var(--line2); border-radius:8px; padding:2px 12px;
+  background:var(--bg); }
+.chain .cn { color:var(--muted); font-size:.85rem; margin-left:8px; }
+.chain .ar { color:var(--sub); font-size:.85rem; margin:4px 0 4px 16px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+
+/* Standard handbook tokens; readable link and secondary-text contrast. */
+:root { --panel2:#f0f1ed; --blue:#165da8; --blue-fill:#e8f0fa; --focus:#165da8; --muted:#686760; --violet:#6c4394; --cyan:#146a78; }
+@media (prefers-color-scheme: dark) {
+  :root { --panel2:#222321; --blue:#83baff; --blue-fill:#15253a; --focus:#83baff; --muted:#a7a69f; --violet:#c5a3eb; --cyan:#8acbd6; }
+}
+a { text-decoration:underline; text-underline-offset:3px; }
+a:focus-visible, .tw:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
+.bk, .toc a { min-height:44px; display:inline-flex; align-items:center; }
+h1 small { display:block; font-size:.66em; color:var(--sub); margin-top:10px; }
+h2 { scroll-margin-top:18px; }
+.meta { color:var(--sub); font-size:.9rem; }
+code { font:.86em/1.6 ui-monospace,Menlo,monospace; overflow-wrap:anywhere; }
+table { min-width:640px; }
+caption { text-align:left; color:var(--sub); padding-bottom:8px; }
+.tw { border:1px solid var(--line); border-radius:8px; padding:0 8px; }
+.tw:focus { outline-color:var(--focus); }
+ol, ul { padding-left:1.5em; }
+.formula { overflow-x:auto; padding:12px; border:1px solid var(--line); background:var(--panel); border-radius:8px; font-family:ui-monospace,Menlo,monospace; font-size:.9rem; }
+@media (max-width:480px) {
+  .wrap { padding:24px 16px 60px; }
+  h1 { font-size:1.65rem; }
+  .duo { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+<a class="bk" href="l20-robust-grasp.html">← 长线路线与研究候选</a> ·
+<a class="bk" href="index.html">Machine Learning Handbook</a>
+<div class="kicker">MACHINE LEARNING HANDBOOK · 实验计划 / 短期执行</div>
+<h1>L20 Robust Grasp · Stage 1.1<small>先把抓住的物体拿稳：任务、reward、扰动与验收步骤</small></h1>
+<p class="lede">这不是另一个泛泛的研究路线，而是第一轮实验的实施说明：用少量人类风格抓姿完成初始化，手腕由外部轨迹驱动，手指策略学习持物抗扰。读完应能在实现仓库中明确构建环境、跑哪些对照、何时停止以及下一步做什么。</p>
+<p class="meta">2026-09-07 · 版本 1.1 方案稿 · 尚未实现本任务／尚未训练／没有实验成绩。所有新数值都是 pilot 起始建议，不是硬件安全认证或文献最优参数。</p>
+<div class="key good"><b>一句话决定。</b>先做 L20、单个 70 mm 方块、一个包握类型、外部控腕、16 维 finger residual PPO；测试从“已抓住”的真实接触状态开始，持续 8 秒。先不做 teacher/student、大规模人类库、视觉、密集触觉、长程工具任务或学习型辅助权重。</div>
+<div class="key warn"><b>文档与实现分开。</b>本 Handbook 只记录实验步骤、选择理由与验收标准，不保存训练代码或可执行配置。实际环境与训练在 <code>/Users/yang/Desktop/Projects/Education/Dex_Hand/human_machine_interaction/training/</code> 下推进；GPU checkpoints / rollout 保留在实现项目既定的训练产物目录。这里不启动训练，不宣称下面提出的环境名已经注册。</div>
+<nav class="toc" aria-label="本页目录"><b>目录</b> ·
+<a href="#scope">1 目标与边界</a> · <a href="#protocol">2 抓取与初始化</a> ·
+<a href="#prior">3 人类风格</a> · <a href="#control">4 控制与物理</a> ·
+<a href="#observation">5 观测</a> · <a href="#disturbance">6 干扰</a> ·
+<a href="#reward">7 Reward</a> · <a href="#termination">8 成败</a> ·
+<a href="#baselines">9 对照</a> · <a href="#training">10 训练顺序</a> ·
+<a href="#evaluation">11 测试与泛化</a> · <a href="#checklist">12 交付与转段</a> ·
+<a href="#evidence">13 依据</a></nav>
+
+<h2 id="scope"><span class="n">§ 1</span>长线不变，第一步只问一个问题</h2>
+<div class="key good"><b>长期目标：</b>跨物体、跨任务的稳定抓取共享控制，能够根据人的意图和抓取风险动态调整辅助，同时保留人对目标、运动与释放的控制。<b>Stage 1.1：</b>在同样外部腕部运动、初始抓姿和执行器限制下，在线手指调整是否比固定闭合更能减少滑移与掉落？</div>
+<p><a href="l20-robust-grasp.html#long-term">总路线页</a>负责阶段关系与长期研究候选；本页负责第一轮实验的具体步骤。<a href="shared-control.html">共享控制页</a>保留系统架构及人机接口背景。三页不互相替代。</p>
+<div class="tw" tabindex="0" role="region" aria-label="阶段范围"><table>
+<caption>Stage 1.1 的包含项和明确排除项</caption>
+<thead><tr><th>维度</th><th>这轮做什么</th><th>这轮不声称什么</th></tr></thead><tbody>
+<tr><td>本体／对象</td><td>L20，单个刚性方块，单一包握类型</td><td>不是跨本体，也不是跨形状泛化</td></tr>
+<tr><td>任务</td><td>已建立抓取后，抵抗运动和外力；保留独立桌面入口</td><td>不是从任意桌面位置端到端抓取</td></tr>
+<tr><td>人类先验</td><td>少量抓姿模板、类型与接触位置检查</td><td>不是完整人类动作生成模型</td></tr>
+<tr><td>人机关系</td><td>腕部从第一天就由外部决定；留 reference / release 接口</td><td>没有实时人类训练，也未验证动态权重或用户体验</td></tr>
+<tr><td>主方法</td><td>直接训练 finger residual；PPO + history 起步</td><td>teacher/student 只是以后有证据再启用的候选</td></tr>
+</tbody></table></div>
+<p>现有 CubePick 证明训练链可用，但“184.7/200 个目标区内步数”不是 92% 的独立抓取成功率。不要把旧指标沿用成本任务的标题成绩。复杂工具专家也不是 Stage 1.1 的先决条件。</p>
+
+<h2 id="protocol"><span class="n">§ 2</span>不是不抓起来，而是先不学习“怎么抓起来”</h2>
+<div class="key good">固定流程负责闭合与抬起；学习控制器负责后面的 8 秒。两个控制器比较时，必须从相同且能真实承重的初态开始，而不是各自挑最有利的一次抓取。</div>
+<ol>
+<li><b>准备候选。</b>按 §3 得到一个 L20 包握 reference。使用现有 CubePick 资产中的方块：边长 0.07 m、质量 0.108 kg；不同时换场景和任务。</li>
+<li><b>建立抓取。</b>用固定的闭合／抬起流程，或用现有策略离线获得候选。动作要经过真实模拟动力学，不能把穿透的关节姿态直接当稳定抓姿。</li>
+<li><b>解除所有支撑。</b>物体底部至少离桌面 0.10 m；物体没有 weld、悬挂或其他隐形支撑。若只能在初始化时临时固定物体，必须先解除，再开始下面的检查。</li>
+<li><b>稳定检查 0.5 s。</b>使用固定 PD，不计训练奖励；没有桌面／地面接触、无明显穿透、无持续滑移。建议窗口内相对平移漂移 ≤2 mm、相对旋转 ≤2°，末端相对速度 ≤0.01 m/s。阈值先审计数值噪声，合格后冻结。</li>
+<li><b>记录初态。</b>保存模型及参数 hash、完整积分状态、控制目标、初始化来源、reference 和重建说明；同一 backend 支持精确恢复。换 backend / 物理参数后必须重新稳定，不能假设原快照仍处于平衡。</li>
+<li><b>开始计分。</b>以稳定检查结束时的手—物体关系为固定目标，清空 episode 指标，运行 8 s = 200 个 25 Hz control steps。运动／外力只在计分开始后出现。</li>
+</ol>
+<p><b>初始化失败单独记账。</b>每组最多尝试 20 次；仍失败记为 initialization failure，不无限重采样。条件持物指标的分母是合格初态数，同时单列候选总数、初始化通过率与失败原因。比较 controller 时共用同一批初态；不能按每个 controller 的表现重新筛选。</p>
+<p><b>两个入口。</b>主入口是“已抓住状态 → 抗扰”，用于训练与归因；完整入口是“固定 pregrasp → 固定闭合／抬起 → 抗扰”，在本轮末期补验证。分别报告初始化、条件持物、完整流程成功率。桌面入口失败不会被从完整流程分母删除，也不等于一定是持物策略失败。</p>
+<p>先用 1 个合格初态做 smoke，再用同一抓取类型的 3–5 个物理合格变体做 pilot。保存未见初态变体作验证／测试；不靠复制同一个快照制造“抓姿泛化”。</p>
+
+<h2 id="prior"><span class="n">§ 3</span>“像人”保留在哪里？</h2>
+<div class="key good">先保留抓取类型、拇指对向关系和功能接触位置，不要求每一帧都匹配人类关节角。人类先验负责提出合理 reference，物理检查负责证明它可以承重。</div>
+<p>第一轮只选一个适合方块的包握类型。可以用现有 Quest／retargeting 流程记录少量参考，或在 L20 上标注类型模板；没有必要先接入大型人类数据库。retarget 必须服从 L20 的 16 个主动关节和 5 组耦合，不能把人手 21 维角度逐项复制。</p>
+<ol>
+<li>检查掌面朝向、拇指对向以及哪些指节应接触物体；标出禁止靠关节极限／穿透形成的抓姿。</li>
+<li>转为 L20 reference 后，调整物体相对位姿和手指闭合量，完成 §2 的物理检查。</li>
+<li>冻结 reference；允许 residual 在有界邻域内调整。每次失败回放检查是否变成非预期抓取类型。</li>
+<li>先记录自然度／类型保持，不立即加大权重的模仿 reward；若策略持续改变类型，先检查 reference 和动作边界，再做单独约束消融。</li>
+</ol>
+<p><a href="https://pku-epic.github.io/Dexonomy/">Dexonomy（RSS 2025）</a>从每手型／每抓取类型一个人工模板出发合成抓姿，适合参考这一步；<a href="https://github.com/JYChen18/Dexonomy">官方实现</a>采用 MuJoCo，当前支持列表不含 L20，接入仍需手模型、接触标注与模板适配。<a href="https://jianglongye.com/cgf/">CGF（RA-L 2023）</a>是人类轨迹 retarget 后学习自然抓取动作的参考，适合以后做完整 approach / closure style；它不是本轮抗扰控制器的替代品。</p>
+<p><b>对照公平性：</b>固定 PD 和学习策略共用相同 reference。如果以后比较“有人类先验 vs 无先验”，必须把它作为独立消融，不能同时改变初态质量、controller 和动作范围。</p>
+
+<h2 id="control"><span class="n">§ 4</span>控制接口与物理：先固定这些，再调 reward</h2>
+<div class="key good">Policy 只有 16 维手指输出；腕部由独立轨迹驱动。Residual 是相对 reference 的有界偏移，不是逐步累加直到关节极限。</div>
+<div class="math">$$q_{\mathrm{raw},t}=q_{\mathrm{ref}}+0.15\,a_t,\qquad a_t\in[-1,1]^{16}$$
+<p class="why">0.15 的单位是 rad，是首轮建议，不是已测最佳幅度；所有 baseline 使用同一个允许目标集合。reference 按主动关节顺序存储，用关节名映射，不依赖 XML 隐含顺序。</p>
+$$q_{\mathrm{cmd},t}=\operatorname{clip}_{[q_{\min},q_{\max}]}\!\left[q_{\mathrm{cmd},t-1}+\operatorname{clip}_{[-v_{\max}\Delta t,v_{\max}\Delta t]}(q_{\mathrm{raw},t}-q_{\mathrm{cmd},t-1})\right],\quad v_{\max}=0.8\ \mathrm{rad/s}$$
+<p class="why">关节范围与目标速率限制始终生效；记录 raw action、限幅后 command 和实际 q，避免把“输出很平滑”误当作“执行很平滑”。腕部 command 不经过 policy 修改。</p></div>
+<div class="tw" tabindex="0" role="region" aria-label="物理与控制参数"><table>
+<caption>首轮候选配置；与旧 CubePick 的差异必须留档</caption>
+<thead><tr><th>项</th><th>Stage 1.1 起点</th><th>为什么／验收</th></tr></thead><tbody>
+<tr><td>Policy period</td><td>0.04 s，25 Hz</td><td>沿用现有 CubePick 控制周期，暂不一起改成 50 Hz</td></tr>
+<tr><td>Physics timestep</td><td>0.002 s，每 control step 20 substeps</td><td>旧 CubePick 是 0.01 s；这是有意改变，必须补物理与 checkpoint 对照</td></tr>
+<tr><td>Integrator / solver</td><td>候选 implicitfast / Newton / elliptic；优先核对 teleop 设置</td><td>验证本机与 GPU backend 支持；不为吞吐静默改接触或耦合</td></tr>
+<tr><td>训练／评估</td><td>MJX-Warp 候选训练；CPU MuJoCo 为独立评估端</td><td>先通过相同控制序列的短时 replay 与 nominal / stress 排名检查</td></tr>
+<tr><td>腕部驱动</td><td>受限、平滑、动态驱动的外部 pose target</td><td>现有 6 轴位置执行器可做 smoke，但与 teleop 的 mocap / soft-weld 差异必须审计；每帧不能覆写物体或腕部 qpos</td></tr>
+<tr><td>执行器</td><td>冻结 XML 的 kp、forcerange、耦合、关节和碰撞设置</td><td>不沿用锤钉分支为工具任务修改的强度；改参数就是新实验版本</td></tr>
+<tr><td>数值敏感性</td><td>同一物理时长补 dt=0.001 s 评估</td><td>控制频率不变；若失稳现象消失或明显改变排序，先修物理再解释方法增益</td></tr>
+</tbody></table></div>
+<p><b>单位注意：</b>MuJoCo actuator force 是广义执行器力，经传动作用于关节；对 hinge，关节广义力是力矩。它不是指尖法向力，更不是材料损坏阈值。当前项目的数值上限只能叫“仿真执行器限制”，不能写成“已标定安全抓力”。</p>
+
+<h2 id="observation"><span class="n">§ 5</span>Actor 看什么？先明确部署信息边界</h2>
+<div class="key good">第一版使用 proprioception 与腕部历史，不接视觉／高分辨率触觉。物体真值可以用来计算 reward 和训练 critic；不能无标注地送入宣称可部署的 actor。</div>
+<div class="tw" tabindex="0" role="region" aria-label="观测设计"><table>
+<caption>部署候选 actor 的每帧观测，共 98 维</caption>
+<thead><tr><th>观测</th><th>维度</th><th>来源与处理</th></tr></thead><tbody>
+<tr><td>主动关节 q、q̇</td><td>16 + 16</td><td>仿真可得；真机回读频率与速度估计仍需核验，不虚构耦合子关节传感器</td></tr>
+<tr><td>q reference、上次实际发出的 command</td><td>16 + 16</td><td>本机已知；明确限幅前后</td></tr>
+<tr><td>上次 raw action</td><td>16</td><td>用于识别动作平滑／饱和，reset 时清零</td></tr>
+<tr><td>实际 wrist twist、当前已收到指令的 wrist twist</td><td>6 + 6</td><td>统一转换到当前 palm frame；差分与滤波因果计算</td></tr>
+<tr><td>期望／实际 wrist pose tracking error</td><td>6</td><td>平移向量 + 相对旋转向量，不用跳变的 Euler 角</td></tr>
+</tbody></table></div>
+<p>堆叠当前及过去 7 帧，共 784 维，最老一帧距当前 0.28 s；reset 复制首帧填充，不继承上一 episode 的历史。先用 MLP history baseline，不把引入 LSTM 和改任务混在一次实验里。各字段统一单位，训练期统计 normalization，验证／测试冻结统计量。</p>
+<p><b>Critic：</b>在 actor 信息基础上可增加真实手—物体相对位姿／速度、耦合关节状态、质量、摩擦、COM、当前外力和本有限时域任务的剩余时间。<b>Oracle actor：</b>另设有物体相对状态的诊断对照，不作为真实部署成绩。</p>
+<p><b>禁止的信息：</b>未来 Quest 帧、下一次扰动的时间／方向、test scenario ID，以及通过固定 timestep index 记住扰动表。质量、摩擦随机化后不得作为部署 actor 的已知标签。本轮传感接口仍是候选；实机接口未核验前只称“仿真中的部署观测候选”。</p>
+
+<h2 id="disturbance"><span class="n">§ 6</span>干扰不是随便摇：先分开测，再混合</h2>
+<div class="key good">腕部运动模拟人怎么搬动物体；对物体施加外力模拟碰撞、阻力和负载。两类先分开，才能知道失败来自运动还是外接触。每次测试恢复初态，扰动的单位、坐标系、时间和实际实现值都记录。</div>
+<h3>6.1 Wrist trajectory bank</h3>
+<p>平移用世界坐标轴，旋转用 episode 初始 palm 的局部轴。使用起止速度、加速度为零的 minimum-jerk 段；在两个端点间往返并有随机停顿，不按轴顺序固定循环。</p>
+<div class="math">$$s(u)=10u^3-15u^4+6u^5,\qquad u=\operatorname{clip}(t/T,0,1),\qquad p(t)=p_0+A\,s(u)\,d$$
+<p class="why">d 是单位方向；A 为位移，T 为单段时长。旋转用同一 s(u) 沿固定轴插值角度。检查真实加速度而非只看“移动了多远”：平移峰值速度为 1.875A/T，峰值加速度约为 5.774A/T²。</p></div>
+<p>首轮训练候选：平移 A=0.02–0.10 m；旋转 10–30°；单段 T=0.8–1.6 s；段间停顿 0.2–0.6 s。限制平移加速度 ≤1 m/s²、角加速度 ≤5 rad/s²；超限轨迹重采样。先单轴，后混合；合成后再检查界限，不把每轴合格误认为合成运动合格。</p>
+<h3>6.2 External wrench bank</h3>
+<p>腕部静止，对物体施加六向力 ±x/±y/±z 和六向力矩 ±roll/±pitch/±yaw。坐标轴固定为 episode 初始 palm frame，并变换到仿真施力所需坐标。力作用于 COM；纯力矩单独施加。以后才加入离心接触点，因为偏心力同时产生力矩。</p>
+<ul>
+<li><b>脉冲：</b>1–5 s 内随机开始，持续 0.24–0.48 s；上升／下降各 0.04 s，按 physics substep 平滑施加，不用理想瞬时冲量。</li>
+<li><b>强度：</b>训练力幅值取 0.1–0.5 mg；力矩取 0.05–0.25 mgr，r=0.035 m 为固定报告尺度，不是解析抗扭能力。</li>
+<li><b>量纲核对：</b>nominal m=0.108 kg、g=9.81 m/s² 时，0.5mg=0.52974 N；0.25mgr=0.00927045 N·m。质量改变后按当前质量换算，并同时报告归一化强度和实际 N / N·m。</li>
+<li><b>阈值扫描：</b>另做单方向逐渐加力／加力矩，记录首次超限滑移强度；每个方向重置。到测试上限仍不失稳，报告“≥上限”，不假称测到了极限。</li>
+</ul>
+<h3>6.3 Physics randomization</h3>
+<p>在静态 nominal 通过后，逐步加入质量 nominal ×[0.8,1.2]，有效滑动摩擦 μ∈[0.3,0.8]。质量变更必须同步合理惯量，COM 第一轮固定。摩擦必须检查实际接触参数：不能只改 object geom，而手／物体的接触混合规则使生效摩擦仍是旧值。记录接触 pair 的实际 μ。</p>
+<p>不同物理参数必须重新建立／稳定初态，并报告通过率；否则“只保留能初始化的低摩擦样本”会暗中改变任务分布。暂不同时随机 actuator gains、延迟、COM、对象形状和传感噪声。</p>
+
+<h2 id="reward"><span class="n">§ 7</span>Reward 1.1：具体算什么，为什么这样算？</h2>
+<div class="key good">主信号是“物体相对手掌没有滑走”，不是让物体停在世界某个点。移动手腕时，物体跟手一起运动应得高分；掉落、支撑作弊和失稳不能靠此前的累计 reward 算成功。</div>
+<h3>7.1 先定义测量量</h3>
+<div class="math">$$T_{PO}(t)=T_{WP}(t)^{-1}T_{WO}(t),\qquad T^*_{PO}=T_{PO}(0)$$
+<p class="why">W 是世界，P 是固定 palm site，O 是物体刚体坐标系；0 是通过稳定检查后的计分起点。目标关系在本 episode 内冻结，不能每步重设目标把累积滑移抹掉。</p>
+$$e_p=\|p_{PO}-p^*_{PO}\|,\qquad e_R=2\arccos\!\left(\operatorname{clip}(|\langle q_{PO},q^*_{PO}\rangle|,0,1)\right)$$
+<p class="why">四元数必须归一化；绝对内积使 q 与 −q 等价。eR 使用 rad。方块仍按物体刚体坐标系记录旋转，90° 翻面不能因几何对称被当作“完全没滑”。</p>
+$$v_{\mathrm{slip}}=\|v_O-v_P-\omega_P\times(p_O-p_P)\|$$
+<p class="why">所有速度和位置先统一到世界坐标，vO 是物体 COM 速度，vP 是 palm site 线速度。减掉叉乘项，才能使物体随手掌刚性旋转时得到零相对滑移；直接相减两个线速度会错误惩罚正常旋转。</p></div>
+<h3>7.2 每步奖励与一次性事件奖励</h3>
+<p>定义位置核 Kp=exp[−(ep/0.01 m)²]，旋转核 KR=exp[−(eR/10°)²]。以下每个 C 都归一化到 [0,1]；Δt=0.04 s。H=1 表示仍在计分阶段，非计分初始化不调用本 reward。</p>
+<div class="math">$$r_t=\Delta t\,[H+2K_p+K_R-0.20C_v-0.05C_{\mathrm{ref}}-0.02C_{\mathrm{slew}}-0.10C_{\mathrm{effort}}-0.50C_{\mathrm{sat}}]-5I_{\mathrm{fail}}+2I_{\mathrm{complete}}$$
+<p class="why">括号内是每秒收益／成本，乘 Δt 后不同控制频率的物理时间可比较；失败 −5 和合格完成 +2 只在事件发生时记一次，不乘 Δt，不在终止后继续累积。fail 优先于 complete。</p></div>
+<div class="tw" tabindex="0" role="region" aria-label="奖励项定义"><table>
+<caption>所有权重都是待 pilot 核验的建议起点，不是论文原始 reward</caption>
+<thead><tr><th>项</th><th>精确定义</th><th>设计目的</th></tr></thead><tbody>
+<tr><td>H，权重 +1</td><td>每个有效计分 step 为 1</td><td>保留持物时间收益；不是接触点数奖励</td></tr>
+<tr><td>Kp，权重 +2</td><td>exp[−(ep/0.01)²]</td><td>相对平移误差，不是世界位置</td></tr>
+<tr><td>KR，权重 +1</td><td>exp[−(eR/rad(10))²]</td><td>避免“没掉但在掌内翻滚”</td></tr>
+<tr><td>Cv，权重 −0.20</td><td>min(vslip/0.05 m/s,1)²</td><td>抑制持续滑移，而不惩罚跟手运动</td></tr>
+<tr><td>Cref，权重 −0.05</td><td>mean{clip[(qcmd−qref)/0.15,−1,1]²}</td><td>轻度保留 reference，不把 style 放在防掉之前</td></tr>
+<tr><td>Cslew，权重 −0.02</td><td>mean{clip[(qcmd,t−qcmd,t−1)/(0.8Δt),−1,1]²}</td><td>对实际下发的目标变化计罚</td></tr>
+<tr><td>Ceffort，权重 −0.10</td><td>mean min(|fi|/flimit,i,1)²</td><td>fi 是手指 actuator generalized force；非指尖 Fn</td></tr>
+<tr><td>Csat，权重 −0.50</td><td>mean{clip[(|fi|/flimit,i−0.8)/0.2,0,1]²}</td><td>对接近执行器饱和加罚；正负边界不对称时按符号取对应上限</td></tr>
+<tr><td>Ifail，−5</td><td>§8 的物理／控制失败第一次发生</td><td>有限值失败 transition 记罚；NaN 数据隔离并报警，不把 NaN 喂给 PPO</td></tr>
+<tr><td>Icomplete，+2</td><td>到达 8 s，且满足 §8 的持物完成标准</td><td>超时但尚未恢复不拿完成奖励；与 fail 互斥</td></tr>
+</tbody></table></div>
+<p><b>量级自检：</b>误差和成本均为零的理论单步上界是 0.04×4=0.16；8 s 持续上界为 32，加一次完成奖励为 34。位置误差 1 cm 时 Kp=e⁻¹≈0.368。这里是公式算例，不是实验数据，也不意味着真实承重可以零 effort。</p>
+<p><b>这轮不加：</b>reach、物体世界目标点 bonus、反复 lift bonus、每多一个接触点奖励、完整人类姿态模仿或强 minimum-force 目标。它们会与当前问题混淆。完整桌面入口的前置阶段单独计分，不偷偷把 CubePick 的 near / very-near 收益叠进来。</p>
+<p><b>调参纪律：</b>先记录每项原始值、加权值与 episode 积分，看是否某项占满；每次只改一类权重或阈值，记录版本与理由。不能看到测试集失利就改测试阈值。若所有简单策略也失败，先检查初态／物理／控制权限，而不是立刻加 reward。</p>
+
+<h2 id="termination"><span class="n">§ 8</span>成败判据与恢复：不要只看 reward</h2>
+<div class="key good">“没掉”“没有明显滑移”“受扰后恢复”是不同成绩。第一版分别报告；一个短暂滑移后恢复的 episode 可以算持物完成，但不能算全程严格稳定。</div>
+<div class="tw" tabindex="0" role="region" aria-label="终止与成功规则"><table>
+<caption>数值阈值均为 pilot 候选，固定后再生成测试集</caption>
+<thead><tr><th>事件／指标</th><th>定义</th><th>处理</th></tr></thead><tbody>
+<tr><td>Drop / support contact</td><td>计分阶段物体触桌面／地面；或物体与手失去有效接触持续 ≥0.12 s</td><td>终止失败；有效接触按总法向力 &gt;0.05 N 初筛，先验证阈值高于数值噪声</td></tr>
+<tr><td>Hard slip</td><td>ep&gt;4 cm 或 eR&gt;45°，连续 ≥0.12 s</td><td>终止失败；在 physics substep 累计持续时间</td></tr>
+<tr><td>Wrist tracking failure</td><td>期望／实际腕位误差 &gt;2 cm 或 &gt;10°，持续 ≥0.20 s</td><td>单列失败，保留在全流程分母；无物体时也失败则轨迹／servo pre-gate 不通过</td></tr>
+<tr><td>Numerical invalid</td><td>NaN/Inf、solver 异常或明显穿透／能量爆炸</td><td>记录 invalid trial 与状态，停止排查；不算作“抓取不够聪明”，也不丢掉分母</td></tr>
+<tr><td>持物完成</td><td>满 8 s 无失败，末 0.5 s 持续 ep≤1 cm、eR≤10°</td><td>一次完成奖励；episode 成功，不用成功步数占比代替</td></tr>
+<tr><td>严格稳定</td><td>持物完成，且全过程 ep≤2 cm、eR≤20°</td><td>独立 strict-stability 指标；初始段也计入</td></tr>
+<tr><td>恢复时间</td><td>扰动结束到首次重新进入 ep≤1 cm、eR≤10°，并持续 0.5 s</td><td>未恢复记为 censored / failure，不能只平均恢复成功的 trials</td></tr>
+</tbody></table></div>
+<p>contact dropout 和 hard-slip debounce 是不同计时器；step 内触桌／掉落不应因 step 末刚好恢复被漏掉。<b>本版本定义为 8 s 有限时域任务：</b>物理失败和到达任务终点都结束 episode，均不 bootstrap 到 reset 后的状态；是否成功由上述判据另行决定，正常结束不记失败罚分。仅因训练器外部中断而发生的真正 truncation 才另行保留 bootstrap。critic 可见剩余时间，actor 不接扰动时间表。完成 bonus 只记一次，reset 清空历史。</p>
+<p>同步保存 peak / P95 actuator effort、饱和时长、相对滑移峰值与积分、实际腕部轨迹、initialization acceptance。没有经过触觉标定，不报告“易碎物体安全”或真实材料受力上限。</p>
+
+<h2 id="baselines"><span class="n">§ 9</span>最小对照：先四条，诊断再追加</h2>
+<div class="key good">主要比较的变量是“是否在线调整手指”。初态、reference、腕部命令、实际参数、动作边界、终止判据和 test scenarios 都相同。旧 joint PPO 只作为兼容性诊断，不要拿它单独承担公平对照。</div>
+<div class="tw" tabindex="0" role="region" aria-label="控制基线"><table>
+<caption>Stage 1.1 的第一张结果表应该包含这些行</caption>
+<thead><tr><th>标识</th><th>定义</th><th>解释</th></tr></thead><tbody>
+<tr><td>B0 Fixed PD</td><td>qcmd=qref，固定腕部外部轨迹</td><td>零 residual 的最低必要基线</td></tr>
+<tr><td>B1 Tuned stronger closure</td><td>仅沿已标注的 flexion 方向加固定偏移，候选 0/0.05/0.10/0.15 rad；验证集选一个后冻结</td><td>相同目标边界、速率、kp 和力限制；不把调大 actuator 上限叫方法改进</td></tr>
+<tr><td>B2 Finger PPO, nominal</td><td>16 维 residual，nominal 质量／摩擦；和 B3 相同训练轨迹分布、预算与网络</td><td>分离在线调整与物理随机化的增益</td></tr>
+<tr><td>B3 Finger PPO + uniform DR</td><td>B2 + §6 的质量／有效摩擦随机化</td><td>当前主方法候选；不是本文新发明的 SOTA 算法</td></tr>
+<tr><td>D1 Joint PPO wrist override</td><td>旧 checkpoint，只执行手指输出，腕部改为外部输入</td><td>补 native joint-control 参照；保留它原来的 observation、normalizer、动作解码，不直接把增量输出当本页 residual</td></tr>
+<tr><td>D2 Oracle actor</td><td>B3 actor 加入真值物体相对状态；其余同 B3</td><td>定位观测不足；不能作为部署成绩</td></tr>
+</tbody></table></div>
+<p>D1 的旧模型、physics timestep 和任务目标都有兼容性问题。先记录旧 checkpoint 在 native 配置的表现，再做新 physics 下 joint-control 与 wrist-override 配对，明确变化来源。原始全自主策略不是外部控腕条件的同等对手，也不保证是数学意义上的上界。</p>
+<p>不必第一轮就跑完所有诊断：B0/B1 无法静态持物，先停；B3 表现差，再看 D2；想验证旧自主专家能否复用，再跑 D1。Teacher / student 只有在样本效率或观测迁移的实际缺口出现后进入下一版。</p>
+
+<h2 id="training"><span class="n">§ 10</span>训练顺序与预算：每一段都能停止</h2>
+<div class="key good">先验证环境，再做小预算曲线；不要直接跑满 100M steps。以下是候选训练设置，不是已实现的 config，也不要求先连接真人。</div>
+<ol>
+<li><b>T0 无学习验收。</b>固定物理参数，跑 B0/B1 静态及小扰动；先取得可复现的初态和 baseline 视频。</li>
+<li><b>T1 Smoke。</b>单个 nominal 初态，静止／低幅运动，约 1M environment steps，seed 0。只验证 reward 有限、action 权限正确、终止和日志正确，不宣称泛化。</li>
+<li><b>T2 Nominal pilot。</b>3–5 个同类型初态，加入完整训练腕部轨迹和独立 wrench 场景；B2 的预算上限先设 10M steps。</li>
+<li><b>T3 DR pilot。</b>B3 使用相同训练轨迹、网络和预算；质量／摩擦先窄后宽。训练场景分配：20% 静态、30% wrist-only、30% wrench-only、20% 混合。预热进度按训练 steps 固定，所有学习对照一致，不看 test 调课程。</li>
+<li><b>T4 配对验证。</b>约每 1M steps 在固定验证集评估；按照持物完成率优先、再看严格稳定率和 effort 选 checkpoint，不按最高训练 reward 选。</li>
+<li><b>T5 三 seed。</b>seed 0 通过环境与 nominal gate 后，复跑 seeds 1、2；若 10M 仍在明确改善，可按预先约定延长到 20M/seed，否则先诊断。超过此预算重新立版本决策，不自动无限加算力。</li>
+</ol>
+<div class="tw" tabindex="0" role="region" aria-label="PPO起始参数"><table>
+<caption>PPO 起始建议；继承实现仓库已验证的批处理结构，改动逐项记录</caption>
+<thead><tr><th>参数</th><th>建议</th><th>解释</th></tr></thead><tbody>
+<tr><td>Network</td><td>History MLP；隐藏层 512/256/128</td><td>actor 784 维历史；critic 可用特权状态</td></tr>
+<tr><td>Environment / rollout</td><td>4096 envs，unroll 40，batch size 256，32 minibatches，4 updates</td><td>沿用已有 PPO 批处理起点；先测显存，OOM 只调并行规模并留档</td></tr>
+<tr><td>Learning rate / entropy</td><td>3e−4 / 0.005</td><td>entropy 是候选新值；检查探索是否撞限幅</td></tr>
+<tr><td>Discount / GAE</td><td>γ=0.995，λ=0.95</td><td>25 Hz 下 γ 的约略有效时间尺度为 8 s；比旧 CubePick γ=0.97 更重视延迟掉落</td></tr>
+<tr><td>PPO clipping / grad norm</td><td>0.2 / 1.0</td><td>实现前核对 pinned trainer 的参数接口和默认值，记录实际生效配置</td></tr>
+<tr><td>Reward scaling / normalization</td><td>1.0；观测归一化，eval 冻结</td><td>reward 已按 Δt 积分，不再盲目套旧 CubePick 的 0.1 scaling</td></tr>
+</tbody></table></div>
+<p>只在实现仓库执行启动动作，先确认 GPU 空闲、模型和代码版本、日志落点，再运行。旧文档“某任务一轮约 7 分钟”的吞吐不能当本任务 ETA：这里 timestep、history 和 reset 都不同，必须重新测量。</p>
+
+<h2 id="evaluation"><span class="n">§ 11</span>测试集、过拟合与真正的第一张表</h2>
+<div class="key good">现在就隔离测试，不现在就要求跨一切。先证明同一个物体在未见轨迹／扰动组合上有效；单物体结果不能写成“跨物体通用”。</div>
+<p>验证集建议 96 episodes；最终 test 192 episodes，分为以下 6 组、每组 32 条。训练随机数 seed 范围 0–99,999，验证 200,000–299,999，测试 300,000–399,999；这仅用于避免随机流重用，<b>不能替代初态来源、轨迹类型和物理参数组合的实质隔离</b>。</p>
+<div class="tw" tabindex="0" role="region" aria-label="测试分层"><table>
+<caption>每个 controller 共用冻结的 scenario manifest，test 不参与调参</caption>
+<thead><tr><th>组</th><th>测试内容</th><th>泛化声明</th></tr></thead><tbody>
+<tr><td>E0</td><td>Nominal 静态保持，初态变体</td><td>基础 sanity</td></tr>
+<tr><td>E1</td><td>ID 范围内未见 wrist 轨迹参数／组合</td><td>同分布未见轨迹</td></tr>
+<tr><td>E2</td><td>ID 范围内未见 force / torque pulse</td><td>同分布未见扰动</td></tr>
+<tr><td>E3</td><td>ID 范围内未见 wrist + wrench + 物理参数组合</td><td>组合泛化</td></tr>
+<tr><td>E4</td><td>训练单轴之外的斜向／多轴轨迹，仍满足相同加速度界限</td><td>轨迹结构 OOD；训练 bank 中明确不包含该保留子类</td></tr>
+<tr><td>E5</td><td>力 0.5–1.0 mg 或力矩 0.25–0.5 mgr，其余受控</td><td>强度 OOD，只测承受范围，不保证必须成功</td></tr>
+</tbody></table></div>
+<p>每条 manifest 必须保存初态来源/hash、物理参数、轨迹或生成器版本、所有扰动时刻及幅值、数值设置。对 train 与 test 做实际参数／轨迹重复检查；反复查看 test 视频并据此调模型也算 test 泄漏。</p>
+<p><b>结果表的列：</b>initialization acceptance、条件持物完成率、strict stability、失稳／掉落／腕部失败／数值异常数量、ep/eR peak 与 P95、恢复率／恢复时间、effort P95、饱和比例。报告每个 seed 和每个组，不只合并平均；小 pilot 不包装成大规模统计证明。</p>
+<p>配对重采样同一 scenario ID 比较 B3−B0/B1，报告 95% bootstrap CI；有多 training seeds 时以训练 seed 和 scenario 分层，并保留每 seed 原始值。3 seeds、每组 32 条只能用于方向判断，最终论文规模在下一版确定。掉落 episode 不因无法计算后续滑移而从成功率分母删除；只对成功者计算的滑移统计要明确标注条件。</p>
+<p><b>扩展顺序：</b>Stage 1.1 内看未见运动；Stage 1.2 加圆柱／偏心物体与完整抓取入口；以后再做 held-out object instance / category、未见操作者和未见任务。公开数据库要先按人／物／序列切分，再 retarget，不在 retarget 后随机打散。</p>
+
+<h2 id="checklist"><span class="n">§ 12</span>实际要做的八个交付物</h2>
+<div class="key good">下面均为待完成实验步骤，不因本页写完而打勾。Handbook 负责解释与汇总；实现仓库负责代码、配置、测试和原始证据。</div>
+<div class="tw" tabindex="0" role="region" aria-label="执行清单"><table>
+<caption>在 human_machine_interaction 项目中推进；本轮只更新 Handbook</caption>
+<thead><tr><th>顺序</th><th>交付物</th><th>通过条件／不通过怎么办</th></tr></thead><tbody>
+<tr><td>1</td><td>物理参数冻结单与 CPU/GPU 对拍报告</td><td>接触、耦合、单位、腕部动力学、dt audit 通过；否则先修环境</td></tr>
+<tr><td>2</td><td>一个人类风格 reference 与 3–5 个合格初态</td><td>没有隐形支撑，B0/B1 静态条件持物建议 ≥95%；否则修 reference，不训新模型</td></tr>
+<tr><td>3</td><td>外部 wrist / wrench bank + manifest</td><td>可重放，实际加速度／施力匹配记录；无物体腕部跟踪先过关</td></tr>
+<tr><td>4</td><td>任务环境与 reward / termination 测试</td><td>刚性平移和旋转不被判滑移；零 residual 等价 B0；16 维 action 不影响 wrist command；失败／完成互斥</td></tr>
+<tr><td>5</td><td>B0/B1 基线表与成功／失败回放</td><td>若两者 stress 已接近全成功，记录“尚无学习必要性证据”，在验证阶段重新定义任务或比较同成功率下 effort</td></tr>
+<tr><td>6</td><td>B2/B3 pilot 曲线与 reward 分项</td><td>无数值异常、nominal 不崩；停滞则查物理、动作限制和 oracle gap</td></tr>
+<tr><td>7</td><td>冻结 checkpoint 后的 3-seed 配对测试报告</td><td>建议 B3 相对较强静态基线的主要 stress 组提升 ≥10 个百分点且配对 CI 不跨 0；未达到就报告结果，不追认 SOTA</td></tr>
+<tr><td>8</td><td>桌面入口小规模回归与 Stage 1.2 决策</td><td>分别给初始化和持物成绩；条件持物有效但完整流程差，则下一步研究 acquisition，不重写整个主方法</td></tr>
+</tbody></table></div>
+<p><b>动作权限与安全接口预留：</b>Stage 1.1 不要求真人在线，但外部腕部命令从训练第一天存在；保留 q reference、release / cancel、human command / assistance / executed command 三路记录语义。在线 shared control 启用前再验证主动张手解除辅助、tracking invalid 和 policy invalid 的安全回退；这些不能仅靠仿真持物成绩代替。</p>
+<p><b>转段判据不是只看一个百分点。</b>只有 nominal 基础、可解释的 stress 增益、控制用力限制、物理审计都通过，才进入少物体泛化和人输入回放。若 B3 已足够好，不为符合旧路线而补做蒸馏；若 oracle 显著更好，再考虑 history / tactile / estimator。</p>
+<p><b>状态快照：</b>本次只完成实验文档；proposed task <code>L20ExternalWristHold</code> 未在所检查的注册表中出现。初态、manifest、reward 实现、物理验收和训练结果均未在本轮生成。计划参数只有在 pilot 后连同实现版本一起冻结，才成为某次 run 的实际配置。</p>
+
+<h2 id="evidence"><span class="n">§ 13</span>依据、文件归属与版本说明</h2>
+<p><b>本地核验：</b>2026-09-07，实施仓库 HEAD <code>7bbd8b0</code>。读取了 <code>training/reinforcement_learning/services/level_1_playground_envs/l20_hand/pick_cube.py</code>、其 <code>xmls/reorientation_cube.xml</code>、<code>xmls/l20_rh_mjx_floating.xml</code>、<code>ppo_params.py</code>、<code>registration.py</code> 与 <code>training/plan/rl_baseline_validation.md</code>。方块 70 mm / 108 g、旧 control_dt=0.04、旧 sim_dt=0.01 及旧指标来自这些文件；本页的新 reward、阈值和预算是项目建议。</p>
+<p><b>职责边界：</b>环境和训练工作归 <code>human_machine_interaction/training/reinforcement_learning/</code>；实施计划与工程验收记录归 <code>human_machine_interaction/training/plan/</code>；原始 checkpoints / rollout 按该项目既定的远端日志目录保存，Handbook 只链接或汇总证据。真正有数据后再建实验记录页，不把这张方案页提前挪入“实验记录”。</p>
+<ul>
+<li><a href="https://arxiv.org/html/2602.20466v1">Grasp-to-Act，Gupta 等，2026</a>：稳定抓姿与在线 residual 适配、wrench-space 测试的科学问题参考；本页不是其官方复现，其机器人与仿真平台也不同。</li>
+<li><a href="https://github.com/JYChen18/Dexonomy">Dexonomy，Chen 等，RSS 2025</a>：类型模板、接触与物理验证；不是现成 L20 配置。</li>
+<li><a href="https://jianglongye.com/cgf/">Continuous Grasping Function，Ye 等，RA-L 2023</a>：完整人类风格抓取运动的后续参考。</li>
+<li><a href="https://github.com/zdchan/RobustDexGrasp">RobustDexGrasp 官方实现</a>：后续部署观测、闭环抓取和 teacher/student 参考，不是 Stage 1.1 必须迁移的工程底座。</li>
+<li><a href="https://mujoco.readthedocs.io/en/stable/computation/index.html">MuJoCo computation</a>：执行器、接触和状态量的语义依据；运行时仍以 pinned 版本为准。</li>
+<li>算法背景：<a href="ppo-learning.html">PPO 学习路线</a>；总路线：<a href="l20-robust-grasp.html#long-term">长期阶段与下一步</a>。</li>
+</ul>
+<footer>Stage 1.1 · 实验步骤，不是实验结果 · 2026-09-07 ·
+<a href="l20-robust-grasp.html">← 长线路线</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
+</main>
+</body>
+</html>

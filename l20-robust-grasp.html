@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>L20 Robust Grasp：V1 实验路线 · Machine Learning Handbook</title>
+  <title>L20 Robust Grasp：长期路线与研究候选 · Machine Learning Handbook</title>
   <style>
     :root {
       --ink: #172026;
@@ -118,20 +118,22 @@
     <div class="wrap">
       <a class="bk" href="index.html">← Machine Learning Handbook</a>
       <div class="kicker">Machine Learning Handbook · Experimental Route</div>
-      <h1>L20 Robust Grasp<br>V1 实验路线</h1>
-      <p class="lead">把 shared control 降为应用层，把核心研究问题收敛为：人类参考抓姿经过 L20 retarget 后，能否通过 joint teacher、外生 wrist 适配和 finger student，形成稳定、自然且可迁移的抓持。</p>
+      <h1>L20 Robust Grasp<br>长期路线与研究候选</h1>
+      <p class="lead">长期目标是跨物体、跨任务的稳定抓取共享控制，能根据人的意图与抓取风险动态调整辅助。先用外部控腕条件下的稳定持物建立底层能力，再接完整抓取、用户输入与动态仲裁；teacher/student、跨本体和大型先验库按实验缺口引入，不再作为起步前提。</p>
       <div class="meta">
         <span class="tag proposal">方案稿 · 尚未跑实验</span>
         <span class="tag">L20 · 21 joints / 16 actuators</span>
         <span class="tag">MuJoCo-only physics</span>
-        <span class="tag">2026-08-24</span>
+        <span class="tag">路线更新 · 2026-09-07</span>
       </div>
     </div>
   </header>
 
   <nav>
     <div class="wrap">
-      <a href="#decision">核心判断</a>
+      <a href="#long-term">当前长线分期</a>
+      <a href="l20-robust-grasp-stage1.html">Stage 1.1 详细步骤 →</a>
+      <a href="#decision">旧 V1 候选</a>
       <a href="#mismatch">Wrist mismatch</a>
       <a href="#problem">任务边界</a>
       <a href="#grasp-prior">人类抓姿先验</a>
@@ -146,15 +148,43 @@
   </nav>
 
   <main class="wrap">
+    <div class="callout" style="margin-top:24px">
+      <strong>现在从这里开始：<a href="l20-robust-grasp-stage1.html">Stage 1.1 · 已抓住条件下的稳定持物实验 →</a></strong>
+      本页负责长期阶段关系与研究候选；新页负责当前单物体实验的初始化、控制接口、reward、扰动、基线、测试集和验收步骤。
+      两页都是计划，不是已完成实验。Handbook 只记录步骤；实现与训练放在 <code>human_machine_interaction/training/</code> 对应目录。
+    </div>
     <p class="sub" style="margin-top:18px;font-size:15px">
-      与 <a href="shared-control.html"><b>共享控制路线</b></a> 的关系：那一页把 shared control 当作研究主线；
-      本页<b>把 shared control 降为应用层</b>，研究问题收敛到「人类抓姿 → L20 retarget → teacher/student → 稳定抓持」。
-      两页可以对照着读，看同一套硬件下研究问题是怎么被重新切分的。
+      与 <a href="shared-control.html"><b>共享控制路线</b></a> 的关系：共享控制仍然是长期研究目标，
+      robust grasp 是可单独验证的底层能力，不再把共享控制仅当作最后的展示层。
+      以下保留的 2026-08-24 V1 方案用于研究备选；其中“必须 joint teacher → student”及旧版大规模清单不再是当前执行顺序。
       强化学习侧的方法背景见 <a href="ppo-learning.html">PPO 学习路线</a> 与 <a href="ppo-variants-research.html">PPO 局限与变体</a>。
     </p>
+    <section id="long-term">
+      <h2 id="long-term-stages">当前长线：先验证局部能力，再扩大共享范围</h2>
+      <div class="callout">
+        <strong>最终要回答的问题</strong>
+        在不同对象与任务中，系统能否理解并保留人的抓取意图，在必要时提供有界、动态的辅助，让物体拿得稳、操作可完成、主动释放不被阻拦？
+        “全程共享”不是机器全程接管，也不预设最后一定由一个网络端到端完成。
+      </div>
+      <div style="overflow-x:auto" tabindex="0" role="region" aria-label="长期阶段关系"><table>
+        <caption>2026-09-07 修订的阶段关系；均须以实验数据验收后转段</caption>
+        <thead><tr><th>阶段</th><th>任务与边界</th><th>核心对照／转段证据</th></tr></thead>
+        <tbody>
+          <tr><td><a href="l20-robust-grasp-stage1.html"><b>Stage 1.1<br>当前短期项目</b></a></td><td>L20、单方块、少量人类风格包握模板；固定流程抓起，外部 wrist + 16 维 finger residual 抵抗运动／外力。程序轨迹即可，不要求真人在线。</td><td>相同初态／限制下 Fixed PD、加强闭合、nominal PPO、DR PPO；验证持物完成、滑移、用力及物理可信度。不是跨物体结果。</td></tr>
+          <tr><td>Stage 1.2<br>局部抓取与少物体泛化</td><td>接固定 pregrasp → closure → lift → carry → release；增加圆柱／偏心对象和抓姿变化，逐步加入录制的 Quest wrist。</td><td>分开报告 acquisition 与 conditional hold；held-out instance、轨迹与初态；检查真实输入分布引入的落差。</td></tr>
+          <tr><td>Stage 2.1<br>真正的人机共享</td><td>引入人手指 reference 与在线用户；人控腕，手指采用有界 residual。先固定 α 和阶段规则 α。</td><td>Direct / fixed assistance / rule-based assistance 对照；用户主动张手、tracking/policy invalid 回退；成功率、冲突、干预量和用户体验。</td></tr>
+          <tr><td>Stage 2.2<br>动态辅助权重</td><td>根据抓取风险、观测不确定性和用户意图调度辅助。学习型仲裁只有在规则基线不足时引入。</td><td>对比固定／规则 α；同等安全和成功条件下减少不必要介入，并验证未见用户。张手／退出优先级不交给 reward 猜。</td></tr>
+          <tr><td>Stage 3<br>跨物体、跨任务共享</td><td>从搬运扩到倾倒／工具使用，明确任务所需抓取类型、接触区和允许的手—物体关系变化。目标选择与低层抓稳分层建模。</td><td>冻结 shared policy，分别评估未见对象、未见任务和联合 OOD；与每任务专家、无辅助和规则辅助比较，报告最差组。</td></tr>
+          <tr><td>条件分支<br>跨本体／感知迁移</td><td>需要另一只手时再做 morphology-aware 表示与 L20 适配；实机观测不足时再做 tactile / estimator / teacher–student。</td><td>明确 zero-shot、few-shot 与 retraining 边界；不把跨本体等同跨任务，也不把蒸馏当必选架构。</td></tr>
+        </tbody>
+      </table></div>
+      <p><b>真实部署贯穿各阶段：</b>仿真结果不能替代 actuator、触觉和延迟标定；Stage 1 的物理验收与小规模实机回归先行，正式用户研究在安全接口通过后进行。这里的阶段不是“等最终模型完成才碰硬件”。</p>
+      <p><b>物理边界：</b>人在运动中可能要求超过可用摩擦／力矩的负载。手指策略不能保证任何运动都不掉；系统应提供风险反馈、请求减速，或在明确授权的模式下辅助腕部。不能通过偷偷改变用户腕部命令声称抓稳。</p>
+      <p><b>短期不做：</b>大规模 PH/PR/PM 数据库、完整 teacher/student 链、密集触觉、液体／易碎物体、锤钉与汉诺塔长程专家、跨本体模型迁移。它们是下面旧 V1 文献与候选库中的可选扩展，不阻塞 <a href="l20-robust-grasp-stage1.html#checklist">Stage 1.1 的八项交付</a>。</p>
+    </section>
     <section id="decision">
-      <h2>0. 核心判断</h2>
-      <p class="sub">以下是项目决策，不是已经得到的实验结果。</p>
+      <h2>0. 旧 V1 研究候选：核心判断</h2>
+      <p class="sub">以下保留旧方案的论证与候选设计，不是当前逐项执行清单，也不是已取得的结果；当前阶段关系以上表为准，具体实验以 Stage 1.1 为准。</p>
       <div class="verdict">
         <div class="primary">
           <p class="big"><b>联合训练可保留，但不能把“部署时直接丢掉 wrist action”当作默认可迁移。</b></p>
@@ -618,7 +648,8 @@ episode: 0.8 s close + 1.0 s lift + 5.0 s hold/disturb</pre>
     </section>
 
     <section id="roadmap">
-      <h2>8. 慢慢做加法：版本路线图</h2>
+      <h2>8. 旧 V1 的扩展分支（非当前分期）</h2>
+      <p>以下保留旧版 V0–V4 命名用于阅读历史论证；当前顺序与启用条件见 <a href="#long-term">Stage 1.1 → Stage 3 长线表</a>。尤其 teacher/student 与触觉不是 Stage 1.1 的启动条件。</p>
       <div class="phase"><div class="phase-id">V0</div><div><b>Hardware audit & system ID</b><br>触觉版本、带宽、时延、迟滞；actuator current→torque、deadband、backlash；Quest wrist 数据与 servo 实际响应。</div></div>
       <div class="phase"><div class="phase-id">V1</div><div><b>Rigid robust hold + wrist mismatch</b><br>刚体、静态 COM、多摩擦、grasp bank、joint teacher、mask policy、finger student、低维 tactile ladder。</div></div>
       <div class="phase"><div class="phase-id">V2</div><div><b>Tactile sim-to-real & recovery</b><br>真实标定噪声；privileged teacher→sensor student；传统 slip reflex 和 friction-cone controller 基线；少量 real correction。</div></div>
@@ -656,7 +687,8 @@ episode: 0.8 s close + 1.0 s lift + 5.0 s hold/disturb</pre>
     </section>
 
     <section id="next">
-      <h2>10. 从明天开始的执行清单</h2>
+      <h2>10. 旧版候选清单（已由 Stage 1.1 收敛）</h2>
+      <p><b>不要把下面 11 项当作明天的并行任务。</b>它们是旧 V1 的完整研究分支；实际当前执行 <a href="l20-robust-grasp-stage1.html#checklist">Stage 1.1 八项交付与转段判据</a>。</p>
       <ol>
         <li><b>先冻结数据 split</b>：human subject + object instance + wrist performer 同时隔离；禁止 retarget 后再随机切分。</li>
         <li><b>冻结 current PPO checkpoint</b>，不再调 reward；先补 T0 β=0 与直接 β=1 两个 mismatch 端点。</li>
@@ -711,7 +743,8 @@ episode: 0.8 s close + 1.0 s lift + 5.0 s hold/disturb</pre>
   </main>
 
   <footer>
-    <div class="wrap">L20 Robust Grasp · V1 experimental route · Updated with human-prior → L20 retarget → teacher/student evaluation. ·
+    <div class="wrap">L20 Robust Grasp · 长期路线与旧 V1 研究候选 · 2026-09-07 ·
+      <a href="l20-robust-grasp-stage1.html">Stage 1.1 详细实验步骤 →</a> ·
       <a href="index.html">← Machine Learning Handbook</a> ·
       <a href="shared-control.html">共享控制路线</a></div>
   </footer>

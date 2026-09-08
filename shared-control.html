@@ -238,6 +238,15 @@ $\gamma\!\approx\!0.1$：输出紧贴 $a^h$（几乎不帮忙）；$\gamma\!\app
 
 <h2 id="s6"><span class="n">§ 6</span>进度：走到哪一步了</h2>
 
+<div class="key warn">
+<b>2026-09-07 路线更新。</b>下面保留的是既有系统与旧专家训练记录，不等于当前启动顺序。
+长期目标仍是跨物体、跨任务的动态共享控制，见 <a href="l20-robust-grasp.html#long-term">当前长线分期</a>；
+近期先执行 <a href="l20-robust-grasp-stage1.html">Stage 1.1 详细实验步骤</a>：
+外部控腕、单物体稳定持物、直接训练 finger residual。
+不再等待锤钉／汉诺塔长程专家或完整 P_demo 才能开始；teacher/student 和 diffusion 由后续缺口决定。
+本轮只更新 Handbook 文档，Stage 1.1 环境与训练尚未实施。
+</div>
+
 <h3>6.1 共享控制主计划（plan of record，2026-08-17 采纳）</h3>
 <p>0/10 个 Go/No-Go gate 正式通过——但这句话会误导：gate 只认落盘证据，而<b>大量基建已经建成并每日在用</b>。逐项看：</p>
 <div class="tw"><table>

@@ -38,7 +38,8 @@
 
 | 页面 | 内容 |
 |---|---|
-| [l20-robust-grasp.html](l20-robust-grasp.html) | L20 Robust Grasp V1 实验路线（方案稿）：人类抓姿 → L20 retarget → joint teacher → 外生 wrist 适配 → finger student |
+| [l20-robust-grasp.html](l20-robust-grasp.html) | L20 Robust Grasp 长期路线与研究候选：持物 → 局部抓取 → 用户共享 → 动态辅助权重 → 跨任务评估；旧 V1 候选保留，teacher/student、触觉与跨本体不是起步前提 |
+| [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | L20 Robust Grasp Stage 1.1 详细实验步骤（短期计划，未训练）：单物体、人类风格模板、外部控腕与 finger residual PPO；初始化、观测／动作、reward、扰动、成败判据、四条基线、训练预算、测试集与转段条件；Handbook 只记步骤，实现在训练项目 |
 | [shared-control.html](shared-control.html) | 共享控制路线：从 To the Noise and Back 到 EMG 灵巧手 |
 
 ### 待验证方案
