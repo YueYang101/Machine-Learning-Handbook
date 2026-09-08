@@ -38,9 +38,9 @@
 
 | 页面 | 内容 |
 |---|---|
-| [l20-robust-grasp.html](l20-robust-grasp.html) | L20 Robust Grasp 长期路线与研究候选：持物 → 局部抓取 → 用户共享 → 动态辅助权重 → 跨任务评估；旧 V1 候选保留，teacher/student、触觉与跨本体不是起步前提 |
-| [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | L20 Robust Grasp Stage 1.1 操作说明与执行台账（S1.1-r2，未执行）：S00–S09 的输入、操作、产物、验收／失败分支；先固定 PD 比抓姿来源，再固定初态比持物 controller；reward、扰动、训练预算、分母与封存测试；实现归训练项目 |
-| ↳ [l20-grasp-sources-review.html](l20-grasp-sources-review.html) | 配套项目选型综述（计划）：人类数据库与几何／捏合／接触／物理 retarget；模型生成与数学优化；既有 ORCA BODex 资产审计、L20 适配缺口；GraspADMM / DexEvolve / CoToGrasp 等近期进展；统一候选合同、可用性、选型优先级与公平比较 |
+| [l20-robust-grasp.html](l20-robust-grasp.html) | L20 Robust Grasp 三步主计划：固定抓姿基线 → 稳定持物 → 共享控制；当前只推进第一步，文献独立查阅，实际实验后再补日志 |
+| [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | Stage 1.1 当前第一步（待执行）：已有 L20 retarget／人工调整 → 固定 PD 方块承重 → 重复记录；只交付可复用抓姿、实际参数、视频与结果，不预设训练配置 |
+| ↳ [l20-grasp-sources-review.html](l20-grasp-sources-review.html) | 配套项目选型综述（计划）：人类数据库与几何／捏合／接触／物理 retarget；模型生成与数学优化；既有 ORCA BODex 资产审计、L20 适配缺口；GraspADMM / DexEvolve / CoToGrasp 等近期进展；可用性与后续接口备忘；是独立文献库，不是并行待办 |
 | [shared-control.html](shared-control.html) | 共享控制路线：从 To the Noise and Back 到 EMG 灵巧手 |
 
 ### 待验证方案

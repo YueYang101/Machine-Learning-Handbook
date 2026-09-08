@@ -102,9 +102,9 @@ caption { text-align:left; margin:8px 0; }
 <h1>抓姿从哪里来？<small>人手 retarget · 模型生成 · 数学优化，以及我们已经做过的 BODex</small></h1>
 <p class="lede">本页给 L20 robust grasp 选择 reference / 初态来源，不替代持物控制器。回答数据库怎么选、retarget 有哪些方向、哪些实现值得复用，以及三类候选如何进入同一套物理测试。</p>
 <p class="meta">核验日期：2026-09-08。范围是与本项目接口相关的代表方法与近期进展，不声称穷尽所有论文或给出统一 SOTA 排名。公开代码／下载入口已核对，未在本轮安装、下载整库或运行作者实验。</p>
-<div class="key good"><b>当前决定：</b>第一份 L20 reference 优先从本地已有 vector retargeting 或人工 L20 类型模板得到；以 angle 为诊断、DexPilot 为不同目标函数对照。已有 ORCA BODex 的流程值得迁移，不直接复用关节数值或成绩。模型生成保留接入位，<b>不先训练一个新生成器，也不等待全部方法移植完才开始持物基线。</b></div>
-<p><a href="l20-robust-grasp-stage1.html#runbook">Stage 1.1 操作说明</a>写按顺序执行的动作、产物和停止条件；<a href="l20-robust-grasp.html#long-term">长线路线</a>写持物 → pick/carry/release → 共享控制 → 跨任务；本页只维护选型依据与来源接口。已有 retarget 的小指问题另见<a href="retargeting-research.html">缺陷与候选修法</a>，不要因引入新库抹掉旧诊断。</p>
-<nav class="toc" aria-label="本页目录"><b>目录</b> · <a href="#routes">1 三类路线</a> · <a href="#local">2 本地资产审计</a> · <a href="#datasets">3 人类数据库</a> · <a href="#retarget">4 Retarget 方向</a> · <a href="#generators">5 模型生成</a> · <a href="#optimization">6 数学优化</a> · <a href="#contract">7 统一接口</a> · <a href="#selection">8 实验排期与文献结论</a></nav>
+<div class="key good"><b>当前只做：</b>已有 L20 vector retarget／人工调整 → 固定 PD 方块承重基线。本页是文献库，不是同时执行的任务清单；其他 retarget 方法、BODex 与生成模型均保留为备选。</div>
+<p><a href="l20-robust-grasp-stage1.html#runbook">Stage 1.1 当前第一步</a>只写固定抓姿基线的三个动作与交付物；<a href="l20-robust-grasp.html#long-term">长线路线</a>写持物 → pick/carry/release → 共享控制 → 跨任务；本页只维护选型依据与来源接口。已有 retarget 的小指问题另见<a href="retargeting-research.html">缺陷与候选修法</a>，不要因引入新库抹掉旧诊断。</p>
+<nav class="toc" aria-label="本页目录"><b>目录</b> · <a href="#routes">1 三类路线</a> · <a href="#local">2 本地资产审计</a> · <a href="#datasets">3 人类数据库</a> · <a href="#retarget">4 Retarget 方向</a> · <a href="#generators">5 模型生成</a> · <a href="#optimization">6 数学优化</a> · <a href="#contract">7 统一接口</a> · <a href="#selection">8 如何使用文献库</a></nav>
 
 <h2 id="routes"><span class="n">§ 1</span>三个入口成立，但并不互斥</h2>
 <div class="tw" tabindex="0" role="region" aria-label="抓姿来源路线"><table>
@@ -198,7 +198,7 @@ caption { text-align:left; margin:8px 0; }
 <p><b>选型顺序的依据是项目成本，不是宣称绝对性能排名：</b>旧 BODex 已有运行链 → 类型与接触问题看 Dexonomy / GraspADMM → 需要动力学筛选与多样性再看 DexEvolve。SpringGrasp 针对柔顺／形状不确定，FRoGGeR 是分析质量与 refinement 的参照。不同论文的“鲁棒”可能仅指解析 wrench 指标、六向重力、开环抬起或特定扰动，不能互换。</p>
 
 <h2 id="contract"><span class="n">§ 7</span>统一候选合同：让来源可替换、后续管线不重写</h2>
-<p>以下是<b>待实现的产物约定</b>，不是本仓库新增代码。生成与优化产物归 grasping，环境／controller 归 human_machine_interaction；只读导入已经冻结的 candidate bank。</p>
+<p>以下是<b>未来接入多种来源时的接口备忘</b>，不是当前待办，也不是本仓库新增代码。生成与优化产物归 grasping，环境／controller 归 human_machine_interaction；只读导入已经冻结的 candidate bank。</p>
 <div class="tw" tabindex="0" role="region" aria-label="候选接口字段"><table>
 <caption>每个候选不只保存一串关节角；缺字段时标 invalid，不猜</caption>
 <thead><tr><th>字段组</th><th>必须保存</th><th>验收用途</th></tr></thead><tbody>
@@ -215,20 +215,11 @@ caption { text-align:left; margin:8px 0; }
 <li><b>来源质量表：</b>固定 L20、对象、控制器与初始化预算，比较 H-vector / H-DexPilot / O-BODex 等。报告生成可行率、承重通过率、固定 PD 的条件稳定率、每个原始候选的整体成功率、style 合规和生成成本。</li>
 <li><b>持物控制表：</b>固定一份来源明确的合格初态 bank，在完全相同 scenario 上比较 B0 / B1 / B2 / B3。不能让 PPO 用优选 grasp 而 PD 用原始失败 grasp。</li>
 </ol>
-<p>先做一个固定类型／物体的 pilot：每个已通过 adapter 的方法最多 <b>20 个候选 slot</b>，保存全部 raw 与 refined 输出；超时／无解占失败 slot，不无穷重采样。记录实际求解次数、硬件／耗时与手工编辑。20 是工程预算，不是统计显著性保证；equal-count 不等于 equal-compute。控制器主实验采用哪一来源，必须在 test 解封前冻结。</p>
+<p>真正比较多种来源时，再根据实际资源确定候选数、预算和测试划分；届时记录全部失败与人工编辑，不把文献库里的备选自动升级为实验要求。</p>
 <p>若比较“直接 retarget”和“retarget + optimizer”，保留为两列；纯自动方法不能只挑最漂亮视频与人工反复修好的一个模板比赛。跨方法场景与预算统一，但各自合格初态不同，因此来源表不是 controller 能力归因。</p>
 
-<h2 id="selection"><span class="n">§ 8</span>现在排什么，什么先不排？</h2>
-<div class="tw" tabindex="0" role="region" aria-label="选型决策"><table>
-<caption>这些是执行决策，不是已完成的实验</caption>
-<thead><tr><th>顺序</th><th>决定</th><th>启动 / 停止条件</th></tr></thead><tbody>
-<tr><td>现在：H0</td><td>复用 L20 vector 得到 cube 包握 reference；输入不可用时人工标注 L20 模板，来源如实标记。angle 是诊断</td><td>一个物理合格初态即可开始 B0 smoke；不以大型人类库为前置</td></tr>
-<tr><td>现在：H 对照</td><td>同一原始输入跑 vector 与 DexPilot；公共数据库优先 ContactPose 的接触样例，intent 扩展看 OakInk</td><td>先 1 条对应物体 adapter 验收，再扩 20 slots。数据入口／MANO 缺失则记阻塞，继续本地模板线</td></tr>
-<tr><td>现在：O 复用</td><td>旧 ORCA 回归 → L20 planner adapter → O-BODex 候选，沿用统一评测</td><td>未通过 16 主动关节／耦合／接触适配时不标“已支持 L20”；不阻塞 H 初态的持物实验</td></tr>
-<tr><td>下一条 O</td><td>Dexonomy 类型模板 + GraspADMM；保存与 BODex 的预算及接口差异</td><td>已有 H/O baseline 失败可定位到接触可行性或类型覆盖时启用，不提前移植全部论文</td></tr>
-<tr><td>下一条 G</td><td>先评估 G-DRO 的原生权重与 L20 描述适配；若重点是用户指定类型，追加 CoToGrasp</td><td>先证明原生例子与自定义本体入口完整，再列正式对照。若需重训则单独报预算、另立版本，不默认为现成可用</td></tr>
-<tr><td>后续动作／任务</td><td>CGF / SPIDER 接 acquisition；DexMachina 接功能结果迁移；闭环泛化看 RobustDexGrasp / DexGrasp-Zero 等</td><td>先通过局部持物与完整入口 gate；长程人机协作不因来源模型复杂就提前宣称完成</td></tr>
-</tbody></table></div>
+<h2 id="selection"><span class="n">§ 8</span>如何使用这份文献库</h2>
+<p>当前执行 <a href="l20-robust-grasp-stage1.html">L20 固定抓姿基线</a>。这里的数据库、retarget、优化器和生成模型都是备选，不预排下一轮移植顺序；实际实验出现需求后再回来选方法。</p>
 <p><b>对 SOTA / “大家常用”的结论：</b>没有可核验的统一使用量统计，不能诚实地选出“行业用得最多的一篇”。更可操作的工程参照是：dex-retargeting 有独立库与视频／HOI 示例；DexGraspNet 系列提供被后续方法使用的数据与比较基准；BODex / DexGraspBench / Dexonomy 有连续的合成、评测与类型扩展链。它们属于可复用的基础参照，<b>不是因较老就过时，也不是因有代码就已成熟适配 L20</b>。</p>
 <p>近期变化不是一律“训练一个再蒸馏”：还有不训练的优化、接触／类型条件生成、跨本体表示、物理轨迹 retarget 和进化筛选。当前我们先把这些方法接到同一个 candidate / controller 边界，而不是选一个最大模型统一替代全部模块。三条来源最后都服务于<b>符合用户选择的局部 pick/hold 策略</b>；是否引入 VLA 是长程调度层的独立决定。</p>
 <p class="meta">检索记录：paper-search CLI 的 arXiv / CrossRef 请求受网络解析限制，返回空结果不代表没有论文；本页据论文页面、作者项目、官方代码逐项交叉核验。作者自报性能未移植为本项目分数；本轮仅做文档和既有资产核验。</p>

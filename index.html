@@ -138,16 +138,16 @@ details.box li { margin:5px 0; font-size:.9rem; color:var(--sub); }
 <h3>研究路线</h3>
 <p class="note">论文地图 + 自己的架构与实验设计。</p>
 <a class="card" href="l20-robust-grasp.html">
-  <div class="t">L20 Robust Grasp：长期路线与研究候选<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">方案稿</span></div>
-  <div class="d">跨物体、跨任务的稳定抓取共享控制 · Stage 1.1 持物 → 完整局部抓取 → 用户共享 → 动态辅助权重 → 跨任务评估 · 保留旧 V1 候选，但 teacher/student、触觉与跨本体不再是起步前提</div>
+  <div class="t">L20 Robust Grasp：三步主计划<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">方案稿</span></div>
+  <div class="d">固定抓姿基线 → 稳定持物 → 共享控制；当前只做第一步，文献独立查阅，实验发生后再记录</div>
 </a>
 <a class="card" href="l20-robust-grasp-stage1.html">
-  <div class="t">L20 Robust Grasp：Stage 1.1 操作说明与执行台账<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">S1.1-r2 · 未执行</span></div>
-  <div class="d">S00–S09：资产冻结 → reference 制作 → 承重验收 → 来源对照 → 裁判单测 → PD 基线 → PPO → 封存测试 → 桌面入口 · 每步输入、产物、停止条件与状态 · 具体 reward、扰动、预算与分母；实现归训练项目</div>
+  <div class="t">Stage 1.1：固定抓姿基线<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">当前第一步 · 待执行</span></div>
+  <div class="d">已有 L20 retarget／人工调整 → 固定 PD 方块承重 → 重复记录；交付抓姿、实际参数和视频，暂不训练模型</div>
 </a>
 <div class="sub">
   <a href="l20-grasp-sources-review.html"><span class="rel">项目选型综述 ·</span> <span class="t2">抓姿来源：人手 Retarget / 模型生成 / 数学优化</span><br>
-    <span class="d2">ContactPose / OakInk / GRAB 等数据库 · 几何、捏合、接触与物理 retarget · 既有 ORCA BODex 审计与 L20 适配 · GraspADMM / DexEvolve / CoToGrasp 等近期进展 · 可用性、来源合同和公平比较</span></a>
+    <span class="d2">人类数据库、不同 retarget 方法、模型生成与数学优化；保留 SOTA 资料及已有 BODex 资产审计，按实际需要查阅，不同时展开</span></a>
 </div>
 <a class="card" href="shared-control.html">
   <div class="t">共享控制路线：从 To the Noise and Back 到 EMG 灵巧手</div>
