@@ -49,6 +49,30 @@ a.card .d { color:var(--sub); font-size:.92rem; margin-top:4px; }
 [role="tabpanel"] > h2:first-child { margin-top:1.7em; }
 footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
 footer a { color:var(--blue); text-decoration:none; }
+/* tools tab: 命令块 + 一键复制 */
+.lbl { display:block; font-size:.82rem; color:var(--muted); margin:16px 0 3px; }
+.lbl b { color:var(--sub); font-weight:600; }
+.cmd { display:flex; align-items:flex-start; gap:10px; background:var(--panel);
+  border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin:5px 0; }
+.cmd code { flex:1; min-width:0; font:.84rem/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color:var(--ink); white-space:pre-wrap; word-break:break-all; background:none; }
+.cmd button { flex:none; appearance:none; border:1px solid var(--line2); background:none;
+  color:var(--sub); border-radius:7px; padding:5px 11px; font:600 .78rem/1 inherit;
+  cursor:pointer; min-height:34px; }
+.cmd button:hover { border-color:var(--blue); color:var(--blue); }
+.cmd button.ok { color:#1a8a4a; border-color:#1a8a4a; }
+details.box { background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  padding:2px 18px; margin:18px 0; }
+details.box > summary { cursor:pointer; font-weight:600; color:var(--blue); padding:12px 0; list-style:none; }
+details.box > summary::-webkit-details-marker { display:none; }
+details.box > summary::before { content:"\25b8 "; color:var(--muted); }
+details.box[open] > summary::before { content:"\25be "; }
+details.box table { border-collapse:collapse; width:100%; font-size:.86rem; margin:6px 0 14px; }
+details.box td, details.box th { border-bottom:1px solid var(--line); padding:7px 8px; text-align:left; vertical-align:top; }
+details.box th { color:var(--muted); font-weight:600; }
+details.box code { font:.82rem ui-monospace,Menlo,Consolas,monospace; color:var(--ink); }
+details.box ul { margin:6px 0 14px; padding-left:20px; }
+details.box li { margin:5px 0; font-size:.9rem; color:var(--sub); }
 </style>
 </head>
 <body>
@@ -56,13 +80,14 @@ footer a { color:var(--blue); text-decoration:none; }
 <div class="kicker">YUE YANG · NOTES</div>
 <h1>Machine Learning Handbook</h1>
 <p class="lede">个人机器学习笔记。单文件 HTML，手机可读，公式 MathJax，动画为按解析解实时模拟的原生 canvas。<br>
-分三类：<b>理论</b>（概念与推导）·<b>实验计划</b>（方案与判据已定，还没跑出数据）·<b>实验记录</b>（跑出来的曲线、视频、失败解剖）。下面的标签页只切换显示哪一类，链接可直接分享（<code>#theory</code> / <code>#plans</code> / <code>#experiments</code>）。</p>
+分三类：<b>理论</b>（概念与推导）·<b>实验计划</b>（方案与判据已定，还没跑出数据）·<b>实验记录</b>（跑出来的曲线、视频、失败解剖）。下面的标签页只切换显示哪一类，链接可直接分享（<code>#theory</code> / <code>#plans</code> / <code>#experiments</code>）。<b>工具</b>标签是自用的远程连接指令（<code>#tools</code>），与笔记无关，仅登录可见。</p>
 
 <nav aria-label="内容分类">
   <div class="tabs" role="tablist" aria-label="内容分类">
     <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="true" tabindex="0">理论<span class="cnt">6</span></button>
-    <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">3</span></button>
+    <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">5</span></button>
     <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验记录<span class="cnt">3</span></button>
+    <button type="button" role="tab" id="tab-tools" aria-controls="panel-tools" aria-selected="false" tabindex="-1">工具</button>
   </div>
 </nav>
 
@@ -108,7 +133,7 @@ footer a { color:var(--blue); text-decoration:none; }
 <section id="panel-plans" role="tabpanel" aria-labelledby="tab-plans" tabindex="0">
 
 <h2>实验计划<span class="en">PLANNED</span></h2>
-<p class="note">方案与判据已经定下来，但还没有跑出数据。跑出来之后按结果搬进「实验记录」，原位留一句指过去的话。</p>
+<p class="note">研究路线、项目选型综述和待执行操作说明。实际运行后在「实验记录」保留带 run ID 的结果；长期维护的操作协议留在此处并双向索引。</p>
 
 <h3>研究路线</h3>
 <p class="note">论文地图 + 自己的架构与实验设计。</p>
@@ -117,9 +142,13 @@ footer a { color:var(--blue); text-decoration:none; }
   <div class="d">跨物体、跨任务的稳定抓取共享控制 · Stage 1.1 持物 → 完整局部抓取 → 用户共享 → 动态辅助权重 → 跨任务评估 · 保留旧 V1 候选，但 teacher/student、触觉与跨本体不再是起步前提</div>
 </a>
 <a class="card" href="l20-robust-grasp-stage1.html">
-  <div class="t">L20 Robust Grasp：Stage 1.1 详细实验步骤<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">短期计划 · 未训练</span></div>
-  <div class="d">单物体、少量人类风格模板、外部控腕与 finger residual PPO · 初始化、观测／动作、reward 权重、干扰与成败判据 · 四条基线、训练预算、冻结测试集和转段条件 · Handbook 只记步骤，实现在训练项目</div>
+  <div class="t">L20 Robust Grasp：Stage 1.1 操作说明与执行台账<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">S1.1-r2 · 未执行</span></div>
+  <div class="d">S00–S09：资产冻结 → reference 制作 → 承重验收 → 来源对照 → 裁判单测 → PD 基线 → PPO → 封存测试 → 桌面入口 · 每步输入、产物、停止条件与状态 · 具体 reward、扰动、预算与分母；实现归训练项目</div>
 </a>
+<div class="sub">
+  <a href="l20-grasp-sources-review.html"><span class="rel">项目选型综述 ·</span> <span class="t2">抓姿来源：人手 Retarget / 模型生成 / 数学优化</span><br>
+    <span class="d2">ContactPose / OakInk / GRAB 等数据库 · 几何、捏合、接触与物理 retarget · 既有 ORCA BODex 审计与 L20 适配 · GraspADMM / DexEvolve / CoToGrasp 等近期进展 · 可用性、来源合同和公平比较</span></a>
+</div>
 <a class="card" href="shared-control.html">
   <div class="t">共享控制路线：从 To the Noise and Back 到 EMG 灵巧手</div>
   <div class="d">参照论文的完整流程与它的实验设计 · 部分扩散（partial diffusion）演示 · 我们的架构映射与当前进度</div>
@@ -154,6 +183,53 @@ footer a { color:var(--blue); text-decoration:none; }
   <div class="d">EMG + Quest 手部追踪 + L20 遥操作 · V1 自研薄渲染链路（已实现）→ V2 Quest 本地物理 / V3 4090 串流（进行中）→ V4 Mac 串流（判死）· 踩坑史：90° 扭转、hold-flat、clutch 之死 · retargeting vector vs angle 对比与小拇指侧摆问题解剖</div>
 </a>
 </section>
+
+<section id="panel-tools" role="tabpanel" aria-labelledby="tab-tools" tabindex="0">
+
+<h2>工具<span class="en">TOOLS</span></h2>
+<p class="note">自用的远程连接指令，私有页面仅登录可见。点右侧「复制」直接粘贴。带 <code>ssh 4090</code> / <code>nas-lan</code> 别名的命令需本机 <code>~/.ssh/config</code> 已配（Mac 已配）；换设备需先装好对应密钥。</p>
+
+<h3>4090 主机 · 远程唤醒</h3>
+<p class="note">机器睡眠/关机时先发魔术包（由家里常开的 NAS 广播），约 15–20s 上线。</p>
+<span class="lbl"><b>在家里</b>（Mac 连着家里网络）</span>
+<div class="cmd"><code>ssh nas-lan /usr/local/sbin/wol.sh 4090</code><button type="button">复制</button></div>
+<span class="lbl"><b>在外网</b>（不在家里网络，走 Tailscale）</span>
+<div class="cmd"><code>ssh -i ~/.ssh/id_rsa -p 2222 dev@100.113.248.42 'ssh 13137836541@172.19.0.1 /usr/local/sbin/wol.sh 4090'</code><button type="button">复制</button></div>
+
+<h3>连接</h3>
+<span class="lbl">Tailscale（人在哪都能连）</span>
+<div class="cmd"><code>ssh 4090</code><button type="button">复制</button></div>
+<span class="lbl">家里 LAN（更快）</span>
+<div class="cmd"><code>ssh 4090-lan</code><button type="button">复制</button></div>
+
+<h3>验证</h3>
+<span class="lbl">确认是魔术包唤醒（应显示 Realtek 5GbE）</span>
+<div class="cmd"><code>ssh 4090 'powercfg /lastwake'</code><button type="button">复制</button></div>
+<span class="lbl">看 GPU</span>
+<div class="cmd"><code>ssh 4090 'nvidia-smi'</code><button type="button">复制</button></div>
+
+<details class="box">
+<summary>节点速查 / 给 Agent 的连接指南</summary>
+<table>
+<tr><th>节点</th><th>Tailscale</th><th>家里 LAN</th><th>登录</th></tr>
+<tr><td><b>4090 主机</b><br>9950x-4090-win · Win11</td><td><code>100.120.135.18</code></td><td><code>192.168.100.128</code></td><td>用户 <code>yy131</code>，密钥 <code>~/.ssh/id_ed25519</code>，shell=PowerShell。MAC <code>30-56-0F-49-9E-D5</code></td></tr>
+<tr><td><b>NAS 主机</b><br>ssd-nas · 家里网关/发包端</td><td><code>100.113.248.42</code></td><td><code>192.168.100.1</code>（别名 nas-lan）</td><td>密钥 <code>id_ed25519_nas</code></td></tr>
+<tr><td><b>NAS devbox 容器</b></td><td><code>100.113.248.42:2222</code></td><td>—</td><td><code>dev@</code>，密钥 <code>id_rsa</code>；容器内跳主机 <code>172.19.0.1</code>（用户 13137836541）</td></tr>
+</table>
+<ul>
+<li><b>判断在家/外网：</b>先试 <code>ssh -o ConnectTimeout=4 nas-lan true</code>，通=在家用家里命令，不通=外网命令。</li>
+<li><b>外网必走 Tailscale：</b>LAN 地址（192.168.100.1 / 192.168.0.178）在外面够不着——探测失败≠NAS 挂了。</li>
+<li><b>钥匙不同：</b>进容器用 <code>id_rsa</code>，进 NAS 主机（nas-lan）用 <code>id_ed25519_nas</code>，别用混。</li>
+<li>Tailscale SSH 直登 NAS 主机被 ACL 拒，外网只能经容器跳 <code>172.19.0.1</code>。</li>
+<li><code>wol.sh</code> 不需 sudo；唤醒后轮询 <code>ssh 4090 exit</code> 返回 0 即上线。</li>
+<li>远端跑 PowerShell 不要再套 <code>powershell -Command "..."</code>（默认 shell 已是 PS，引号会打架）。</li>
+<li>密码登录不可用（用的是开机 PIN，网络登录不认），一律用密钥。</li>
+</ul>
+</details>
+
+<p class="note">关机（S5）唤醒尚未实测；睡眠已通过。若关机唤不醒，进 BIOS 确认 ErP=Disabled、Wake on LAN=Enabled。</p>
+
+</section>
 </main>
 
 <footer><a href="https://github.com/YueYang101/Machine-Learning-Handbook">GitHub 仓库</a></footer>
@@ -163,8 +239,8 @@ footer a { color:var(--blue); text-decoration:none; }
 (function () {
   var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
   if (!tabs.length) return;                       // 无 JS / 结构变动时两栏都留在页面上
-  var byHash = { '#theory': 0, '#plans': 1, '#experiments': 2 };
-  var hashOf = ['#theory', '#plans', '#experiments'];
+  var byHash = { '#theory': 0, '#plans': 1, '#experiments': 2, '#tools': 3 };
+  var hashOf = ['#theory', '#plans', '#experiments', '#tools'];
 
   function select(i, focus) {
     tabs.forEach(function (tab, j) {
@@ -194,6 +270,28 @@ footer a { color:var(--blue); text-decoration:none; }
   window.addEventListener('hashchange', fromHash);
   fromHash();
 })();
+</script>
+
+<script>
+// 工具 tab：一键复制命令
+document.querySelectorAll('.cmd button').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var text = btn.parentNode.querySelector('code').textContent;
+    var done = function () {
+      var old = btn.textContent; btn.textContent = '已复制'; btn.classList.add('ok');
+      setTimeout(function () { btn.textContent = old; btn.classList.remove('ok'); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { copyFallback(text, done); });
+    } else { copyFallback(text, done); }
+  });
+});
+function copyFallback(text, done) {
+  var ta = document.createElement('textarea'); ta.value = text;
+  ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta);
+  ta.select(); try { document.execCommand('copy'); done(); } catch (e) {}
+  document.body.removeChild(ta);
+}
 </script>
 </body>
 </html>
