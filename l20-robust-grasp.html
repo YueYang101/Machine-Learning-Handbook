@@ -133,6 +133,7 @@
     <div class="wrap">
       <a href="#long-term">当前长线分期</a>
       <a href="l20-robust-grasp-stage1.html">Stage 1.1 详细步骤 →</a>
+      <a href="l20-grasp-sources-review.html">抓姿来源选型综述 →</a>
       <a href="#decision">旧 V1 候选</a>
       <a href="#mismatch">Wrist mismatch</a>
       <a href="#problem">任务边界</a>
@@ -150,8 +151,8 @@
   <main class="wrap">
     <div class="callout" style="margin-top:24px">
       <strong>现在从这里开始：<a href="l20-robust-grasp-stage1.html">Stage 1.1 · 已抓住条件下的稳定持物实验 →</a></strong>
-      本页负责长期阶段关系与研究候选；新页负责当前单物体实验的初始化、控制接口、reward、扰动、基线、测试集和验收步骤。
-      两页都是计划，不是已完成实验。Handbook 只记录步骤；实现与训练放在 <code>human_machine_interaction/training/</code> 对应目录。
+      本页负责长期阶段关系；<a href="l20-grasp-sources-review.html"><b>抓姿来源选型综述</b></a>负责人类数据库、retarget / 模型生成 / 优化三条路线，以及已有 ORCA BODex 的可复用资产与 L20 适配缺口；<a href="l20-robust-grasp-stage1.html#runbook">Stage 1.1 的 S00–S09 操作说明</a>负责具体输入、操作、产物、验收和失败分支。
+      三页都在计划区，不是当前实验成绩。Handbook 不放训练代码；候选生成归 <code>grasping/</code>，环境与训练归 <code>human_machine_interaction/training/</code>。操作台账的“待执行”只在有真实证据后更新。
     </div>
     <p class="sub" style="margin-top:18px;font-size:15px">
       与 <a href="shared-control.html"><b>共享控制路线</b></a> 的关系：共享控制仍然是长期研究目标，
@@ -170,7 +171,7 @@
         <caption>2026-09-07 修订的阶段关系；均须以实验数据验收后转段</caption>
         <thead><tr><th>阶段</th><th>任务与边界</th><th>核心对照／转段证据</th></tr></thead>
         <tbody>
-          <tr><td><a href="l20-robust-grasp-stage1.html"><b>Stage 1.1<br>当前短期项目</b></a></td><td>L20、单方块、少量人类风格包握模板；固定流程抓起，外部 wrist + 16 维 finger residual 抵抗运动／外力。程序轨迹即可，不要求真人在线。</td><td>相同初态／限制下 Fixed PD、加强闭合、nominal PPO、DR PPO；验证持物完成、滑移、用力及物理可信度。不是跨物体结果。</td></tr>
+          <tr><td><a href="l20-robust-grasp-stage1.html#runbook"><b>Stage 1.1<br>当前短期项目</b></a></td><td>A：L20、单方块、单包握类型；先用本地 retarget / 人工模板取得合格初态，再接已有 BODex 的 L20 适配与模型来源对照。B：外部 wrist + 16 维 finger residual 持物抗扰；不要求真人在线。</td><td>先用固定 PD 比来源，再固定初态比 B0/B1/B2/B3。运动学姿态不直接算稳定抓取；分别记初始化、条件持物与完整桌面入口成绩。不是跨物体结果。</td></tr>
           <tr><td>Stage 1.2<br>局部抓取与少物体泛化</td><td>接固定 pregrasp → closure → lift → carry → release；增加圆柱／偏心对象和抓姿变化，逐步加入录制的 Quest wrist。</td><td>分开报告 acquisition 与 conditional hold；held-out instance、轨迹与初态；检查真实输入分布引入的落差。</td></tr>
           <tr><td>Stage 2.1<br>真正的人机共享</td><td>引入人手指 reference 与在线用户；人控腕，手指采用有界 residual。先固定 α 和阶段规则 α。</td><td>Direct / fixed assistance / rule-based assistance 对照；用户主动张手、tracking/policy invalid 回退；成功率、冲突、干预量和用户体验。</td></tr>
           <tr><td>Stage 2.2<br>动态辅助权重</td><td>根据抓取风险、观测不确定性和用户意图调度辅助。学习型仲裁只有在规则基线不足时引入。</td><td>对比固定／规则 α；同等安全和成功条件下减少不必要介入，并验证未见用户。张手／退出优先级不交给 reward 猜。</td></tr>
@@ -180,7 +181,7 @@
       </table></div>
       <p><b>真实部署贯穿各阶段：</b>仿真结果不能替代 actuator、触觉和延迟标定；Stage 1 的物理验收与小规模实机回归先行，正式用户研究在安全接口通过后进行。这里的阶段不是“等最终模型完成才碰硬件”。</p>
       <p><b>物理边界：</b>人在运动中可能要求超过可用摩擦／力矩的负载。手指策略不能保证任何运动都不掉；系统应提供风险反馈、请求减速，或在明确授权的模式下辅助腕部。不能通过偷偷改变用户腕部命令声称抓稳。</p>
-      <p><b>短期不做：</b>大规模 PH/PR/PM 数据库、完整 teacher/student 链、密集触觉、液体／易碎物体、锤钉与汉诺塔长程专家、跨本体模型迁移。它们是下面旧 V1 文献与候选库中的可选扩展，不阻塞 <a href="l20-robust-grasp-stage1.html#checklist">Stage 1.1 的八项交付</a>。</p>
+      <p><b>短期不做：</b>大规模 PH/PR/PM 数据库、完整 teacher/student 链、密集触觉、液体／易碎物体、锤钉与汉诺塔长程专家、训练通用跨本体模型。少量公共人手数据 adapter、已有 ORCA 优化器迁移到 L20、现成生成器可用性审计纳入<a href="l20-grasp-sources-review.html#selection">来源选型清单</a>，但不要求全部跑通才启动 <a href="l20-robust-grasp-stage1.html#runbook">Stage 1.1 操作序列</a>。</p>
     </section>
     <section id="decision">
       <h2>0. 旧 V1 研究候选：核心判断</h2>
@@ -688,7 +689,7 @@ episode: 0.8 s close + 1.0 s lift + 5.0 s hold/disturb</pre>
 
     <section id="next">
       <h2>10. 旧版候选清单（已由 Stage 1.1 收敛）</h2>
-      <p><b>不要把下面 11 项当作明天的并行任务。</b>它们是旧 V1 的完整研究分支；实际当前执行 <a href="l20-robust-grasp-stage1.html#checklist">Stage 1.1 八项交付与转段判据</a>。</p>
+      <p><b>不要把下面 11 项当作明天的并行任务。</b>它们是旧 V1 的完整研究分支；实际当前执行 <a href="l20-robust-grasp-stage1.html#runbook">Stage 1.1 的 S00–S09 操作序列</a>，来源选型依据见<a href="l20-grasp-sources-review.html">配套综述</a>。</p>
       <ol>
         <li><b>先冻结数据 split</b>：human subject + object instance + wrist performer 同时隔离；禁止 retarget 后再随机切分。</li>
         <li><b>冻结 current PPO checkpoint</b>，不再调 reward；先补 T0 β=0 与直接 β=1 两个 mismatch 端点。</li>
@@ -745,6 +746,7 @@ episode: 0.8 s close + 1.0 s lift + 5.0 s hold/disturb</pre>
   <footer>
     <div class="wrap">L20 Robust Grasp · 长期路线与旧 V1 研究候选 · 2026-09-07 ·
       <a href="l20-robust-grasp-stage1.html">Stage 1.1 详细实验步骤 →</a> ·
+      <a href="l20-grasp-sources-review.html">抓姿来源选型综述 →</a> ·
       <a href="index.html">← Machine Learning Handbook</a> ·
       <a href="shared-control.html">共享控制路线</a></div>
   </footer>

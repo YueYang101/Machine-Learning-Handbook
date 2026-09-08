@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>L20 Robust Grasp · Stage 1.1 实验步骤 · Machine Learning Handbook</title>
+<title>L20 Robust Grasp · Stage 1.1 操作说明与执行台账 · Machine Learning Handbook</title>
 <script>
 window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
 </script>
@@ -93,6 +93,12 @@ h2 { scroll-margin-top:18px; }
 .meta { color:var(--sub); font-size:.9rem; }
 code { font:.86em/1.6 ui-monospace,Menlo,monospace; overflow-wrap:anywhere; }
 table { min-width:640px; }
+.runbook-table { min-width:1040px; table-layout:fixed; }
+.runbook-table th:nth-child(1) { width:16%; }
+.runbook-table th:nth-child(2) { width:24%; }
+.runbook-table th:nth-child(3) { width:18%; }
+.runbook-table th:nth-child(4) { width:32%; }
+.runbook-table th:nth-child(5) { width:10%; }
 caption { text-align:left; color:var(--sub); padding-bottom:8px; }
 .tw { border:1px solid var(--line); border-radius:8px; padding:0 8px; }
 .tw:focus { outline-color:var(--focus); }
@@ -110,13 +116,13 @@ ol, ul { padding-left:1.5em; }
 <a class="bk" href="l20-robust-grasp.html">← 长线路线与研究候选</a> ·
 <a class="bk" href="index.html">Machine Learning Handbook</a>
 <div class="kicker">MACHINE LEARNING HANDBOOK · 实验计划 / 短期执行</div>
-<h1>L20 Robust Grasp · Stage 1.1<small>先把抓住的物体拿稳：任务、reward、扰动与验收步骤</small></h1>
-<p class="lede">这不是另一个泛泛的研究路线，而是第一轮实验的实施说明：用少量人类风格抓姿完成初始化，手腕由外部轨迹驱动，手指策略学习持物抗扰。读完应能在实现仓库中明确构建环境、跑哪些对照、何时停止以及下一步做什么。</p>
-<p class="meta">2026-09-07 · 版本 1.1 方案稿 · 尚未实现本任务／尚未训练／没有实验成绩。所有新数值都是 pilot 起始建议，不是硬件安全认证或文献最优参数。</p>
+<h1>L20 Robust Grasp · Stage 1.1<small>操作说明与执行台账：先取得合格抓姿，再训练动态持物</small></h1>
+<p class="lede">按 S00 → S09 执行；每一步写明输入、操作、产物和停止条件。先用已有 L20 retarget / 人工模板获得能承重的 reference，再固定来源训练 finger residual。人手、模型与优化器的选择依据移到配套综述，本页只保留当前采用值与执行分支。</p>
+<p class="meta">2026-09-08 · 协议 S1.1-r2 · 操作说明，尚未执行。下列数值是本轮工程起始规范，须经 S00/S04 审计后写入实际运行冻结单；不是文献最优参数或硬件安全认证。训练、评测和产物均未因本文更新而生成。</p>
 <div class="key good"><b>一句话决定。</b>先做 L20、单个 70 mm 方块、一个包握类型、外部控腕、16 维 finger residual PPO；测试从“已抓住”的真实接触状态开始，持续 8 秒。先不做 teacher/student、大规模人类库、视觉、密集触觉、长程工具任务或学习型辅助权重。</div>
 <div class="key warn"><b>文档与实现分开。</b>本 Handbook 只记录实验步骤、选择理由与验收标准，不保存训练代码或可执行配置。实际环境与训练在 <code>/Users/yang/Desktop/Projects/Education/Dex_Hand/human_machine_interaction/training/</code> 下推进；GPU checkpoints / rollout 保留在实现项目既定的训练产物目录。这里不启动训练，不宣称下面提出的环境名已经注册。</div>
 <nav class="toc" aria-label="本页目录"><b>目录</b> ·
-<a href="#scope">1 目标与边界</a> · <a href="#protocol">2 抓取与初始化</a> ·
+<a href="#runbook">0 执行顺序与台账</a> · <a href="#scope">1 目标与边界</a> · <a href="#protocol">2 抓取与初始化</a> ·
 <a href="#prior">3 人类风格</a> · <a href="#control">4 控制与物理</a> ·
 <a href="#observation">5 观测</a> · <a href="#disturbance">6 干扰</a> ·
 <a href="#reward">7 Reward</a> · <a href="#termination">8 成败</a> ·
@@ -124,9 +130,71 @@ ol, ul { padding-left:1.5em; }
 <a href="#evaluation">11 测试与泛化</a> · <a href="#checklist">12 交付与转段</a> ·
 <a href="#evidence">13 依据</a></nav>
 
+
+<h2 id="runbook"><span class="n">§ 0</span>从这里执行：S00 → S09</h2>
+<div class="key good"><b>先执行 S00 和 S01，不先训练模型。</b>本轮拆为 S1.1-A「抓姿来源与承重验收」和 S1.1-B「同一初态上的抗扰控制」。H/G/O 是来源，B0–B3 是 controller，二者不互相替代。文献和旧 BODex 核验见<a href="l20-grasp-sources-review.html">抓姿来源选型综述</a>。</div>
+<p><b>文件归属约定：</b>下列目录和文件名均为<b>待生成产物</b>，本次没有创建。候选数据归 <code>grasping/outputs/stage1_1/&lt;batch_id&gt;/</code>；工程冻结单与日志索引归 <code>human_machine_interaction/training/plan/stage1_1/</code>；运行数据放实现项目既定的 run 目录，每个 <code>&lt;run_id&gt;/</code> 中保存实际配置和证据。Handbook 不存训练代码／可执行配置，写入台账时用实际绝对路径或可访问结果链接替换占位。</p>
+<p class="meta">操作表可横向滚动查看产物、验收和状态；下方 A1–A3 展开具体操作，§4–11 给出参数规范。</p>
+<div class="tw" tabindex="0" role="region" aria-label="Stage1.1操作顺序"><table class="runbook-table">
+<caption>全部为待执行；gate 不通过就停在该步，不能靠修改结果标签跳过</caption>
+<thead><tr><th>步骤 / 输入</th><th>执行操作</th><th>产物（待生成）</th><th>通过 / 失败分支</th><th>状态</th></tr></thead><tbody>
+<tr><td>S00 资产与物理<br>现有 L20CubePick 场景、L20 retarget、旧 grasping 文件</td><td>登记代码版本及 dirty diff hash；导出实际编译模型的关节／执行器／碰撞／耦合／solver 参数。验证 16 主动手指目标与 6 轴腕部命令独立。按 §4 执行空手轨迹、接触与 dt 审计，禁止 ORCA kp boost 渗入</td><td><code>asset_audit.md</code><br><code>physics_freeze.md</code><br><code>actuator_map.csv</code><br><code>physics_replay.csv</code></td><td>单位、映射和权限检查全通过，空手无 wrist failure。backend 不支持或动作限位不符 → 修环境并重新冻结；不改 reward 解救物理问题</td><td>待执行</td></tr>
+<tr><td>S01 最小 reference<br>S00 模型、一个 cube 包握类型</td><td>复用现有 L20 vector 输入／采集；没有可用人手数据时直接标注 L20 包握并标 manual-L20。固定掌面、拇指对向和物体相对位姿，导出 q_pre / q_grasp / q_hold；按下方 A1 操作验收</td><td><code>source_manifest.csv</code><br><code>candidate_0001.json</code><br><code>reference_front_side.png</code></td><td>字段、坐标与耦合检查通过。源数据缺失可走 manual 分支，但不能宣称 human-dataset retarget。未取得候选 → 不进入 PPO</td><td>待执行</td></tr>
+<tr><td>S02 承重与初态<br>S01 候选、固定 PD</td><td>按 §2 的固定初始化建立真实接触并解除支撑，检查 0.5 s；先取得一个 smoke 初态，再用来源独立的变体扩 bank。每候选最多 20 次初始化，不删失败记录</td><td><code>initialization.csv</code><br><code>accepted_states/</code><br><code>init_replay.mp4</code></td><td>smoke 至少 1 个通过；正式 pilot 训练 3–5 个、验证／测试各至少 1 个独立来源初态。只有复制快照则只允许 smoke，不声明初态泛化</td><td>待执行</td></tr>
+<tr><td>S03 来源对照（A）<br>可用的 H / O / G adapter</td><td>按 A2 给每个已适配方法固定 20 slots；同一对象、类型和 PD 做生成／承重／静态测评。vector 与 DexPilot 用同一源输入；旧 BODex 先做 native ORCA 回归再适配 L20</td><td><code>source_scorecard.csv</code><br><code>adapter_acceptance.md</code><br><code>bank_freeze.md</code></td><td>冻结持物主实验的来源，不按 test 得分选。未适配方法记 N/A 与阻塞原因，不记 0% 也不要求全部完成；S02 的 H bank 可先推进</td><td>待执行／其他 adapter 待适配</td></tr>
+<tr><td>S04 环境与裁判<br>冻结初态、§4–8 规范</td><td>在实现项目实现任务；逐项通过下方 A3 检查，生成验证 96 / test 192 场景表。训练／验证／测试源组隔离；抽查真实接触摩擦与实际腕加速度</td><td><code>environment_acceptance.md</code><br><code>val_manifest.jsonl</code><br><code>test_manifest.jsonl</code><br><code>split_audit.md</code></td><td>裁判测试全部通过，快照可重放，test 封存。任务尚未实现就记“待实现”，不得给出虚构启动命令</td><td>待实现／待验收</td></tr>
+<tr><td>S05 无学习基线<br>B0 / B1、验证集</td><td>先 20 次 nominal 静态重放；再跑验证集。B1 在 0 / 0.05 / 0.10 / 0.15 rad 中选一个固定闭合量；kp 与力限制保持一致</td><td><code>baseline_val.csv</code><br><code>b1_selection.md</code><br><code>baseline_replays/</code></td><td>较强静态基线 nominal ≥19/20，且无 invalid；否则回 S01/S02。若 stress ≥95%，先记录“增益空间不足”，只在新开发版本调整任务，不能偷改已封存 test</td><td>待执行</td></tr>
+<tr><td>S06 Smoke<br>S04/S05 通过</td><td>一个 nominal 初态、seed 0、1M environment steps；执行 §10 T1，检查每项 reward、动作权限和 reset</td><td><code>smoke_metrics.csv</code><br><code>reward_terms.csv</code><br><code>smoke_acceptance.md</code></td><td>无 NaN/Inf、episode 裁判正确、zero residual 等价 B0。异常先修实现；smoke 不是泛化结果，也不并入正式 seed 的预算</td><td>待执行</td></tr>
+<tr><td>S07 PPO 对照（B）<br>冻结 bank 和训练规范</td><td>B2/B3 从头训练，各 seeds 0/1/2、10M steps/seed；按 §10 固定课程、每 1M 验证并选 checkpoint。先 seed 0，验收通过才复跑 1/2</td><td><code>resolved_config.json</code><br><code>train_metrics.csv</code><br><code>checkpoint_selection.csv</code><br><code>checkpoints/</code></td><td>nominal 不崩且物理审计通过；停滞按 D2 oracle 诊断，不自动蒸馏。延长预算按 §10 固定规则，所有变更有版本记录</td><td>待执行</td></tr>
+<tr><td>S08 一次封存测试<br>已选 checkpoint 与 test manifest</td><td>B0/B1 及六个 B2/B3 checkpoint 跑同一 192 scenarios。报告每组、每 seed、配对差值和 CI；统计所有失败／初始化无效分母</td><td><code>test_episode_metrics.csv</code><br><code>paired_summary.csv</code><br><code>failure_catalog.md</code></td><td>结果无论好坏都入账；不以 test 回调 reward。invalid 不能删去制造高成功率；若需要修协议，当前结果保留并另开版本</td><td>待执行</td></tr>
+<tr><td>S09 完整入口与转段<br>S08 结果</td><td>固定 pregrasp → close → lift → 8 s hold，20 条事先冻结入口条件，比较 B0 与已选 B3。记录入口成功与条件持物，填 §12 转段决策</td><td><code>entry_manifest.jsonl</code><br><code>entry_metrics.csv</code><br><code>stage_decision.md</code></td><td>持物有效但抓起差 → Stage 1.2 acquisition；观测 gap 大 → estimator/history 分支；控制能力未证实 → 不扩大跨任务声明</td><td>待执行</td></tr>
+</tbody></table></div>
+
+<h3 id="source-steps">A1 · S01 的具体操作：先做一条，再做一批</h3>
+<ol>
+<li><b>加载同一个对象。</b>只用现有 70 mm / 108 g cube。登记 mesh 与 collision hash，不切换为旧 ORCA 的 cube / bottle。参考点采用固定 palm site，坐标与单位按<a href="l20-grasp-sources-review.html#contract">候选合同</a>。</li>
+<li><b>取得原始包握输入。</b>保存右手静态关键点和接近闭合的一段原始序列；若没有可用采集，人工在 L20 模型上标注包握并记录该来源。检查拇指与至少两个非拇指构成对向包握，掌面朝向与接触区域符合目标类型；这只是类型筛查，仍须承重验证。</li>
+<li><b>运行既有映射。</b>先用本地 vector，保存 16 主动关节目标与全部耦合后的 FK；angle 输出只作对照。小指限位／curl 不手工删除记录，按 retargeting 缺陷页定位。若用 DexPilot，保存其实际门控阈值、scale、点对和库 commit，不能只把 vector 改个名字。</li>
+<li><b>构造三个不同语义的目标。</b>q_pre 是不与 cube 穿透的预闭合目标，q_grasp 是几何接触目标，q_hold 是固定控制器实际承重目标。沿标注 flexion 方向，以 0 / 0.05 / 0.10 / 0.15 rad 为开发集闭合候选，经限位、0.8 rad/s 速率约束与物理回放选定；这一初始化标定与后续 B1 固定偏移搜索分开留档。</li>
+<li><b>保留来源。</b>source ID、retargeter、人工修改、优化 refinement、q_hold 选择依据全部存入 candidate。初态通过后令 controller 的 q_ref=q_hold；q_ref 在计分期间不因物体滑移而更新。</li>
+</ol>
+<p><b>公共数据 adapter 的执行入口：</b>先从 <a href="l20-grasp-sources-review.html#datasets">ContactPose 官方样例</a>选择一条右手手物姿态与它对应的原始 mesh，校验许可／单位／帧／接触，然后同输入跑三种 retarget。产出 <code>public_data_adapter.md</code> 与 raw / retarget 叠加图。没有与 cube 对应的示教时，该物体只用于 adapter 验收，不计入 cube 持物主表；不靠拉伸瓶子 mesh 冒充同一对象。</p>
+
+<h3>A2 · S03 的具体操作：方法可多，第一轮不全接</h3>
+<p>当前来源标签固定为 <b>H-vector、H-angle、H-DexPilot、O-BODex、G-DRO</b>；refinement 另列，人工 fallback 标 H-manual。本地 vector / angle 已有实现，但本协议下的候选尚待生成；其余方法在 adapter 通过前都是待适配。GraspADMM / CoToGrasp 放在综述的下一轮列表，不是额外强制 gate。</p>
+<ol>
+<li>在看结果前分配 20 个 source-group slots：train 01–12、validation 13–16、test 17–20。一个源动作／模板衍生的所有变体归同一组；不同 seed 本身不是独立来源证据。实际源组不足则只做 smoke，不用复制补齐。</li>
+<li>在同一手型、cube、包握类型、固定 PD 及初始化流程下生成，保留无解／超时／穿透失败 slot。每个方法记录 candidate 数及优化耗时；本轮单 slot 计算上限先设 CPU 120 s / GPU 120 s wall-clock，实际硬件和预算分别报告，不宣称等算力比较。超时即记失败，不换 seed 填坑。</li>
+<li>直接 retarget 与 retarget + 优化修正分开行；人工编辑仅用于开发样本、记录次数与耗时，不能在 held-out test 上逐个调姿救活。</li>
+<li>每个 train / validation 承重合格候选先跑 8 s 静态保持，再从相同初态分别跑 12 条标准 wrench probes：六向力 0.25mg、六向力矩 0.125mgr，t=2 s 开始、持续 0.32 s、两端 ramp 各 0.04 s，其余参数按 §6/§8。test slots 此时只导出封存，S08 解封后才跑同一来源评测。来源表保存静态与 12 条 probe 的逐条结果；这是事先固定的来源诊断集，不替代 controller 的封存测试集。</li>
+<li>只用 train / validation 决定来源与参数。主 controller bank 优先用 H-vector；若承重失败，按记录转 H-manual 或已适配 O-BODex。换来源须保留旧失败与选择理由，后续 B0–B3 全部使用同一新 bank。</li>
+<li>test 侧只按冻结的初始化通过规则机械验收，不人为优化它的抓姿；全部初始化失败仍计入整体来源成功率。最终来源表与 controller 表分开生成。</li>
+</ol>
+
+<h3>A3 · S04 的裁判验收：以下检查全部通过才训练</h3>
+<ul>
+<li><b>坐标：</b>解析构造的刚性共同平移／旋转给出 ep、eR、vslip≈0；姿态四元数 q 与 −q 判同一旋转，90° cube 翻面判不同。解析测试容差 10⁻⁶；动力学 replay 的误差另外报告，不用解析容差要求两个 backend 接触轨迹逐位相同。</li>
+<li><b>动作：</b>全零 residual 与 B0 控制目标完全相同；16 维 action 无法改变外部腕部命令；raw / clipped / measured 三者分别有日志。</li>
+<li><b>事件：</b>分别注入触桌、接触丢失 0.12 s、hard-slip 超限 0.12 s、腕跟踪超限 0.20 s；验证失败一次记账，fail 与 complete 互斥，终止后不继续加奖励。</li>
+<li><b>奖励：</b>用 §7 的解析输入得到理论上界 34、Kp(1 cm)=e⁻¹；记录每一成本原值和积分。NaN 注入触发 invalid 隔离，不进入 PPO buffer。</li>
+<li><b>物理：</b>空手与带物体命令分别重放，比较实际腕轨迹、有效接触摩擦和执行器饱和；物体无 weld，手腕可有动力学驱动约束。换 backend / dt 后重新承重验收。</li>
+<li><b>分割：</b>同 parent source、相邻示教帧、同一轨迹参数表不能跨 split。E4 的斜向／多轴轨迹禁止进入训练；训练的 mixed 指单轴腕运动 + 外力／参数组合，不是偷偷加入多轴腕轨迹。</li>
+</ul>
+
+<h3>记录怎么填：运行发生后才追加一行</h3>
+<p>实现项目的 <code>execution_log.md</code> 按下列字段记录：日期、step ID、run ID、protocol 版本、输入 manifest hash、代码 commit + dirty diff hash、实际配置、执行设备、尝试／有效／成功分母、结果／视频路径、判定、失败原因、下一步。禁止预填 PASS 或预期成功率。无数据字段写“未运行”，不是 0。</p>
+<div class="tw" tabindex="0" role="region" aria-label="当前执行状态"><table>
+<caption>2026-09-08 的真实状态；仅文档与只读资产核验已完成</caption>
+<thead><tr><th>范围</th><th>状态</th><th>证据 / 下一动作</th></tr></thead><tbody>
+<tr><td>文档 S1.1-r2 与选型综述</td><td>已编写；不是实验</td><td>本页与配套综述；执行从 S00 开始</td></tr>
+<tr><td>旧 grasping 代码／历史 CSV</td><td>已只读核验</td><td>综述 §2；ORCA 历史成绩，不计当前协议</td></tr>
+<tr><td>L20 当前 candidate bank、物理 gate、任务实现</td><td>待生成／待实现／待验收</td><td>不能跳到 S07</td></tr>
+<tr><td>PPO smoke、正式训练、封存测试</td><td>未运行</td><td>当前无 run ID、checkpoint 或成绩</td></tr>
+</tbody></table></div>
+
 <h2 id="scope"><span class="n">§ 1</span>长线不变，第一步只问一个问题</h2>
 <div class="key good"><b>长期目标：</b>跨物体、跨任务的稳定抓取共享控制，能够根据人的意图和抓取风险动态调整辅助，同时保留人对目标、运动与释放的控制。<b>Stage 1.1：</b>在同样外部腕部运动、初始抓姿和执行器限制下，在线手指调整是否比固定闭合更能减少滑移与掉落？</div>
-<p><a href="l20-robust-grasp.html#long-term">总路线页</a>负责阶段关系与长期研究候选；本页负责第一轮实验的具体步骤。<a href="shared-control.html">共享控制页</a>保留系统架构及人机接口背景。三页不互相替代。</p>
+<p><a href="l20-robust-grasp.html#long-term">总路线</a>管阶段关系；<a href="l20-grasp-sources-review.html">选型综述</a>管三类来源、数据库与既有 BODex；本页管操作顺序与冻结规范。<a href="shared-control.html">共享控制页</a>管人机接口背景。§1–13 是 S00–S09 要引用的参数与判据，不是重新选方法的讨论。</p>
 <div class="tw" tabindex="0" role="region" aria-label="阶段范围"><table>
 <caption>Stage 1.1 的包含项和明确排除项</caption>
 <thead><tr><th>维度</th><th>这轮做什么</th><th>这轮不声称什么</th></tr></thead><tbody>
@@ -142,46 +210,45 @@ ol, ul { padding-left:1.5em; }
 <div class="key good">固定流程负责闭合与抬起；学习控制器负责后面的 8 秒。两个控制器比较时，必须从相同且能真实承重的初态开始，而不是各自挑最有利的一次抓取。</div>
 <ol>
 <li><b>准备候选。</b>按 §3 得到一个 L20 包握 reference。使用现有 CubePick 资产中的方块：边长 0.07 m、质量 0.108 kg；不同时换场景和任务。</li>
-<li><b>建立抓取。</b>用固定的闭合／抬起流程，或用现有策略离线获得候选。动作要经过真实模拟动力学，不能把穿透的关节姿态直接当稳定抓姿。</li>
+<li><b>建立抓取。</b>主入口采用固定初始化：reset 时允许临时定位物体；用 q_pre → q_hold 限速闭合 1.0 s，腕部保持，随后解除物体临时支撑并稳定 0.5 s。初始位置须使物体底部离桌 ≥0.10 m；解除后只能由手承重。完整桌面入口单独采用 gravity-on 的 pregrasp → 1.0 s 闭合 → minimum-jerk 抬高 0.15 m / 1.2 s → 0.5 s 稳定；腕部越界或无法离桌记初始化失败，不改成瞬移抬起。全过程动作经过真实模拟动力学。</li>
 <li><b>解除所有支撑。</b>物体底部至少离桌面 0.10 m；物体没有 weld、悬挂或其他隐形支撑。若只能在初始化时临时固定物体，必须先解除，再开始下面的检查。</li>
-<li><b>稳定检查 0.5 s。</b>使用固定 PD，不计训练奖励；没有桌面／地面接触、无明显穿透、无持续滑移。建议窗口内相对平移漂移 ≤2 mm、相对旋转 ≤2°，末端相对速度 ≤0.01 m/s。阈值先审计数值噪声，合格后冻结。</li>
+<li><b>稳定检查 0.5 s。</b>使用固定 PD，不计训练奖励；没有桌面／地面接触、无明显穿透、无持续滑移。本版本窗口内相对平移漂移 ≤2 mm、相对旋转 ≤2°，末端相对速度 ≤0.01 m/s。先审计数值噪声；若阈值不适用，退回 S00 修改协议版本，不在单个失败样本上放宽。</li>
 <li><b>记录初态。</b>保存模型及参数 hash、完整积分状态、控制目标、初始化来源、reference 和重建说明；同一 backend 支持精确恢复。换 backend / 物理参数后必须重新稳定，不能假设原快照仍处于平衡。</li>
 <li><b>开始计分。</b>以稳定检查结束时的手—物体关系为固定目标，清空 episode 指标，运行 8 s = 200 个 25 Hz control steps。运动／外力只在计分开始后出现。</li>
 </ol>
-<p><b>初始化失败单独记账。</b>每组最多尝试 20 次；仍失败记为 initialization failure，不无限重采样。条件持物指标的分母是合格初态数，同时单列候选总数、初始化通过率与失败原因。比较 controller 时共用同一批初态；不能按每个 controller 的表现重新筛选。</p>
+<p><b>初始化失败单独记账。</b>每个候选最多尝试 20 次；仍失败记为 initialization failure，不无限重采样。条件持物指标的分母是合格初态数，同时单列候选总数、初始化通过率与失败原因。比较 controller 时共用同一批初态；不能按每个 controller 的表现重新筛选。</p>
 <p><b>两个入口。</b>主入口是“已抓住状态 → 抗扰”，用于训练与归因；完整入口是“固定 pregrasp → 固定闭合／抬起 → 抗扰”，在本轮末期补验证。分别报告初始化、条件持物、完整流程成功率。桌面入口失败不会被从完整流程分母删除，也不等于一定是持物策略失败。</p>
-<p>先用 1 个合格初态做 smoke，再用同一抓取类型的 3–5 个物理合格变体做 pilot。保存未见初态变体作验证／测试；不靠复制同一个快照制造“抓姿泛化”。</p>
+<p>先用 1 个合格初态做 smoke，再用 3–5 个训练初态做 pilot；验证和测试各至少保留 1 个独立源组，所有增强继承 parent split。正式运行以 S03 的 manifest 为准，初态数量不足就停在 smoke，不靠复制快照制造“抓姿泛化”。所有 controller 恢复同一完整初态；DR 参数改变后按同一固定 PD 初始化，不能各自先用自己的 policy 闭合。</p>
 
-<h2 id="prior"><span class="n">§ 3</span>“像人”保留在哪里？</h2>
-<div class="key good">先保留抓取类型、拇指对向关系和功能接触位置，不要求每一帧都匹配人类关节角。人类先验负责提出合理 reference，物理检查负责证明它可以承重。</div>
-<p>第一轮只选一个适合方块的包握类型。可以用现有 Quest／retargeting 流程记录少量参考，或在 L20 上标注类型模板；没有必要先接入大型人类数据库。retarget 必须服从 L20 的 16 个主动关节和 5 组耦合，不能把人手 21 维角度逐项复制。</p>
+<h2 id="prior"><span class="n">§ 3</span>Reference 来源和 style 的执行规范</h2>
+<p>按 <a href="#source-steps">A1</a>先执行本地 L20 vector；H-angle、H-DexPilot 是同输入对照。其他方法的可用性、数据库入口和优化器迁移步骤见<a href="l20-grasp-sources-review.html#selection">选型综述的优先级表</a>，不在本页重复论文名单。</p>
 <ol>
-<li>检查掌面朝向、拇指对向以及哪些指节应接触物体；标出禁止靠关节极限／穿透形成的抓姿。</li>
-<li>转为 L20 reference 后，调整物体相对位姿和手指闭合量，完成 §2 的物理检查。</li>
-<li>冻结 reference；允许 residual 在有界邻域内调整。每次失败回放检查是否变成非预期抓取类型。</li>
-<li>先记录自然度／类型保持，不立即加大权重的模仿 reward；若策略持续改变类型，先检查 reference 和动作边界，再做单独约束消融。</li>
+<li>本轮固定一个 cube 包握类型：记录拇指对向、参与手指、允许接触区域与原始意图。自然度不以肉眼“像人”代替物理承重。</li>
+<li>所有 q 按 16 主动关节名存储，5 组耦合统一求 FK；人工标注、真实人手 retarget 和优化 refinement 分开记来源。</li>
+<li>通过固定 PD 承重后冻结 q_ref=q_hold。在线 residual 仅在 §4 边界内修正，不能用每步更新 reference 隐藏动作漂移。</li>
+<li>每个评测 episode 报类型保持与 contact-role 变化，成功但换成非预期类型另记 style failure。当前完成奖励不强行等于完整姿态模仿；新增 style reward 必须单独做消融。</li>
+<li>B0–B3 共用 reference 与状态；来源比较共用固定 PD。不可同时换生成器、初态和控制器后把增益全归给 PPO。</li>
 </ol>
-<p><a href="https://pku-epic.github.io/Dexonomy/">Dexonomy（RSS 2025）</a>从每手型／每抓取类型一个人工模板出发合成抓姿，适合参考这一步；<a href="https://github.com/JYChen18/Dexonomy">官方实现</a>采用 MuJoCo，当前支持列表不含 L20，接入仍需手模型、接触标注与模板适配。<a href="https://jianglongye.com/cgf/">CGF（RA-L 2023）</a>是人类轨迹 retarget 后学习自然抓取动作的参考，适合以后做完整 approach / closure style；它不是本轮抗扰控制器的替代品。</p>
-<p><b>对照公平性：</b>固定 PD 和学习策略共用相同 reference。如果以后比较“有人类先验 vs 无先验”，必须把它作为独立消融，不能同时改变初态质量、controller 和动作范围。</p>
 
 <h2 id="control"><span class="n">§ 4</span>控制接口与物理：先固定这些，再调 reward</h2>
 <div class="key good">Policy 只有 16 维手指输出；腕部由独立轨迹驱动。Residual 是相对 reference 的有界偏移，不是逐步累加直到关节极限。</div>
 <div class="math">$$q_{\mathrm{raw},t}=q_{\mathrm{ref}}+0.15\,a_t,\qquad a_t\in[-1,1]^{16}$$
-<p class="why">0.15 的单位是 rad，是首轮建议，不是已测最佳幅度；所有 baseline 使用同一个允许目标集合。reference 按主动关节顺序存储，用关节名映射，不依赖 XML 隐含顺序。</p>
+<p class="why">0.15 的单位是 rad，是本版本采用值，不是已测最佳幅度；所有 baseline 使用同一个允许目标集合。reference 按主动关节顺序存储，用关节名映射，不依赖 XML 隐含顺序。</p>
 $$q_{\mathrm{cmd},t}=\operatorname{clip}_{[q_{\min},q_{\max}]}\!\left[q_{\mathrm{cmd},t-1}+\operatorname{clip}_{[-v_{\max}\Delta t,v_{\max}\Delta t]}(q_{\mathrm{raw},t}-q_{\mathrm{cmd},t-1})\right],\quad v_{\max}=0.8\ \mathrm{rad/s}$$
 <p class="why">关节范围与目标速率限制始终生效；记录 raw action、限幅后 command 和实际 q，避免把“输出很平滑”误当作“执行很平滑”。腕部 command 不经过 policy 修改。</p></div>
 <div class="tw" tabindex="0" role="region" aria-label="物理与控制参数"><table>
-<caption>首轮候选配置；与旧 CubePick 的差异必须留档</caption>
+<caption>本版本采用值与必须验收的实现项；S00 记录实际编译值</caption>
 <thead><tr><th>项</th><th>Stage 1.1 起点</th><th>为什么／验收</th></tr></thead><tbody>
 <tr><td>Policy period</td><td>0.04 s，25 Hz</td><td>沿用现有 CubePick 控制周期，暂不一起改成 50 Hz</td></tr>
 <tr><td>Physics timestep</td><td>0.002 s，每 control step 20 substeps</td><td>旧 CubePick 是 0.01 s；这是有意改变，必须补物理与 checkpoint 对照</td></tr>
-<tr><td>Integrator / solver</td><td>候选 implicitfast / Newton / elliptic；优先核对 teleop 设置</td><td>验证本机与 GPU backend 支持；不为吞吐静默改接触或耦合</td></tr>
-<tr><td>训练／评估</td><td>MJX-Warp 候选训练；CPU MuJoCo 为独立评估端</td><td>先通过相同控制序列的短时 replay 与 nominal / stress 排名检查</td></tr>
-<tr><td>腕部驱动</td><td>受限、平滑、动态驱动的外部 pose target</td><td>现有 6 轴位置执行器可做 smoke，但与 teleop 的 mocap / soft-weld 差异必须审计；每帧不能覆写物体或腕部 qpos</td></tr>
-<tr><td>执行器</td><td>冻结 XML 的 kp、forcerange、耦合、关节和碰撞设置</td><td>不沿用锤钉分支为工具任务修改的强度；改参数就是新实验版本</td></tr>
+<tr><td>Integrator / solver</td><td>采用 implicitfast / Newton / elliptic；接触参数从编译模型逐项留档</td><td>验证本机与 GPU backend 支持；不为吞吐静默改接触或耦合</td></tr>
+<tr><td>训练／评估</td><td>CPU MuJoCo 先验收；MJX-Warp 训练在 backend gate 通过后启用</td><td>先通过相同控制序列的短时 replay 与 nominal / stress 排名检查</td></tr>
+<tr><td>腕部驱动</td><td>受限、平滑、动态驱动的外部 pose target</td><td>本轮先用已有 6 轴位置执行器；命令须在关节范围内且通过空手与带物体跟踪 gate。与 teleop mocap / soft-weld 差异留档；若改驱动方式另立版本。每帧不能覆写物体或腕部 qpos</td></tr>
+<tr><td>执行器</td><td>冻结实际编译的 kp、forcerange、耦合、关节和碰撞；当前源 XML 手指默认 kp=2、forcerange=±1，最终以逐 actuator 导出值为准</td><td>不沿用锤钉分支为工具任务修改的强度；改参数就是新实验版本</td></tr>
 <tr><td>数值敏感性</td><td>同一物理时长补 dt=0.001 s 评估</td><td>控制频率不变；若失稳现象消失或明显改变排序，先修物理再解释方法增益</td></tr>
 </tbody></table></div>
 <p><b>单位注意：</b>MuJoCo actuator force 是广义执行器力，经传动作用于关节；对 hinge，关节广义力是力矩。它不是指尖法向力，更不是材料损坏阈值。当前项目的数值上限只能叫“仿真执行器限制”，不能写成“已标定安全抓力”。</p>
+<p><b>Backend gate 的固定开发集：</b>S00 先完成空手段：20 条单轴轨迹（平移与旋转各 10 条、覆盖 §6 的幅值端点），全部无 wrist tracking failure。S02 有初态后、S04 验收前，补 20 条 B0 带物体 replay（4 静态、8 wrist、8 wrench）。同一 command 在 CPU / 训练 backend 和 dt=0.002 / 0.001 s 下重放，必须无 invalid、静态均通过、完成判定一致至少 18/20；逐条保存不一致案例，不要求混沌接触轨迹逐位相同。这是本项目首轮工程门槛，不是 backend 等价的数学证明；未过完整 gate 时只能继续 CPU 诊断，不能开始 GPU PPO 并解释算法增益。</p>
 
 <h2 id="observation"><span class="n">§ 5</span>Actor 看什么？先明确部署信息边界</h2>
 <div class="key good">第一版使用 proprioception 与腕部历史，不接视觉／高分辨率触觉。物体真值可以用来计算 reward 和训练 critic；不能无标注地送入宣称可部署的 actor。</div>
@@ -204,7 +271,7 @@ $$q_{\mathrm{cmd},t}=\operatorname{clip}_{[q_{\min},q_{\max}]}\!\left[q_{\mathrm
 <p>平移用世界坐标轴，旋转用 episode 初始 palm 的局部轴。使用起止速度、加速度为零的 minimum-jerk 段；在两个端点间往返并有随机停顿，不按轴顺序固定循环。</p>
 <div class="math">$$s(u)=10u^3-15u^4+6u^5,\qquad u=\operatorname{clip}(t/T,0,1),\qquad p(t)=p_0+A\,s(u)\,d$$
 <p class="why">d 是单位方向；A 为位移，T 为单段时长。旋转用同一 s(u) 沿固定轴插值角度。检查真实加速度而非只看“移动了多远”：平移峰值速度为 1.875A/T，峰值加速度约为 5.774A/T²。</p></div>
-<p>首轮训练候选：平移 A=0.02–0.10 m；旋转 10–30°；单段 T=0.8–1.6 s；段间停顿 0.2–0.6 s。限制平移加速度 ≤1 m/s²、角加速度 ≤5 rad/s²；超限轨迹重采样。先单轴，后混合；合成后再检查界限，不把每轴合格误认为合成运动合格。</p>
+<p>本版本训练分布：平移 A=0.02–0.10 m；旋转 10–30°；单段 T=0.8–1.6 s；段间停顿 0.2–0.6 s。限制平移加速度 ≤1 m/s²、角加速度 ≤5 rad/s²；超限轨迹重采样。训练腕部只用单轴段；mixed 指腕运动与 wrench / 物理参数同时出现，多轴／斜向腕轨迹专留 E4。所有轨迹须检查腕部关节范围和实际合成加速度，越界重采样并统计拒绝率。</p>
 <h3>6.2 External wrench bank</h3>
 <p>腕部静止，对物体施加六向力 ±x/±y/±z 和六向力矩 ±roll/±pitch/±yaw。坐标轴固定为 episode 初始 palm frame，并变换到仿真施力所需坐标。力作用于 COM；纯力矩单独施加。以后才加入离心接触点，因为偏心力同时产生力矩。</p>
 <ul>
@@ -214,7 +281,7 @@ $$q_{\mathrm{cmd},t}=\operatorname{clip}_{[q_{\min},q_{\max}]}\!\left[q_{\mathrm
 <li><b>阈值扫描：</b>另做单方向逐渐加力／加力矩，记录首次超限滑移强度；每个方向重置。到测试上限仍不失稳，报告“≥上限”，不假称测到了极限。</li>
 </ul>
 <h3>6.3 Physics randomization</h3>
-<p>在静态 nominal 通过后，逐步加入质量 nominal ×[0.8,1.2]，有效滑动摩擦 μ∈[0.3,0.8]。质量变更必须同步合理惯量，COM 第一轮固定。摩擦必须检查实际接触参数：不能只改 object geom，而手／物体的接触混合规则使生效摩擦仍是旧值。记录接触 pair 的实际 μ。</p>
+<p>nominal 有效滑动摩擦固定 μ=0.6、质量 0.108 kg；先在 S00 核对 contact pair 的实际值。B3 的 uniform DR 全程独立采样质量 nominal ×[0.8,1.2]、有效滑动摩擦 μ∈[0.3,0.8]；B2 不随机化二者。质量变更必须同步合理惯量，COM 第一轮固定。摩擦必须检查实际接触参数：不能只改 object geom，而手／物体的接触混合规则使生效摩擦仍是旧值。记录接触 pair 的实际 μ。</p>
 <p>不同物理参数必须重新建立／稳定初态，并报告通过率；否则“只保留能初始化的低摩擦样本”会暗中改变任务分布。暂不同时随机 actuator gains、延迟、COM、对象形状和传感噪声。</p>
 
 <h2 id="reward"><span class="n">§ 7</span>Reward 1.1：具体算什么，为什么这样算？</h2>
@@ -231,7 +298,7 @@ $$v_{\mathrm{slip}}=\|v_O-v_P-\omega_P\times(p_O-p_P)\|$$
 <div class="math">$$r_t=\Delta t\,[H+2K_p+K_R-0.20C_v-0.05C_{\mathrm{ref}}-0.02C_{\mathrm{slew}}-0.10C_{\mathrm{effort}}-0.50C_{\mathrm{sat}}]-5I_{\mathrm{fail}}+2I_{\mathrm{complete}}$$
 <p class="why">括号内是每秒收益／成本，乘 Δt 后不同控制频率的物理时间可比较；失败 −5 和合格完成 +2 只在事件发生时记一次，不乘 Δt，不在终止后继续累积。fail 优先于 complete。</p></div>
 <div class="tw" tabindex="0" role="region" aria-label="奖励项定义"><table>
-<caption>所有权重都是待 pilot 核验的建议起点，不是论文原始 reward</caption>
+<caption>本版本采用的 reward 系数；S04 单测，pilot 修改需新版本，不是论文原始 reward</caption>
 <thead><tr><th>项</th><th>精确定义</th><th>设计目的</th></tr></thead><tbody>
 <tr><td>H，权重 +1</td><td>每个有效计分 step 为 1</td><td>保留持物时间收益；不是接触点数奖励</td></tr>
 <tr><td>Kp，权重 +2</td><td>exp[−(ep/0.01)²]</td><td>相对平移误差，不是世界位置</td></tr>
@@ -251,7 +318,7 @@ $$v_{\mathrm{slip}}=\|v_O-v_P-\omega_P\times(p_O-p_P)\|$$
 <h2 id="termination"><span class="n">§ 8</span>成败判据与恢复：不要只看 reward</h2>
 <div class="key good">“没掉”“没有明显滑移”“受扰后恢复”是不同成绩。第一版分别报告；一个短暂滑移后恢复的 episode 可以算持物完成，但不能算全程严格稳定。</div>
 <div class="tw" tabindex="0" role="region" aria-label="终止与成功规则"><table>
-<caption>数值阈值均为 pilot 候选，固定后再生成测试集</caption>
+<caption>S1.1-r2 裁判阈值；S04 审计后生成并封存测试集</caption>
 <thead><tr><th>事件／指标</th><th>定义</th><th>处理</th></tr></thead><tbody>
 <tr><td>Drop / support contact</td><td>计分阶段物体触桌面／地面；或物体与手失去有效接触持续 ≥0.12 s</td><td>终止失败；有效接触按总法向力 &gt;0.05 N 初筛，先验证阈值高于数值噪声</td></tr>
 <tr><td>Hard slip</td><td>ep&gt;4 cm 或 eR&gt;45°，连续 ≥0.12 s</td><td>终止失败；在 physics substep 累计持续时间</td></tr>
@@ -280,21 +347,21 @@ $$v_{\mathrm{slip}}=\|v_O-v_P-\omega_P\times(p_O-p_P)\|$$
 <p>不必第一轮就跑完所有诊断：B0/B1 无法静态持物，先停；B3 表现差，再看 D2；想验证旧自主专家能否复用，再跑 D1。Teacher / student 只有在样本效率或观测迁移的实际缺口出现后进入下一版。</p>
 
 <h2 id="training"><span class="n">§ 10</span>训练顺序与预算：每一段都能停止</h2>
-<div class="key good">先验证环境，再做小预算曲线；不要直接跑满 100M steps。以下是候选训练设置，不是已实现的 config，也不要求先连接真人。</div>
+<div class="key good">先验证环境，再做小预算曲线；不要直接跑满 100M steps。以下是本版本采用的训练设置，需在实现项目落实并导出实际配置；不是已存在的启动脚本，也不要求真人在线。</div>
 <ol>
 <li><b>T0 无学习验收。</b>固定物理参数，跑 B0/B1 静态及小扰动；先取得可复现的初态和 baseline 视频。</li>
-<li><b>T1 Smoke。</b>单个 nominal 初态，静止／低幅运动，约 1M environment steps，seed 0。只验证 reward 有限、action 权限正确、终止和日志正确，不宣称泛化。</li>
-<li><b>T2 Nominal pilot。</b>3–5 个同类型初态，加入完整训练腕部轨迹和独立 wrench 场景；B2 的预算上限先设 10M steps。</li>
-<li><b>T3 DR pilot。</b>B3 使用相同训练轨迹、网络和预算；质量／摩擦先窄后宽。训练场景分配：20% 静态、30% wrist-only、30% wrench-only、20% 混合。预热进度按训练 steps 固定，所有学习对照一致，不看 test 调课程。</li>
-<li><b>T4 配对验证。</b>约每 1M steps 在固定验证集评估；按照持物完成率优先、再看严格稳定率和 effort 选 checkpoint，不按最高训练 reward 选。</li>
-<li><b>T5 三 seed。</b>seed 0 通过环境与 nominal gate 后，复跑 seeds 1、2；若 10M 仍在明确改善，可按预先约定延长到 20M/seed，否则先诊断。超过此预算重新立版本决策，不自动无限加算力。</li>
+<li><b>T1 Smoke。</b>单个 nominal 初态，静止／低幅运动，1M environment steps，seed 0。只验证 reward 有限、action 权限正确、终止和日志正确，不宣称泛化。</li>
+<li><b>T2 Nominal pilot。</b>3–5 个训练初态，B2 的预算为 10M steps/seed。前 1M steps 为静态／低幅运动预热，随后 1M–10M 按完整训练分布执行；验证初态不进训练。</li>
+<li><b>T3 DR pilot。</b>B3 使用与 B2 相同网络、预算和场景课程，全程采用 §6 的 uniform mass / friction DR。两者前 1M steps 固定为 50% 静态、50% wrist-only（A=0.02 m、旋转 10°、T=1.6 s），后续固定为 20% 静态、30% wrist-only、30% wrench-only、20% 混合；只有物理参数分布不同，不看 test 调课程。</li>
+<li><b>T4 配对验证。</b>每 1M steps 在固定验证集评估；按照持物完成率优先、再看严格稳定率和 effort 选 checkpoint，不按最高训练 reward 选。</li>
+<li><b>T5 三 seed。</b>seed 0 通过环境与 nominal gate 后，复跑 seeds 1、2；10M 为默认终点；若任一方法 seed 0 在 8M/9M/10M 三次验证的主要 stress 完成率单调上升且总增益 ≥5 个百分点，可启用 20M 扩展。启用则 B2/B3 的全部 seeds 使用同预算，分别报告 10M 与 20M；不能只延长落后方法后仍称等预算。否则先诊断。超过此预算重新立版本决策，不自动无限加算力。</li>
 </ol>
 <div class="tw" tabindex="0" role="region" aria-label="PPO起始参数"><table>
-<caption>PPO 起始建议；继承实现仓库已验证的批处理结构，改动逐项记录</caption>
-<thead><tr><th>参数</th><th>建议</th><th>解释</th></tr></thead><tbody>
+<caption>PPO 本版本采用值；逐项核对 pinned trainer 的实际语义</caption>
+<thead><tr><th>参数</th><th>采用值</th><th>解释</th></tr></thead><tbody>
 <tr><td>Network</td><td>History MLP；隐藏层 512/256/128</td><td>actor 784 维历史；critic 可用特权状态</td></tr>
 <tr><td>Environment / rollout</td><td>4096 envs，unroll 40，batch size 256，32 minibatches，4 updates</td><td>沿用已有 PPO 批处理起点；先测显存，OOM 只调并行规模并留档</td></tr>
-<tr><td>Learning rate / entropy</td><td>3e−4 / 0.005</td><td>entropy 是候选新值；检查探索是否撞限幅</td></tr>
+<tr><td>Learning rate / entropy</td><td>3e−4 / 0.005</td><td>entropy 是本轮新值；检查探索是否撞限幅</td></tr>
 <tr><td>Discount / GAE</td><td>γ=0.995，λ=0.95</td><td>25 Hz 下 γ 的约略有效时间尺度为 8 s；比旧 CubePick γ=0.97 更重视延迟掉落</td></tr>
 <tr><td>PPO clipping / grad norm</td><td>0.2 / 1.0</td><td>实现前核对 pinned trainer 的参数接口和默认值，记录实际生效配置</td></tr>
 <tr><td>Reward scaling / normalization</td><td>1.0；观测归一化，eval 冻结</td><td>reward 已按 Δt 积分，不再盲目套旧 CubePick 的 0.1 scaling</td></tr>
@@ -303,7 +370,7 @@ $$v_{\mathrm{slip}}=\|v_O-v_P-\omega_P\times(p_O-p_P)\|$$
 
 <h2 id="evaluation"><span class="n">§ 11</span>测试集、过拟合与真正的第一张表</h2>
 <div class="key good">现在就隔离测试，不现在就要求跨一切。先证明同一个物体在未见轨迹／扰动组合上有效；单物体结果不能写成“跨物体通用”。</div>
-<p>验证集建议 96 episodes；最终 test 192 episodes，分为以下 6 组、每组 32 条。训练随机数 seed 范围 0–99,999，验证 200,000–299,999，测试 300,000–399,999；这仅用于避免随机流重用，<b>不能替代初态来源、轨迹类型和物理参数组合的实质隔离</b>。</p>
+<p>验证集固定 96 episodes（E0–E5 各 16 条）；最终 test 192 episodes，分为以下 6 组、每组 32 条。训练随机数 seed 范围 0–99,999，验证 200,000–299,999，测试 300,000–399,999；这仅用于避免随机流重用，<b>不能替代初态来源、轨迹类型和物理参数组合的实质隔离</b>。</p>
 <div class="tw" tabindex="0" role="region" aria-label="测试分层"><table>
 <caption>每个 controller 共用冻结的 scenario manifest，test 不参与调参</caption>
 <thead><tr><th>组</th><th>测试内容</th><th>泛化声明</th></tr></thead><tbody>
@@ -316,6 +383,7 @@ $$v_{\mathrm{slip}}=\|v_O-v_P-\omega_P\times(p_O-p_P)\|$$
 </tbody></table></div>
 <p>每条 manifest 必须保存初态来源/hash、物理参数、轨迹或生成器版本、所有扰动时刻及幅值、数值设置。对 train 与 test 做实际参数／轨迹重复检查；反复查看 test 视频并据此调模型也算 test 泄漏。</p>
 <p><b>结果表的列：</b>initialization acceptance、条件持物完成率、strict stability、失稳／掉落／腕部失败／数值异常数量、ep/eR peak 与 P95、恢复率／恢复时间、effort P95、饱和比例。报告每个 seed 和每个组，不只合并平均；小 pilot 不包装成大规模统计证明。</p>
+<p><b>分母固定：</b>N_attempt 为 manifest 中计划的 scenario 次数，N_init 为固定初始化通过次数，N_success 为持物完成次数；初始化通过率=N_init/N_attempt，条件持物完成率=N_success/N_init，完整流程率=N_success/N_attempt。初始化后的 numerical invalid 保留在 N_init 中但不计成功，同时报告 invalid 数；N_init=0 时条件率写 N/A，不写 0%。来源生成表另外报告 raw slots、几何有效、承重有效数量，不把优化无解混作一个已执行的持物 trial。</p>
 <p>配对重采样同一 scenario ID 比较 B3−B0/B1，报告 95% bootstrap CI；有多 training seeds 时以训练 seed 和 scenario 分层，并保留每 seed 原始值。3 seeds、每组 32 条只能用于方向判断，最终论文规模在下一版确定。掉落 episode 不因无法计算后续滑移而从成功率分母删除；只对成功者计算的滑移统计要明确标注条件。</p>
 <p><b>扩展顺序：</b>Stage 1.1 内看未见运动；Stage 1.2 加圆柱／偏心物体与完整抓取入口；以后再做 held-out object instance / category、未见操作者和未见任务。公开数据库要先按人／物／序列切分，再 retarget，不在 retarget 后随机打散。</p>
 
@@ -325,19 +393,20 @@ $$v_{\mathrm{slip}}=\|v_O-v_P-\omega_P\times(p_O-p_P)\|$$
 <caption>在 human_machine_interaction 项目中推进；本轮只更新 Handbook</caption>
 <thead><tr><th>顺序</th><th>交付物</th><th>通过条件／不通过怎么办</th></tr></thead><tbody>
 <tr><td>1</td><td>物理参数冻结单与 CPU/GPU 对拍报告</td><td>接触、耦合、单位、腕部动力学、dt audit 通过；否则先修环境</td></tr>
-<tr><td>2</td><td>一个人类风格 reference 与 3–5 个合格初态</td><td>没有隐形支撑，B0/B1 静态条件持物建议 ≥95%；否则修 reference，不训新模型</td></tr>
+<tr><td>2</td><td>一个人类风格 reference 与 3–5 个合格初态</td><td>没有隐形支撑，较强的 B0/B1 在 20 次 nominal 静态重放中 ≥19/20；否则修 reference，不训新模型</td></tr>
 <tr><td>3</td><td>外部 wrist / wrench bank + manifest</td><td>可重放，实际加速度／施力匹配记录；无物体腕部跟踪先过关</td></tr>
 <tr><td>4</td><td>任务环境与 reward / termination 测试</td><td>刚性平移和旋转不被判滑移；零 residual 等价 B0；16 维 action 不影响 wrist command；失败／完成互斥</td></tr>
 <tr><td>5</td><td>B0/B1 基线表与成功／失败回放</td><td>若两者 stress 已接近全成功，记录“尚无学习必要性证据”，在验证阶段重新定义任务或比较同成功率下 effort</td></tr>
 <tr><td>6</td><td>B2/B3 pilot 曲线与 reward 分项</td><td>无数值异常、nominal 不崩；停滞则查物理、动作限制和 oracle gap</td></tr>
-<tr><td>7</td><td>冻结 checkpoint 后的 3-seed 配对测试报告</td><td>建议 B3 相对较强静态基线的主要 stress 组提升 ≥10 个百分点且配对 CI 不跨 0；未达到就报告结果，不追认 SOTA</td></tr>
+<tr><td>7</td><td>冻结 checkpoint 后的 3-seed 配对测试报告</td><td>主指标预先固定为 E1–E3 条件持物完成率（等权，合计 96 scenarios）；B3 相对验证集选定的较强 B0/B1 提升 ≥10 个百分点且配对 CI 不跨 0；未达到就报告结果，不追认 SOTA</td></tr>
 <tr><td>8</td><td>桌面入口小规模回归与 Stage 1.2 决策</td><td>分别给初始化和持物成绩；条件持物有效但完整流程差，则下一步研究 acquisition，不重写整个主方法</td></tr>
 </tbody></table></div>
 <p><b>动作权限与安全接口预留：</b>Stage 1.1 不要求真人在线，但外部腕部命令从训练第一天存在；保留 q reference、release / cancel、human command / assistance / executed command 三路记录语义。在线 shared control 启用前再验证主动张手解除辅助、tracking invalid 和 policy invalid 的安全回退；这些不能仅靠仿真持物成绩代替。</p>
 <p><b>转段判据不是只看一个百分点。</b>只有 nominal 基础、可解释的 stress 增益、控制用力限制、物理审计都通过，才进入少物体泛化和人输入回放。若 B3 已足够好，不为符合旧路线而补做蒸馏；若 oracle 显著更好，再考虑 history / tactile / estimator。</p>
-<p><b>状态快照：</b>本次只完成实验文档；proposed task <code>L20ExternalWristHold</code> 未在所检查的注册表中出现。初态、manifest、reward 实现、物理验收和训练结果均未在本轮生成。计划参数只有在 pilot 后连同实现版本一起冻结，才成为某次 run 的实际配置。</p>
+<p><b>状态快照：</b>本次只完成实验文档；proposed task <code>L20ExternalWristHold</code> 未在所检查的注册表中出现。初态、manifest、reward 实现、物理验收和训练结果均未在本轮生成。协议采用值须先通过实现审计并导出实际配置；pilot 调整必须记录新版本与参数变化，不能覆盖旧 run。</p>
 
 <h2 id="evidence"><span class="n">§ 13</span>依据、文件归属与版本说明</h2>
+<p><b>2026-09-08 文档修订：</b>S1.1-r2 新增 S00–S09 操作台账、三类来源合同与冻结／失败分支；明确 nominal μ、uniform DR 与训练课程，移出大段文献选型。旧 ORCA 资产只读核验见<a href="l20-grasp-sources-review.html#local">综述 §2</a>。本次没有生成 candidate、执行训练或评测，以下历史实现核验日期保持不变。</p>
 <p><b>本地核验：</b>2026-09-07，实施仓库 HEAD <code>7bbd8b0</code>。读取了 <code>training/reinforcement_learning/services/level_1_playground_envs/l20_hand/pick_cube.py</code>、其 <code>xmls/reorientation_cube.xml</code>、<code>xmls/l20_rh_mjx_floating.xml</code>、<code>ppo_params.py</code>、<code>registration.py</code> 与 <code>training/plan/rl_baseline_validation.md</code>。方块 70 mm / 108 g、旧 control_dt=0.04、旧 sim_dt=0.01 及旧指标来自这些文件；本页的新 reward、阈值和预算是项目建议。</p>
 <p><b>职责边界：</b>环境和训练工作归 <code>human_machine_interaction/training/reinforcement_learning/</code>；实施计划与工程验收记录归 <code>human_machine_interaction/training/plan/</code>；原始 checkpoints / rollout 按该项目既定的远端日志目录保存，Handbook 只链接或汇总证据。真正有数据后再建实验记录页，不把这张方案页提前挪入“实验记录”。</p>
 <ul>
@@ -348,7 +417,7 @@ $$v_{\mathrm{slip}}=\|v_O-v_P-\omega_P\times(p_O-p_P)\|$$
 <li><a href="https://mujoco.readthedocs.io/en/stable/computation/index.html">MuJoCo computation</a>：执行器、接触和状态量的语义依据；运行时仍以 pinned 版本为准。</li>
 <li>算法背景：<a href="ppo-learning.html">PPO 学习路线</a>；总路线：<a href="l20-robust-grasp.html#long-term">长期阶段与下一步</a>。</li>
 </ul>
-<footer>Stage 1.1 · 实验步骤，不是实验结果 · 2026-09-07 ·
+<footer>Stage 1.1 · S1.1-r2 操作说明，未执行 · 2026-09-08 · <a href="l20-grasp-sources-review.html">来源选型综述</a> ·
 <a href="l20-robust-grasp.html">← 长线路线</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
 </main>
 </body>

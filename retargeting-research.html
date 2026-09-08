@@ -81,6 +81,7 @@ figcaption { color:var(--sub); font-size:.9rem; margin-top:10px; line-height:1.6
 <h1>Retargeting 的局限与候选解法<br><span style="font-size:.72em;color:var(--sub)">小指为什么伸不直也摆不开 · AnyTeleop / dex-retargeting 能不能治 · 六个待验证方案</span></h1>
 
 <p class="lede">这一页只做两件事：把 L20 retargeting 目前<b>已知但未修</b>的缺陷收敛成一个统一的根因描述，然后把可能的修法排成一张<b>可证伪的候选清单</b>——每一条都写清它针对哪个根因、代价是什么、用什么判据判它成功。AnyTeleop 是清单里的一条，不是这一页的主题。</p>
+<p><b>Robust grasp 的配套索引：</b><a href="l20-grasp-sources-review.html#retarget">抓姿来源选型综述</a>汇总人类数据库、几何／接触／物理 retarget 与模型、优化器；本页继续负责 L20 小指和目标函数的具体缺陷。需要实际执行时读 <a href="l20-robust-grasp-stage1.html#source-steps">Stage 1.1 的 reference 制作步骤</a>，不要把引入一个新库视为旧问题已经解决。</p>
 
 <p><b>前置阅读</b>：<a href="hand-control.html">Hand Control 技术路线手册</a> 的 <a href="hand-control.html#v1">§2.3 六个 retargeter 实现与 vector/angle 实测对比</a>、<a href="hand-control.html#pinky">§2.4 小拇指侧摆</a>、<a href="hand-control.html#pitfalls">§3.4 小拇指 curl</a>。那一页记录的是<b>现象与代码机制</b>；这一页从那里接着往前走，讲<b>怎么修</b>，两页不重复推导。</p>
 
