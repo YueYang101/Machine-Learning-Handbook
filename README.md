@@ -39,7 +39,7 @@
 | 页面 | 内容 |
 |---|---|
 | [l20-robust-grasp.html](l20-robust-grasp.html) | L20 Robust Grasp：长期路线与研究候选；跨物体、跨任务的全程共享控制，稳定持物 → 完整局部抓取 → 用户共享 → 动态辅助权重 → 跨任务评估；robust grasp 是其中一项能力，短期 PoC 独立维护 |
-| [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | Stage 1.1（待执行）：cube 部分手部运动 → 最终掌姿与关节回归 → 影子手验证提前量与多样性；明确几何与接触偏好接口，先回归，不做承重、抗扰或 pick |
+| [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | Stage 1.1（preparation 待验收）：Quest–MuJoCo 链路、retarget 与录制回放 → cube 部分运动到最终 L20 抓姿回归 → 影子手验证；保留改意图记录与置信度／分类讨论，不做承重、抗扰或 pick |
 | ↳ [l20-grasp-sources-review.html](l20-grasp-sources-review.html) | 配套项目选型综述（计划）：人类数据库与几何／捏合／接触／物理 retarget；模型生成与数学优化；既有 ORCA BODex 资产审计、L20 适配缺口；GraspADMM / DexEvolve / CoToGrasp 等近期进展；可用性与后续接口备忘；是独立文献库，不是并行待办 |
 | [shared-control.html](shared-control.html) | 共享控制路线：从 To the Noise and Back 到 EMG 灵巧手 |
 

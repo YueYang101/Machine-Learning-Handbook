@@ -113,17 +113,26 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 <body>
 <main class="wrap">
 <a class="bk" href="l20-robust-grasp.html">← 长期路线</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">实验计划 · 当前第一步 · 2026-09-08</div>
+<div class="kicker">实验计划 · 当前第一步 · 2026-09-09</div>
 <h1>Stage 1.1：Cube 多样抓姿与意图回归</h1>
 <p class="lede" id="scope">同一个 cube，用户做不同的接近与成形动作，模型在动作完成前预测其最终抓姿。先用连续回归，验证不同意图能否保留；不要求先训练 robust grasp policy。</p>
-<p class="meta">状态：待执行。2026-09-08 明确时序预测目标、输入输出与后续抓取接口；本次仅更新方案，没有采集、训练或新增实验成绩。</p>
+<p class="meta">状态：preparation 待验收，正式采集与训练待执行。2026-09-09 补充 Quest–MuJoCo 链路、retarget 准备与改意图记录约定；本次仅更新实验方案，没有新增硬件验收或实验成绩。执行后另建带 run ID 的结果记录，并回链本协议。</p>
 <div class="key good"><b>本轮假设：</b>部分手部运动包含最终抓姿的信息；模型能在用户完成动作前，比“把当前姿态当作最终姿态”更早、更准确地预测目标，同时保留不同手形与方向。最终手姿 → 最终手姿只能验证映射，不能验证提前预测。</div>
-<nav class="toc" aria-label="本页目录"><a href="#runbook">当前四步</a> · <a href="#io">输入输出</a> · <a href="#handoff">抓取接口</a> · <a href="#checklist">交付与判据</a> · <a href="#next">后续边界</a></nav>
+<nav class="toc" aria-label="本页目录"><a href="#preparation">采集前准备</a> · <a href="#runbook">当前四步</a> · <a href="#io">输入输出</a> · <a href="#intent-updates">改意图与置信度</a> · <a href="#handoff">抓取接口</a> · <a href="#checklist">交付与判据</a> · <a href="#next">后续边界</a></nav>
+
+<h2 id="preparation">Preparation：先让示教可用、记录可信</h2>
+<div class="key good"><b>正式采集前置条件：</b>先验收 Quest 中看到并操纵 MuJoCo 的 L20/cube，以及 retarget 对本轮目标抓姿的表达能力。沿用当前架构：<b>电脑端 MuJoCo 是物理计算权威，Quest/Unity 负责追踪、传输与显示</b>；头显本地运行 MuJoCo 不属于这次准备工作。</div>
+<ol>
+<li><b>Quest ↔ MuJoCo 链路，待验收。</b>跑通“真实人手 → Quest → 电脑 retarget → MuJoCo L20/cube → Quest 显示”。检查掌部朝向、尺度、场景对齐、物体与手的状态显示；记录追踪到控制、状态回传与显示的延迟／抖动及丢帧，注明实际测到的边界，不能把网络延迟当完整端到端延迟。短试跑后确认断连、追踪丢失与重连不会沿用失效指令；本页不预填性能成绩。</li>
+<li><b>Retarget 表达与版本，待复核。</b>逐指开合、拇指对指、两指／三指与本轮选定包覆抓姿；记录限位、耦合、指腹朝向、小指 curl／侧摆、掌部映射及跟踪误差。先区分追踪、坐标变换、retarget 和接触后受阻；对挡住目标抓姿表达的问题修复或明确缩小本轮范围，再固定版本。已有问题见<a href="retargeting-research.html">retarget 候选与判据</a>，已有控制链说明见<a href="hand-control.html">Hand Control 手册</a>；这里只记录采集前准备，不重做完整 retarget 研究。</li>
+<li><b>记录与回放，待验收。</b>保留原始 Quest 手／头姿及有效性、双时间戳、cube 位姿、L20 控制目标与实际关节／掌姿、校准和 retarget 配置版本。标记开始、终点确认、取消、改意图提示及追踪异常；核对一段离线回放与在线输入／输出对应。原始数据只读，派生量可重算。形成 preparation 记录：日期、代码／资产版本、样本或 session、问题及验收证据。</li>
+</ol>
+<p>准备阶段可以录调试片段；链路与本轮目标抓姿表达通过后，再进入正式示教。这里只要求采集与几何表达可用，不把稳定承重、抗扰或 pick 加回前置验收。</p>
 
 <h2 id="runbook">现在做这四件事</h2>
 <ol>
 <li id="source-steps"><b>先在 MuJoCo 中采集并回放 10 条试跑示教。</b>仿真中由 <b>L20 与 cube 交互</b>，真实人手通过“Quest 追踪 → 现有 retarget → 仿真 L20”提供示教输入；不需要另建参与物理交互的人手模型。固定 cube 的尺寸／位姿、一只 L20 与一个用户，利用已有记录链完成“接近 → 形成抓姿 → 停住”。用户观察 L20 并调整自己的手，确认最终 L20 抓姿。覆盖 L20 能表达的两指、三指、包覆及方向变化；这些是采集提示，不是模型类别。物体可固定，不要求抬起。确认最终目标可重现、无明显穿透且符合用户意图，再按覆盖缺口扩充完整示教。</li>
-<li id="protocol"><b>构建因果的配对样本。</b>每个历史窗口只使用截至当前的观测，标签为该条示教最终确认的连续 L20 抓姿。保留原始追踪、双时间戳、对象与手模型版本；retarget 和几何派生量单独保存并可重算。按完整示教划分，另留独立 session 检查漂移；相邻帧不能跨训练／测试。第一轮用 Quest 手姿，EMG 解码后续接入。</li>
+<li id="protocol"><b>构建因果的配对样本。</b>首个基线使用意图保持不变的完整示教，每个历史窗口只使用截至当前的观测，标签为该条示教最终确认的连续 L20 抓姿。保留原始追踪、双时间戳、对象与手模型版本；retarget 和几何派生量单独保存并可重算。按完整示教划分，另留独立 session 检查漂移；相邻帧不能跨训练／测试。第一轮用 Quest 手姿，EMG 解码后续接入。改意图／取消片段保留并单列，不将最终新目标倒贴给改意图前的全部输入，详见<a href="#intent-updates">记录约定</a>。</li>
 <li id="training"><b>训练一个小型回归基线。</b>固定长度的手部历史窗口 → MLP → 最终掌部位姿与 16 个主动关节目标。记录窗口长度、采样率、特征归一化、旋转表示和实际 loss；旋转不用普通欧拉角 MSE。对照“当前姿态保持”与“训练示教相似片段检索”。不先加入 mesh 编码器、接触分类头或在线更新。</li>
 <li id="evaluation"><b>先以影子手检验提前量和多样性。</b>离线回放当前输入、预测最终抓姿与真实最终抓姿，模型不修改用户指令。按动作进展统计误差、进入容差并保持的提前量、各采集手形／方向的预测覆盖及几何异常。动作进度与最终时长只用于离线分析，不作为在线可提前获得的特征。确认有提前预测价值，再讨论闭环辅助。</li>
 </ol>
@@ -142,6 +151,22 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 </tbody></table></div>
 <p><b>标注成本：</b>本轮必须得到可信的最终抓姿，不要求逐帧标五指接触点。若记录接触，区分用户指定、几何估计和仿真实际接触；追踪丢失与距离不足以判断时保留未知，不生成伪真值。包覆抓取可能涉及指节和掌部，五个指尖不能代表全部接触。</p>
 
+<h2 id="intent-updates">改意图、置信度与手势库：现在考虑到哪里？</h2>
+<p><b>现在保留事件与失败案例，先完成单一回归基线。</b>意图可以随时间改变，预测只表示当前证据下的判断；不要求系统预知用户尚未表达的改变。当前影子手不参与控制，分类层、置信度校准与动态辅助都不作为采集前置。</p>
+<details>
+<summary>改意图与取消：怎样记录，怎样避免错误标签？</summary>
+<p>区分“从两指改为三指”“停止抓取”“已持物后要求释放”，不能把三者都当成低置信度。首轮可另留少量有提示的改意图／取消诊断片段，记录提示时间、用户报告和可观察动作变化，三者不等同于直接测到内心意图。与固定意图主测试分开计数，未采集时标待执行。</p>
+<p>若轨迹原本朝 A，途中改成 B，不能把 A 阶段的所有历史窗口都配成 B；按有依据的阶段标注，过渡区保留不确定，不清楚时不用于固定意图监督。取消片段可以没有抓姿终点，仍保留原始记录。未来用最近时间窗、允许目标转移的滤波或变化检测更新判断，避免旧历史和强平滑锁住 A；评估改意图后的更新延迟、旧目标持续输出与误报警。</p>
+<p>接入共享控制后，明确取消／用户覆盖应撤销旧目标与相应辅助，不必等待置信度下降。已承重时停止自动继续任务与立即张手是不同动作，释放按独立的明确指令处理；不能用“防掉落”永久阻止用户释放。</p>
+</details>
+<details>
+<summary>回归怎样输出可信度？是否先分类再回归？</summary>
+<p>可信度首先定义为“在给定预测时距、意图保持条件和姿态容差下，预测落入容差的可能性”。分别看追踪有效性、目标预测不确定性与几何／执行可行性，不能用一个数互相替代，也不能用离物体近直接推出高置信度。</p>
+<p>得到回归基线后，可比较多个独立训练的小回归器的分歧，并结合条件残差或预测区间估计误差。模型一致仍可能共同预测错误或共同输出平均手形；分歧不是概率，也不完整描述多个合理未来。必须在独立校准／验证示教上检查区间覆盖、误差与拒绝预测后的覆盖率，在未用于校准的测试集报告；训练外姿态和改意图需要单独测试。未实现校准时不显示虚构的置信百分比。方法参考 <a href="https://arxiv.org/abs/1612.01474">Deep Ensembles（Lakshminarayanan 等，NeurIPS 2017）</a>。</p>
+<p>可以保存有限的<b>模板／示教库</b>用于覆盖采集、检索基线与优化初始化；人类具体抓姿的关节、掌姿和接触位置连续变化，有限 taxonomy 不等于全部姿态有限。<a href="https://doi.org/10.1109/THMS.2015.2470657">GRASP taxonomy（Feix 等，2016）</a>整理 33 种静态稳定抓取类型，本轮不据此强制采齐或固定类别数。</p>
+<p>“先分类类型，再回归类型内姿态”是候选层级模型，可能减轻跨类型平均化，也会引入分类错误传播、边界跳变和未见类型拒识问题；softmax 最大值不能证明目标在已知库内。先保存有用的采集标签；只有基线显示可辨识类型被持续混淆，再按相同数据划分比较直接回归与类型条件回归。若保留多个候选，不把不同手形的关节直接平均成一只手。关于已知意图库外仍可能过度自信，参见 <a href="https://clear.csail.mit.edu/pdf/CASA/zurek2021ICRA.pdf">Situational Confidence Assistance（Zurek 等，ICRA 2021）</a>。</p>
+</details>
+
 <h2 id="handoff">如何交给后续抓取模块？</h2>
 <p>意图输出作为<b>目标参考与偏好</b>传给抓取模块。抓取模块还需要物体几何、当前机器人状态与执行约束；只有接触点不够。第一版接口直接传完整预测抓姿，接触偏好作为可选字段，以后可以替换预测器而不改变下游职责。</p>
 <div class="formula" aria-label="未来抓取接口示意">IntentGoal: object/frame/time + target_palm_pose + target_q<br>optional contact_preferences: link_id + surface_region + normal + tolerance + intent_status<br>GraspRefiner(geometry, robot_state, IntentGoal) → feasible_goal / unresolved<br>GoalController(robot_state, feasible_goal) → current_action</div>
@@ -153,6 +178,8 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 <div class="formula" role="math" aria-label="后续抓姿局部修正的概念目标">minimize over g: pose_deviation(g, ĝ_T) + contact_region_error(g) + normal_error(g)<br>subject to joint_limits, coupling, nonpenetration, explicit_avoidance</div>
 <p>这是待设计的目标结构，不是已定权重。用 L20 FK／接触面计算每个指定部位到其目标区域的误差；手形与掌姿参考用来约束接触位置之外的自由度。法向项要求接触面朝向合理。几何投影与限位检查不证明力学稳定，后续才加入摩擦／wrench 与物理执行评测。无解时报告偏离、约束冲突或未找到解，不能自动替换为另一种抓法。</p>
 <p><b>修正器首先可以不训练。</b>已有 <code>grasping/optimization/planner</code> 有接触距离、穿透与关节成本，但默认 ORCA；L20 的关节耦合、接触部位及模型仍需适配。现有 L20 retarget/FK 可以复用，资产存在不等于上述新接口已实现。</p>
+<p><b>纯数学能否抓举？</b>可以用接触约束 IK／优化求抓姿，按已知接触、摩擦、质量与质心求满足物体力／力矩平衡及驱动能力的接触力，再用模型式反馈控制执行。固定接触下，线性化摩擦锥可形成 QP；保留圆锥约束通常是 SOCP。给定 mesh 不等于知道摩擦、质量和真实接触力，静态算出的力也不会自动成为电机实际施加的力；L20 耦合与位置控制接口需单独考虑。</p>
+<p>动态调整同样可以使用阻抗／力反馈、在线接触力重分配或 MPC，不强制训练神经网络。接触切换和抬起的加速度需要动态模型与状态反馈，静态平衡不保证整段动作成功；参考 <a href="https://arxiv.org/abs/2408.07855">Complementarity-Free Multi-Contact Modeling and Optimization for Dexterous Manipulation（2024 预印本）</a> 的模型式接触 MPC。仿真可读取真值作首个基线，未来实机要明确哪些量可测／可估。只有计算时延、模型误差或泛化问题暴露后，再考虑学习加速、残差补偿或 goal-conditioned policy；物理模型与学习模型都不能无条件保证抓稳。</p>
 <p><b>若后续训练执行 policy：</b>输入当前关节／速度、掌与物体相对状态、修正后的目标抓姿，必要时附接触区域与接触观测；输出当前关节增量或有界残差。先在同一 cube 上准备多个可行目标及其接近／闭合过程，以目标条件监督学习作基线；需要稳定持物时再用带目标跟踪约束的 RL 或其他闭环方法。只有静态接触点没有动作标签，不能直接监督训练轨迹 policy。</p>
 <p>训练时变化目标抓姿与起始状态，保留手指组合和接触偏好，并对单独留出的目标分别评价执行效果与意图偏离。只奖励“拿起”，可能让策略忽略目标而总用最容易的抓法；不能只看总成功率。先验证人工正确目标的执行，再输入有预测误差的目标。目标姿态可行不保证从任意初态都有无碰撞路径。</p>
 <p><b>允许同期准备的最小工作：</b>统一坐标、对象／手模型版本和目标接口；从已确认终点可视化接触候选；用人工目标离线检验少量 L20 几何修正案例。robust policy、跨物体训练和在线学习保持后续议题。实时新观测更新预测是 online inference，不等于在线更新模型参数。</p>
