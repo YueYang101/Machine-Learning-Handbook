@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 1.1 其他方案：数学推断与 VLM 辅助 · Machine Learning Handbook</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap canvas { width:100%; display:block; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; }
+.ctl button { font:600 .85rem/1 inherit; color:var(--ink); background:var(--bg);
+  border:1px solid var(--line2); border-radius:7px; padding:7px 11px; cursor:pointer; }
+.ctl button:hover { border-color:var(--blue); color:var(--blue); }
+.ctl button.pri { background:var(--blue); border-color:var(--blue); color:var(--bg); }
+.ctl label { display:inline-flex; gap:5px; align-items:center; font-size:.85rem; color:var(--sub);
+  cursor:pointer; user-select:none; }
+.ctl input[type=range] { flex:1 1 140px; min-width:120px; accent-color:var(--blue); }
+.ctl .ro { font:.8rem/1.4 ui-monospace,Menlo,monospace; color:var(--sub); }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+.chain { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:1.4em 0; }
+.chain .cr { margin:2px 0; }
+.chain .cb { display:inline-block; border:1px solid var(--line2); border-radius:8px; padding:2px 12px;
+  background:var(--bg); }
+.chain .cn { color:var(--muted); font-size:.85rem; margin-left:8px; }
+.chain .ar { color:var(--sub); font-size:.85rem; margin:4px 0 4px 16px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+
+/* Standard handbook tokens; readable link and secondary-text contrast. */
+:root { --panel2:#f0f1ed; --blue:#165da8; --blue-fill:#e8f0fa; --focus:#165da8; --muted:#686760; --violet:#6c4394; --cyan:#146a78; }
+@media (prefers-color-scheme: dark) {
+  :root { --panel2:#222321; --blue:#83baff; --blue-fill:#15253a; --focus:#83baff; --muted:#a7a69f; --violet:#c5a3eb; --cyan:#8acbd6; }
+}
+a { text-decoration:underline; text-underline-offset:3px; }
+a:focus-visible, .tw:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
+.bk, .toc a { min-height:44px; display:inline-flex; align-items:center; }
+h1 small { display:block; font-size:.66em; color:var(--sub); margin-top:10px; }
+h2 { scroll-margin-top:18px; }
+.meta { color:var(--sub); font-size:.9rem; }
+code { font:.86em/1.6 ui-monospace,Menlo,monospace; overflow-wrap:anywhere; }
+table { min-width:640px; }
+.runbook-table { min-width:1040px; table-layout:fixed; }
+.runbook-table th:nth-child(1) { width:16%; }
+.runbook-table th:nth-child(2) { width:24%; }
+.runbook-table th:nth-child(3) { width:18%; }
+.runbook-table th:nth-child(4) { width:32%; }
+.runbook-table th:nth-child(5) { width:10%; }
+caption { text-align:left; color:var(--sub); padding-bottom:8px; }
+.tw { border:1px solid var(--line); border-radius:8px; padding:0 8px; }
+.tw:focus { outline-color:var(--focus); }
+ol, ul { padding-left:1.5em; }
+.formula { overflow-x:auto; padding:12px; border:1px solid var(--line); background:var(--panel); border-radius:8px; font-family:ui-monospace,Menlo,monospace; font-size:.9rem; }
+details { margin:1.2em 0; padding:12px 16px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
+summary { min-height:44px; cursor:pointer; font-weight:650; }
+summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
+@media (max-width:480px) {
+  .wrap { padding:24px 16px 60px; }
+  h1 { font-size:1.65rem; }
+  .duo { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+<a class="bk" href="l20-robust-grasp-stage1.html">← Stage 1.1 主方案</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
+<div class="kicker">实验计划 · 其他方案 · 2026-09-12</div>
+<h1>Stage 1.1 其他方案：数学推断与 VLM 辅助</h1>
+<p class="lede">同一批 Quest 3 示教，比较“学习运动规律”“用数学推断目标”和“用 VLM 提供抓取先验”。共同问题是：能否在动作完成前，预测用户最终确认的 L20 抓姿？</p>
+<p class="meta">状态：四个其他方案均待实现、待评估；本页只制定并行对照协议，没有训练结果。<a href="l20-robust-grasp-stage1.html">主方案</a>保留数据采集、小型 MLP 连续回归与影子手四步；本页说明可替换的 Human Model 和比较方法。</p>
+<div class="key good"><b>可以并行测试，也仍需采集验证数据。</b>数学方案可先手工设定模型，VLM 方案可先用预训练模型，都不要求从零训练大网络；但它们是否理解了这个用户，必须用用户确认的终点检验。LSTM 用于 Bioimpedance 信号处理，不是此处 Human Model 的既定结构。</div>
+<nav class="toc" aria-label="本页目录"><a href="#overview">方案总览</a> · <a href="#shared">共同输入输出</a> · <a href="#m1">几何评分</a> · <a href="#m2">贝叶斯</a> · <a href="#v1">VLM 先验</a> · <a href="#h1">融合</a> · <a href="#comparison">怎么比较</a> · <a href="#next">当前四步</a> · <a href="#sources">依据</a></nav>
+
+<h2 id="overview">方案总览：四条其他方案，各验证一个问题</h2>
+<div class="tw" tabindex="0" role="region" aria-label="主方案与其他方案比较"><table>
+<caption>所有方法先离线回放和影子手测试；“无需从零训练”不等于“无需数据”</caption>
+<thead><tr><th scope="col">方案</th><th scope="col">Human Model 做什么</th><th scope="col">数据／训练需求</th><th scope="col">最想检验的差别</th></tr></thead><tbody>
+<tr><td>B0 · 主方案<br>MLP 连续回归</td><td>历史手部运动 → 连续最终掌姿与关节</td><td>需要配对示教训练；沿用主协议</td><td>是否学到用户运动与终点的关系？</td></tr>
+<tr><td><a href="#m1">M1 · 其他方案<br>几何评分</a></td><td>根据接近方向、掌姿、手形选择候选抓姿</td><td>少量候选终点；校准特征尺度与权重，不训练深网</td><td>简单规则是否已足够？</td></tr>
+<tr><td><a href="#m2">M2 · 其他方案<br>递归贝叶斯</a></td><td>用新行为证据更新各候选的 belief</td><td>候选库＋行为模型校准；可从手设模型起步</td><td>时间证据能否减少跳变并保留改意图能力？</td></tr>
+<tr><td><a href="#v1">S1 · 其他方案<br>VLM 语义先验</a></td><td>看物体与场景，给候选抓法排序</td><td>预训练 VLM＋可追溯场景图像；先不微调</td><td>只看物体的“合理抓法”是否符合用户选择？</td></tr>
+<tr><td><a href="#h1">H1 · 其他方案<br>VLM＋贝叶斯</a></td><td>以 VLM 初始化先验，再让用户行为修正</td><td>复用 M2 与 S1 的数据、候选和接口</td><td>语义先验是否让早期预测更好，且不会压过用户？</td></tr>
+</tbody></table></div>
+<p><b>当前优先做 B0、M1、M2；S1 与 H1 可并行准备。</b>固定 cube 的功能语义很少，同一物体也对应多个用户抓姿。VLM 在这里可能没有增益；保留 S1 作为诊断对照，恰好能检验“物体理解”与“用户意图理解”的差别。是否扩展到带把手等物体，应另开后续实验，不改变本轮 cube 范围。</p>
+
+<h2 id="shared">共同输入输出：比较完整抓姿，避免只比抓取区域</h2>
+<div class="key good"><b>统一终点、统一候选、统一回放时刻。</b>主指标始终针对物体坐标系中的 L20 掌部位姿＋16 个主动关节。VLM 的区域或文字不能直接与连续回归的姿态误差比较，必须先落到完整抓姿。</div>
+<div class="formula" role="math" aria-label="统一预测目标与候选接口">X_t = history(T_OH, hand_shape, tracking_validity), observations available by t<br>g_T = (T_OP,T, q_T) : user-confirmed final L20 grasp pose<br>C = {g_1, …, g_K} : fixed candidate bank from training demonstrations<br>Predictor → target_palm_pose + target_q + timestamp + validity<br>optional: candidate_ids + belief/scores + uncertainty_status</div>
+<p>沿用<a href="l20-robust-grasp-stage1.html#io">主协议的坐标、手形特征与终点定义</a>。M1／M2 可使用同一 retarget 将历史人手掌映射到 L20 参考掌姿；这仍是用户参考，不用接触后仿真实际关节替代用户动作。新增速度、方向和手形变化只从历史因果计算。</p>
+<div class="tw" tabindex="0" role="region" aria-label="各路线的统一数据需求"><table>
+<caption>已有数据与本轮待补字段分开；不把当前采集原型当作已验收数据集</caption>
+<thead><tr><th scope="col">共同部分</th><th scope="col">本轮约定</th><th scope="col">对比较的作用</th></tr></thead><tbody>
+<tr><td>运动与终点</td><td>Quest 原始手／头姿、有效性、时间戳、retarget 参考与仿真实际状态分存；最终抓姿需用户确认。</td><td>所有方法在同一预测时刻接受当时已经可获得的数据；终点只作标签。</td></tr>
+<tr><td>候选库 C</td><td>先只取训练示教的已确认完整终点，保留连续掌姿／关节、来源与版本，不只留“两指／三指”类别。</td><td>M1、M2、S1、H1 用同一 C；不得加入测试示教终点。B0 仍保留连续输出。</td></tr>
+<tr><td>场景语义输入</td><td>S1／H1 起步用试次开始时的物体场景渲染与带 ID 的候选说明，屏蔽示教提示、真值标签、未来影子手及真实终点。</td><td>无需先开通真实相机采集；渲染数据是额外待生成产物，不能把事后终点图交给 VLM。</td></tr>
+<tr><td>场景几何</td><td>同一 cube 几何、物体坐标和 L20 模型；全部条件可用。渲染视角、候选 ID 到物体区域映射固定。</td><td>隔离语义推断差别；若增加深度、手部图像或语言指令，单列输入增强实验。</td></tr>
+<tr><td>标签与时序缺口</td><td>V1 已有 host 记录资产；截至 2026-09-12，V2 为 Quest 物理＋Mac retarget，正式 session writer、确认／取消／改意图等仍待接入。</td><td>仿真终点来自实际物理运行端；不同管线分开标版本。控制后的状态不能反作同周期控制前的观测。</td></tr>
+</tbody></table></div>
+<p><b>候选库是可行的起步近似，不代表抓姿只有有限几种。</b>先报告它是否覆盖测试终点：仅在离线分析中，计算“知道真值后从 C 选最佳候选”的 oracle 覆盖率与误差。oracle 不是可运行预测器；库外目标要单列。如果库的表达上限已经很低，先扩展训练候选，不能把全部误差归因于意图推断。</p>
+<p>第一版不做几何修正，直接比较原始预测和几何异常。若后续增加局部优化，所有方法使用同一修正器与预算，分别报告修正前后误差与失败比例；不能只有 VLM 获得额外姿态优化。</p>
+
+<h2 id="m1">其他方案 M1：几何一致性评分</h2>
+<div class="key good"><b>假设：</b>用户正在朝最终抓姿靠近；当前的运动方向、掌部朝向与手形，可以帮助给候选终点排序。这是最容易解释的数学基线，状态：待实现。</div>
+<ol>
+<li><b>准备候选。</b>复用训练示教终点 C，确认坐标、限位与候选来源；不额外收集一套重复数据。</li>
+<li><b>计算历史特征。</b>在相同窗口中计算掌位置差、SO(3) 旋转角差、手形差与接近方向一致性。低速或已到候选掌位置时方向无定义，省略方向项；追踪无效不补成新证据。</li>
+<li><b>选择目标。</b>用训练数据估计各特征尺度，在验证集选择权重；按加权代价取最佳完整候选，保留 top-k 诊断，不平均不同手形。</li>
+<li><b>做影子手对照。</b>对比“当前姿态保持”和“只按掌部距离选候选”，检查方向／手形特征是否带来提前量，而不只是到终点后才匹配。</li>
+</ol>
+<details><summary>输入输出、数学形式与失败判据</summary>
+<div class="formula" role="math" aria-label="几何候选代价">E_k(t) = w_p d_p² + w_R d_R² + w_q d_q² + w_v (1 − cos(angle(v_t, p_k − p_t)))<br>k* = argmin_k E_k(t), predicted grasp = g_k*</div>
+<p>各距离先按训练数据确定的尺度归一化，位置用米、旋转用弧度，关节按统一单位和顺序。窗口聚合也须固定为因果处理；权重与窗口长度是待选择参数，没有预填最优值。位置或方向并不能独自确定最终手形。</p>
+<p><b>输入：</b>历史 retarget 掌姿／关节参考、cube 几何、C。<b>输出：</b>最佳完整候选及代价。代价间隔只是排序证据，不是置信概率。<b>交付：</b>特征定义、参数来源、逐示教预测与误差图。<b>失败判据：</b>总选离当前手最近的姿态，提前量不优于距离对照；或在候选边界频繁跳变。相近前缀对应不同终点时，应保留不确定，不能声称仅靠数学消除了歧义。</p>
+</details>
+
+<h2 id="m2">其他方案 M2：递归贝叶斯 Human Model</h2>
+<div class="key good"><b>假设：</b>用户最近的新动作更符合某个目标；累积行为证据，比每帧独立打分更能稳定预测。状态：待实现。参考 Jain 与 Argall 的<a href="#ref-bayes">递归贝叶斯目标推断</a>，此处为面向 L20 抓姿的拟议适配。</div>
+<ol>
+<li><b>建立目标 belief。</b>仍使用 C，先用均匀先验；目标转移允许从 A 改到 B，不把旧目标永久锁住。</li>
+<li><b>定义行为似然。</b>对每个目标假设一个局部趋近运动：预计掌部平移、旋转和关节参考如何变化。以实际新动作与预计动作的残差构造联合似然；训练／校准数据决定尺度与噪声。</li>
+<li><b>递归更新。</b>每次用新证据更新并归一化 belief，输出最可能完整抓姿；追踪失效跳过观测更新，明确取消使目标失效。</li>
+<li><b>检查稳定性与改变。</b>主测试仍用固定意图示教；额外用已标注改意图片段测切换延迟、旧目标持续时长和错误切换。</li>
+</ol>
+<details><summary>输入输出、数学形式与失败判据</summary>
+<div class="formula" role="math" aria-label="目标belief递归更新">b_t(k) ∝ L(Δz_t | g_k, z_previous) × Σ_j A_jk b_previous(j)<br>Σ_k b_t(k) = 1, predicted grasp = g_argmax(b_t)</div>
+<p><code>z</code> 为同一坐标约定下的掌姿／关节参考；<code>Δz_t</code> 是新的有效运动增量，旋转增量在 SO(3) 上计算。<code>A_jk</code> 是目标转移概率；<code>L</code> 是给定目标时观察到这个动作的似然。局部趋近模型可以手工定义，之后只用训练／校准示教估计参数；不是假定所有人的运动都严格最优。</p>
+<p><b>避免虚假的自信：</b>不要把高度重叠的整段窗口每帧当作独立新证据反复相乘，也不要将来自同一追踪信号的距离、速度、手形无条件视为独立。需采用一致的采样间隔／联合残差模型，并在验证数据检查过度集中。</p>
+<p><b>输入：</b>与 M1 相同的行为信息＋上一步 belief。<b>输出：</b>完整候选、候选分布及有效性。<b>交付：</b>似然／转移定义、belief 时间曲线与切换案例。<b>失败判据：</b>比 M1 更迟才改正错误，或在目标不在库内时仍很自信。belief 是“给定模型及候选库”的概率，不天然等于预测准确率；置信度须按共同协议校准。</p>
+</details>
+
+<h2 id="v1">其他方案 S1：VLM 提供物体与抓法先验</h2>
+<div class="key good"><b>假设：</b>物体形状与场景能提示哪些抓法合理。VLM 先负责理解与排序，完整姿态由统一候选库提供。状态：待接入预训练模型、待准备渲染输入；这是语义先验对照，尚不是完整的用户行为模型。</div>
+<ol>
+<li><b>准备可追溯输入。</b>试次起点渲染 cube 与环境，用固定 ID 表示候选抓取面／区域及完整抓姿的说明。相机、场景状态、候选展示方式固定，输入不包含最后抓姿。</li>
+<li><b>限制输出。</b>让 VLM 返回候选 ID 的排序或分数、涉及区域及简短理由，允许“证据不足”。只接受 C 中存在的 ID，记录模型版本、prompt、请求和响应。</li>
+<li><b>落到完整目标。</b>通过 ID 查表得到掌姿＋16 关节；不把文字“抓左侧”当成已求出抓点、接触力或电机控制。</li>
+<li><b>测试它是否辨别人。</b>同一 cube 上用不同用户终点测试。若始终推荐同一种合理抓法，但与用户选择不一致，记录为语义先验的能力边界。</li>
+</ol>
+<details><summary>输入输出、文献关系与失败判据</summary>
+<p><b>输入：</b>物体场景图像、候选几何／区域说明。首轮只用通用“抓取 cube”任务描述，不将采集时给人的“两指／三指”提示透露给模型；若加入明确语言意图，应单列为用户额外提供信息的条件。<b>输出：</b>候选排序和映射后的完整抓姿。</p>
+<p><a href="#ref-shapegrasp">ShapeGrasp</a>借助几何分解和 LLM 推断适合任务的部位；<a href="#ref-thinkgrasp">ThinkGrasp</a>利用视觉与语言理解目标、部位及遮挡。这些提供模块分工的依据，不证明“看一张物体图就知道用户准备怎么抓”，也不提供已经适配好的 L20 Human Model。</p>
+<p><b>训练与标注：</b>可先不微调，但仍需配对示教做测试，少量验证样本用于固定 prompt 和排序映射。VLM 自报“90%”不直接用作概率。<b>交付：</b>可复现的输入图、候选表、prompt／模型版本、解析失败记录和输出。<b>失败判据：</b>没有意图区分能力、输出非法 ID，或收益不足以抵偿等待时间。物体图不变时只计算一次；这一路不应伪装成每帧有新的人类证据。</p>
+<p><b>可留作下一轮的变体：</b>加入截至 t 的手部图像／短视频，让 VLM 看动作。此时它获得了新的行为输入，须与“数值轨迹＋相同可见信息”的条件单独比较，并记录遮挡、渲染与 token 成本；不把这个变体的成绩混入物体语义先验实验。</p>
+</details>
+
+<h2 id="h1">其他方案 H1：VLM 先验＋贝叶斯行为修正</h2>
+<div class="key good"><b>假设：</b>场景先验帮助动作早期缩小候选，用户行为随后纠正它。状态：待 M2／S1 最小接口后组合；这是优先考虑的 VLM 辅助 Human Model 方式，效果待比较。</div>
+<ol>
+<li><b>初始化先验。</b>将 VLM 排序按固定规则转成分布，与均匀分布混合，给所有候选保留非零可能性。排序映射和先验强度只在验证集选择。</li>
+<li><b>用行为更新。</b>后续完全复用 M2 的似然、目标转移和采样时序；静态图像的同一先验只注入一次，不能每帧重复增强。</li>
+<li><b>处理冲突。</b>如果用户持续朝先验不偏好的抓姿运动，允许 belief 转向；场景改变再触发新语义推断。几何无解只标记不可行，不伪称用户换了意图。</li>
+<li><b>做消融。</b>与均匀先验的 M2、仅语义的 S1 对照；另设错误／打乱先验诊断，检验系统能否被真实行为纠正。</li>
+</ol>
+<details><summary>输入输出、融合公式与失败判据</summary>
+<div class="formula" role="math" aria-label="混合语义先验">b_0(k) = (1 − λ) / K + λ π_VLM(k), 0 ≤ λ &lt; 1<br>after initialization: use the same recursive update as M2</div>
+<p><code>π_VLM</code> 是按记录规则归一化的候选分布，不是 VLM 已校准的真实意图概率；<code>λ</code> 控制先验影响。<code>λ=0</code> 应退化为 M2。主实验冻结模型与参数；不能在看到测试结果后调先验强度。</p>
+<p><b>输入：</b>M2 行为输入＋S1 场景先验。<b>输出：</b>同 M2。<b>交付：</b>逐时刻 belief、先验覆盖／误导案例、各消融的误差和延迟。<b>失败判据：</b>只让默认抓法更稳定、压低少见意图的覆盖；或先验错误后比 M2 更难恢复。</p>
+<p>VLM 超时、非法响应或场景版本过期时，记录回退并使用 M2；不等待它才继续数值推断。按请求时刻与结果真正到达时刻回放，不能把后来得到的语义结果提前塞进预测。未来若场景更新时重新初始化，需明确 reset 规则并单独测量，不能重复累乘同一画面的先验。</p>
+</details>
+
+<h2 id="comparison">怎样比较：先判断意图预测，不混入抓稳能力</h2>
+<div class="key good"><b>同一测试示教、同一历史截止时刻、同一终点真值。</b>结果要同时回答“准不准”“早不早”“是否保留不同抓法”和“是否值得等待”。全部先用影子手，不修改用户指令。</div>
+<ol>
+<li><b>冻结数据划分。</b>按完整示教划分训练／验证／测试，另留独立 session；同一示教的相邻窗口不能跨集合。候选库、归一化只由训练数据生成，校准与选型用验证数据，测试集不改模型。</li>
+<li><b>对齐因果输入。</b>动作百分比／最终时长只作事后分组。排除确认后的窗口作为“提前预测”证据；另外报告首次接触前的结果。改意图前窗口不倒贴新终点，失效追踪与取消单列。</li>
+<li><b>跑共同对照。</b>当前姿态保持、仅距离候选、训练片段检索、B0、M1、M2、S1、H1；候选 oracle 单列为诊断。检索只用当前历史匹配训练片段，不用测试最终时长对齐。</li>
+<li><b>统一计分。</b>容差、持续正确的时间要求和拒绝规则在验证集确定，测试前冻结；按示教汇总配对差异及不确定区间，不把每帧当独立样本。试跑小样本只用于排错，不得声称统计优势。</li>
+</ol>
+<div class="tw" tabindex="0" role="region" aria-label="统一实验指标"><table>
+<caption>待执行指标与解释；不预填实验成绩或最优阈值</caption>
+<thead><tr><th scope="col">指标</th><th scope="col">统一定义</th><th scope="col">避免的误判</th></tr></thead><tbody>
+<tr><td>终点姿态误差</td><td>掌平移距离、SO(3) 旋转角、16 关节 MAE；辅以 FK 指尖误差。按预测时刻或离线动作进度分组。</td><td>部位判断正确不等于完整抓姿正确；旋转不用欧拉角 MSE。</td></tr>
+<tr><td>提前量与持续正确</td><td>首次进入全部约定容差且满足预定保持要求，到用户确认终点的时间；报告未达到的示教比例。</td><td>不能只算成功预测样本，也不能把临时掠过容差算早预测。</td></tr>
+<tr><td>意图覆盖与候选上限</td><td>各采集手形／接近方向分别报姿态误差与成功覆盖；附 C 的 oracle 容差覆盖及库外样本表现。</td><td>总是猜常见抓法的模型可能总体误差小；库的限制与预测器错误分开。</td></tr>
+<tr><td>不确定与改意图</td><td>有校准概率时检查可靠性／Brier 分数；所有方法报不同拒绝覆盖率下的误差。有事件标注时另报切换延迟和误切换。</td><td>定义事件为“完整预测在约定容差内”，不是随意把候选最大分数当成功概率。</td></tr>
+<tr><td>时延与资源</td><td>共同设备上记录数值推断耗时；VLM 记录渲染／编码、网络、模型响应、解析总时间与 p50／p95、调用次数、实际费用及回退比例。</td><td>缓存与未缓存分开；提前量必须按预测实际可用时间计算。</td></tr>
+<tr><td>几何异常</td><td>同一模型检查限位、耦合、穿透；输出失效、非法候选与无解均计入分母。</td><td>本轮不验证承重、摩擦稳定、抗扰、释放或 pick；几何可行不能当抓稳。</td></tr>
+</tbody></table></div>
+<details><summary>在线学习怎样作为后续对照，不污染第一轮比较？</summary>
+<p>先比较冻结版本；每帧更新 belief 属于 online inference。之后可单列个性化实验：每次用户明确确认一个试次后，才用该次标签更新偏好、似然参数或小模型，并从下一试次开始评分。保留相同按时间排列的示教流和冻结模型对照，禁止用本次最终确认改善本次早期预测成绩。</p>
+<p>记录更新前后参数、可用标签数量与每次耗时，不用模型自己的预测当用户确认。是否更少改错、是否对新意图产生偏见，与总体误差一起报告。在线学习不是当前采集验收的前提。</p>
+</details>
+
+<h2 id="next">当前四步：共享采集，再逐条接入</h2>
+<ol>
+<li><b>完成共享数据小试跑。</b>沿用主方案的 10 条调试示教计划，补齐确认标签与因果回放；检查能否生成仅含当时场景的 VLM 输入。10 条用于检查流程，不预设足够训练或比较。</li>
+<li><b>冻结一版数据契约与 C。</b>写明划分、候选来源、坐标、输入时间界线，先复现当前保持、检索与 M1；B0 数据训练准备同时推进。</li>
+<li><b>接入其他方案。</b>数学路线实现 M2；语义路线准备 S1 图像／输出解析，再合成 H1。各路线复用同一录制，避免重新采四套数据。</li>
+<li><b>交付比较记录。</b>另建带 run ID 的结果页，回链本协议；附每条路线状态、实际数据量、误差／提前量图、影子手回放及失败案例。证据不足保留待评估，不填名次。</li>
+</ol>
+<p><b>选择依据：</b>若 M1／M2 已满足提前量与意图区分，优先保留更简单路线；若 B0 在同一标注预算下更好，扩展其数据；若 H1 仅对少数情况有用，记录作用条件。VLM 没有收益也应保留结果，作为当前 cube 场景的边界，而不宣称其在所有物体上无效。</p>
+
+<h2 id="sources">方法依据与复用边界</h2>
+<p>下列文献提供模块设计依据；M1 的评分与 H1 的混合接口是本项目候选设计，尚未验证，不是论文原算法复现。更多感知理解文献见<a href="https://yueyang101.github.io/Visualized-SOTA-Paper-Library/">文献阅读库的“感知与理解”分类</a>。</p>
+<ul>
+<li id="ref-bayes"><b>Recursive Bayesian Human Intent Recognition in Shared-Control Robotics</b> — Siddarth Jain、Brenna Argall，IROS 2018。<a href="https://users.eecs.northwestern.edu/~sjq751/research_files/jain_iros18.pdf">作者论文</a>。输入候选目标与非语言行为观测，输出目标 belief；有用户研究。复用数学结构，L20 连续抓姿候选、似然与校准需另做；本次未核验可直接复用的代码或数据。</li>
+<li id="ref-shapegrasp"><b>ShapeGrasp: Zero-Shot Task-Oriented Grasping with Large Language Models through Geometric Decomposition</b> — Samuel Li 等，IROS 2024。<a href="https://arxiv.org/abs/2403.18062">论文</a> · <a href="https://shapegrasp.github.io/">作者项目与资源入口</a>。几何分解、对象名称与给定任务 → 部位语义与抓取部位；不同于观察用户后推断目标。代码／数据入口由作者提供，本页未复现，外部 LLM 与 L20 姿态接口仍需适配。</li>
+<li id="ref-thinkgrasp"><b>ThinkGrasp: A Vision-Language System for Strategic Part Grasping in Clutter</b> — Yaoyao Qian 等，CoRL 2024。<a href="https://arxiv.org/abs/2407.11298">论文</a> · <a href="https://h-freax.github.io/thinkgrasp_page/">作者项目与代码入口</a>。视觉与语言目标 → 目标／部位理解并衔接抓姿生成；本轮只借鉴感知与几何执行分工，不引入清障长程任务。代码入口可查，本次未核验完整依赖／权重可运行性，不当作即用 L20 模型。</li>
+</ul>
+<p class="meta">本地状态依据：HMI 的 <code>quest/mj_unity/README.md</code> 与 <code>quest/plan/2026-09-11-mr-floor-stage11-audit.md</code>（含 2026-09-12 更新）。脚本或原生验证通过不代表真人示教采集已验收。本页不修改设备代码、不启动训练。</p>
+<footer><a href="l20-robust-grasp-stage1.html">← Stage 1.1 主方案</a> · <a href="index.html">Machine Learning Handbook</a></footer>
+</main>
+</body>
+</html>

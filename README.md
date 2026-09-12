@@ -47,6 +47,7 @@
 
 | 页面 | 内容 |
 |---|---|
+| [l20-stage1-alternatives.html](l20-stage1-alternatives.html) | Stage 1.1 其他方案（四条待验证）：与主方案共享 Quest 示教；几何评分、递归贝叶斯、VLM 语义先验及融合；统一完整抓姿、数据划分与误差／提前量对照 |
 | [retargeting-research.html](retargeting-research.html) | Retargeting 的局限与候选解法（配套 [hand-control.html](hand-control.html)）：小指 curl 与侧摆的统一根因 · 六条待验证候选与判据 · AnyTeleop / dex-retargeting 详档与整包引进的裁决 |
 
 ## 实验记录

@@ -113,17 +113,17 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 <body>
 <main class="wrap">
 <a class="bk" href="l20-robust-grasp.html">← 长期路线</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">实验计划 · 当前第一步 · 2026-09-09</div>
+<div class="kicker">实验计划 · 当前第一步 · 2026-09-12</div>
 <h1>Stage 1.1：Cube 多样抓姿与意图回归</h1>
 <p class="lede" id="scope">同一个 cube，用户做不同的接近与成形动作，模型在动作完成前预测其最终抓姿。先用连续回归，验证不同意图能否保留；不要求先训练 robust grasp policy。</p>
-<p class="meta">状态：preparation 待验收，正式采集与训练待执行。2026-09-09 补充 Quest–MuJoCo 链路、retarget 准备与改意图记录约定；本次仅更新实验方案，没有新增硬件验收或实验成绩。执行后另建带 run ID 的结果记录，并回链本协议。</p>
+<p class="meta">状态：preparation 待验收，正式采集与训练待执行。2026-09-09 补充 Quest–MuJoCo 链路、retarget 准备与改意图记录约定；2026-09-12 新增数学／VLM 并行其他方案，并按 HMI 最新记录修正 V1／V2 部署说明。本次仅更新实验方案，没有新增硬件验收或实验成绩。执行后另建带 run ID 的结果记录，并回链本协议。</p>
 <div class="key good"><b>本轮假设：</b>部分手部运动包含最终抓姿的信息；模型能在用户完成动作前，比“把当前姿态当作最终姿态”更早、更准确地预测目标，同时保留不同手形与方向。最终手姿 → 最终手姿只能验证映射，不能验证提前预测。</div>
-<nav class="toc" aria-label="本页目录"><a href="#preparation">采集前准备</a> · <a href="#runbook">当前四步</a> · <a href="#io">输入输出</a> · <a href="#intent-updates">改意图与置信度</a> · <a href="#handoff">抓取接口</a> · <a href="#checklist">交付与判据</a> · <a href="#next">后续边界</a></nav>
+<nav class="toc" aria-label="本页目录"><a href="#preparation">采集前准备</a> · <a href="#runbook">当前四步</a> · <a href="#io">输入输出</a> · <a href="#alternatives">其他方案</a> · <a href="#intent-updates">改意图与置信度</a> · <a href="#handoff">抓取接口</a> · <a href="#checklist">交付与判据</a> · <a href="#next">后续边界</a></nav>
 
 <h2 id="preparation">Preparation：先让示教可用、记录可信</h2>
-<div class="key good"><b>正式采集前置条件：</b>先验收 Quest 中看到并操纵 MuJoCo 的 L20/cube，以及 retarget 对本轮目标抓姿的表达能力。沿用当前架构：<b>电脑端 MuJoCo 是物理计算权威，Quest/Unity 负责追踪、传输与显示</b>；头显本地运行 MuJoCo 不属于这次准备工作。</div>
+<div class="key good"><b>正式采集前置条件：</b>先验收 Quest 中看到并操纵 MuJoCo 的 L20/cube，以及 retarget 对本轮目标抓姿的表达能力。<b>记录必须来自实际物理运行端</b>：V1 为电脑端 MuJoCo＋Quest 显示；截至 2026-09-12，V2 已是 Quest 本地物理＋Mac retarget 的混合原型，正式 session writer 与试次确认／取消仍待接入。不能再把 9 月 9 日的 V1 部署决定写成唯一现状，也不能把 V2 当作已验收的独立采集应用。</div>
 <ol>
-<li><b>Quest ↔ MuJoCo 链路，待验收。</b>跑通“真实人手 → Quest → 电脑 retarget → MuJoCo L20/cube → Quest 显示”。检查掌部朝向、尺度、场景对齐、物体与手的状态显示；记录追踪到控制、状态回传与显示的延迟／抖动及丢帧，注明实际测到的边界，不能把网络延迟当完整端到端延迟。短试跑后确认断连、追踪丢失与重连不会沿用失效指令；本页不预填性能成绩。</li>
+<li><b>Quest ↔ MuJoCo 链路，待验收。</b>按选用的 V1／V2 管线，跑通“真实人手 → Quest 追踪 → retarget → 实际物理端 L20/cube → Quest 显示”，固定记录管线版本。检查掌部朝向、尺度、场景对齐、物体与手的状态显示；记录追踪到控制、状态回传与显示的延迟／抖动及丢帧，注明实际测到的边界，不能把网络延迟当完整端到端延迟。短试跑后确认断连、追踪丢失与重连不会沿用失效指令；本页不预填性能成绩。</li>
 <li><b>Retarget 表达与版本，待复核。</b>逐指开合、拇指对指、两指／三指与本轮选定包覆抓姿；记录限位、耦合、指腹朝向、小指 curl／侧摆、掌部映射及跟踪误差。先区分追踪、坐标变换、retarget 和接触后受阻；对挡住目标抓姿表达的问题修复或明确缩小本轮范围，再固定版本。已有问题见<a href="retargeting-research.html">retarget 候选与判据</a>，已有控制链说明见<a href="hand-control.html">Hand Control 手册</a>；这里只记录采集前准备，不重做完整 retarget 研究。</li>
 <li><b>记录与回放，待验收。</b>保留原始 Quest 手／头姿及有效性、双时间戳、cube 位姿、L20 控制目标与实际关节／掌姿、校准和 retarget 配置版本。标记开始、终点确认、取消、改意图提示及追踪异常；核对一段离线回放与在线输入／输出对应。原始数据只读，派生量可重算。形成 preparation 记录：日期、代码／资产版本、样本或 session、问题及验收证据。</li>
 </ol>
@@ -150,6 +150,10 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 <tr><td>接触派生量</td><td>按手指／手掌部位保存近表面候选、间隙、物体表面法向及来源；第一轮可按需从目标抓姿离线推导。</td><td>不要求模型同时预测“哪些手指”和接触点。最近表面点始终存在，但不一定是用户意图或真实接触；不能强行为五根手指都分配接触目标。</td></tr>
 </tbody></table></div>
 <p><b>标注成本：</b>本轮必须得到可信的最终抓姿，不要求逐帧标五指接触点。若记录接触，区分用户指定、几何估计和仿真实际接触；追踪丢失与距离不足以判断时保留未知，不生成伪真值。包覆抓取可能涉及指节和掌部，五个指尖不能代表全部接触。</p>
+
+<h2 id="alternatives">其他方案：与主线共享数据、并行比较</h2>
+<div class="key good"><b>主线仍是采集 → MLP 连续回归 → 影子手验证。</b>另设四条待验证路线：几何一致性评分、递归贝叶斯、VLM 语义先验、VLM＋贝叶斯融合。LSTM 保留在 Bioimpedance 信号处理环节，不作为 Human Model 的既定结构。</div>
+<p>详见<a href="l20-stage1-alternatives.html">Stage 1.1 其他方案：数学推断与 VLM 辅助</a>。该页按“假设、四步操作、输入输出、交付与判据”展开各方案，并统一数据划分、候选抓姿库与误差／提前量指标；本页保留主实验步骤。数学和预训练 VLM 可减少从零训练需求，但仍需用户确认的示教验证。同一个 cube 的形状不能单独决定用户想用哪种抓法。</p>
 
 <h2 id="intent-updates">改意图、置信度与手势库：现在考虑到哪里？</h2>
 <p><b>现在保留事件与失败案例，先完成单一回归基线。</b>意图可以随时间改变，预测只表示当前证据下的判断；不要求系统预知用户尚未表达的改变。当前影子手不参与控制，分类层、置信度校准与动态辅助都不作为采集前置。</p>
@@ -195,7 +199,7 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 
 <h2 id="next">本轮边界与后续</h2>
 <p><b>不做稳定性、承重、抗扰或 pick。</b>只检查姿态的基本几何合理性，不把“能生成抓姿”当作“能稳定抓取”。回归经验证不能满足意图预测需求时，再考虑分类；robust grasp 留到后续。</p>
-<p>多样性指不同意图能得到不同抓姿，不要求同一个输入随机生成多个结果。抓姿来源按需查 <a href="l20-grasp-sources-review.html">文献库</a>，不同时开展全部方法。</p>
+<p>多样性指不同意图能得到不同抓姿，不要求同一个输入随机生成多个结果。抓姿来源按需查 <a href="l20-grasp-sources-review.html">文献库</a>，其他方案按<a href="l20-stage1-alternatives.html#next">共享采集与并行对照协议</a>逐条接入，不要求先完成所有候选才开始主实验。</p>
 
 <div class="meta"><span id="prior" aria-hidden="true"></span><span id="control" aria-hidden="true"></span><span id="observation" aria-hidden="true"></span><span id="disturbance" aria-hidden="true"></span><span id="reward" aria-hidden="true"></span><span id="termination" aria-hidden="true"></span><span id="evidence" aria-hidden="true"></span>
 <p>旧固定 PD 承重方案已退出 Stage 1.1，<a href="https://github.com/YueYang101/Machine-Learning-Handbook/blob/fa552aa/l20-robust-grasp-stage1.html">旧稿保留在 Git 历史</a>，不是本轮验收要求。</p>
