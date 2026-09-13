@@ -125,7 +125,7 @@
     a:focus-visible { outline:3px solid var(--blue); outline-offset:3px; }
     p,li { overflow-wrap:anywhere; }
     @media(prefers-color-scheme:dark) {
-      :root { --ink:#f2f1ec; --muted:#c3c2b7; --paper:#101514; --card:#1a2322; --line:#354341; --teal:#7bcfc2; --teal-soft:#18332e; --blue:#95c1ff; }
+      :root { --ink:#f2f1ec; --muted:#c3c2b7; --paper:#101514; --card:#1a2322; --line:#354341; --teal:#7bcfc2; --teal-soft:#18332e; --blue:#95c1ff; --green:#78cf9b; --green-soft:#173127; }
     }
     @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
   </style>
@@ -133,27 +133,26 @@
 <body>
 <header><div class="wrap">
 <a class="bk" href="index.html">← Machine Learning Handbook</a>
-<div class="kicker">实验计划 · 精简版 · 2026-09-08</div>
+<div class="kicker">实验计划 · 精简版 · 2026-09-13</div>
 <h1>L20 Robust Grasp：长期路线与研究候选</h1>
-<p class="lead">最终目标：跨物体、跨任务的全程人机共享控制，根据人的意图与操作风险动态调整辅助。Robust grasp 是其中一项底层能力，不是整个长期目标。</p>
+<p class="lead">最终目标拆为三条长期能力线：先让现有 L20 抓取策略恢复足够 robust 的执行能力；再从当前 L20 数据训练扩展到真人手预训练，并通过 retargeting 迁移到 L20；最后加入面向残障用户的 online learning 个性化。</p>
 </div></header>
 <main class="wrap">
 <section id="long-term">
-<h2 id="long-term-stages">长期路线：恢复原有能力主线</h2>
-<p>系统能否理解并保留人的抓取意图，在必要时提供有界、动态的辅助，让物体拿得稳、操作可完成、主动释放不被阻拦？“全程共享”不等于全程接管，也不预设一个网络端到端完成。</p>
+<h2 id="long-term-stages">长期路线：三条能力主线</h2>
+<p>三条主线分别解决“机器人能不能稳稳执行”“能不能从更丰富的真人数据学习抓取意图”“能不能适应具体残障用户”。它们最终汇合到 shared control，但不预设由一个网络端到端完成。</p>
 <ol>
-<li><b>稳定持物（robust grasp）：</b>外部控腕条件下拿稳物体，验证滑移、掉落与抗扰能力。</li>
-<li><b>完整局部抓取：</b>接 pregrasp → closure → lift → carry → release，逐步增加物体与抓姿变化。</li>
-<li><b>用户共享：</b>接入在线用户与手指 reference，保留人的操作和释放意图，先验证固定／规则辅助。</li>
-<li><b>动态辅助权重：</b>根据风险、不确定性与用户意图调节辅助，减少不必要介入。</li>
-<li><b>跨物体、跨任务评估：</b>从搬运扩展到倾倒／工具使用，分别检验未见对象、任务与用户。</li>
+<li><b>L20 robust grasp：</b>让现有抓取策略回到 L20，并达到足够可靠的稳定持物能力。先在外部控腕条件下验证滑移、掉落与抗扰，再接通 pregrasp → closure → lift → carry → release；这条线提供后续意图辅助所依赖的可靠执行器。</li>
+<li><b>真人手预训练 → L20 迁移：</b>当前先用“Quest 追踪 → retargeting → L20”示教训练，直接学习 L20 可执行的最终抓姿。后续由健全参与者采集更丰富的真人自然抓取数据，预训练 Human Model；再依靠 retargeting、运动学约束和少量 L20 遥操作数据，把人手抓取先验迁移为 L20 可执行姿态。大规模预训练不依赖残障用户完成自然手示教，残障用户数据留给部署分布校准与个体适配。</li>
+<li><b>Online learning：</b>离线模型和安全执行链验证后，再利用实际使用中的纠正、用户覆盖、成功／失败和能力变化，在线更新小型用户 embedding、抓取先验、可达约束或辅助权重。第一版不在线改动整个 backbone；更新必须受关节／碰撞／力限约束，并保留固定模型和规则控制作为回退。</li>
 </ol>
-<p>跨本体、触觉与 teacher/student 保留为条件分支，按实际缺口引入，不作为起步前提。真实部署与安全验证贯穿各阶段。</p>
+<div class="callout good"><strong>当前顺序</strong>L20 离线基线先跑通；真人手预训练和 human-to-L20 transfer 是第二个长期目标；online learning 是第三个长期目标。Robust grasp 主线同时提供可靠执行能力，不用等 Human Model 完成才开始。</div>
+<p>跨物体、跨任务和跨用户评估贯穿三条主线；触觉与 teacher/student 仍作为条件分支，按实际缺口引入。Retargeting 在第二条线中是连接真人手先验与 L20 本体的必要桥梁，但迁移是否成功仍需以 L20 上的抓姿误差、可执行性与真实任务结果验证。</p>
 </section>
 <section id="current">
 <h2 id="current-poc">当前短期 PoC（与长期路线分开）</h2>
-<p>先验证<b>同一个 cube，不同用户意图能否得到不同抓姿</b>，具体见 <a href="l20-robust-grasp-stage1.html">Stage 1.1：Cube 多样抓姿与意图回归</a>。</p>
-<p>本轮不考核承重、稳定性、抗扰或 pick；这是当前实验范围的减法，不是删除或重排长期目标。Stage 1.1 的调整只更新短期实验页。</p>
+<p>当前只执行 <b>L20 数据训练路线</b>：用户观察并操纵仿真 L20，输入来自 Quest 手部历史，经过现有 retargeting；监督标签是用户确认的最终 L20 掌姿与 16 个主动关节目标。先验证<b>同一个 cube，不同用户意图能否得到不同 L20 抓姿</b>，具体见 <a href="l20-robust-grasp-stage1.html">Stage 1.1：Cube 多样抓姿与意图回归</a>。</p>
+<p>本轮不加入真人手数据预训练、human-to-L20 transfer 或 online model update，也不考核承重、稳定性、抗扰或 pick；这些是后续长期目标，不是被删除。当前先把采集、标签、离线回归和影子手验证做可信。</p>
 </section>
 <section id="reading">
 <h2 id="research-reading">研究候选：保留，按需启用</h2>
