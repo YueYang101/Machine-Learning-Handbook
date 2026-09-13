@@ -116,7 +116,7 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 <div class="kicker">实验计划 · 其他方案 · 2026-09-12</div>
 <h1>Stage 1.2 其他方案：数学推断与 VLM 辅助</h1>
 <p class="lede">同一批 Quest 3 示教，比较“学习运动规律”“用数学推断目标”和“用 VLM 提供抓取先验”。共同问题是：能否在动作完成前，预测用户最终确认的 L20 抓姿？</p>
-<p class="meta">状态：四个其他方案均待实现、待评估；本页只制定并行对照协议，没有训练结果。<a href="l20-robust-grasp-stage1.html">Stage 1.1</a>负责冻结数据，<a href="l20-stage1-2-training.html">Stage 1.2 主方案</a>比较确定性回归与 Flow Matching；本页说明可替换的 Human Model 和比较方法。</p>
+<p class="meta">状态：四个其他方案均待实现、待评估；本页只制定并行对照协议，没有训练结果。<a href="l20-robust-grasp-stage1.html">Stage 1.1</a>负责冻结数据，<a href="l20-stage1-2-training.html">Stage 1.2 主方案</a>并列测试 No-Gaze VQ-VAE＋自回归 Transformer 与 Flow Matching；本页说明其他可替换的 Human Model 和比较方法。</p>
 <div class="key good"><b>可以并行测试，也仍需采集验证数据。</b>数学方案可先手工设定模型，VLM 方案可先用预训练模型，都不要求从零训练大网络；但它们是否理解了这个用户，必须用用户确认的终点检验。LSTM 用于 Bioimpedance 信号处理，不是此处 Human Model 的既定结构。</div>
 <nav class="toc" aria-label="本页目录"><a href="#overview">方案总览</a> · <a href="#shared">共同输入输出</a> · <a href="#m1">几何评分</a> · <a href="#m2">贝叶斯</a> · <a href="#v1">VLM 先验</a> · <a href="#h1">融合</a> · <a href="#comparison">怎么比较</a> · <a href="#next">当前四步</a> · <a href="#sources">依据</a></nav>
 

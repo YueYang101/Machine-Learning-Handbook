@@ -147,7 +147,7 @@ details.box li { margin:5px 0; font-size:.9rem; color:var(--sub); }
 </a>
 <a class="card" href="l20-stage1-2-training.html">
   <div class="t">Stage 1.2：Training<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">待 Stage 1.1 数据验收</span></div>
-  <div class="d">单一 cube、无 RGB／眼动／物体分类：先跑确定性最终抓姿回归，再以状态条件 Flow Matching 生成多个最终 L20 手姿候选并做同划分对照</div>
+  <div class="d">两个方案并列：A 删除 gaze／物体分支的 VQ-VAE＋自回归 Transformer 预测未来序列；B 状态条件 Flow Matching 生成多个最终 L20 手姿候选；共享确定性基线与冻结划分</div>
 </a>
 <div class="sub">
   <a href="l20-grasp-sources-review.html"><span class="rel">项目选型综述 ·</span> <span class="t2">抓姿来源：人手 Retarget / 模型生成 / 数学优化</span><br>

@@ -173,12 +173,12 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 <div class="ar">↓ 校准、同步与 cube 坐标变换可重复计算</div>
 <div class="cr"><span class="cb">冻结 manifest + 144／48／48 session split</span></div>
 <div class="ar">↓ Stage 1.1 到此结束</div>
-<div class="cr"><span class="cb"><a href="l20-stage1-2-training.html">Stage 1.2：Training</a></span><span class="cn">确定性基线 + 状态条件 Flow Matching</span></div>
+<div class="cr"><span class="cb"><a href="l20-stage1-2-training.html">Stage 1.2：Training</a></span><span class="cn">No-Gaze VQ-VAE＋Transformer + 状态条件 Flow Matching</span></div>
 </div>
 <p>Stage 1.1 不固定 optimizer、epoch 或生成模型结构，只保证训练所需变量可追溯。网络窗口、归一化、loss、checkpoint、影子手预测与模型比较均由 Stage 1.2 记录，避免把“准备数据”和“得到模型结果”写成同一个状态。</p>
 
 <h2 id="alternatives">训练与其他方案索引</h2>
-<div class="key good"><b>数采协议不因模型选择改变。</b>Stage 1.2 先比较确定性回归和状态条件 Flow Matching；几何一致性、递归贝叶斯、VLM 语义先验与融合继续作为待验证方案，共享同一冻结数据与测试集。</div>
+<div class="key good"><b>数采协议不因模型选择改变。</b>Stage 1.2 并列测试 No-Gaze VQ-VAE＋自回归 Transformer 与状态条件 Flow Matching，并以确定性回归作共同基线；几何一致性、递归贝叶斯、VLM 语义先验与融合继续作为待验证方案，共享同一冻结数据与测试集。</div>
 <p>主训练见<a href="l20-stage1-2-training.html">Stage 1.2：Training</a>；候选路线见<a href="l20-stage1-alternatives.html">Stage 1.2 其他方案：数学推断与 VLM 辅助</a>。同一个 cube 的形状不能单独决定用户想用哪种抓法，因此三种抓取提示仍只用于覆盖检查和分层报告，不作为模型输入。</p>
 
 <h2 id="intent-updates">改意图、置信度与手势库：现在考虑到哪里？</h2>

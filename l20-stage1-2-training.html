@@ -70,23 +70,45 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <a class="bk" href="l20-robust-grasp-stage1.html">← Stage 1.1：数采</a> · <a class="bk" href="l20-robust-grasp.html">长期路线</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
 <div class="kicker">实验计划 · Stage 1.1 验收后执行 · 2026-09-13</div>
 <h1>Stage 1.2：Training</h1>
-<p class="lede">使用 Stage 1.1 冻结的单一 cube Quest→retarget→L20 示教，比较确定性最终抓姿回归与状态条件 Flow Matching。模型只根据尚未完成的手部动作前缀预测未来最终手姿，不读取 RGB、眼动或物体类别，也不直接输出机器人当前控制命令。</p>
+<p class="lede">使用 Stage 1.1 冻结的单一 cube Quest→retarget→L20 示教，并行尝试两个 Human Model：A 是删除 gaze／物体分支的 Gaze-Guided VQ-VAE＋自回归 Transformer；B 是条件 Flow Matching 生成预测。两者都只根据尚未完成的手部动作前缀预测未来，不直接输出机器人当前控制命令。</p>
 <p class="meta">状态：待 Stage 1.1 数据验收，尚未训练。当前写的是模型与比较协议，不是训练结果；实际 optimizer、batch、训练轮数、随机种子、checkpoint 与运行时间在首个 run 中记录。</p>
-<div class="key good"><b>本阶段要回答的问题：</b>同一个 cube 存在 pinch、tripod、power grasp 等不同意图时，Flow Matching 能否比单一 MLP 更少输出“平均手形”，并在动作尚未结束时给出多个几何有效的最终 L20 抓姿候选？</div>
-<div class="key warn"><b>首轮取舍：</b>先生成物体坐标系中的<b>最终 L20 手姿分布</b>，不直接照搬 Diffusion Policy 生成电机 action chunk。240 条 trial 对高维长轨迹生成偏少；若终点分布实验成立，再把输出扩展为短期未来轨迹。</div>
-<nav class="toc" aria-label="本页目录"><a href="#boundary">任务边界</a> · <a href="#data">输入输出</a> · <a href="#flow">Flow Matching</a> · <a href="#inference">推理</a> · <a href="#comparison">对照与判据</a> · <a href="#runbook">当前四步</a></nav>
+<div class="key good"><b>明确是两个方案：</b>方案 A 学离散 motion token 的序列条件概率，目标是复现“动作前缀 → 到接触为止的未来序列”；方案 B 学连续未来手姿的条件分布，目标是避免不确定时只输出一只“平均手”。它们共享数据，但编码、loss 和推理过程都不同。</div>
+<div class="key warn"><b>小数据取舍：</b>240 条 trial 可能不足以同时稳定训练 codebook、Transformer 和高维轨迹生成器。因此 A 保留论文式完整序列任务；B 首轮只生成物体坐标系中的多个最终 L20 手姿候选。两者先在相同终点指标上比较，不把不同额外能力混成一个总分。</div>
+<nav class="toc" aria-label="本页目录"><a href="#schemes">两个方案</a> · <a href="#boundary">与 IL 的关系</a> · <a href="#data">共同数据</a> · <a href="#scheme-a">方案 A</a> · <a href="#flow">方案 B</a> · <a href="#comparison">对照与判据</a> · <a href="#runbook">当前五步</a></nav>
+
+<h2 id="schemes">两个方案，不是同一个方法</h2>
+<div class="tw" tabindex="0" role="region" aria-label="Stage 1.2 两个方案总览"><table>
+<caption>共同输入是 Quest／L20 手部历史；主要差别是未来输出如何表示和生成</caption>
+<thead><tr><th scope="col">方案</th><th scope="col">模型核心</th><th scope="col">输出</th><th scope="col">主要问题</th></tr></thead><tbody>
+<tr><td>A · No-Gaze Gaze-Guided</td><td>VQ-VAE motion codebook + decoder-only autoregressive Transformer</td><td>一条从当前时刻到接触的未来 L20 手部序列</td><td>离散 motion token 能否用少量动作前缀逐步续写完整动作？</td></tr>
+<tr><td>B · Conditional Flow Matching</td><td>条件速度场把高斯噪声连续运输到手姿分布</td><td>多个可能的最终 L20 手姿候选；成立后再扩展短轨迹</td><td>同一早期动作有多种可能时，能否减少确定性回归的平均化？</td></tr>
+</tbody></table></div>
+<p>方案 A 更贴近 <a href="https://arxiv.org/abs/2504.01024">Gaze-Guided 3D Hand Motion Prediction</a> 的原始结构，但删除其 gaze 和物体 embedding；方案 B 参考 <a href="https://arxiv.org/abs/2303.04137">Diffusion Policy</a> 的条件生成思想，首个实现选择 <a href="https://arxiv.org/abs/2210.02747">Flow Matching</a> 的连续速度场目标。Diffusion 与 Flow Matching 属于同一条“生成分布”路线的两种训练形式，本轮不把两者都各训一遍。</p>
 
 <h2 id="boundary">Flow Matching／DP 与 IL 的关系</h2>
 <p><a href="diffusion-policy.html">Diffusion Policy</a>把机器人观测作为条件、专家示范的未来动作作为输出，用离线 demonstration 做生成式 behavior cloning；在这种用法下，它属于 offline imitation learning。Diffusion 与 Flow Matching 本身只是学习条件数据分布的生成方法，并不天然等于 IL。</p>
-<div class="formula" role="math" aria-label="机器人 Diffusion Policy 与本项目 Human Model 的区别">robot DP: observation → future robot action chunk → receding-horizon execution<br>Stage 1.2: past human/L20 hand state → final intended L20 hand pose candidates → shadow-hand evaluation</div>
+<div class="formula" role="math" aria-label="机器人 Diffusion Policy 与本项目 Human Model 的区别">robot DP: observation → future robot action chunk → receding-horizon execution<br>Stage 1.2 A: past hand state → future hand-motion token sequence → decoded hand sequence<br>Stage 1.2 B: past hand state + noise → final intended hand-pose candidates → shadow-hand evaluation</div>
 <p>Stage 1.2 的数据管线与 behavior cloning 相似，但输出是预测目标，不是要立即执行的 action，因此当前应称为<b>监督式 Human Model</b>。之后如果把候选经过 retargeting、几何修正与安全仲裁转成实时动作，才形成机器人 policy／shared-control 闭环。</p>
 
-<h2 id="data">单物体 Quest 数据怎样进入模型？</h2>
+<h2 id="data">两个方案共享什么数据？</h2>
 <p>单一 cube 消除了目标类别识别，不消除坐标问题。cube 固定时，每个 session 标定一次 <code>T_world_object</code>；所有手掌位置和方向都变换到 cube 坐标系。模型不输入 RGB、mesh、类别或 gaze，系统只在预处理和几何检查时使用已知 cube pose。</p>
-<div class="formula" role="math" aria-label="Stage 1.2 条件与监督目标">condition c<sub>t</sub> = past 1 s of [p<sub>OH</sub>(3), R<sub>OH</sub>(6), q<sub>L20,ref</sub>(16), valid(1)]<br>target y = final confirmed [p<sub>OP,T</sub>(3), R<sub>OP,T</sub>(6), q<sub>T</sub>(16)]</div>
+<div class="formula" role="math" aria-label="Stage 1.2 条件与监督目标">condition c<sub>t</sub> = past 1 s of [p<sub>OH</sub>(3), R<sub>OH</sub>(6), q<sub>L20,ref</sub>(16), valid(1)]<br>scheme A target Y<sub>t:T</sub> = future L20 hand-state sequence until confirmed contact<br>scheme B target y = final confirmed [p<sub>OP,T</sub>(3), R<sub>OP,T</sub>(6), q<sub>T</sub>(16)]</div>
 <p><code>O</code> 是 cube，<code>H</code> 是 Quest 人手掌，<code>P</code> 是 L20 掌。原始数据保留全频率、双时间戳、Quest 关节点和 tracking validity；窗口与26维派生输入只由训练代码生成。归一化统计只能从144条训练 trial 计算，48条 validation 和48条 test 不参与。</p>
 
-<h2 id="flow">状态条件 Flow Matching 如何训练？</h2>
+<h2 id="scheme-a">方案 A：No-Gaze VQ-VAE＋自回归 Transformer</h2>
+<div class="chain" aria-label="Stage 1.2 方案 A 训练流程">
+<div class="cr"><span class="cb">完整 L20 手部运动序列 Y</span></div>
+<div class="ar">↓ temporal encoder 压缩并匹配最近 codebook 向量</div>
+<div class="cr"><span class="cb">离散 motion tokens S</span><span class="cn">VQ-VAE 学习动作词典并重建原序列</span></div>
+<div class="ar">↓ 用历史 tokens 预测下一个 token</div>
+<div class="cr"><span class="cb">decoder-only Transformer</span><span class="cn">masked self-attention + next-token cross-entropy</span></div>
+<div class="ar">↓ 自回归生成未来 tokens</div>
+<div class="cr"><span class="cb">VQ-VAE decoder → 一条未来 L20 手部序列</span></div>
+</div>
+<p>第一步单独训练 VQ-VAE，loss 由动作重建、codebook embedding 和 commitment 三部分组成；第二步用训练好的 codebook 把动作变成离散 token，再训练 Transformer 的 next-token 分类，并提高终点 token 的权重。Quest 适配版不输入 gaze、RGB 或 object embedding，固定 cube 只通过物体坐标变换进入预处理。</p>
+<p>该方案应先报告 VQ-VAE 自身重建误差、codebook 使用率和 collapse，再报告自回归未来序列的 ADE／终点误差；否则无法区分“动作压缩失败”和“Transformer 预测失败”。原论文通过 gaze 改善早期预测，删除 gaze 后预期会损失一部分提前辨别能力，必须作为本项目消融结果重新验证，不能沿用论文结论。</p>
+
+<h2 id="flow">方案 B：状态条件 Flow Matching</h2>
 <div class="chain" aria-label="Stage 1.2 Flow Matching 训练流程">
 <div class="cr"><span class="cb">历史手部状态 c</span> + <span class="cb">真实最终抓姿 y</span></div>
 <div class="ar">↓ 采样 ε ~ N(0,I)、τ ~ U(0,1)</div>
@@ -98,7 +120,7 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 </div>
 <p>位置、6D rotation 和16个主动关节先分别按训练集尺度归一化，再拼成25维目标，避免单位差异让某一组变量支配 loss。首轮条件编码器保持小型，不加图像 backbone、VLM、object encoder 或 online update。Flow Matching的原始方法见 <a href="https://arxiv.org/abs/2210.02747">Lipman 等（ICLR 2023）</a>；机器人 action 生成的对照见 <a href="https://arxiv.org/abs/2303.04137">Diffusion Policy（Chi 等，RSS 2023）</a>。</p>
 
-<h2 id="inference">怎样得到多个候选？</h2>
+<h2 id="inference">方案 B 怎样得到多个候选？</h2>
 <div class="chain" aria-label="Stage 1.2 Flow Matching 推理流程">
 <div class="cr"><span class="cb">当前1秒历史 c</span></div>
 <div class="ar">↓ 采样多个独立噪声 ε₁…εₖ</div>
@@ -117,17 +139,20 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <tr><td>B0 · 当前姿态保持</td><td>把当前手姿当最终抓姿</td><td>学习模型是否真的提前？</td></tr>
 <tr><td>B1 · 最近示教检索</td><td>一个训练集抓姿</td><td>模型是否优于直接记忆示教？</td></tr>
 <tr><td>M0 · 历史 MLP</td><td>一个连续最终抓姿</td><td>小数据下确定性回归能做到什么？</td></tr>
-<tr><td>M1 · Conditional Flow Matching</td><td>多个最终抓姿候选</td><td>是否减少跨抓型平均化并覆盖多模态意图？</td></tr>
+<tr><td>A · No-Gaze VQ-VAE + AR Transformer</td><td>一条未来手部序列及其终点</td><td>论文式 motion token 续写在无 gaze、小数据下是否成立？</td></tr>
+<tr><td>B · Conditional Flow Matching</td><td>多个最终抓姿候选</td><td>是否减少跨抓型平均化并覆盖多模态意图？</td></tr>
 </tbody></table></div>
-<p>测试报告掌部平移误差、旋转角误差、主动关节误差、FK 指尖误差、几何无效率、top-1 和 best-of-k；并按 pinch／tripod／power grasp、方向、cube 位置与 session 分层。若 M1 只增加样本抖动、无效姿态或记忆训练集，而没有改善模式覆盖，就保留 M0，不因“生成模型更新”而继续加大模型。</p>
+<p>共同测试报告最终掌部平移误差、旋转角误差、主动关节误差和 FK 指尖误差；A 额外报告序列 ADE、VQ 重建误差与 codebook 使用率，B 额外报告几何无效率、top-1、best-of-k 和候选多样性。所有结果按 pinch／tripod／power grasp、方向、cube 位置与 session 分层。</p>
+<p>A 与 B 都必须先超过 B0／B1 并与 M0 比较。A 若 codebook collapse 或序列终点不优于 M0，先停在确定性基线；B 若只增加样本抖动、无效姿态或训练集记忆，而没有改善模式覆盖，也保留 M0。不因“生成模型更新”而继续加大模型。</p>
 <p>240条单用户 trial 只能支持 PoC，不能声称跨用户或跨物体。测试前依据 validation 固定候选数、筛选规则与误差容差；不预先写死提升阈值，首个 run 后按真实分布和下游误差需求登记。</p>
 
-<h2 id="runbook">进入 Stage 1.2 后只做这四步</h2>
+<h2 id="runbook">进入 Stage 1.2 后只做这五步</h2>
 <ol>
 <li><b>读取并复核冻结数据。</b>验证 manifest、session split、坐标重算、normalizer 与排除原因；不改 Stage 1.1 原始数据。</li>
 <li><b>先跑 B0、B1、M0。</b>得到确定性误差、提前量和平均手形失败样例，作为是否需要生成模型的事实依据。</li>
-<li><b>训练 M1 Flow Matching。</b>使用相同条件、目标和 split，保存实际配置、seed、checkpoint、训练曲线与推理耗时。</li>
-<li><b>冻结评测并记录。</b>输出 top-1／best-of-k、几何无效率、分层指标和影子手视频；决定保留 M0、采用 M1，或先补数据。</li>
+<li><b>训练方案 A。</b>先验收 VQ-VAE 重建与 codebook，再训练无 gaze 的自回归 Transformer；保存未来序列与终点结果。</li>
+<li><b>训练方案 B。</b>使用相同历史条件和最终标签训练 Flow Matching；保存多个候选、几何过滤结果和推理耗时。</li>
+<li><b>冻结评测并记录。</b>共同比较终点指标，再分别报告 A 的序列质量和 B 的分布覆盖；决定保留 M0、A、B，或先补数据。</li>
 </ol>
 <div class="key bad"><b>本阶段不做：</b>不训练直接电机 action policy，不在线更新模型，不把 Flow Matching 候选直接送给真实机器人，不把“覆盖到真实姿态”解释成抓取稳定、承重或 pick 成功。</div>
 
