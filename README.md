@@ -39,7 +39,7 @@
 | 页面 | 内容 |
 |---|---|
 | [l20-robust-grasp.html](l20-robust-grasp.html) | L20 Robust Grasp：三条长期主线——L20 robust grasp、真人手预训练并经 retargeting 迁移到 L20、面向残障用户的 online learning；当前短期先做 L20 数据训练 |
-| [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | Stage 1.1（preparation 待验收）：Quest–MuJoCo 链路、retarget 与录制回放 → cube 部分运动到最终 L20 抓姿回归 → 影子手验证；保留改意图记录与置信度／分类讨论，不做承重、抗扰或 pick |
+| [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | Stage 1.1（preparation 待验收）：10 条试跑 → 3 手形 × 4 方向 × 2 位置 × 10 重复，共 240 条平衡 L20 示教 → 固定 1 秒历史的轻量 MLP 预测完整最终掌姿与 16 关节 → 影子手验证；接触先作派生验证量，不做承重、抗扰或 pick |
 | ↳ [l20-grasp-sources-review.html](l20-grasp-sources-review.html) | 配套项目选型综述（计划）：人类数据库与几何／捏合／接触／物理 retarget；模型生成与数学优化；既有 ORCA BODex 资产审计、L20 适配缺口；GraspADMM / DexEvolve / CoToGrasp 等近期进展；可用性与后续接口备忘；是独立文献库，不是并行待办 |
 | [shared-control.html](shared-control.html) | 共享控制路线：从 To the Noise and Back 到 EMG 灵巧手 |
 
