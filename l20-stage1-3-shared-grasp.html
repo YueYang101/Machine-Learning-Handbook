@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L20 Stage 1.3：意图条件的共享抓取控制 · Machine Learning Handbook</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#686760;
+  --line:#e1e0d9; --line2:#c3c2b7; --panel2:#f0f1ed;
+  --blue:#165da8; --blue-fill:#e8f0fa; --focus:#165da8; --orange:#eb6834; --green:#1baf7a;
+  --red:#e34948; --magenta:#e87ba4; --yellow:#b98000; --violet:#6c4394; --cyan:#146a78;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#a7a69f;
+    --line:#2c2c2a; --line2:#383835; --panel2:#222321;
+    --blue:#83baff; --blue-fill:#15253a; --focus:#83baff; --orange:#e0692f; --green:#27b07e;
+    --red:#e66767; --magenta:#d55181; --yellow:#d09a2e; --violet:#c5a3eb; --cyan:#8acbd6;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; scroll-margin-top:18px; }
+a { color:var(--blue); text-decoration:underline; text-underline-offset:3px; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.key.bad { border-left-color:var(--red); }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+.chain { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:1.4em 0; }
+.chain .cr { margin:2px 0; }
+.chain .cb { display:inline-block; border:1px solid var(--line2); border-radius:8px; padding:2px 12px; background:var(--bg); }
+.chain .cn { color:var(--muted); font-size:.85rem; margin-left:8px; }
+.chain .ar { color:var(--sub); font-size:.85rem; margin:4px 0 4px 16px; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:6px 0; }
+.formula { overflow-x:auto; padding:12px; border:1px solid var(--line); background:var(--panel); border-radius:8px;
+  font-family:ui-monospace,Menlo,monospace; font-size:.9rem; }
+table { border-collapse:collapse; width:100%; min-width:640px; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+caption { text-align:left; color:var(--sub); padding-bottom:8px; }
+.tw { overflow-x:auto; border:1px solid var(--line); border-radius:8px; padding:0 8px; }
+.meta { color:var(--sub); font-size:.9rem; }
+code { font:.86em/1.6 ui-monospace,Menlo,monospace; overflow-wrap:anywhere; }
+ol, ul { padding-left:1.5em; }
+.bk { display:inline-flex; min-height:44px; align-items:center; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.toc a { min-height:44px; display:inline-flex; align-items:center; }
+a:focus-visible, .tw:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+@media (max-width:480px) {
+  .wrap { padding:24px 16px 60px; }
+  h1 { font-size:1.65rem; }
+}
+</style>
+</head>
+
+<body>
+<main class="wrap">
+<a class="bk" href="l20-stage1-2-training.html">← Stage 1.2：Training</a> · <a class="bk" href="l20-robust-grasp.html">长期路线</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
+<div class="kicker">实验计划 · Stage 1.2 验收后接入 · 2026-09-13</div>
+<h1>Stage 1.3：意图条件的共享抓取控制</h1>
+<p class="lede">复用 Stage 1.2 的 A／B 预测作为用户意图，接入候选选择、几何修正和闭环执行。先比较直接跟踪与目标条件辅助，再根据接触失败决定是否训练 goal-conditioned RL／residual policy。DexGen 是动作先验与人类引导分工的主要参考。</p>
+<p class="meta">状态：方案已记录，待执行；没有 Stage 1.3 训练、抓取成功率或实机验证结果。当前范围为单一 cube、Quest→retarget→L20，首轮在仿真中验证。以下接口与实验组是设计，不表示已有实现。</p>
+<div class="key good"><b>选型：</b>1.2 负责“用户想怎样抓”，1.3 负责“如何辅助完成这个抓法”。保留直接跟踪预测的对照组；第一版执行模块可以不训练，出现明确的接触／动力学缺口后再引入学习型控制器。</div>
+<nav class="toc" aria-label="本页目录"><a href="#boundary">能力边界</a> · <a href="#architecture">接入架构</a> · <a href="#execution">执行选型</a> · <a href="#dexgen">DexGen 参考</a> · <a href="#evaluation">对照与判据</a> · <a href="#runbook">当前五步</a></nav>
+
+<h2 id="boundary">§ 1 · 预测抓姿之后，还缺什么？</h2>
+<p><a href="l20-stage1-2-training.html">Stage 1.2</a> 的 A（No-Gaze VQ-VAE＋自回归 Transformer）输出未来手部序列，B（Flow Matching）首轮输出多个最终抓姿候选。它们的标签来自 <a href="l20-robust-grasp-stage1.html">Stage 1.1 数采</a>，表示想达到的 L20 抓姿，尚未证明承重或抗扰。</p>
+<div class="tw" tabindex="0" role="region" aria-label="预测、修正与执行的职责"><table>
+<caption>相同的最终姿态，可以对应不同的闭合指令、接触过程和执行结果</caption>
+<thead><tr><th scope="col">模块</th><th scope="col">输入 → 输出</th><th scope="col">本阶段取舍</th></tr></thead><tbody>
+<tr><td>意图预测</td><td>用户手部历史 → 未来抓姿／序列</td><td>复用 1.2 冻结模型；同时保留实时用户参考</td></tr>
+<tr><td>候选选择与几何修正</td><td>预测候选＋cube／L20 几何 → 可行目标或拒绝</td><td>先用现有示教、FK 与优化，不新训通用抓姿生成器</td></tr>
+<tr><td>闭环执行</td><td>实际机器人状态＋目标 → 当前关节命令</td><td>先基础控制；按失败证据升级目标条件 RL／有界残差</td></tr>
+</tbody></table></div>
+<p>单一 cube 消除了目标类别识别，仍需要物体相对位姿与接触反馈。首轮仿真可读物体／接触真值；实机需要另行明确哪些量可测或可估。几何无穿透、预测误差低、稳定持物是不同指标。</p>
+<p>第一轮检验用户指定抓法的接近、闭合与短时保持；独立报告接触形成和物理保持。只有解除物体固定／支撑后的测试才能说明承重。搬运、抗扰、复杂手内操作与完整 release 流程后续逐项扩展，不倒加为 1.1／1.2 的验收条件。</p>
+
+<h2 id="architecture">§ 2 · A／B 共用一个执行接口</h2>
+<div class="chain" aria-label="架构示意：实时用户输入和意图预测汇合，控制器读取实际状态闭环执行">
+<div class="cr"><span class="cb">Quest 历史 → 1.2 A／B → 抓姿／轨迹候选</span></div>
+<div class="ar">↓ 按实时输入一致性、可行性与时间连续性选候选；不平均不同抓法</div>
+<div class="cr"><span class="cb">几何修正 → 目标抓姿 g</span></div>
+<div class="ar">↓ 与用户实时 retarget 参考、确认／取消状态汇合</div>
+<div class="cr"><span class="cb">共享控制：目标选择、执行进度、辅助强度</span></div>
+<div class="ar">↓ 目标＋实际 L20 状态＋可用物体／接触反馈</div>
+<div class="cr"><span class="cb">目标条件执行模块 → 当前关节命令 → L20</span></div>
+<div class="ar">↺ 读取执行后的真实状态，重新规划／修正下一步</div>
+</div>
+<p class="meta">上图是接口示意，没有暗示 controller、候选评分器或置信度模块已经实现。</p>
+<p><b>目标表达：</b>沿用物体坐标系中的掌部位姿与 16 个主动关节参考 <code>g = (T_OP, q_goal)</code>，保留关节顺序、单位、耦合定义与坐标版本；可通过 FK 派生指尖目标和接触候选。A 可提供序列子目标，B 需先选择终点并生成接近／闭合参考。首轮 A／B 统一比较终点条件执行，序列优势另报。</p>
+<p><b>目标与动作：</b><code>q_goal</code> 表示几何目标；控制器根据当前实际状态输出 <code>q_cmd</code> 或有界修正量。接触时的关节目标误差会影响作用力，不能把几何终点无条件当作闭合／承重指令。</p>
+<p><b>腕部权限：</b>首轮腕部保持用户／外部控制，手指负责局部辅助；掌姿预测用于提示、可达性判断和目标选择。掌姿不可达时拒绝或请求用户调整腕部，不通过手指强行补偿；自动控腕属于后续单独对照。</p>
+<p><b>用户主导进度：</b>预测终点提供辅助方向，当前用户输入决定是否继续。首轮先用明确启用／确认建立可解释基线，再验证自动门控。取消或覆盖应撤销旧目标；“停止辅助”与“立即张手”分开，释放用独立明确输入。低可信或库外输入退回实时控制，不因训练集多为闭合动作而持续帮用户握紧。</p>
+<p>候选采样数量、时序一致性与可行性只能提供评分线索，不能直接当作校准置信度。选择／拒绝规则在 validation 上确定，冻结后进入测试；不使用真实未来终点做在线候选排序。</p>
+
+<h2 id="execution">§ 3 · 执行模块按缺口升级</h2>
+<div class="tw" tabindex="0" role="region" aria-label="执行模块候选"><table>
+<caption>当前先做可解释基线；后两项是按实验结果启用的候选</caption>
+<thead><tr><th scope="col">实现</th><th scope="col">什么时候用</th><th scope="col">所需数据／验证</th></tr></thead><tbody>
+<tr><td>几何修正＋基础闭环</td><td>当前首选：受限轨迹跟踪、分阶段闭合；优先定位不可达、穿透、接近错误</td><td>已知模型与可行目标；记录实际状态、控制目标、接触与失败</td></tr>
+<tr><td>Goal-conditioned RL／residual policy</td><td>目标合理但滑移、丢接触、扰动恢复反复失败时</td><td>仿真交互或完整执行示教；输入实际状态与目标，输出关节命令／有界残差</td></tr>
+<tr><td>DexGen 式生成控制器</td><td>已有足够机器人动作数据，需要覆盖多种操作模式时</td><td>成功执行与恢复轨迹、状态—动作配对；独立训练动作先验，不能只复用 1.2 的终点标签</td></tr>
+</tbody></table></div>
+<p>若训练执行 policy，目标跟踪、抓取稳定、动作平滑和限位／碰撞约束共同定义任务，实际权重在首个 run 登记。变化起始状态与目标抓姿，保留不同接触指和抓法；只奖励“拿起”可能使策略忽略目标而总选同一容易抓法。先用正确目标验证，再加入预测误差与目标切换。</p>
+<p>1.1 示教可提供目标与初始化参考，但当前记录尚未验收稳定抓取，因此不能直接称为机器人执行专家数据。训练执行器需要额外物理 rollout 或成功示教，保留恢复过程与失败原因；共享控制导致的偏离状态也应覆盖。</p>
+<p>可复用资产的历史核验与本体缺口见 <a href="l20-grasp-sources-review.html">抓姿来源选型综述</a>。本页不重新宣称已有 planner／policy 已适配 L20；实现时核验最新模型、关节耦合、传感和接口。基础控制、已有策略与新训策略都必须按同一协议验收。</p>
+
+<h2 id="dexgen">§ 4 · Reference：DexterityGen（DexGen）</h2>
+<p><b>DexterityGen: Foundation Controller for Unprecedented Dexterity</b>，Zhao-Heng Yin、Changhao Wang 等，RSS 2025。<a href="https://www.roboticsproceedings.org/rss21/p103.pdf">会议原文</a> · <a href="https://arxiv.org/html/2502.04307v1">可读全文（v1）</a> · <a href="https://zhaohengyin.github.io/dexteritygen/">作者项目与视频</a>。</p>
+<div class="chain" aria-label="DexGen 训练及部署方法示意">
+<div class="cr"><span class="cb">仿真 RL 学习旋转、平移与抓法转换</span></div>
+<div class="ar">↓ 采集机器人状态、关键点运动与实际控制动作</div>
+<div class="cr"><span class="cb">训练 diffusion 动作先验＋逆动力学模型</span></div>
+<div class="ar">↓ 部署：当前本体状态作为条件，人类粗动作引导 diffusion 采样</div>
+<div class="cr"><span class="cb">短时关键点运动 → 逆动力学 → 关节位置目标</span></div>
+</div>
+<p>原文用 diffusion 学习给定机器人状态的短时关键点运动分布，再以 inverse dynamics MLP 将运动转为关节目标；人的动作作为采样梯度引导。训练数据主要来自仿真 RL 产生的动作，物理执行能力来自这些交互数据。我们借鉴“人提供目标、低层先验辅助执行”的分工。</p>
+<div class="key warn"><b>与 Stage 1.2 B 的区别：</b>1.2 B 学的是“用户未来希望的手姿”；DexGen 学的是“机器人当前状态下的动作分布”。即便都采用 diffusion／Flow Matching，训练标签与部署职责仍不同。沿用架构思想不等于复现 DexGen，也不等于已有可用权重。</div>
+<p><b>代码／权重／数据核验（2026-09-13）：</b>作者页的 <a href="https://github.com/zhaohengyin/lightning-grasp">Code (I)：Lightning Grasp</a> 指向抓姿生成引擎；该入口不是完整 DexGen diffusion／逆动力学控制器。本轮未核验完整控制器 checkpoint、RL 轨迹数据或 L20 适配结果。原文实机为 Allegro＋Franka，L20 需要重新对齐运动学、耦合、观测、动作和动力学数据。</p>
+<p><b>首轮适配：</b>先以小型目标条件控制器验证单 cube 辅助，暂不复制 DexGen 的大规模 RL→数据生成→diffusion 训练链。若后续建立动作先验，1.2 的预测可作为额外引导，但必须与实时用户参考比较，验证是否改善提前量而非放大错误预测。接触后的复杂换抓与工具使用保留为后续研究。</p>
+<p>相关路线：<a href="https://arxiv.org/html/2607.11481v1">TeleDexter（Li 等，2026 预印本）</a>参考目标条件 RL 接触执行；<a href="https://arxiv.org/html/2603.22787">DiSCo（Wang 等，2026）</a>参考用户动作引导的 diffusion 序列辅助。二者是方法背景，本阶段不承诺复现；共享控制理论与部分扩散说明见 <a href="shared-control.html">系统路线</a>。</p>
+
+<h2 id="evaluation">§ 5 · 分开验证预测收益和执行收益</h2>
+<div class="tw" tabindex="0" role="region" aria-label="Stage 1.3 实验对照"><table>
+<caption>状态全部为待执行；T2 的人工正确目标是执行诊断，不是可部署预测器</caption>
+<thead><tr><th scope="col">组别</th><th scope="col">系统组成</th><th scope="col">回答的问题</th></tr></thead><tbody>
+<tr><td>T0</td><td>当前 Quest retarget＋基础控制器</td><td>无预测辅助的直接控制能做到什么？</td></tr>
+<tr><td>T1</td><td>1.2 预测辅助＋同一基础控制器</td><td>仅有预测能否改善操作？</td></tr>
+<tr><td>T2</td><td>人工确认的可行目标＋专用执行模块</td><td>给对目标之后，执行器是否有效？</td></tr>
+<tr><td>T3</td><td>1.2 预测辅助＋同一专用执行模块</td><td>完整链路的效果及预测误差代价是什么？</td></tr>
+</tbody></table></div>
+<p>T1／T3 使用相同预测器、候选选择和门控规则；T2／T3 使用相同执行器、初态与目标抓法分布。另以相同人工目标对基础与专用控制器做配对测试，隔离执行收益；如需判断预测是否必需，在 T3 中关闭预测、保留实时参考作消融。比较 A／B 时固定下游控制器。</p>
+<p><b>共同记录：</b>目标抓法／接触指保持程度、接触形成成功率、短时保持成功率与掉落、完成时间、辅助修正幅度、用户覆盖／取消响应、推理和控制延迟。按抓法、方向、初态与 session 分层，失败分为预测错误、目标不可行、执行失稳和仲裁错误。</p>
+<p>测试前在 validation 冻结成功定义、保持时长、允许误差、控制预算与样本分母；物理保持明确物体是否固定、支撑／腕部运动条件。1.2 的 session 划分继续隔离；执行策略开发不使用其 test trial 的未来标签，测试目标只用于评测。新增执行数据独立登记划分。</p>
+<p><b>继续判据：</b>先让 T2 在正确目标下可靠工作；T3 应在保持用户抓法的前提下优于基础控制。若只提高拿起率却频繁改变抓法，或预测辅助不优于实时参考，应调整相应模块。不给尚未运行的方案预填成功率和提升阈值。</p>
+
+<h2 id="runbook">§ 6 · 进入 Stage 1.3 后执行这五步</h2>
+<ol>
+<li><b>冻结接口与案例。</b>读取 1.2 模型／normalizer／split 版本；统一目标、实际状态、腕部权限及确认／取消输入。交付接口说明与少量候选回放，待生成。</li>
+<li><b>先验证正确目标。</b>在单 cube 仿真中用人工确认目标测试几何修正和基础执行；记录接触、保持与失败，得到是否需要学习型执行的依据。</li>
+<li><b>建立预测辅助对照。</b>跑 T0／T1，固定门控和控制器；比较预测带来的收益、错误和用户覆盖响应。</li>
+<li><b>按缺口启用专用执行。</b>需要时适配已有控制器或训练目标条件 RL／有界残差，完成 T2；成功后接入预测跑 T3。DexGen 式生成执行保留为数据充足后的分支。</li>
+<li><b>冻结评测并登记结果。</b>配对比较、保留失败回放；记录 run ID、模型／资产版本、实际配置、样本分母、结果与下一步。决定保留基础方案、升级执行器或补数采。</li>
+</ol>
+<footer><a href="l20-stage1-2-training.html">← Stage 1.2：Training</a> · <a href="l20-robust-grasp.html">长期路线</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
+</main>
+</body>
+</html>

@@ -149,6 +149,10 @@ details.box li { margin:5px 0; font-size:.9rem; color:var(--sub); }
   <div class="t">Stage 1.2：Training<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">待 Stage 1.1 数据验收</span></div>
   <div class="d">两个方案并列：A 删除 gaze／物体分支的 VQ-VAE＋自回归 Transformer 预测未来序列；B 状态条件 Flow Matching 生成多个最终 L20 手姿候选；共享确定性基线与冻结划分</div>
 </a>
+<a class="card" href="l20-stage1-3-shared-grasp.html">
+  <div class="t">Stage 1.3：意图条件的共享抓取控制<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">方案已记录 · 待执行</span></div>
+  <div class="d">复用 1.2 预测 → 候选选择与几何修正 → 目标条件闭环执行；T0–T3 分开验证预测与执行收益，按需升级 RL／残差；参考 DexGen 动作先验</div>
+</a>
 <div class="sub">
   <a href="l20-grasp-sources-review.html"><span class="rel">项目选型综述 ·</span> <span class="t2">抓姿来源：人手 Retarget / 模型生成 / 数学优化</span><br>
     <span class="d2">人类数据库、不同 retarget 方法、模型生成与数学优化；保留 SOTA 资料及已有 BODex 资产审计，按实际需要查阅，不同时展开</span></a>
