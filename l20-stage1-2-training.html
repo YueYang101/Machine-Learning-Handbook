@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L20 Stage 1.2：Training · Machine Learning Handbook</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#686760;
+  --line:#e1e0d9; --line2:#c3c2b7; --panel2:#f0f1ed;
+  --blue:#165da8; --blue-fill:#e8f0fa; --focus:#165da8; --orange:#eb6834; --green:#1baf7a;
+  --red:#e34948; --magenta:#e87ba4; --yellow:#b98000; --violet:#6c4394; --cyan:#146a78;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#a7a69f;
+    --line:#2c2c2a; --line2:#383835; --panel2:#222321;
+    --blue:#83baff; --blue-fill:#15253a; --focus:#83baff; --orange:#e0692f; --green:#27b07e;
+    --red:#e66767; --magenta:#d55181; --yellow:#d09a2e; --violet:#c5a3eb; --cyan:#8acbd6;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; scroll-margin-top:18px; }
+a { color:var(--blue); text-decoration:underline; text-underline-offset:3px; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.key.bad { border-left-color:var(--red); }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+.chain { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:1.4em 0; }
+.chain .cr { margin:2px 0; }
+.chain .cb { display:inline-block; border:1px solid var(--line2); border-radius:8px; padding:2px 12px; background:var(--bg); }
+.chain .cn { color:var(--muted); font-size:.85rem; margin-left:8px; }
+.chain .ar { color:var(--sub); font-size:.85rem; margin:4px 0 4px 16px; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:6px 0; }
+.formula { overflow-x:auto; padding:12px; border:1px solid var(--line); background:var(--panel); border-radius:8px;
+  font-family:ui-monospace,Menlo,monospace; font-size:.9rem; }
+table { border-collapse:collapse; width:100%; min-width:640px; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+caption { text-align:left; color:var(--sub); padding-bottom:8px; }
+.tw { overflow-x:auto; border:1px solid var(--line); border-radius:8px; padding:0 8px; }
+.meta { color:var(--sub); font-size:.9rem; }
+code { font:.86em/1.6 ui-monospace,Menlo,monospace; overflow-wrap:anywhere; }
+ol, ul { padding-left:1.5em; }
+.bk { display:inline-flex; min-height:44px; align-items:center; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.toc a { min-height:44px; display:inline-flex; align-items:center; }
+a:focus-visible, .tw:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+@media (max-width:480px) {
+  .wrap { padding:24px 16px 60px; }
+  h1 { font-size:1.65rem; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+<a class="bk" href="l20-robust-grasp-stage1.html">← Stage 1.1：数采</a> · <a class="bk" href="l20-robust-grasp.html">长期路线</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
+<div class="kicker">实验计划 · Stage 1.1 验收后执行 · 2026-09-13</div>
+<h1>Stage 1.2：Training</h1>
+<p class="lede">使用 Stage 1.1 冻结的单一 cube Quest→retarget→L20 示教，比较确定性最终抓姿回归与状态条件 Flow Matching。模型只根据尚未完成的手部动作前缀预测未来最终手姿，不读取 RGB、眼动或物体类别，也不直接输出机器人当前控制命令。</p>
+<p class="meta">状态：待 Stage 1.1 数据验收，尚未训练。当前写的是模型与比较协议，不是训练结果；实际 optimizer、batch、训练轮数、随机种子、checkpoint 与运行时间在首个 run 中记录。</p>
+<div class="key good"><b>本阶段要回答的问题：</b>同一个 cube 存在 pinch、tripod、power grasp 等不同意图时，Flow Matching 能否比单一 MLP 更少输出“平均手形”，并在动作尚未结束时给出多个几何有效的最终 L20 抓姿候选？</div>
+<div class="key warn"><b>首轮取舍：</b>先生成物体坐标系中的<b>最终 L20 手姿分布</b>，不直接照搬 Diffusion Policy 生成电机 action chunk。240 条 trial 对高维长轨迹生成偏少；若终点分布实验成立，再把输出扩展为短期未来轨迹。</div>
+<nav class="toc" aria-label="本页目录"><a href="#boundary">任务边界</a> · <a href="#data">输入输出</a> · <a href="#flow">Flow Matching</a> · <a href="#inference">推理</a> · <a href="#comparison">对照与判据</a> · <a href="#runbook">当前四步</a></nav>
+
+<h2 id="boundary">Flow Matching／DP 与 IL 的关系</h2>
+<p><a href="diffusion-policy.html">Diffusion Policy</a>把机器人观测作为条件、专家示范的未来动作作为输出，用离线 demonstration 做生成式 behavior cloning；在这种用法下，它属于 offline imitation learning。Diffusion 与 Flow Matching 本身只是学习条件数据分布的生成方法，并不天然等于 IL。</p>
+<div class="formula" role="math" aria-label="机器人 Diffusion Policy 与本项目 Human Model 的区别">robot DP: observation → future robot action chunk → receding-horizon execution<br>Stage 1.2: past human/L20 hand state → final intended L20 hand pose candidates → shadow-hand evaluation</div>
+<p>Stage 1.2 的数据管线与 behavior cloning 相似，但输出是预测目标，不是要立即执行的 action，因此当前应称为<b>监督式 Human Model</b>。之后如果把候选经过 retargeting、几何修正与安全仲裁转成实时动作，才形成机器人 policy／shared-control 闭环。</p>
+
+<h2 id="data">单物体 Quest 数据怎样进入模型？</h2>
+<p>单一 cube 消除了目标类别识别，不消除坐标问题。cube 固定时，每个 session 标定一次 <code>T_world_object</code>；所有手掌位置和方向都变换到 cube 坐标系。模型不输入 RGB、mesh、类别或 gaze，系统只在预处理和几何检查时使用已知 cube pose。</p>
+<div class="formula" role="math" aria-label="Stage 1.2 条件与监督目标">condition c<sub>t</sub> = past 1 s of [p<sub>OH</sub>(3), R<sub>OH</sub>(6), q<sub>L20,ref</sub>(16), valid(1)]<br>target y = final confirmed [p<sub>OP,T</sub>(3), R<sub>OP,T</sub>(6), q<sub>T</sub>(16)]</div>
+<p><code>O</code> 是 cube，<code>H</code> 是 Quest 人手掌，<code>P</code> 是 L20 掌。原始数据保留全频率、双时间戳、Quest 关节点和 tracking validity；窗口与26维派生输入只由训练代码生成。归一化统计只能从144条训练 trial 计算，48条 validation 和48条 test 不参与。</p>
+
+<h2 id="flow">状态条件 Flow Matching 如何训练？</h2>
+<div class="chain" aria-label="Stage 1.2 Flow Matching 训练流程">
+<div class="cr"><span class="cb">历史手部状态 c</span> + <span class="cb">真实最终抓姿 y</span></div>
+<div class="ar">↓ 采样 ε ~ N(0,I)、τ ~ U(0,1)</div>
+<div class="cr"><span class="cb">x<sub>τ</sub> = (1−τ)ε + τy</span><span class="cn">噪声到真实抓姿的直线路径</span></div>
+<div class="ar">↓ 小型 MLP／TCN 接收 (xτ, τ, c)</div>
+<div class="cr"><span class="cb">v<sub>θ</sub>(x<sub>τ</sub>, τ, c)</span><span class="cn">预测沿路径移动的速度</span></div>
+<div class="ar">↓ 回归目标速度 u* = y − ε</div>
+<div class="cr"><span class="cb">L<sub>FM</sub> = ‖v<sub>θ</sub> − u*‖²</span></div>
+</div>
+<p>位置、6D rotation 和16个主动关节先分别按训练集尺度归一化，再拼成25维目标，避免单位差异让某一组变量支配 loss。首轮条件编码器保持小型，不加图像 backbone、VLM、object encoder 或 online update。Flow Matching的原始方法见 <a href="https://arxiv.org/abs/2210.02747">Lipman 等（ICLR 2023）</a>；机器人 action 生成的对照见 <a href="https://arxiv.org/abs/2303.04137">Diffusion Policy（Chi 等，RSS 2023）</a>。</p>
+
+<h2 id="inference">怎样得到多个候选？</h2>
+<div class="chain" aria-label="Stage 1.2 Flow Matching 推理流程">
+<div class="cr"><span class="cb">当前1秒历史 c</span></div>
+<div class="ar">↓ 采样多个独立噪声 ε₁…εₖ</div>
+<div class="cr"><span class="cb">积分 dx/dτ = v<sub>θ</sub>(x,τ,c)</span></div>
+<div class="ar">↓ τ: 0 → 1</div>
+<div class="cr"><span class="cb">k 个最终 L20 抓姿候选</span></div>
+<div class="ar">↓ FK、关节限位、穿透与候选去重</div>
+<div class="cr"><span class="cb">影子手可视化与离线评分</span></div>
+</div>
+<p>首轮不让候选修改用户命令。Flow Matching生成多个样本不等于自动知道哪个最好；<code>best-of-k</code> 只能衡量分布是否覆盖真实答案，不能冒充部署时的 top-1 性能。实际接入前还需要独立的候选排序、置信度校准和退让规则。</p>
+
+<h2 id="comparison">固定对照与继续判据</h2>
+<div class="tw" tabindex="0" role="region" aria-label="Stage 1.2 模型对照"><table>
+<caption>所有模型使用 Stage 1.1 冻结的相同 session 划分</caption>
+<thead><tr><th scope="col">模型</th><th scope="col">输出</th><th scope="col">回答的问题</th></tr></thead><tbody>
+<tr><td>B0 · 当前姿态保持</td><td>把当前手姿当最终抓姿</td><td>学习模型是否真的提前？</td></tr>
+<tr><td>B1 · 最近示教检索</td><td>一个训练集抓姿</td><td>模型是否优于直接记忆示教？</td></tr>
+<tr><td>M0 · 历史 MLP</td><td>一个连续最终抓姿</td><td>小数据下确定性回归能做到什么？</td></tr>
+<tr><td>M1 · Conditional Flow Matching</td><td>多个最终抓姿候选</td><td>是否减少跨抓型平均化并覆盖多模态意图？</td></tr>
+</tbody></table></div>
+<p>测试报告掌部平移误差、旋转角误差、主动关节误差、FK 指尖误差、几何无效率、top-1 和 best-of-k；并按 pinch／tripod／power grasp、方向、cube 位置与 session 分层。若 M1 只增加样本抖动、无效姿态或记忆训练集，而没有改善模式覆盖，就保留 M0，不因“生成模型更新”而继续加大模型。</p>
+<p>240条单用户 trial 只能支持 PoC，不能声称跨用户或跨物体。测试前依据 validation 固定候选数、筛选规则与误差容差；不预先写死提升阈值，首个 run 后按真实分布和下游误差需求登记。</p>
+
+<h2 id="runbook">进入 Stage 1.2 后只做这四步</h2>
+<ol>
+<li><b>读取并复核冻结数据。</b>验证 manifest、session split、坐标重算、normalizer 与排除原因；不改 Stage 1.1 原始数据。</li>
+<li><b>先跑 B0、B1、M0。</b>得到确定性误差、提前量和平均手形失败样例，作为是否需要生成模型的事实依据。</li>
+<li><b>训练 M1 Flow Matching。</b>使用相同条件、目标和 split，保存实际配置、seed、checkpoint、训练曲线与推理耗时。</li>
+<li><b>冻结评测并记录。</b>输出 top-1／best-of-k、几何无效率、分层指标和影子手视频；决定保留 M0、采用 M1，或先补数据。</li>
+</ol>
+<div class="key bad"><b>本阶段不做：</b>不训练直接电机 action policy，不在线更新模型，不把 Flow Matching 候选直接送给真实机器人，不把“覆盖到真实姿态”解释成抓取稳定、承重或 pick 成功。</div>
+
+<footer><a href="l20-robust-grasp-stage1.html">← Stage 1.1：数采</a> · <a href="l20-robust-grasp.html">长期路线</a> · <a href="index.html">Machine Learning Handbook</a></footer>
+</main>
+</body>
+</html>

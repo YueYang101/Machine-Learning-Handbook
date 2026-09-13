@@ -38,8 +38,9 @@
 
 | 页面 | 内容 |
 |---|---|
-| [l20-robust-grasp.html](l20-robust-grasp.html) | L20 Robust Grasp：三条长期主线——L20 robust grasp、真人手预训练并经 retargeting 迁移到 L20、面向残障用户的 online learning；当前短期先做 L20 数据训练 |
-| [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | Stage 1.1（preparation 待验收）：10 条试跑 → 3 手形 × 4 方向 × 2 位置 × 10 重复，共 240 条平衡 L20 示教 → 固定 1 秒历史的轻量 MLP 预测完整最终掌姿与 16 关节 → 影子手验证；接触先作派生验证量，不做承重、抗扰或 pick |
+| [l20-robust-grasp.html](l20-robust-grasp.html) | L20 Robust Grasp：三条长期主线——L20 robust grasp、真人手预训练并经 retargeting 迁移到 L20、面向残障用户的 online learning；当前短期先数采，再做 L20 抓姿训练 |
+| [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | Stage 1.1 数采（preparation 待验收）：10 条试跑回放 → 3 手形 × 4 方向 × 2 位置 × 10 重复，共 240 条平衡 L20 示教 + 24 条改意图／取消诊断 → 冻结字段、坐标、标签与 144／48／48 session 划分 |
+| [l20-stage1-2-training.html](l20-stage1-2-training.html) | Stage 1.2 Training（待 Stage 1.1 数据验收）：单一 cube、无 RGB／眼动／物体分类；先跑确定性最终抓姿回归，再以状态条件 Flow Matching 生成多个最终 L20 手姿候选并做同划分对照 |
 | ↳ [l20-grasp-sources-review.html](l20-grasp-sources-review.html) | 配套项目选型综述（计划）：人类数据库与几何／捏合／接触／物理 retarget；模型生成与数学优化；既有 ORCA BODex 资产审计、L20 适配缺口；GraspADMM / DexEvolve / CoToGrasp 等近期进展；可用性与后续接口备忘；是独立文献库，不是并行待办 |
 | [shared-control.html](shared-control.html) | 共享控制路线：从 To the Noise and Back 到 EMG 灵巧手 |
 
@@ -47,7 +48,7 @@
 
 | 页面 | 内容 |
 |---|---|
-| [l20-stage1-alternatives.html](l20-stage1-alternatives.html) | Stage 1.1 其他方案（四条待验证）：与主方案共享 Quest 示教；几何评分、递归贝叶斯、VLM 语义先验及融合；统一完整抓姿、数据划分与误差／提前量对照 |
+| [l20-stage1-alternatives.html](l20-stage1-alternatives.html) | Stage 1.2 其他方案（四条待验证）：与主方案共享 Quest 示教；几何评分、递归贝叶斯、VLM 语义先验及融合；统一完整抓姿、数据划分与误差／提前量对照 |
 | [retargeting-research.html](retargeting-research.html) | Retargeting 的局限与候选解法（配套 [hand-control.html](hand-control.html)）：小指 curl 与侧摆的统一根因 · 六条待验证候选与判据 · AnyTeleop / dex-retargeting 详档与整包引进的裁决 |
 
 ## 实验记录

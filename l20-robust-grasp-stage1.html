@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>L20 Stage 1.1：Cube 多样抓姿与意图回归 · Machine Learning Handbook</title>
+<title>L20 Stage 1.1：数采 · Machine Learning Handbook</title>
 <style>
 :root {
   color-scheme: light;
@@ -114,12 +114,12 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 <main class="wrap">
 <a class="bk" href="l20-robust-grasp.html">← 长期路线</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
 <div class="kicker">实验计划 · 当前第一步 · 2026-09-13</div>
-<h1>Stage 1.1：Cube 多样抓姿与意图回归</h1>
-<p class="lede" id="scope">同一个 cube，用户通过 Quest 与 retargeting 操作 L20；模型只看尚未完成的动作前缀，提前预测用户最终确认的 L20 抓姿。第一版预测完整掌姿与关节，不直接预测精确接触点。</p>
-<p class="meta">状态：preparation 待验收，正式采集与训练待执行。2026-09-13 按抓姿预测文献补齐正式采集矩阵、逐项数据字段、轻量 MLP 架构与接触目标取舍。本次仅更新实验方案，没有新增硬件验收、训练结果或性能成绩。执行后另建带 run ID 的结果记录，并回链本协议。</p>
-<div class="key good"><b>本轮假设：</b>部分手部运动包含最终抓姿的信息；模型能在用户完成动作前，比“把当前姿态当作最终姿态”更早、更准确地预测目标，同时保留不同手形与方向。最终手姿 → 最终手姿只能验证映射，不能验证提前预测。</div>
+<h1>Stage 1.1：数采</h1>
+<p class="lede" id="scope">同一个 cube，用户通过 Quest 与 retargeting 操作 L20；本阶段只把试跑、正式示教、时间同步、坐标、标签和回放验收做可信，不在这里训练模型。</p>
+<p class="meta">状态：preparation 待验收，正式采集待执行。计划先回放 10 条试跑，再采集 240 条固定意图示教和 24 条改意图／取消诊断。训练与影子手预测验证已经拆到 <a href="l20-stage1-2-training.html">Stage 1.2：Training</a>；本次没有新增实验数据或性能成绩。</p>
+<div class="key good"><b>本阶段交付：</b>版本冻结、可回放、无 trial／session 泄漏的 Quest→retarget→L20 数据集。它必须保留模型训练所需的完整动作前缀和最终确认抓姿，但“数据已经采到”不等于“意图已经能被预测”。</div>
 <div class="key warn"><b>监督目标选择：</b>预测物体坐标系中的最终 L20 掌部 6D 位姿与 16 个主动关节目标；MuJoCo 接触位置、法向和接触 link 全部记录，但先作为派生验证量，不作为网络主标签。完整抓姿能经 FK／碰撞几何重建接触候选；只有接触点却不能唯一恢复掌姿、关节、接近路径或稳定力分配。</div>
-<nav class="toc" aria-label="本页目录"><a href="#preparation">采集前准备</a> · <a href="#runbook">当前四步</a> · <a href="#dataset">采集矩阵</a> · <a href="#io">数据字段</a> · <a href="#model">训练架构</a> · <a href="#alternatives">其他方案</a> · <a href="#intent-updates">改意图与置信度</a> · <a href="#handoff">抓取接口</a> · <a href="#checklist">交付与判据</a> · <a href="#next">后续边界</a></nav>
+<nav class="toc" aria-label="本页目录"><a href="#preparation">采集前准备</a> · <a href="#runbook">当前三步</a> · <a href="#dataset">采集矩阵</a> · <a href="#io">数据字段</a> · <a href="#model">训练交接</a> · <a href="#alternatives">方案索引</a> · <a href="#intent-updates">改意图记录</a> · <a href="#handoff">抓取接口</a> · <a href="#checklist">交付与判据</a> · <a href="#next">后续边界</a></nav>
 
 <h2 id="preparation">Preparation：先让示教可用、记录可信</h2>
 <div class="key good"><b>正式采集前置条件：</b>先验收 Quest 中看到并操纵 MuJoCo 的 L20/cube，以及 retarget 对本轮目标抓姿的表达能力。<b>记录必须来自实际物理运行端</b>：V1 为电脑端 MuJoCo＋Quest 显示；截至 2026-09-12，V2 已是 Quest 本地物理＋Mac retarget 的混合原型，正式 session writer 与试次确认／取消仍待接入。不能再把 9 月 9 日的 V1 部署决定写成唯一现状，也不能把 V2 当作已验收的独立采集应用。</div>
@@ -130,12 +130,11 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 </ol>
 <p>准备阶段可以录调试片段；链路与本轮目标抓姿表达通过后，再进入正式示教。这里只要求采集与几何表达可用，不把稳定承重、抗扰或 pick 加回前置验收。</p>
 
-<h2 id="runbook">现在做这四件事</h2>
+<h2 id="runbook">现在做这三件事</h2>
 <ol>
 <li id="source-steps"><b>先采集并回放 10 条试跑示教，不进入训练集。</b>仿真中由 <b>L20 与 cube 交互</b>，真实人手通过“Quest 追踪 → 现有 retarget → 仿真 L20”提供输入；完成“接近 → 形成抓姿 → 停住 → 用户确认／取消”。逐项验收时间戳、坐标、追踪有效性、L20 target／actual、终点和接触记录，确认两指、三指、包覆三种提示均可表达。</li>
 <li id="protocol"><b>采集 240 条有效正式示教。</b>使用 3 种抓取提示 × 4 个接近方向 × 2 个 cube 位置 × 10 次重复的平衡矩阵；分 5 个独立 session 采集，每个 session 每格 2 次。前三个 session 共 144 条训练，第四个 48 条验证，第五个 48 条测试。无效试次保留原因并补采，但不能删除失败记录后假装没有发生。</li>
-<li id="training"><b>训练固定 1 秒历史的轻量 MLP 回归。</b>每个窗口取 5 个等间隔历史帧，预测最终物体相对 L20 掌姿与 16 个主动关节；模型和训练默认值见<a href="#model">训练架构</a>。同时跑当前姿态保持、最近示教检索和 MPF 式单帧 MLP 三条对照，不加入 mesh 编码器、接触分类头或 online update。</li>
-<li id="evaluation"><b>先以影子手检验提前量和多样性。</b>离线回放当前输入、预测最终抓姿与真实最终抓姿，模型不修改用户指令。按动作进展统计误差、进入容差并保持的提前量、各采集手形／方向的预测覆盖及几何异常。动作进度与最终时长只用于离线分析，不作为在线可提前获得的特征。确认有提前预测价值，再讨论闭环辅助。</li>
+<li id="dataset-freeze"><b>冻结并交接数据集。</b>补采后生成 trial manifest、排除原因、字段／单位／坐标说明、校准与 retarget 版本以及 144／48／48 的完整 session 划分；随机抽样回放原始与派生状态。只有这一步验收后，<a href="l20-stage1-2-training.html">Stage 1.2</a> 才读取冻结数据训练，不能在训练阶段静默改标签或移动 test trial。</li>
 </ol>
 
 <h2 id="dataset">正式采集矩阵：240 条有效示教</h2>
@@ -153,46 +152,34 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 <p>另采 <b>24 条诊断轨迹</b>：12 条中途改变抓取提示，12 条明确取消。它们不进入首轮固定意图训练和主测试，只验证记录协议、目标撤销与未来变化检测。正式 240 条之外的追踪丢失、穿透、误确认和 retarget 饱和均保留原始记录与排除原因。</p>
 
 <h2 id="io">数据字段：原始量、网络量和标签分开</h2>
-<div class="formula" role="math" aria-label="历史手部运动预测最终抓姿">X<sub>t</sub> = history(T<sub>OH</sub>, hand_shape, tracking_validity)<br>ĝ<sub>T</sub> = f<sub>θ</sub>(X<sub>t</sub>) = (T̂<sub>OP,T</sub>, q̂<sub>T</sub>)</div>
+<div class="formula" role="math" aria-label="数采到训练的变量关系">raw trial → history(T<sub>OH</sub>, hand_shape, tracking_validity)<br>confirmed endpoint → (T<sub>OP,T</sub>, q<sub>T</sub>)</div>
 <p><code>O</code> 是 cube 坐标系，<code>H</code> 是追踪定义的人手掌坐标系，<code>P</code> 是 L20 掌坐标系；<code>T_OH</code> 把人手掌坐标变换到物体坐标，<code>T_OP</code> 对 L20 同理。两种掌坐标不能直接视为相同，保存校准／retarget 约定。<code>t</code> 是当前时刻，<code>T</code> 是示教终点。</p>
 <div class="tw" tabindex="0" role="region" aria-label="Stage 1.1 输入输出契约"><table>
 <caption>网络学习的变量与系统持有的几何分开；本表是待实现接口</caption>
 <thead><tr><th scope="col">部分</th><th scope="col">本轮定义</th><th scope="col">用途与限制</th></tr></thead><tbody>
 <tr><td>trial metadata</td><td><code>subject_id</code>、<code>session_id</code>、<code>trial_id</code>、三项采集条件、重复号、确认／取消、排除原因、软件／模型／retarget／校准版本。</td><td>条件提示只用于覆盖检查和分层报告，不输入网络；身份与 session 用于防止数据泄漏。</td></tr>
 <tr><td>原始时间序列</td><td>Quest 与物理端双时间戳；头／手原始 pose、21 个手部关键点、tracking validity／confidence；cube 世界 pose；L20 掌姿、16 个 target 与 actual 主动关节。</td><td>原始记录只读。不能只保存重采样后的网络 tensor，否则无法复核同步、retarget 或坐标错误。</td></tr>
-<tr><td>网络输入</td><td>每帧使用物体相对人手掌位置 3 维、旋转 6D 表示、retarget 产生的 L20 关节 reference 16 维、tracking-valid mask 1 维，共 26 维；1 秒窗口取 5 个等间隔历史帧，拼成 130 维。</td><td>只使用当前及过去；归一化参数只从 144 条训练示教计算。原始 Quest 21 点保留，首个基线不与关节 reference 重复输入。</td></tr>
+<tr><td>Stage 1.2 候选输入</td><td>每帧可派生物体相对人手掌位置 3 维、旋转 6D 表示、retarget 产生的 L20 关节 reference 16 维、tracking-valid mask 1 维，共 26 维；原始数据仍按实际采样率完整保存。</td><td>这里只约定可重算字段；历史窗口、抽帧和归一化由 Stage 1.2 记录。原始 Quest 关节点保留，不能只保存网络 tensor。</td></tr>
 <tr><td>系统几何</td><td>cube 尺寸、碰撞几何和世界位姿；L20 运动学、关节顺序、限位、耦合及碰撞模型。</td><td>固定 cube 不需要把 mesh 输入意图网络；系统仍需要几何用于坐标变换、FK 与穿透检查。L20 mesh 也不是本轮网络观测。以后跨物体才评估点云／SDF 等几何条件。</td></tr>
-<tr><td>网络输出</td><td>最终 L20 掌部相对 cube 的位置／朝向 + 16 个主动关节参考 <code>q̂_T</code>。</td><td>不是当前电机动作，也不是接触力。被动关节由同一耦合恢复。旋转的存储维数与物理自由度分开记录。</td></tr>
+<tr><td>Stage 1.2 候选输出</td><td>最终 L20 掌部相对 cube 的位置／朝向 + 16 个主动关节参考 <code>q̂_T</code>。</td><td>Stage 1.1 只采集监督所需真值，不产生预测。该量不是当前电机动作，也不是接触力。</td></tr>
 <tr><td>监督目标</td><td>示教末尾停住时，经用户确认、几何检查的 <b>L20 最终抓姿</b> <code>(T_OP,T, q_T)</code>，取仿真实际姿态或明确记录的修正姿态。</td><td>分别保存 retarget 控制目标、仿真实际状态及人工修正目标，记录标签来源与取样方式。接触后仍要求继续闭合的控制指令不能直接当作几何抓姿。当前标签表示“想摆出的 L20 抓姿”，不表示已验证能承重。</td></tr>
 <tr><td>事件与接触</td><td>开始、提示、确认、取消、改意图、tracking fault 的时间；MuJoCo 实际接触 link、物体表面点、法向、穿透／间隙及可用时的接触力。</td><td>接触是真值、几何近点还是用户偏好必须分字段保存。最近表面点不等于意图；不能强行为五根手指都分配接触目标。</td></tr>
 </tbody></table></div>
 <p><b>标注成本：</b>本轮必须得到可信的最终抓姿，不要求逐帧标五指接触点。若记录接触，区分用户指定、几何估计和仿真实际接触；追踪丢失与距离不足以判断时保留未知，不生成伪真值。包覆抓取可能涉及指节和掌部，五个指尖不能代表全部接触。</p>
 
-<h2 id="model">训练架构：固定历史窗口的轻量 MLP</h2>
-<div class="chain" aria-label="Stage 1.1 模型流程">
-<div class="cr"><span class="cb">5 × 26 历史特征</span><span class="cn">1 秒内等间隔取 5 帧</span></div>
-<div class="ar">↓ 拼接为 130 维并按训练集统计归一化</div>
-<div class="cr"><span class="cb">MLP 130 → 256 → 256 → 128 → 64</span><span class="cn">GELU；前两层 dropout 0.1</span></div>
-<div class="ar">↓ 三个连续输出 head</div>
-<div class="cr"><span class="cb">位置 3</span> + <span class="cb">旋转 6D</span> + <span class="cb">L20 主动关节 16</span></div>
+<h2 id="model">交给 Stage 1.2 的数据接口</h2>
+<div class="chain" aria-label="Stage 1.1 到 Stage 1.2 的交接流程">
+<div class="cr"><span class="cb">原始 Quest／L20 trial</span><span class="cn">只读、可回放、含 validity 与双时间戳</span></div>
+<div class="ar">↓ 校准、同步与 cube 坐标变换可重复计算</div>
+<div class="cr"><span class="cb">冻结 manifest + 144／48／48 session split</span></div>
+<div class="ar">↓ Stage 1.1 到此结束</div>
+<div class="cr"><span class="cb"><a href="l20-stage1-2-training.html">Stage 1.2：Training</a></span><span class="cn">确定性基线 + 状态条件 Flow Matching</span></div>
 </div>
-<p>三个 head 分别输出物体相对掌部平移、可正交化为旋转矩阵的 6D rotation representation，以及按 L20 关节限位归一化的 16 维关节目标。网络是十万量级参数，适合作为单用户 PoC；它不是执行 policy，不输出当前电机命令。</p>
-<div class="formula" role="math" aria-label="Stage 1.1 回归损失">L = L<sub>position</sub> + L<sub>rotation</sub> + L<sub>joint</sub><br>L<sub>position</sub> = SmoothL1(p̂<sub>T</sub>, p<sub>T</sub>) / s<sub>p</sub><br>L<sub>rotation</sub> = geodesic(R̂<sub>T</sub>, R<sub>T</sub>) / s<sub>R</sub><br>L<sub>joint</sub> = mean SmoothL1(q̂<sub>T</sub>, q<sub>T</sub>) / s<sub>q</sub></div>
-<p><code>s_p</code>、<code>s_R</code>、<code>s_q</code> 只用训练集的典型变化尺度计算，使三块初始权重均为 1 而单位可比；不使用欧拉角 MSE。初始训练配置为 AdamW、learning rate <code>1e-3</code>、weight decay <code>1e-4</code>、batch 64、最多 200 epochs；以验证集总 loss early stopping，patience 20，并保存实际 seed、最佳 epoch 和 checkpoint。它们是首跑默认值，不是实验成绩。</p>
-<p>训练时每条轨迹最多等量抽取 5 个 causal window：窗口终点均位于开始 1 秒之后、终点确认 0.2 秒之前，并覆盖动作的早、中、晚阶段；不足 5 个有效窗口的轨迹不做未来帧填充。选择窗口时可以用完整 trial 的时间范围，但动作进度和最终时长不进入网络。验证与测试不抽窗口，按完整回放逐时刻计算曲线，避免长轨迹因窗口更多而在训练中权重更大。</p>
-<div class="tw" tabindex="0" role="region" aria-label="Stage 1.1 对照模型"><table>
-<caption>所有模型使用同一 144／48／48 trial 划分</caption>
-<thead><tr><th scope="col">模型</th><th scope="col">输入</th><th scope="col">回答的问题</th></tr></thead><tbody>
-<tr><td>B0 · 当前姿态保持</td><td>把当前 retargeted L20 掌姿／关节当最终值</td><td>学习模型是否真的提前，而非只复述当前状态？</td></tr>
-<tr><td>B1 · 最近示教检索</td><td>按当前物体相对掌姿和手形查训练轨迹</td><td>小网络是否优于直接记忆训练示教？</td></tr>
-<tr><td>B2 · MPF 式单帧 MLP</td><td>只输入当前 26 维特征；同样输出完整连续抓姿</td><td>历史窗口是否比单个当前 pose 更有价值？</td></tr>
-<tr><td>M0 · 历史 MLP</td><td>1 秒、5 帧、130 维</td><td>首个待验证的主模型。</td></tr>
-</tbody></table></div>
-<p><b>文献依据：</b><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10296099/">Motion Prior Field（Shi 等，2023）</a>用当前物体相对手腕 7D pose 和五层 MLP 预测最终 6D 手腕姿态簇与 pre-shape，支持“先预测完整抓姿而非接触点”；<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC7010329/">Naturalistic Exoskeleton Grasp Prediction（Chauhan 等，2020）</a>以 PCA＋Gaussian Process 从动作前缀预测离散抓型，支持保留重复示教、抓型提示和置信度，但不提供连续抓取位置；<a href="https://arxiv.org/abs/2504.01024">Gaze-Guided Hand Motion Prediction（He 等，2025）</a>使用 VQ-VAE＋Transformer 预测未来手部序列，数据与模型都更重，留作扩展；<a href="https://arxiv.org/abs/2606.08341">Uncertainty-Aware Human-to-Robot Intention Prediction（Heman 等，2026 预印本）</a>展示真人示范预训练、少量机器人遥操作微调的路线，放在后续 human-to-L20 transfer，不混入本轮单用户 PoC。</p>
+<p>Stage 1.1 不固定 optimizer、epoch 或生成模型结构，只保证训练所需变量可追溯。网络窗口、归一化、loss、checkpoint、影子手预测与模型比较均由 Stage 1.2 记录，避免把“准备数据”和“得到模型结果”写成同一个状态。</p>
 
-<h2 id="alternatives">其他方案：与主线共享数据、并行比较</h2>
-<div class="key good"><b>主线仍是平衡采集 → 历史 MLP 连续回归 → 影子手验证。</b>另设四条待验证路线：几何一致性评分、递归贝叶斯、VLM 语义先验、VLM＋贝叶斯融合。更重的 GRU／TCN／Transformer 只有在 MLP 明确欠拟合且轨迹数量增加后再比较，不作为首轮前置。</div>
-<p>详见<a href="l20-stage1-alternatives.html">Stage 1.1 其他方案：数学推断与 VLM 辅助</a>。该页按“假设、四步操作、输入输出、交付与判据”展开各方案，并统一数据划分、候选抓姿库与误差／提前量指标；本页保留主实验步骤。数学和预训练 VLM 可减少从零训练需求，但仍需用户确认的示教验证。同一个 cube 的形状不能单独决定用户想用哪种抓法。</p>
+<h2 id="alternatives">训练与其他方案索引</h2>
+<div class="key good"><b>数采协议不因模型选择改变。</b>Stage 1.2 先比较确定性回归和状态条件 Flow Matching；几何一致性、递归贝叶斯、VLM 语义先验与融合继续作为待验证方案，共享同一冻结数据与测试集。</div>
+<p>主训练见<a href="l20-stage1-2-training.html">Stage 1.2：Training</a>；候选路线见<a href="l20-stage1-alternatives.html">Stage 1.2 其他方案：数学推断与 VLM 辅助</a>。同一个 cube 的形状不能单独决定用户想用哪种抓法，因此三种抓取提示仍只用于覆盖检查和分层报告，不作为模型输入。</p>
 
 <h2 id="intent-updates">改意图、置信度与手势库：现在考虑到哪里？</h2>
 <p><b>现在保留事件与失败案例，先完成单一回归基线。</b>意图可以随时间改变，预测只表示当前证据下的判断；不要求系统预知用户尚未表达的改变。当前影子手不参与控制，分类层、置信度校准与动态辅助都不作为采集前置。</p>
@@ -231,17 +218,17 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 </details>
 
 <h2 id="checklist">这一轮交付什么？</h2>
-<p><b>10 条不入训练的试跑、240 条有效固定意图示教、24 条改意图／取消诊断、四条对照结果、误差／提前量图、影子手视频和带 run ID 的结果记录。</b>保留掌部平移误差、旋转角误差、主动关节误差；另用 FK 指尖误差和实际／派生接触帮助解释姿态差异。按 3 种手形、4 个方向、2 个位置与 session 分层报告，不能只展示总体平均或最好样本。</p>
-<p id="baselines"><b>判断是否继续：</b>在独立测试示教上与当前姿态保持、训练集检索对照；检查有用的提前量、持续准确性和各类采集变化是否被保留。根据追踪噪声、重复示教差异及下游需要，在验证集上确定容差，测试前固定。仅终点准确、持续输出平均手形或某种手指组合消失，分别记为提前量不足、输出平均化或覆盖缺口；先查输入、标签和数据覆盖，再决定是否改分类。</p>
-<p>记录实际输入／输出表示、数据划分、模型版本、终点取法、追踪无效处理、排除规则与测试样本分母；所有指标状态均为待执行。初次单用户 cube 结果不推广为跨用户、跨物体或稳定抓取能力。</p>
+<p><b>10 条不入训练的试跑、240 条有效固定意图示教、24 条改意图／取消诊断、冻结的 trial manifest、144／48／48 session 划分、字段与坐标说明，以及抽样回放验收记录。</b>排除的 trial 仍保留原始记录和原因；每种手形、方向、位置与 session 的有效数量必须可核对。</p>
+<p id="baselines"><b>进入 Stage 1.2 的门槛：</b>关键时间序列可回放，输入与终点标签能在 cube 坐标系重算，tracking fault／取消不会被当作正常抓姿，任何 trial 的帧和窗口不会跨 train／validation／test。这里不要求模型指标或影子手视频。</p>
+<p>所有采集状态仍为待执行。初次单用户 cube 数据不能推广为跨用户、跨物体、意图预测或稳定抓取能力。</p>
 <p>抓姿／优化工作在 <code>Dex_Hand/grasping</code>，控制与实验在 <code>Dex_Hand/human_machine_interaction</code>。Handbook 只保留计划与结果摘要。</p>
 
 <h2 id="next">本轮边界与后续</h2>
-<p><b>不做稳定性、承重、抗扰或 pick，也不训练精确接触点预测器。</b>只检查姿态的基本几何合理性，不把“能生成抓姿”当作“能稳定抓取”。若历史 MLP 持续把两指、三指和包覆平均在一起，再在同一数据划分上比较“抓型分类＋类型内姿态回归”或多候选模型；robust grasp 留到后续。</p>
-<p>多样性指不同意图能得到不同抓姿，不要求同一个输入随机生成多个结果。抓姿来源按需查 <a href="l20-grasp-sources-review.html">文献库</a>，其他方案按<a href="l20-stage1-alternatives.html#next">共享采集与并行对照协议</a>逐条接入，不要求先完成所有候选才开始主实验。</p>
+<p><b>Stage 1.1 不训练模型，也不做稳定性、承重、抗扰、pick 或精确接触点预测。</b>它只保证数据与标签可信。确定性 MLP、Flow Matching、误差／提前量图和影子手候选验证属于 <a href="l20-stage1-2-training.html">Stage 1.2</a>；robust grasp 仍是更后的能力线。</p>
+<p>抓姿来源按需查<a href="l20-grasp-sources-review.html">文献库</a>，其他训练方案按<a href="l20-stage1-alternatives.html#next">共享数据与并行对照协议</a>逐条接入，不要求 Stage 1.1 在采集前决定最终模型。</p>
 
 <div class="meta"><span id="prior" aria-hidden="true"></span><span id="control" aria-hidden="true"></span><span id="observation" aria-hidden="true"></span><span id="disturbance" aria-hidden="true"></span><span id="reward" aria-hidden="true"></span><span id="termination" aria-hidden="true"></span><span id="evidence" aria-hidden="true"></span>
-<p>旧固定 PD 承重方案已退出 Stage 1.1，<a href="https://github.com/YueYang101/Machine-Learning-Handbook/blob/fa552aa/l20-robust-grasp-stage1.html">旧稿保留在 Git 历史</a>，不是本轮验收要求。</p>
+<p>旧固定 PD 承重方案已退出当前短期路线，<a href="https://github.com/YueYang101/Machine-Learning-Handbook/blob/fa552aa/l20-robust-grasp-stage1.html">旧稿保留在 Git 历史</a>，不是数采验收要求。</p>
 </div>
 <footer><a href="l20-robust-grasp.html">← 长期路线</a> · <a href="index.html">Machine Learning Handbook</a></footer>
 </main>

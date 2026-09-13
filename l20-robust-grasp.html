@@ -151,8 +151,8 @@
 </section>
 <section id="current">
 <h2 id="current-poc">当前短期 PoC（与长期路线分开）</h2>
-<p>当前只执行 <b>L20 数据训练路线</b>：用户观察并操纵仿真 L20，输入来自 Quest 手部历史，经过现有 retargeting；监督标签是用户确认的最终 L20 掌姿与 16 个主动关节目标。先验证<b>同一个 cube，不同用户意图能否得到不同 L20 抓姿</b>，具体见 <a href="l20-robust-grasp-stage1.html">Stage 1.1：Cube 多样抓姿与意图回归</a>。</p>
-<p>本轮不加入真人手数据预训练、human-to-L20 transfer 或 online model update，也不考核承重、稳定性、抗扰或 pick；这些是后续长期目标，不是被删除。当前先把采集、标签、离线回归和影子手验证做可信。</p>
+<p>当前短期路线拆成连续两步：<a href="l20-robust-grasp-stage1.html">Stage 1.1：数采</a>先冻结 Quest→retarget→L20 的单一 cube 多样抓姿数据；<a href="l20-stage1-2-training.html">Stage 1.2：Training</a>再比较确定性最终抓姿回归与状态条件 Flow Matching，验证不同用户意图能否得到不同 L20 抓姿候选。</p>
+<p>这两步不加入真人手大规模预训练、human-to-L20 transfer 或 online model update，也不考核承重、稳定性、抗扰或 pick；这些是后续长期目标，不是被删除。数据是否可信与模型是否有效分别验收。</p>
 </section>
 <section id="reading">
 <h2 id="research-reading">研究候选：保留，按需启用</h2>

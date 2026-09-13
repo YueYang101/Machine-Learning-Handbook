@@ -85,7 +85,7 @@ details.box li { margin:5px 0; font-size:.9rem; color:var(--sub); }
 <nav aria-label="内容分类">
   <div class="tabs" role="tablist" aria-label="内容分类">
     <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="true" tabindex="0">理论<span class="cnt">6</span></button>
-    <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">5</span></button>
+    <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">6</span></button>
     <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验记录<span class="cnt">3</span></button>
     <button type="button" role="tab" id="tab-tools" aria-controls="panel-tools" aria-selected="false" tabindex="-1">工具</button>
   </div>
@@ -139,11 +139,15 @@ details.box li { margin:5px 0; font-size:.9rem; color:var(--sub); }
 <p class="note">论文地图 + 自己的架构与实验设计。</p>
 <a class="card" href="l20-robust-grasp.html">
   <div class="t">L20 Robust Grasp：长期路线与研究候选<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">方案稿</span></div>
-  <div class="d">三条长期主线：L20 robust grasp、真人手预训练并经 retargeting 迁移到 L20、面向残障用户的 online learning；当前短期先做 L20 数据训练</div>
+  <div class="d">三条长期主线：L20 robust grasp、真人手预训练并经 retargeting 迁移到 L20、面向残障用户的 online learning；当前短期先数采，再做 L20 抓姿训练</div>
 </a>
 <a class="card" href="l20-robust-grasp-stage1.html">
-  <div class="t">Stage 1.1：Cube 多样抓姿与意图回归<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">当前第一步 · preparation 待验收</span></div>
-  <div class="d">10 条试跑 → 240 条平衡 L20 示教 → 1 秒历史轻量 MLP 预测完整最终抓姿 → 影子手验证；接触先作派生验证量，不做承重／抗扰／pick</div>
+  <div class="t">Stage 1.1：数采<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">当前第一步 · preparation 待验收</span></div>
+  <div class="d">10 条试跑回放 → 240 条平衡 L20 示教 + 24 条改意图／取消诊断 → 冻结字段、坐标、标签与 144／48／48 session 划分</div>
+</a>
+<a class="card" href="l20-stage1-2-training.html">
+  <div class="t">Stage 1.2：Training<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">待 Stage 1.1 数据验收</span></div>
+  <div class="d">单一 cube、无 RGB／眼动／物体分类：先跑确定性最终抓姿回归，再以状态条件 Flow Matching 生成多个最终 L20 手姿候选并做同划分对照</div>
 </a>
 <div class="sub">
   <a href="l20-grasp-sources-review.html"><span class="rel">项目选型综述 ·</span> <span class="t2">抓姿来源：人手 Retarget / 模型生成 / 数学优化</span><br>
@@ -157,7 +161,7 @@ details.box li { margin:5px 0; font-size:.9rem; color:var(--sub); }
 <h3>待验证方案</h3>
 <p class="note">针对某个已知缺陷排出来的候选清单，每条都带验证判据，状态全是「未跑」。</p>
 <a class="card" href="l20-stage1-alternatives.html">
-  <div class="t">Stage 1.1 其他方案：数学推断与 VLM 辅助<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">四条待验证</span></div>
+  <div class="t">Stage 1.2 其他方案：数学推断与 VLM 辅助<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">四条待验证</span></div>
   <div class="d">与主方案共享 Quest 示教；几何评分、递归贝叶斯、VLM 语义先验及融合；统一完整抓姿、数据划分与误差／提前量对照</div>
 </a>
 <a class="card" href="retargeting-research.html">

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Stage 1.1 其他方案：数学推断与 VLM 辅助 · Machine Learning Handbook</title>
+<title>Stage 1.2 其他方案：数学推断与 VLM 辅助 · Machine Learning Handbook</title>
 <style>
 :root {
   color-scheme: light;
@@ -112,11 +112,11 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 </head>
 <body>
 <main class="wrap">
-<a class="bk" href="l20-robust-grasp-stage1.html">← Stage 1.1 主方案</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
+<a class="bk" href="l20-stage1-2-training.html">← Stage 1.2：Training</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
 <div class="kicker">实验计划 · 其他方案 · 2026-09-12</div>
-<h1>Stage 1.1 其他方案：数学推断与 VLM 辅助</h1>
+<h1>Stage 1.2 其他方案：数学推断与 VLM 辅助</h1>
 <p class="lede">同一批 Quest 3 示教，比较“学习运动规律”“用数学推断目标”和“用 VLM 提供抓取先验”。共同问题是：能否在动作完成前，预测用户最终确认的 L20 抓姿？</p>
-<p class="meta">状态：四个其他方案均待实现、待评估；本页只制定并行对照协议，没有训练结果。<a href="l20-robust-grasp-stage1.html">主方案</a>保留数据采集、小型 MLP 连续回归与影子手四步；本页说明可替换的 Human Model 和比较方法。</p>
+<p class="meta">状态：四个其他方案均待实现、待评估；本页只制定并行对照协议，没有训练结果。<a href="l20-robust-grasp-stage1.html">Stage 1.1</a>负责冻结数据，<a href="l20-stage1-2-training.html">Stage 1.2 主方案</a>比较确定性回归与 Flow Matching；本页说明可替换的 Human Model 和比较方法。</p>
 <div class="key good"><b>可以并行测试，也仍需采集验证数据。</b>数学方案可先手工设定模型，VLM 方案可先用预训练模型，都不要求从零训练大网络；但它们是否理解了这个用户，必须用用户确认的终点检验。LSTM 用于 Bioimpedance 信号处理，不是此处 Human Model 的既定结构。</div>
 <nav class="toc" aria-label="本页目录"><a href="#overview">方案总览</a> · <a href="#shared">共同输入输出</a> · <a href="#m1">几何评分</a> · <a href="#m2">贝叶斯</a> · <a href="#v1">VLM 先验</a> · <a href="#h1">融合</a> · <a href="#comparison">怎么比较</a> · <a href="#next">当前四步</a> · <a href="#sources">依据</a></nav>
 
@@ -247,7 +247,7 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 <li id="ref-thinkgrasp"><b>ThinkGrasp: A Vision-Language System for Strategic Part Grasping in Clutter</b> — Yaoyao Qian 等，CoRL 2024。<a href="https://arxiv.org/abs/2407.11298">论文</a> · <a href="https://h-freax.github.io/thinkgrasp_page/">作者项目与代码入口</a>。视觉与语言目标 → 目标／部位理解并衔接抓姿生成；本轮只借鉴感知与几何执行分工，不引入清障长程任务。代码入口可查，本次未核验完整依赖／权重可运行性，不当作即用 L20 模型。</li>
 </ul>
 <p class="meta">本地状态依据：HMI 的 <code>quest/mj_unity/README.md</code> 与 <code>quest/plan/2026-09-11-mr-floor-stage11-audit.md</code>（含 2026-09-12 更新）。脚本或原生验证通过不代表真人示教采集已验收。本页不修改设备代码、不启动训练。</p>
-<footer><a href="l20-robust-grasp-stage1.html">← Stage 1.1 主方案</a> · <a href="index.html">Machine Learning Handbook</a></footer>
+<footer><a href="l20-stage1-2-training.html">← Stage 1.2：Training</a> · <a href="l20-robust-grasp-stage1.html">Stage 1.1：数采</a> · <a href="index.html">Machine Learning Handbook</a></footer>
 </main>
 </body>
 </html>
