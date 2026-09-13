@@ -77,17 +77,18 @@ figcaption { color:var(--sub); font-size:.9rem; margin-top:10px; line-height:1.6
 <body>
 <div class="wrap">
 <a class="bk" href="hand-control.html">← Hand Control 技术路线手册</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">MACHINE LEARNING HANDBOOK · 实验计划 · 待验证方案 · 2026-09-07</div>
-<h1>Retargeting 的局限与候选解法<br><span style="font-size:.72em;color:var(--sub)">小指为什么伸不直也摆不开 · AnyTeleop / dex-retargeting 能不能治 · 六个待验证方案</span></h1>
+<div class="kicker">MACHINE LEARNING HANDBOOK · 实验计划 · 待验证方案 · 初稿 2026-09-07 · 状态更新 2026-09-13</div>
+<h1>Retargeting 的局限与候选解法<br><span style="font-size:.72em;color:var(--sub)">小指为什么伸不直也摆不开 · AnyTeleop / dex-retargeting 能不能治 · 候选与后续验证</span></h1>
 
-<p class="lede">这一页只做两件事：把 L20 retargeting 目前<b>已知但未修</b>的缺陷收敛成一个统一的根因描述，然后把可能的修法排成一张<b>可证伪的候选清单</b>——每一条都写清它针对哪个根因、代价是什么、用什么判据判它成功。AnyTeleop 是清单里的一条，不是这一页的主题。</p>
+<p class="lede">这一页保留 L20 legacy retargeting 的缺陷分析与候选判据，维护尚未完成的验证。已有本地 PIP／目标一致性／小指骨架和 ABD 对照的结果放在工程记录；引用 AnyTeleop 的一个做法不代表已经复现整套方法。</p>
+<div class="key good"><b>2026-09-13 分工与状态。</b><a href="dexhand-engineering.html#quest-rt">工程实验记录 · Quest RT</a>保存已跑候选、冻结会话比较和新增手势测试；本页只保留机制、结果回链与未验证项。用户已接受 <code>skeleton_abd/PIP1</code> 作为采集基线，仍有高屈曲和捏合 gap 的取舍。AnyDexRT 已有本地部分实现与合成程序检查，真人配对锚点、P2/P3 插值、接触标签及模板仍待补齐；不能称完整论文复现或真人效果通过。DexPilot 的 L20 接入／任务效果和整套 AnyTeleop 尚未验证。</div>
 <p><b>Robust grasp 的配套索引：</b><a href="l20-grasp-sources-review.html#retarget">抓姿来源选型综述</a>汇总人类数据库、几何／接触／物理 retarget 与模型、优化器；本页继续负责 L20 小指和目标函数的具体缺陷。需要实际执行时读 <a href="l20-robust-grasp-stage1.html#source-steps">Stage 1.1 的 reference 制作步骤</a>，不要把引入一个新库视为旧问题已经解决。</p>
 
 <p><b>前置阅读</b>：<a href="hand-control.html">Hand Control 技术路线手册</a> 的 <a href="hand-control.html#v1">§2.3 六个 retargeter 实现与 vector/angle 实测对比</a>、<a href="hand-control.html#pinky">§2.4 小拇指侧摆</a>、<a href="hand-control.html#pitfalls">§3.4 小拇指 curl</a>。那一页记录的是<b>现象与代码机制</b>；这一页从那里接着往前走，讲<b>怎么修</b>，两页不重复推导。</p>
 
 <div class="key good">
-<b>三十秒版本。</b>小指的两个毛病——平手时伸不直（curl）、侧摆在头显里看不见（splay）——不是两个 bug，是<b>同一个目标函数写法</b>的两种表现：目标里只有指尖向量、缩放只有一个全局标量、而 L20 的小指按比例比人的长得多且不能反向伸展。<br>
-AnyTeleop（RSS 2023）用的是<b>和我们同一条公式</b>，而且它的缩放因子是单标量——所以<b>它自己也有这个毛病，整包引进解决不了小指</b>。它真正值钱的是两个可以单独抄过来的做法：Shadow Hand 配置里的<b>中间关节向量</b>（结构性地修 curl），以及 DexPilot 的<b>捏合距离门控投影</b>（修的是另一个问题——精密抓取，且有副作用）。
+<b>2026-09-07 legacy 基线的三十秒解释。</b>小指的两个毛病——平手时伸不直（curl）、侧摆在头显里看不见（splay）——不是两个 bug，是<b>同一个目标函数写法</b>的两种表现：目标里只有指尖向量、缩放只有一个全局标量、而 L20 的小指按比例比人的长得多且不能反向伸展。<br>
+AnyTeleop（RSS 2023）的 vector 目标与我们<b>同属向量匹配方法</b>，单标量缩放也不自动匹配 L20 骨长和关节范围，不能据此保证换库就解决小指。可分别借用的做法是 Shadow Hand 配置的<b>中间关节向量</b>（本地小指 PIP 候选已试），以及 DexPilot 的<b>捏合距离门控投影</b>（L20 适配与任务效果仍待验证，且需检查副作用）。
 </div>
 
 <div class="toc"><b>目录</b> · <a href="#s1">§1 一个根因，两个症状</a> · <a href="#s2">§2 候选解法清单</a> · <a href="#s3">§3 AnyTeleop / dex-retargeting 详档</a> · <a href="#s4">§4 验证顺序与出口条件</a> · <a href="#s5">§5 参考</a></div>
@@ -96,7 +97,7 @@ AnyTeleop（RSS 2023）用的是<b>和我们同一条公式</b>，而且它的�
 
 <h3>1.1 我们在解的到底是什么</h3>
 
-<p>出货路径 <code>L20VectorRetargeter</code> 每帧解这个问题（<code>level_1_retargeting/vector.py</code> + <code>l20.py</code>）：</p>
+<p>历史 legacy/PIP0 路径的 <code>L20VectorRetargeter</code> 每帧解这个问题（<code>level_1_retargeting/vector.py</code> + <code>l20.py</code>）：</p>
 
 <div class="math">
 $$\min_{q}\ \sum_{i=1}^{9} w_i \left\| R_{\text{palm}}\big(p_{b_i}(q)-p_{a_i}(q)\big) \;-\; s\cdot s_i\, v_i^{\text{human}} \right\|^2 \;+\; \lambda\left\|q-q_{\text{prev}}\right\|^2$$
@@ -149,7 +150,7 @@ $$\min_{q}\ \sum_{i=1}^{9} w_i \left\| R_{\text{palm}}\big(p_{b_i}(q)-p_{a_i}(q)
     <text x="614" y="83" fill="currentColor" opacity=".7">little_scale 后残 23°</text>
 
     <rect x="602" y="152" width="150" height="56" rx="8" fill="none" stroke="currentColor" opacity=".35"/>
-    <text x="614" y="174" fill="currentColor" opacity=".85">未修</text>
+    <text x="614" y="174" fill="currentColor" opacity=".85">历史基线</text>
     <text x="614" y="193" fill="currentColor" opacity=".7">且被缓解措施加重</text>
   </g>
 </svg>
@@ -173,7 +174,7 @@ $$\min_{q}\ \sum_{i=1}^{9} w_i \left\| R_{\text{palm}}\big(p_{b_i}(q)-p_{a_i}(q)
 <tr><th>配置</th><th>平手 <code>pinky_pip</code></th><th>握拳 <code>pinky_pip</code></th><th>拇指–食指间隙</th></tr>
 <tr><td>不放大（baseline）</td><td>63°</td><td>80.7°</td><td>3.2 mm</td></tr>
 <tr><td>scale 1.35 / weight 2.5</td><td>26°</td><td>79.9°</td><td>5.0 mm</td></tr>
-<tr><td><b>scale 1.35 / weight 1.5</b>（当前）</td><td><b>23°</b></td><td>78.0°</td><td><b>4.6 mm</b></td></tr>
+<tr><td><b>scale 1.35 / weight 1.5</b>（历史 legacy）</td><td><b>23°</b></td><td>78.0°</td><td><b>4.6 mm</b></td></tr>
 <tr><td>scale 1.45</td><td>13°</td><td>—</td><td>&gt; 5 mm</td></tr>
 </table></div>
 
@@ -191,7 +192,7 @@ $$\min_{q}\ \sum_{i=1}^{9} w_i \left\| R_{\text{palm}}\big(p_{b_i}(q)-p_{a_i}(q)
 
 <h2 id="s2"><span class="n">§ 2</span>候选解法清单</h2>
 
-<p>六条。前四条针对小指，第五条针对另一个未修问题（<a href="hand-control.html#issues">手册问题表 #2</a>：pinch 任务全线失败），第六条是「整包引进」的裁决。<b>全部都还没跑</b>——这一页的状态栏没有一个「已验证」，等有数据了要按 <a href="hand-control.html">手册</a> 的分类搬过去。</p>
+<p>保留初稿六条候选的对应关系：a 的本地 PIP 实验已有数据，结果移至 <a href="dexhand-engineering.html#quest-rt">工程记录</a>；b/c/d/e 仍按各自原定义待验证，f 是工程取舍。新增 consistent、skeleton、skeleton_abd 已另做对照，其中骨架＋tanh 不等于 b 的纵向缩放或 d 的 roll 增益补偿。下表旧 pinch 判据针对精密抓取任务，不自动成为 Stage 1.1 的前置门槛。</p>
 
 <div class="tw"><table class="cand">
 <tr><th>#</th><th>候选</th><th>治哪个根因</th><th>代价</th><th>验证判据</th><th>状态</th></tr>
@@ -201,7 +202,7 @@ $$\min_{q}\ \sum_{i=1}^{9} w_i \left\| R_{\text{palm}}\big(p_{b_i}(q)-p_{a_i}(q)
   <td><b>A</b>（唯一一条真正治 A 的）</td>
   <td>任务数 9 → 10~13，求解时间按比例涨（现 8 迭代 ~0.9 ms）；需在 MJCF 上加近节 site</td>
   <td>平手 <code>pinky_pip</code> 残留 &lt; 10°，<b>且</b> 捏合回归表（index / middle / ring / tripod）四项均不退化超过 0.5 mm</td>
-  <td><span class="tag warn">首选</span>未跑</td>
+  <td><span class="tag">已有本地实验</span><a href="dexhand-engineering.html#quest-rt">PIP0/1 对照</a>；不表示本行全部判据已通过</td>
 </tr>
 <tr>
   <td>b</td>
@@ -246,7 +247,7 @@ $$\min_{q}\ \sum_{i=1}^{9} w_i \left\| R_{\text{palm}}\big(p_{b_i}(q)-p_{a_i}(q)
 </table></div>
 
 <div class="key">
-<b>为什么 a 排在最前。</b>b/c/d 三条都是在<b>根因 B 和权重</b>上继续腾挪，而 §1.3 那张表已经显示这条路走到头了——再加大缩放就开始拿捏合换直度。只有 a 动了根因 A：给近节指骨一个独立约束，总长误差就被分摊到两段，不会全部由远端屈曲吸收。它也是唯一一条<b>已经在别人的生产配置里跑过</b>的（Shadow Hand，见 <a href="#s3">§3.3</a>）。
+<b>初稿为何优先尝试 a（2026-09-07）。</b>b/c/d 三条都是在<b>根因 B 和权重</b>上继续腾挪，而 §1.3 那张表已经显示这条路走到头了——再加大缩放就开始拿捏合换直度。只有 a 动了根因 A：给近节指骨一个独立约束，总长误差就被分摊到两段，不会全部由远端屈曲吸收。它也是唯一一条<b>已经在别人的生产配置里跑过</b>的（Shadow Hand，见 <a href="#s3">§3.3</a>）。
 </div>
 
 <h2 id="s3"><span class="n">§ 3</span>AnyTeleop / dex-retargeting 详档</h2>
@@ -255,26 +256,26 @@ $$\min_{q}\ \sum_{i=1}^{9} w_i \left\| R_{\text{palm}}\big(p_{b_i}(q)-p_{a_i}(q)
 
 <div class="key warn"><b>先说清分工</b>：AnyTeleop 的 retargeting 模块<b>只管手指</b>，手腕与手臂交给 CuRobo 单独规划——论文原话 “this module only considers the robot hand”。所以它和我们的对照只发生在手指这一层，我们的腕部对齐链路不在比较范围内。</div>
 
-<h3 id="s31">3.1 它和我们是同一条公式</h3>
+<h3 id="s31">3.1 与本地 vector 目标属于同一方法家族</h3>
 
 <div class="math">
 $$\min_{q_t}\ \sum_{i=0}^{N}\big\|\,\alpha\, v_t^i - f_i(q_t)\,\big\|^2 \;+\; \beta\,\|q_t-q_{t-1}\|^2 \qquad \text{s.t.}\quad q_l \le q_t \le q_u$$
 <div class="why">$v_t^i$ 是人手关键点向量，$f_i$ 是机器人侧对应向量的正运动学，$\alpha$ 是「补偿两只手尺寸差异」的缩放因子，$\beta$ 是拉向上一帧的时间正则。把它和 <a href="#s1">§1.1</a> 那条并排看：<b>逐项对应</b>——向量匹配、全局缩放、时间正则、关节限位为盒约束。我们多出来的是 $w_i$（逐任务权重）与 $s_i$（逐任务缩放），以及为 L20 的 equality 耦合准备的 $J\!\cdot\!C$。</div>
 </div>
 
-<p>换句话说，<code>L20VectorRetargeter</code> 实质上<b>已经是</b> AnyTeleop 的 vector 模式，且在两个地方比它多一个自由度。论文与实现之间有若干差异（实现用 Huber 而非平方 L2、$\delta=0.02$ m），但形式是同一族。</p>
+<p><code>L20VectorRetargeter</code> 与 AnyTeleop 的 vector 模式属于同一目标函数家族，不能据此称为整套 AnyTeleop 的实现或对等复现。论文与开源实现之间也有差异（实现用 Huber 而非平方 L2、$\delta=0.02$ m）；这些差异需要在具体比较中分别记录。</p>
 
-<h3 id="s32">3.2 $\alpha$ 是单标量——所以它自己也有小指问题</h3>
+<h3 id="s32">3.2 单标量 $\alpha$ 的适配边界：不能保证解决 L20 小指</h3>
 
-<p><code>RetargetingConfig.scaling_factor</code> 是<b>一个 float</b>，schema 里没有逐指 / 逐向量的字段（<code>position</code> 模式甚至完全没有缩放这个概念）。仓库内的取值：Allegro 1.6、LEAP 1.6、Panda 夹爪 1.5、Shadow 1.2、Schunk SVH 1.2、Inspire 1.15、Ability 1.0——都是照着食指/中指的比例定的。</p>
+<p><code>RetargetingConfig.scaling_factor</code> 是<b>一个 float</b>，schema 里没有逐指 / 逐向量的字段（<code>position</code> 模式甚至完全没有缩放这个概念）。仓库内的取值：Allegro 1.6、LEAP 1.6、Panda 夹爪 1.5、Shadow 1.2、Schunk SVH 1.2、Inspire 1.15、Ability 1.0。这些是各手配置的整体尺度；本页未核验作者选择每个数值的具体标定过程。</p>
 
-<p>把 <a href="#s1">§1.2</a> 的推理套上去：设人手某指伸直时腕→尖距离 $L_h$、机器人该指伸直时可达最大 $L_r^{\max}$，目标向量的模长是 $\alpha L_h$。若 $L_r^{\max} > \alpha L_h$，机器人「够不着这么短的目标」，唯一手段是弯曲——<b>摊平手时该指仍是屈的</b>；若 $L_r^{\max} < \alpha L_h$，伸直也够不到，被限位钳住，表现为该指长期贴着限位、动态范围被压缩。任何相对指长比例与人不同的手指都会落进其中一种。</p>
+<p>沿 <a href="#s1">§1.2</a> 做一个几何风险分析：设人手某指伸直时腕→尖距离 $L_h$、机器人该指最大可达距离 $L_r^{\max}$，目标模长为 $\alpha L_h$。目标偏短时，屈曲可能减小指尖残差；若目标超过最大可达距离，则无法精确满足。实际解还取决于 MCP 基点、骨段方向、其余任务权重与关节约束，<b>不能仅由这两个长度推出必然屈曲、长期顶限位，或认定作者系统已出现相同故障</b>。这里列的是迁移 L20 时需要验证的风险。</p>
 
-<p><b>论文没有讨论这个问题</b>，也没有提逐指缩放；它对形态差异的全部说明是「差异很大时（如 DClaw）需要手工指定关键点向量的对应关系」。我们的 <code>little_scale</code> 就是它 schema 里缺的那个旋钮。</p>
+<p>本页已有文献核查没有找到 L20 小指的专项验证；论文讨论了较大形态差异下手工指定关键点向量对应关系的需求。旧 <code>little_scale</code> 是本地逐任务尺度旋钮，它本身也会破坏目标三角一致性，不能当作已经解决形态差异的证据。</p>
 
-<p class="lede" style="font-size:.95rem">补充一点公平的：它的 Huber 损失（作用在残差模长上）确实能限制「某根离谱的手指把整体带偏」的串扰，因为残差超过 $\delta$ 后梯度被截断为常数。但 <b>Huber 不改变最优点的位置</b>——只要弯曲能减小该行残差，最优解还是会弯。缓解串扰，不修正比例。</p>
+<p class="lede" style="font-size:.95rem">Huber 损失在大残差区降低梯度增长，可减轻异常任务对整体解的影响。在多个耦合任务与正则项共同优化时，它<b>可能改变最优解</b>，不能笼统地说最优点不变；但它本身不重建机器人骨长或人机对应关系，能否改善 L20 小指仍需同条件验证。</p>
 
-<h3 id="s33">3.3 Shadow 的 10 向量配置：我们缺的那个结构性杠杆</h3>
+<h3 id="s33">3.3 Shadow 的 10 向量配置：本地 PIP 候选借用的结构</h3>
 
 <p>这是本页从这篇论文里拿到的<b>最有用的一条</b>。dex-retargeting 里绝大多数手的配置都是「腕/掌 → 各指尖」，向量数等于手指数；<b>Shadow Hand 是例外，它用 10 条</b>：</p>
 
@@ -347,18 +348,16 @@ $$\min_{q_t}\ \sum_{i=0}^{N}\big\|\,\alpha\, v_t^i - f_i(q_t)\,\big\|^2 \;+\; \b
 <h2 id="s4"><span class="n">§ 4</span>验证顺序与出口条件</h2>
 
 <div class="algo">
-<div class="t">建议顺序（每一步都是一天级的小实验，全部在 synthetic bench 上做完再上 rig）</div>
+<div class="t">当前一步（2026-09-13）</div>
 <ol>
-<li><b>先量，再修。</b>跑一段只做小指开合的 session，看 <code>q[pinky_mcp_roll]</code> 时间序列与 <code>n_at_limit</code>：长时间钉在 ±0.23 则症状 2 的环节 1+2 确认；中段来回但幅度远小于 ±0.23 则环节 4 主导。<b>这一步决定 c/d 要不要做</b>，不做会在两个候选之间瞎猜。</li>
-<li><b>候选 a</b>（加 <code>palm→PIP</code> 向量）。判据见清单。同时记录求解时间 p95 的涨幅——它是这条的唯一硬代价。</li>
-<li><b>候选 b</b>（纵向分量缩放）。只有在 a 之后做才说得清功劳归属：a 若把 curl 修到 10° 以下，<code>little_scale</code> 就可以往回退，症状 2 自动缓解，b 可能根本不需要。</li>
-<li><b>候选 e</b>（DexPilot 投影）独立于上面三条，可并行，但<b>必须带主观报告</b>。</li>
+<li>冻结已接受的 <code>skeleton_abd/PIP1</code> 配置，新增约 90 秒自然手势测试，覆盖伸直侧摆、高屈曲侧摆、握拢、拇指—小指与其他捏合及释放。新数据独立保留，不用于调参；协议和结果写入 <a href="dexhand-engineering.html#quest-rt">工程记录</a>。</li>
+<li>b/c/d 保留为尚未执行的候选，只有新数据暴露相应缺陷时再选一条有界验证；不把它们与已跑的骨架或 tanh 改动混名。</li>
+<li>AnyDexRT 的真实效果比较先补 P1 配对，明确补齐 P2/P3 与接触监督的范围；当前合成模型不能用于真人 live 或充当质量基线。</li>
+<li>DexPilot 投影独立保留，实施时检查近邻负例、释放粘滞、原始距离分层和用户体验；当前没有 L20 任务通过证据。</li>
 </ol>
 </div>
 
-<div class="key">
-<b>出口条件。</b>任何一条候选跑出数据之后，结果（曲线、回归表、视频）搬进 <a href="hand-control.html">Hand Control 技术路线手册</a>，这一页在对应行留一句指过去的话。这一页永远只放<b>还没有数据</b>的东西——它是清单，不是记录。这也是它归在<b>实验计划</b>而不是实验记录的原因（STYLE §1 第 3–4 问）。
-</div>
+<div class="key"><b>出口条件。</b>实际运行的曲线、回归表、失败原因和视频保存到 <a href="dexhand-engineering.html#quest-rt">工程实验记录 · Quest RT</a>；本页仅留下结果回链和未验证项。<a href="hand-control.html">Hand Control 技术路线手册</a>继续保存架构与历史机制，三页分工不变。文档更新、合成检查和用户接受某个工程取舍，都不能互换成完整论文复现或全部指标通过。</div>
 
 <h2 id="s5"><span class="n">§ 5</span>参考</h2>
 <ul style="font-size:.9rem;color:var(--sub)">
@@ -368,7 +367,7 @@ $$\min_{q_t}\ \sum_{i=0}^{N}\big\|\,\alpha\, v_t^i - f_i(q_t)\,\big\|^2 \;+\; \b
 <li>我们这边：<code>hand_control/services/level_1_retargeting/</code>（<code>vector.py</code> 求解器 · <code>l20.py</code> 任务集与常数 · <code>dex.py</code> 当年的选型记录）· session <code>20260816_191302</code>（curl 与 clutch 两组数字的来源）。</li>
 </ul>
 
-<footer><a href="hand-control.html">← Hand Control 技术路线手册</a> · <a href="index.html">Machine Learning Handbook</a> · retargeting-research.html · 2026-09-07 · 清单页，全部候选均未跑；数字出自代码常量、session 实测与上述一手资料</footer>
+<footer><a href="hand-control.html">← Hand Control 技术路线手册</a> · <a href="dexhand-engineering.html#quest-rt">Quest RT 工程记录</a> · <a href="index.html">Machine Learning Handbook</a> · retargeting-research.html · 状态更新 2026-09-13 · 本页保留历史机制与未验证候选；已跑结果见工程记录</footer>
 </div>
 </body>
 </html>

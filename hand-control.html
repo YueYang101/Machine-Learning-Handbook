@@ -27,12 +27,12 @@ h2 { font-size:1.35rem; margin:2.4em 0 .5em; padding-top:.8em; border-top:1px so
 h3 { font-size:1.08rem; margin:1.8em 0 .4em; }
 .lede { color:var(--sub); }
 p { margin:.6em 0; }
-code { background:var(--code); border-radius:5px; padding:1px 6px; font-size:.88em;
+code { overflow-wrap:anywhere; background:var(--code); border-radius:5px; padding:1px 6px; font-size:.88em;
   font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
 pre { background:var(--code); border:1px solid var(--line); border-radius:10px;
   padding:14px 16px; overflow-x:auto; font-size:.83rem; line-height:1.6;
   font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
-pre code { background:none; padding:0; }
+pre code { background:none; padding:0; overflow-wrap:normal; }
 table { border-collapse:collapse; width:100%; margin:14px 0; font-size:.92rem; display:block; overflow-x:auto; }
 th, td { border:1px solid var(--line); padding:7px 11px; text-align:left; vertical-align:top; }
 th { background:var(--code); white-space:nowrap; }
@@ -50,22 +50,25 @@ th { background:var(--code); white-space:nowrap; }
 .bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
 .bk:hover { color:var(--blue); }
 footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
-a { color:var(--blue); text-decoration:none; }
+a { color:var(--blue); text-decoration:underline; text-underline-offset:3px; }
+a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 </style>
 </head>
 <body>
 <div class="wrap">
 <a class="bk" href="index.html">← Machine Learning Handbook</a>
-<div class="kicker">YUE YANG · NOTES · 工程手册 · 2026-08-21</div>
+<div class="kicker">YUE YANG · NOTES · 工程手册 · 历史路线 2026-08-21 · RT 状态更新 2026-09-13</div>
 <h1>Hand Control 技术路线手册<br><span class="small" style="font-weight:400">EMG + Quest 手部追踪 + L20 灵巧手遥操作 · 版本化路线记录（V1–V4）· 踩坑史 · retargeting 方案对比</span></h1>
 
-<p class="lede">这份手册记录 human_machine_interaction 仓库里 hand control 平台的技术路线：V1 是已建成并通过 rig 验证的"Mac 物理权威 + Quest 薄渲染"自研链路；V2（Quest 本地跑官方 MuJoCo Unity 插件）与 V3（4090 Linux 物理+渲染、ALVR 串流）正在调研推进；V4（Mac 端串流）是远期探索且调研结论基本判死。开头是当前有问题的模块总表，中间是 V1 全景与踩坑史——每一个坑都写清"现象 → 根因 → 解法 → 钉住它的测试"。</p>
+<p class="lede">本页保留 2026-08-21 的 V1–V4 技术路线与机制记录；最新 Quest 运行状态见下方更新。原路线中，V1 是已建成并通过 rig 验证的"Mac 物理权威 + Quest 薄渲染"自研链路；当时 V2（Quest 本地跑官方 MuJoCo Unity 插件）与 V3（4090 Linux 物理+渲染、ALVR 串流）正在调研推进；V4（Mac 端串流）是远期探索且调研结论基本判死。开头是历史问题与后续状态总表，中间是 V1 全景与踩坑史——每一个坑都写清"现象 → 根因 → 解法 → 钉住它的测试"。</p>
 
-<h2 id="issues">0 · 当前有问题的模块（总表）</h2>
-<p>先看这张表再看别的。状态含义：<span class="tag bad">未修</span>坑还在；<span class="tag warn">刻意</span>是权衡后接受的代价，有逃生口；<span class="tag">平台</span>受 OS/硬件限制无法修。</p>
+<div class="callout"><b>2026-09-13 状态更新：</b>下文保留 V1 机制与此前 V2–V4 路线判断；其中“当前 APK”“待 benchmark”等是历史阶段状态。Quest 本地物理和 RT 的新运行证据集中在 <a href="dexhand-engineering.html#quest-rt">工程实验记录 · Quest RT</a>。本地 PIP／一致目标／小指机器人骨架与 ABD 候选已经完成旧录制对照，用户接受 <code>skeleton_abd / PIP1</code> 作为采集基线；方向误差与捏合 gap 仍有取舍。AnyDexRT 是部分实现与合成程序检查，尚无真人训练验收。本页保留机制，<a href="retargeting-research.html#s2">研究页</a>维护余下候选，数字和新增手势结果写入工程记录。</div>
+
+<h2 id="issues">0 · V1 历史问题与后续状态（总表）</h2>
+<p>表中机制和旧任务成绩沿用 V1 记录；RT 后续状态单独标注日期。状态含义：<span class="tag bad">未修</span>坑还在；<span class="tag warn">刻意</span>是权衡后接受的代价，有逃生口；<span class="tag">平台</span>受 OS/硬件限制无法修。</p>
 <table>
 <tr><th>#</th><th>模块</th><th>位置</th><th>问题</th><th>影响</th><th>状态</th></tr>
-<tr><td>1</td><td><b>retarget 小拇指侧摆</b></td><td><code>level_1_retargeting/l20.py::l20_tasks</code></td><td><code>pinky_mcp_roll</code> 限位仅 ±13°（人 ±21°），且 <code>little_scale=1.35</code> 把横向目标同比放大 → 长期钉在限位；小指尖横向由 <code>thumb→pinky</code>(w=1.5) 而非 <code>palm→pinky</code>(w=0.8) 主导</td><td>侧摆活动范围在头显里基本不可见</td><td><span class="tag bad">未修</span>机制分析见 §2.4；候选修法与判据见 <a href="retargeting-research.html">retargeting 相关研究</a></td></tr>
+<tr><td>1</td><td><b>retarget 小拇指侧摆</b></td><td><code>level_1_retargeting/l20.py::l20_tasks</code></td><td><code>pinky_mcp_roll</code> 限位仅 ±13°（人 ±21°），且 legacy 的 <code>little_scale=1.35</code> 把横向目标同比放大 → 长期钉在限位；小指尖横向由 <code>thumb→pinky</code>(w=1.5) 而非 <code>palm→pinky</code>(w=0.8) 主导</td><td>侧摆活动范围在头显里基本不可见</td><td><span class="tag warn">已有工程缓解</span>2026-09-13：<code>skeleton_abd/PIP1</code> 已接受；高屈曲与捏合仍有取舍。<a href="dexhand-engineering.html#quest-rt">比较与边界</a>；<a href="retargeting-research.html">后续候选</a></td></tr>
 <tr><td>2</td><td>pinch 任务全线失败</td><td><code>l20_scene.py</code> pinch task</td><td>bead(⌀16)、coin(⌀22×3)、peg(⌀10×40) 上 vector 与 angle 的 <code>--autograsp</code> baseline 全部失败</td><td>小物体精密抓取未跑通</td><td><span class="tag bad">未修</span>候选：<a href="retargeting-research.html#s34">DexPilot 捏合投影</a>（待验证）</td></tr>
 <tr><td>3</td><td>vector 关节撞限位</td><td><code>--compare</code> 输出</td><td>平均 3.7 个关节在限位（angle 是 0.0），jerk 363 vs 251 rad/s³</td><td>与 #1 同源——"人的位姿机构够不到"的数据表现</td><td><span class="tag warn">已测量、已接受</span></td></tr>
 <tr><td>4</td><td><code>--attach wrist</code> 指尖误差</td><td><code>palm_align.py</code> / <code>teleop.py</code></td><td>L20 base 杠杆 148 mm vs 人腕 93 mm：30° 腕转 ≈ 26 mm 指尖误差</td><td>精密抓取可达性下降</td><td><span class="tag warn">刻意</span>具身感换精度；<code>--attach palm</code> 是逃生口</td></tr>
@@ -161,8 +164,8 @@ a { color:var(--blue); text-decoration:none; }
 </table>
 <p><b>优缺点一句话</b>：vector 准（pinch 3.3 mm vs angle 22 mm）但硬（撞限位、jerk 高、每帧 ~1 ms 求解）；angle 快而柔顺、永不撞限位，但<b>拇指是死穴</b>——L20 拇指是 3-DoF CMC、轴经两个非轴对齐四元数串联，任何逐轴启发式都恢复不了对掌（对掌构型 (0.88, 0.66, 0.31, 0.45) 不可能被独立映射碰巧命中），tripod 误差 84 mm。所以 angle 永远是 baseline/control condition，不是出货路径。ORCA 侧：同求解器 overall 14.2 mm，需要一个 L20 不需要的旋钮 <code>auto_scale_correction=0.72</code>（否则拇指被要求超出 62° 外展范围）。</p>
 
-<h3 id="pinky">2.4 ★ 小拇指侧摆问题（当前最优先的 retarget 缺陷）</h3>
-<div class="callout warn"><b>注意</b>：这个问题在仓库文档里没有既有记载（文档记载的小指问题是 curl，见 §3.4）。以下机制分析是从代码推导的，四个环节各自贡献多少<b>待实测确认</b>。</div>
+<h3 id="pinky">2.4 ★ 小拇指侧摆问题（legacy 基线机制）</h3>
+<div class="callout warn"><b>历史分析边界：</b>以下保留 2026-09-07 对 legacy 的四环节推断，不能直接套到新目标模式。2026-09-12 已做候选回放与受控 ABD 扫描；截至 2026-09-13 的取舍见 <a href="dexhand-engineering.html#quest-rt">工程记录</a>。这些对照仍不是四个环节各自贡献的完整因果分解。</div>
 <p>现象：操作者小指左右侧摆（abduction），头显里的机器人小指基本不动。四个叠加环节：</p>
 <ol>
 <li><b>机构先饱和（天花板，对所有 retargeter 成立）</b>：人手 splay ±21°，L20 <code>pinky_mcp_roll</code> 限位 ±0.23 rad = ±13°——"机器人先于操作者饱和，这是机构属性不是标定错误"（<code>l20.py</code> 原话）。</li>
@@ -171,7 +174,7 @@ a { color:var(--blue); text-decoration:none; }
 <li><b>小增益方向被正则压制</b>：<code>mcp_roll</code> 指尖增益仅 ~0.099 m/rad（该指最小），在 LM 阻尼 + posture 项下拿到最大的相对阻尼份额，加上 <code>max_iters=8</code> + 热启动，每帧只挪一点。</li>
 </ol>
 <p class="small"><b>验证判据</b>：跑一段只做小指开合的 session，看 <code>q[pinky_mcp_roll]</code> 时间序列与 <code>n_at_limit</code>——长时间钉在 ±0.23 则环节 1+2 确认；中段来回但幅度远小于 ±0.23 则环节 4 主导。<b>归一化不是元凶</b>（掌宽 scale 姿态无关，有测试钉住）；真正的放大器是 little_scale 作用于整条向量。可能的修法方向：little_scale 只作用于纵向分量（沿指方向分解后再缩放）、把 palm→pinky 权重抬回主导、或给 roll 单独的增益补偿——三者都要先过 pinch 回归表再上 rig。</p>
-<p><b>配套 research 页</b>：<a href="retargeting-research.html">Retargeting 的局限与候选解法</a>——把这里的侧摆与 §3.4 的 curl 收敛成同一组根因，排出六条待验证候选（含判据），并评估 AnyTeleop / dex-retargeting 能不能治。<b>本节讲四个环节各是什么，那一页讲怎么修。</b></p>
+<p><b>配套 research 页</b>：<a href="retargeting-research.html">Retargeting 的局限与候选解法</a>——把这里的侧摆与 §3.4 的 curl 收敛成同一组根因，保留候选判据与尚未执行的修法，并评估 AnyTeleop / dex-retargeting 的可借用部分。<b>本节讲历史机制，研究页讲余下方案，<a href="dexhand-engineering.html#quest-rt">工程记录</a>保存已跑结果。</b></p>
 
 <h2 id="pitfalls">3 · 踩坑史（现象 → 根因 → 解法）</h2>
 <p>每一条都值一次 session。前四条是大案，后面的收进速查表。</p>
@@ -282,7 +285,7 @@ a { color:var(--blue); text-decoration:none; }
 
 <h2 id="refs">8 · 参考</h2>
 <ul class="small">
-<li>本站：<a href="retargeting-research.html">Retargeting 的局限与候选解法</a>（相关研究页：根因、候选清单、AnyTeleop 详档）</li>
+<li>本站：<a href="retargeting-research.html">Retargeting 的局限与候选解法</a>（机制与未验证候选） · <a href="dexhand-engineering.html#quest-rt">工程实验记录 · Quest RT</a>（2026-09-13 状态、比较与新数据证据）</li>
 <li>仓库内：<code>PROJECT_SPEC.md</code> · <code>hand_control/plan/transformations-and-alignment.md</code>（每个坐标变换与三个高度机制）· <code>hand_control/plan/l20_shared_control_phase1.md</code>（下一阶段 plan of record）· <code>plan/architecture/layers.py</code>（分层唯一权威表）</li>
 <li>MuJoCo Unity 插件：<a href="https://mujoco.readthedocs.io/en/latest/unity.html">官方文档</a> · <a href="https://github.com/google-deepmind/mujoco/discussions/1638">Discussion #1638（Android/Quest 编译）</a> · <a href="https://github.com/joanllobera/mujoco-bin">joanllobera/mujoco-bin（arm64 预编译）</a> · <a href="https://github.com/Balint-H/modular-agents">Balint-H/modular-agents（Quest 2 参考工程）</a></li>
 <li>串流：<a href="https://github.com/alvr-org/ALVR">ALVR</a> · <a href="https://github.com/alvr-org/ALVR/wiki/ALVR-wired-setup-(ALVR-over-USB)">ALVR USB 有线</a> · <a href="https://github.com/alvr-org/ALVR/wiki/Linux-encoders-requirements">Linux 编码器要求</a> · <a href="https://blog.nicholas.clooney.io/notes/quest-pcvr-on-mac-notes/">Quest PCVR on Apple Silicon 验尸笔记</a></li>

@@ -1,0 +1,141 @@
+{
+  "session_label": "2026-09-13 human Quest native cube transfer",
+  "source_kind": "human",
+  "physics_authority": "Quest native MuJoCo",
+  "wrist_drive": "bounded_pd",
+  "pd_limits": {
+    "force_N": 60,
+    "torque_Nm": 4
+  },
+  "recording": {
+    "physics_samples": 6875,
+    "render_frames": 4763,
+    "dropped": 0,
+    "source_hashes_verified_before_after": 148
+  },
+  "sampled_force": {
+    "max_normal_N": {
+      "n": 6875,
+      "min": 0.0,
+      "p50": 0.0,
+      "p95": 14.187347867704512,
+      "p99": 16.637395932758068,
+      "max": 40.65644021163686,
+      "mean": 3.133798291076885
+    },
+    "max_force3_N": {
+      "n": 6875,
+      "min": 0.0,
+      "p50": 0.0,
+      "p95": 14.948315961209184,
+      "p99": 18.826119030869254,
+      "max": 44.92253802679704,
+      "mean": 3.390302186744327
+    },
+    "sum_normal_N": {
+      "n": 6875,
+      "min": 0.0,
+      "p50": 0.0,
+      "p95": 27.261803416568487,
+      "p99": 32.29185045403054,
+      "max": 50.450873508333785,
+      "mean": 5.901925295162256
+    },
+    "max_penetration_mm": {
+      "n": 6875,
+      "min": 0.0,
+      "p50": 0.0,
+      "p95": 2.24022864505563,
+      "p99": 2.5950238298506525,
+      "max": 5.308825588787327,
+      "mean": 0.4880916147348618
+    }
+  },
+  "force_limit_violations": {
+    "pd_force_violations": 0,
+    "pd_torque_violations": 0,
+    "actuator_limit_violation_samples": 0,
+    "recorder_dropped_max": 0
+  },
+  "periodic_steady_step_ms": {
+    "n": 6522,
+    "min": 0.1755,
+    "p50": 0.3413,
+    "p95": 0.6521849999999999,
+    "p99": 0.8636279999999998,
+    "max": 3.0119,
+    "mean": 0.38191245016865993
+  },
+  "steady_render_ms": {
+    "n": 4693,
+    "min": 5.702199996449053,
+    "p50": 13.918299999204464,
+    "p95": 16.65747999213636,
+    "p99": 18.287247997359373,
+    "max": 27.6568999979645,
+    "mean": 13.893857319412161
+  },
+  "startup_render_ms": [
+    1627.209500002209,
+    73.94109999586362
+  ],
+  "outcomes": {
+    "trial_start": 5,
+    "phase_change": 40,
+    "success": 4,
+    "reset": 4,
+    "reset_confirmed": 4,
+    "trial_end": 4
+  },
+  "trial_five": "incomplete Ready; contains repeated input poses followed by discontinuities",
+  "tail_input_jump_summary": [
+    {
+      "source_interval_ms": 17.20970000314992,
+      "translation_jump_mm": 336.4478117033904,
+      "rotation_jump_deg": 84.48366118914365,
+      "source_tracked_flag": true,
+      "recovery_10mm_5deg_sustained100ms_delay_s": 0.15000000000018332
+    },
+    {
+      "source_interval_ms": 11.722700000973418,
+      "translation_jump_mm": 171.24970072966553,
+      "rotation_jump_deg": 144.17958131399206,
+      "source_tracked_flag": true,
+      "recovery_10mm_5deg_sustained100ms_delay_s": 0.18000000000021998
+    }
+  ],
+  "limits_of_claim": [
+    "No recorded >=1000N event; this session supports bounded-force functionality, not universal grasp quality.",
+    "No human contact ground truth or user-confirmed final grasp target.",
+    "Source quality is separate from physical force limits.",
+    "Startup timing excluded only as explicitly shown; no hidden removal of force samples."
+  ],
+  "run_id": "20260913T095059Z-dc3afac4ef274e07aeaf2d226a61e11c",
+  "configuration": {
+    "retarget": "skeleton_abd",
+    "little_pip_weight": 1,
+    "task": "cube_transfer",
+    "table_height_m": 1.219,
+    "hand_height_m": 1.419,
+    "physics_timestep_s": 0.002,
+    "sampling": "Every 5 physics ticks + contact/high-force/slow-step/task events; every render frame",
+    "steady_definition": "excludes first workspace second, startup separately reported",
+    "force_definition": "Only hand XOR external contacts; normal=force6[0]; force3 norm excludes torque components"
+  },
+  "verification": {
+    "capture_complete": true,
+    "stage11_training_ready": false,
+    "reason": "No user-confirmed final grasp target for five started trials"
+  },
+  "local_evidence": {
+    "audit": "hand_control/data/quest_sessions/20260913T095059Z-dc3afac4ef274e07aeaf2d226a61e11c/derived/mechanics_audit_20260913/",
+    "rt_comparison": "hand_control/data/quest_diagnostics/target-comparison-20260912-validation/results.json",
+    "force_comparison": "hand_control/data/quest_diagnostics/force-audit-20260912/"
+  },
+  "provenance": {
+    "native_raw_sha256": "99556db31bc07987010fca5911c7f55e22e501ee17b1d33b5f94b55a99bbe029",
+    "rt_comparison_sha256": "7894a3e0e91c83514a7728f018477784ccb3e9bf88859cd8bd55ed47e2cd5ff9",
+    "model_sha256": "1ab6792f32ecf560e772fb8f41dbf68288b55eefa11c024467108cae0f50f0fd",
+    "figure_sha256": "88b054388e540374e7ad969c67c1c100f049241d05be7e1982bcbdbf6ea61425"
+  }
+}

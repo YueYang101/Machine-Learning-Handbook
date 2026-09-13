@@ -55,5 +55,5 @@
 | 页面 | 内容 |
 |---|---|
 | [dexhand-rl.html](dexhand-rl.html) | 灵巧手 RL 实验记录：锤钉与抓取，每个 reward 版本的视频与失败解剖 |
-| [dexhand-engineering.html](dexhand-engineering.html) | 灵巧手 RL 工程记录：碰撞简化与 JAX→Warp 迁移 |
+| [dexhand-engineering.html](dexhand-engineering.html) | 灵巧手工程记录：Quest 真人搬运与物理力审计、RT 已试／未验证对照、新手势测试；历史碰撞简化与 JAX→Warp 迁移 |
 | [hand-control.html](hand-control.html) | Hand Control 技术路线手册：EMG + Quest 手部追踪 + L20 遥操作 |
