@@ -57,6 +57,7 @@
 | 页面 | 内容 |
 |---|---|
 | [l20-stage1-2-results.html](l20-stage1-2-results.html) | Stage 1.2 结果：意图预测／人类模型建模——95 条 pinch 示教留一 session 的阶梯结果、影子手逐帧预测视频、序列生成器与输入消融、数据侧发现、Stage 1.3 第二步物理回放预检 |
+| [l20-stage1-3-results.html](l20-stage1-3-results.html) | Stage 1.3 结果：共享抓取残差 RL 首轮——L20SharedPinch 环境实现与录像核对、零残差基线、门控残差 20M 步与 α=0 的配对比较（1–7 个百分点）、α≡1 对照臂 +8–16 个百分点（授权上限是主因）、按指门控／速度缩放臂、berlin 与 4090 WSL2 运行方式、视频 |
 | [dexhand-rl.html](dexhand-rl.html) | 灵巧手 RL 实验记录：锤钉与抓取，每个 reward 版本的视频与失败解剖 |
 | [dexhand-engineering.html](dexhand-engineering.html) | 灵巧手工程记录：Quest 真人搬运与物理力审计、RT 已试／未验证对照、新手势测试；历史碰撞简化与 JAX→Warp 迁移 |
 | [hand-control.html](hand-control.html) | Hand Control 技术路线手册：EMG + Quest 手部追踪 + L20 遥操作 |

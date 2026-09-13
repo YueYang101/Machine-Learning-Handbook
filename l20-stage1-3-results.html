@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 1.3 结果：共享抓取残差 RL 首轮</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --blue:#2a78d6; --green:#2c7a4b; --red:#b4423a; --amber:#9a6b15;
+  --code:#f1f0ea;
+}
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --blue:#3987e5; --green:#4caf7d; --red:#d9695f; --amber:#c99b3f;
+    --code:#232322; }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:860px; margin:0 auto; padding:56px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.8rem; margin:.3em 0 .3em; line-height:1.35; }
+h2 { font-size:1.35rem; margin:2.4em 0 .5em; padding-top:.8em; border-top:1px solid var(--line); }
+h3 { font-size:1.08rem; margin:1.8em 0 .4em; }
+.lede { color:var(--sub); }
+p { margin:.6em 0; }
+code { background:var(--code); border-radius:5px; padding:1px 6px; font-size:.88em;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:10px;
+  padding:14px 16px; overflow-x:auto; font-size:.83rem; line-height:1.6;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:14px 0; font-size:.92rem; display:block; overflow-x:auto; }
+th, td { border:1px solid var(--line); padding:7px 11px; text-align:left; vertical-align:top; }
+th { background:var(--code); white-space:nowrap; }
+.videos { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0; }
+.videos.one { grid-template-columns:1fr; }
+.fig { margin:16px 0; } .fig img { width:100%; border-radius:10px; border:1px solid var(--line); display:block; } .fig figcaption { font-size:.85rem; color:var(--sub); margin-top:7px; line-height:1.5; }
+@media (max-width:640px){ .videos { grid-template-columns:1fr; } }
+.videos figure { margin:0; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px; }
+.videos video { width:100%; border-radius:8px; display:block; background:#000; }
+.videos figcaption { font-size:.85rem; color:var(--sub); margin-top:7px; line-height:1.5; }
+.tag { display:inline-block; font-size:.76rem; border-radius:99px; padding:1px 10px; margin-right:6px;
+  border:1px solid var(--line); color:var(--sub); vertical-align:2px; }
+.tag.ok { color:var(--green); border-color:var(--green); }
+.tag.bad { color:var(--red); border-color:var(--red); }
+.tag.warn { color:var(--amber); border-color:var(--amber); }
+.callout { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--blue);
+  border-radius:10px; padding:12px 16px; margin:16px 0; font-size:.94rem; }
+.callout.bad { border-left-color:var(--red); }
+.callout.good { border-left-color:var(--green); }
+.small { font-size:.87rem; color:var(--sub); }
+.tasknav { display:grid; grid-template-columns:1fr; gap:12px; margin:22px 0; }
+.tasknav .tcard { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 16px; }
+.tasknav .tname { font-weight:600; }
+.tasknav .vchips { margin-top:6px; line-height:2.1; }
+.tasknav .vchips a { display:inline-block; font-size:.78rem; border:1px solid var(--line); border-radius:99px; padding:0 9px; margin-right:5px; color:var(--blue); }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+a { color:var(--blue); text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<a class="bk" href="l20-stage1-3-shared-grasp.html">← Stage 1.3：共享抓取（计划）</a> · <a class="bk" href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
+<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.3 · 2026-09-13 深夜</div>
+<h1>Stage 1.3 结果：共享抓取残差 RL 首轮<br><span class="small" style="font-weight:400">L20SharedPinch 环境 · 腕部外生回放 · 手指有界残差 · α 门控 · berlin H200 单卡 + 4090 WSL2 · 20M 步</span></h1>
+
+<p class="lede">这是 <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a>第 4 步（RL 残差策略）的第一次实际运行，接在第 2 步物理回放预检之后（预检结果记在 <a href="l20-stage1-2-results.html#closure">Stage 1.2 结果页</a>）。同一晚还做了三件配套的事：按录像核对并修订了腕部模拟方案、做了 Stage 1.3 相关工作的批判性综述、并按综述里的收益加训了两条对照臂。设计文档：<code>Dex_Hand/human_machine_interaction/hand_control/plan/stage13-shared-grasp-design.md</code>（§1.1 录像核对、§2.1 动态参与、§6c 环境实现、§8 学习曲线）；综述：<code>hand_control/plan/2026-09-13-stage13-related-work.md</code>。</p>
+
+<div class="callout"><b>本页不是 Stage 1.3 的正式结果。</b>全部在仿真里、只有一名操作者的 95 条 pinch 示教作人手来源、腕部用软 weld 而不是部署的有界 PD、每条臂只跑了 20M 步一个 seed。它回答的只是「这套环境能不能训、零残差的人自己能抓多少、第一版门控残差有没有动静」。结论先写在前面：<b>门控残差策略（α_max 0.3）在 20M 步后与 α=0 的配对差别在 1 到 7 个百分点内，施加的残差只有 2 到 5 mrad；把授权放开到 α≡1 训练的对照臂高 8 到 16 个百分点、掉落率降到四分之一。</b>第一版没动静的主因是授权上限（45 mrad），不是没有学习信号；α_max 扫描是下一步，见 <a href="#arms">对照臂</a>。</div>
+
+<h2 id="setup">环境：实现了什么，和设计初值差在哪</h2>
+<div class="tw"><table>
+<tr><th>项</th><th>实现（2026-09-13）</th><th>与计划的差别 / 原因</th></tr>
+<tr><td>代码</td><td><code>training/reinforcement_learning/services/level_1_playground_envs/l20_hand/shared_pinch.py</code>，注册名 <code>L20SharedPinch</code>；轨迹库 <code>shared_pinch_bank.py</code> → <code>training/artifacts/stage13_shared_pinch/trajs.npz</code>；评测 <code>level_3_evaluation/shared_pinch_eval.py</code>；检查 <code>check l20-shared-pinch</code>（25 项通过）</td><td>—</td></tr>
+<tr><td>腕部</td><td><code>hand_base_link</code> 放在 free joint 上（armature 0.005），由<b>软 weld</b>（solref 0.02）跟随 mocap 目标；目标 = 录像里头显施加的腕部目标 H，按 cube 坐标系回放</td><td>计划是部署的 V2 有界 PD（60 N / 4 N·m）。用录像的<i>目标</i> H 驱动 PD，掌部滞后录像 ≈ 2 cm（0.44 m/s 时；操作者当时是看着补偿的），回放抓不到 cube（0% 抬起）；V2 的 dr 0.15 在 250 Hz 显式积分下发散。PD 保留为 <code>wrist.drive="pd"</code>，要先有对录像实际掌部的前馈才能当训练驱动</td></tr>
+<tr><td>物理</td><td>sim_dt 0.004、控制 50 Hz、episode 5 s；手指执行器 kp 8 / kv 0.08 / ±2 N·m；手摩擦 1.4 condim 4；cube 54 mm / 120 g / 摩擦 1.2；每个手身 gravcomp=1</td><td>对齐会话 MJCF（原 MJX 手模型 kp 2 / ±1 N，指尖是胶囊体而会话是网格）</td></tr>
+<tr><td>人手指令 u_h</td><td>回放录像的 retarget 命令；或 p=0.5 用第 2 步的脚本闭合（3 cm 内起，0.4 s 线性闭到抬离时的 u_h）</td><td>脚本目标改为<b>抬离时的命令</b>而不是标签关节角：标签是接触下的实际角，比操作者的命令少 0.09–0.15 rad 挤压量（拇指/食指），照标签闭合等于零夹持力</td></tr>
+<tr><td>抬离</td><td>解析式 8 cm / 1 s，起始时刻相对录像抬离 U(−0.3, +0.05) s；抬起段与录像接近段重叠</td><td>数据集抬离后只有 ≈ 11 个样本，Transport 段未进 npz</td></tr>
+<tr><td>扰动</td><td>终点 ±2 cm / ±15°（p 0.7）、速度 0.8–1.25×（p 0.7）、cube 偏航随机</td><td>犹豫停顿、瞄准偏差、反应式 u_h、质量/摩擦随机化未做</td></tr>
+<tr><td>目标 g</td><td>标签抬离抓姿（掌部相对 cube 9 + 关节 16），T2 口径；预测器 ĝ 未接</td><td>—</td></tr>
+<tr><td>动作 / 命令</td><td>Δu = 0.15·a，u = clip(u_h + α·Δu)；α 按设计 §2 的表在环里算、进观测（d_goal 6→3 cm 升到 0.15，用户在合拢时 0.3，≥2 指接触后保持，张手归零）</td><td>—</td></tr>
+<tr><td>观测 94 维</td><td>q16、dq16、掌部相对当前 cube 9、u_h 16、g 25、指尖接触 5、α 1、腕目标−实际掌部 6</td><td>—</td></tr>
+<tr><td>奖励</td><td>抬起并保持 1 s +5（一次）、拇指+食指同时接触 +1（一次）、接触 +0.01/步、保持 +0.02/步、−0.1·mean|q−q_goal|、−0.1·mean|α·Δu|、−0.05·平滑、−0.1·饱和比例、掉落 −3 终止</td><td>接触力惩罚未做</td></tr>
+<tr><td>成功</td><td><code>success</code> = cube 离桌 ≥ 2.5 cm 连续 1 s 且未掉落；<code>success_strict</code> 另要求掌部仍在标签 T_OP 的 3 cm 内（只作报告）</td><td>抬起后掌部相对 cube 的位置与标签差中位 5–6 cm：标签的 cube 系是录像里被推动后的 cube，且 cube 在两指间会转</td></tr>
+<tr><td>PPO</td><td>brax PPO，2048 envs，unroll 40，32 minibatch，lr 3e-4，entropy 1e-2，discount 0.97，reward scale 0.1，网络 512-256-128；请求 20M 步（brax 补到评测边界，实际 24.9M）</td><td>与 L20CubePick 相同</td></tr>
+</table></div>
+
+<h3>录像核对（95 条，50 Hz 重采样，中位数 [p10, p90]）</h3>
+<p>写环境前把设计稿 §1 的腕部假设对着数据核了一遍，五处不符，已写回设计稿 §1.1：</p>
+<div class="tw"><table>
+<tr><th>量</th><th>录像</th><th>设计稿原假设</th></tr>
+<tr><td>接近时长</td><td>2.1 s [1.7, 3.0]</td><td>—</td></tr>
+<tr><td>峰值速度</td><td>0.44 m/s [0.32, 0.65]</td><td>0.15–0.35 m/s</td></tr>
+<tr><td>峰值时刻 / 总时长</td><td>0.30 [0.18, 0.74]</td><td>直线加小弧</td></tr>
+<tr><td>进入终点 3 cm 内到抬离</td><td>0.48 s [0.29, 1.12]</td><td>走到位、保持、再抬 8 cm</td></tr>
+<tr><td>u_h 半闭合到抬离</td><td>0.44 s [0.01, 1.47]</td><td>距目标 &lt; 3 cm 后线性闭合</td></tr>
+<tr><td>掌部旋转量，起点到抬离</td><td>27° [17, 66]</td><td>终点姿态 ±15°</td></tr>
+</table></div>
+<p class="small">还有一点设计稿没提：95 条录像全是成功抬离，回放只覆盖操作者不用辅助也抓得好的腕部位姿；辅助有价值的近失状态只能靠终点扰动造出来。</p>
+
+<h3>门控是否真的会打开</h3>
+<p>单条回放逐步看：掌部到目标距离在抬离前 1 s 左右降到 2 cm（α 0.15），录像里的合拢速率 ≈ 0.4 rad/s 触发 closing（α 0.30），两指接触后 α 保持到抬起结束。失败的那类 trial 是接触后又丢掉、cube 被推走（掌部到目标从 1.6 cm 涨到 9.5 cm）。所以 α_max 是被到达的，评测里 α ≥ 0.3 的时间占 10%–25%（取决于来源）。</p>
+
+<h2 id="baseline">零残差基线：模拟的人自己能抓多少</h2>
+<p>α·Δu ≡ 0，每个来源 256 条，seed 0，weld 腕。berlin H200 与 4090 两边数字一致。</p>
+<div class="tw"><table>
+<tr><th>人手来源</th><th>success</th><th>strict</th><th>抬起</th><th>接触形成</th><th>掉落</th><th>滑移中位</th><th>α≥0.3 占比</th></tr>
+<tr><td>回放，无扰动</td><td>0.59</td><td>0.05</td><td>0.70</td><td>0.94</td><td>0.11</td><td>0.5 cm</td><td>0.23</td></tr>
+<tr><td>脚本闭合，无扰动</td><td>0.63</td><td>0.07</td><td>0.75</td><td>0.91</td><td>0.11</td><td>0.6 cm</td><td>0.22</td></tr>
+<tr><td>回放，终点/速度扰动</td><td>0.34</td><td>0.02</td><td>0.43</td><td>0.65</td><td>0.09</td><td>0.6 cm</td><td>0.10</td></tr>
+<tr><td>训练混合（默认）</td><td>0.47</td><td>0.05</td><td>0.57</td><td>0.77</td><td>0.11</td><td>0.7 cm</td><td>0.14</td></tr>
+</table></div>
+<p class="small">第 2 步在会话 MJCF + 刚性 weld 下回放能保持 99%，这里无扰动回放只有 70% 抬起：差距来自扰动之前的物理差异（指尖胶囊体对网格、dt、摩擦模型、软 weld），未逐项定位。「训练混合」一行在修掉一个共享 ConfigDict 被就地改写的 bug 之后才有效；bug 之前评出的该行等于上一个来源的复制。</p>
+
+<h2 id="gated">门控残差策略，20M 步：与 α=0 配对</h2>
+<p>berlin，run <code>L20SharedPinch-20260913-225032</code>，checkpoint 000024903680，训练 13 分钟（含编译）。评测与基线同 seed、同来源、各 256 条。</p>
+<div class="tw"><table>
+<tr><th>人手来源</th><th>success α=0 → 策略</th><th>抬起</th><th>掉落</th><th>施加残差 mean|α·Δu|</th><th>关节偏离 |q−q_goal|（抬起段）</th></tr>
+<tr><td>回放，无扰动</td><td>0.59 → 0.63</td><td>0.70 → 0.72</td><td>0.11 → 0.09</td><td>4.6 mrad</td><td>0.780 rad</td></tr>
+<tr><td>脚本闭合，无扰动</td><td>0.63 → 0.64</td><td>0.75 → 0.74</td><td>0.11 → 0.10</td><td>4.5 mrad</td><td>0.781 rad</td></tr>
+<tr><td>回放，扰动</td><td>0.34 → 0.37</td><td>0.43 → 0.44</td><td>0.09 → 0.07</td><td>2.1 mrad</td><td>0.775 rad</td></tr>
+<tr><td>训练混合</td><td>0.47 → 0.48</td><td>0.57 → 0.58</td><td>0.11 → 0.09</td><td>2.8 mrad</td><td>0.779 rad</td></tr>
+</table></div>
+<p>读法：256 条的二项标准差约 3 个百分点，所有差别都在噪声内；策略能施加的残差上限是 45 mrad（α 0.3 × 0.15 rad），实际只用了 2 到 5 mrad，没有动作饱和。训练曲线（每 1.3M 步一次评测回报）在 2.4 到 4.0 之间来回，没有趋势。关节偏离 0.78 rad 与 α=0 相同，没有改变用户的抓法。</p>
+<div class="videos">
+<figure><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-3-results/stage13-policy20M-rollout.mp4"></video><figcaption>门控残差策略，20M 步，训练混合来源，10 s 连续片段（掉落或成功后原地重置）。绿色方块是腕部目标。</figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-3-results/stage13-alpha0-rollout.mp4"></video><figcaption>同一 seed 的 α=0：只有回放的人手。两段肉眼看不出差别，与表一致。</figcaption></figure>
+</div>
+
+<h2 id="arms">对照臂：授权、按指门控、速度缩放</h2>
+<p>综述（<code>2026-09-13-stage13-related-work.md</code> §5）给了五条有文献支撑的改动，其中两条是环境内改动，当晚各训一条臂；再加 advisor 提的 α≡1 对照臂分辨「授权太小」和「没有学习信号」。全部 20M 步、一个 seed，与 α=0 同 seed 配对。</p>
+<div class="tw"><table>
+<tr><th>臂</th><th>改动</th><th>依据</th><th>在哪跑</th><th>结果</th></tr>
+<tr><td>Const</td><td>无门控，α ≡ 1（残差上限 0.15 rad）</td><td>诊断：能否在完全授权下超过 α=0</td><td>4090 / WSL2，seed 0</td><td id="arm-const">success <b>0.75 / 0.75 / 0.43 / 0.55</b>（α=0：0.59 / 0.63 / 0.34 / 0.47），掉落 0.01 / 0.02 / 0.03 / 0.04（α=0：0.08–0.11），残差 6–14 mrad。这一行是「训练 α≡1、评测时套几何门控且 α_max=1」；真正 α≡1 评测见下表</td></tr>
+<tr><td>Finger</td><td>五个按指 α_i：指尖到 cube 表面距离（5→2 cm）+ 该指自己的合拢速率；指 i 接触后保持 α_i；用户伸展该指 α_i 归零；观测加 5 维</td><td>Trout et al. 2025，Nature Communications</td><td>berlin，seed 0</td><td id="arm-finger">success 0.64 / 0.70 / 0.40 / 0.50，掉落 0.10 / 0.09 / 0.05 / 0.10，残差 1.4–2.6 mrad：四个来源都比 α=0 高 3–7 个百分点，方向一致，单 seed 未达显著</td></tr>
+<tr><td>Speed</td><td>Δu = 0.5·a_s ⊙ (q_goal − u_h) + 0.15·a_r，a_s ∈ [0, 2]，32 维动作：先学沿脚本闭合方向的速度缩放</td><td>GraspGF 2023 消融（仅方向 19.5%、方向×速度 5.1%、全模型 56.5%）</td><td>berlin，seed 0</td><td id="arm-speed">success 0.61 / 0.62 / 0.35 / 0.48，残差 2.7–5.4 mrad：与 α=0 无差别</td></tr>
+<tr><td>seed 1</td><td>默认门控臂第二个 seed</td><td>—</td><td>4090 / WSL2</td><td id="arm-seed1">success 0.66 / 0.67 / 0.38 / 0.48，掉落 0.08 / 0.09 / 0.06 / 0.10，残差 2.3–5.1 mrad：与 seed 0 同方向，无扰动源 +4 到 +7</td></tr>
+</table></div>
+<h3>四个来源并排（success，256 条配对，同 seed）</h3>
+<div class="tw"><table>
+<tr><th>臂</th><th>训练 α</th><th>评测 α</th><th>回放</th><th>脚本</th><th>回放+扰动</th><th>混合</th><th>掉落（混合）</th><th>残差（混合）</th></tr>
+<tr><td>α=0 基线</td><td>—</td><td>0</td><td>0.59</td><td>0.63</td><td>0.34</td><td>0.47</td><td>0.11</td><td>0</td></tr>
+<tr><td>门控 seed 0</td><td>门控 ≤0.3</td><td>门控 ≤0.3</td><td>0.63</td><td>0.64</td><td>0.37</td><td>0.48</td><td>0.09</td><td>2.8 mrad</td></tr>
+<tr><td>门控 seed 1</td><td>门控 ≤0.3</td><td>门控 ≤0.3</td><td>0.66</td><td>0.67</td><td>0.38</td><td>0.48</td><td>0.10</td><td>3.1 mrad</td></tr>
+<tr><td>Finger 按指门控</td><td>按指 ≤0.3</td><td>按指 ≤0.3</td><td>0.64</td><td>0.70</td><td>0.40</td><td>0.50</td><td>0.10</td><td>1.7 mrad</td></tr>
+<tr><td>Speed 速度缩放</td><td>门控 ≤0.3</td><td>门控 ≤0.3</td><td>0.61</td><td>0.62</td><td>0.35</td><td>0.48</td><td>0.10</td><td>3.4 mrad</td></tr>
+<tr><td><b>Const</b></td><td><b>α≡1</b></td><td>门控 ≤1</td><td><b>0.75</b></td><td><b>0.75</b></td><td><b>0.43</b></td><td><b>0.55</b></td><td><b>0.04</b></td><td>8.0 mrad</td></tr>
+<tr><td>Const</td><td>α≡1</td><td>α≡1</td><td id="ct-1">待补</td><td id="ct-2">待补</td><td id="ct-3">待补</td><td id="ct-4">待补</td><td id="ct-5">待补</td><td id="ct-6">待补</td></tr>
+</table></div>
+<p><b>读法。</b>三条 α_max=0.3 的臂（门控两个 seed、按指门控、速度缩放）都只把残差用到几 mrad，收益在 0 到 7 个百分点之间，只有按指门控四个来源同向。把授权放开到 α≡1 训练的对照臂，同样 20M 步，success 高 8 到 16 个百分点，掉落率降到四分之一，残差 8 到 14 mrad，仍远未用满 0.15 rad 的上限。所以第一版「没动静」的主因是 <b>α_max 0.3 × δ 0.15 = 45 mrad 的授权上限</b>，不是环境没有学习信号；设计稿 §2.1 的 α_max 扫描（0.15 / 0.3 / 0.5 / 1.0）就是下一步，而且「训练时全授权、部署时套门控」这一行说明门控可以只管时机、不必压缩幅度。按指门控的方向一致值得再跑两个 seed；速度缩放在 0.3 的授权下没有帮助。</p>
+<div class="videos">
+<figure><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-3-results/stage13-const20M-rollout.mp4"></video><figcaption>Const 臂（训练 α≡1），评测套门控 α_max=1，训练混合来源，10 s 片段。</figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-3-results/stage13-finger20M-rollout.mp4"></video><figcaption>Finger 臂（按指门控，α_max 0.3），同 seed。</figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-3-results/stage13-speed20M-rollout.mp4"></video><figcaption>Speed 臂（速度缩放动作，α_max 0.3），同 seed。</figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-3-results/stage13-seed120M-rollout.mp4"></video><figcaption>门控臂 seed 1（4090 / WSL2 训练），同 seed 评测片段。</figcaption></figure>
+</div>
+<p class="small">评测 JSON（每来源 256 条的全部指标）在 <code>assets/l20-stage1-3-results/eval-*.json</code>。训练曲线（每 1.3M 步一次评测回报，10 条 episode）：门控 seed 0 在 2.4–4.0 间无趋势；seed 1 末段 3.4–3.6；Finger 末段 3.8；Const 末段见其 log。4090 上的两次训练结束时 brax 的收尾渲染在无显示的 WSL 里抛 Renderer 异常（exit 1），checkpoint 已完整写出，不影响结果。</p>
+<p class="small">综述另外三条不在环境里：把共适应当作测量项（部署日志）、保留调度 α 加一致性项与介入占比指标（介入占比已在评测输出：α&gt;0 时间、mean|α·Δu|、饱和比例）、kNN 检索式人类代理（只在 RL 启动后做）。</p>
+
+<h2 id="compute">算力与运行方式</h2>
+<div class="tw"><table>
+<tr><th>盒子</th><th>状态</th><th>用法</th></tr>
+<tr><td>berlin（UCL，8×H200）</td><td>可用；单用户单卡硬规则</td><td>代码 rsync 到 <code>~/Projects/shc_stage13/</code>（不进 git clone），只用仓库的 <code>train --box ucl</code> 启动（自动限一张空闲卡），tmux/nohup；2048 envs 约 1.6M 步/分钟</td></tr>
+<tr><td>4090（Windows 11）</td><td>2026-09-13 装了 WSL2 + Ubuntu-24.04；jax 0.6.2 CUDA、mujoco 3.6.0 在 WSL 内可用；<code>mujoco_warp</code> 未装，Warp 路径待补</td><td>playground clone 在 <code>/root/Desktop/Projects/Dex/Mujoco_playground</code>（与旧 Linux 同路径）；训练要以 WMI 拉起的<b>前台</b> <code>wsl.exe</code> 跑（<code>train --box 4090</code> 的分离子进程会随 wsl 客户端退出被杀）；约 0.5M 步/分钟，比 Linux 时慢，未查</td></tr>
+</table></div>
+
+<h2 id="notdone">没做的与下一步</h2>
+<ul>
+<li>数据集 builder 保留抬离后 1–2 s 的 Transport 段（设计稿 §6 前提）。</li>
+<li>PD 腕部的前馈：目标改为录像的实际掌部 + 速度前馈，再做腕部驱动预检。</li>
+<li>反应式 u_h、犹豫停顿、瞄准偏差；质量/摩擦随机化；接触力惩罚。</li>
+<li>Stage 1.2 预测器 ĝ 接入（T3）；预测器在全部 95 条上训练并保存的版本目前不存在。</li>
+<li>多 seed 与 α_max 扫描（0.15 / 0.3 / 0.5 / 1.0），它才回答「参与多少」。</li>
+</ul>
+
+<footer>Yue Yang · 2026-09-13 · <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a> · <a href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a href="index.html">Machine Learning Handbook</a></footer>
+</div>
+</body>
+</html>
