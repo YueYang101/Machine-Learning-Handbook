@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 1.2 结果：意图预测／人类模型建模</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --blue:#2a78d6; --green:#2c7a4b; --red:#b4423a; --amber:#9a6b15;
+  --code:#f1f0ea;
+}
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --blue:#3987e5; --green:#4caf7d; --red:#d9695f; --amber:#c99b3f;
+    --code:#232322; }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:860px; margin:0 auto; padding:56px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.8rem; margin:.3em 0 .3em; line-height:1.35; }
+h2 { font-size:1.35rem; margin:2.4em 0 .5em; padding-top:.8em; border-top:1px solid var(--line); }
+h3 { font-size:1.08rem; margin:1.8em 0 .4em; }
+.lede { color:var(--sub); }
+p { margin:.6em 0; }
+code { background:var(--code); border-radius:5px; padding:1px 6px; font-size:.88em;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+pre { background:var(--code); border:1px solid var(--line); border-radius:10px;
+  padding:14px 16px; overflow-x:auto; font-size:.83rem; line-height:1.6;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; width:100%; margin:14px 0; font-size:.92rem; display:block; overflow-x:auto; }
+th, td { border:1px solid var(--line); padding:7px 11px; text-align:left; vertical-align:top; }
+th { background:var(--code); white-space:nowrap; }
+.videos { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0; }
+.videos.one { grid-template-columns:1fr; }
+.fig { margin:16px 0; } .fig img { width:100%; border-radius:10px; border:1px solid var(--line); display:block; } .fig figcaption { font-size:.85rem; color:var(--sub); margin-top:7px; line-height:1.5; }
+@media (max-width:640px){ .videos { grid-template-columns:1fr; } }
+.videos figure { margin:0; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px; }
+.videos video { width:100%; border-radius:8px; display:block; background:#000; }
+.videos figcaption { font-size:.85rem; color:var(--sub); margin-top:7px; line-height:1.5; }
+.tag { display:inline-block; font-size:.76rem; border-radius:99px; padding:1px 10px; margin-right:6px;
+  border:1px solid var(--line); color:var(--sub); vertical-align:2px; }
+.tag.ok { color:var(--green); border-color:var(--green); }
+.tag.bad { color:var(--red); border-color:var(--red); }
+.tag.warn { color:var(--amber); border-color:var(--amber); }
+.callout { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--blue);
+  border-radius:10px; padding:12px 16px; margin:16px 0; font-size:.94rem; }
+.callout.bad { border-left-color:var(--red); }
+.callout.good { border-left-color:var(--green); }
+.small { font-size:.87rem; color:var(--sub); }
+.tasknav { display:grid; grid-template-columns:1fr; gap:12px; margin:22px 0; }
+.tasknav .tcard { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 16px; }
+.tasknav .tname { font-weight:600; }
+.tasknav .vchips { margin-top:6px; line-height:2.1; }
+.tasknav .vchips a { display:inline-block; font-size:.78rem; border:1px solid var(--line); border-radius:99px; padding:0 9px; margin-right:5px; color:var(--blue); }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+a { color:var(--blue); text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<a class="bk" href="l20-stage1-2-training.html">← Stage 1.2：Training（计划）</a> · <a class="bk" href="l20-stage1-3-shared-grasp.html">Stage 1.3</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
+<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.2 · 2026-09-13</div>
+<h1>Stage 1.2 结果：意图预测／人类模型建模<br><span class="small" style="font-weight:400">pilot 6 个 session + 正式 session 1 · 95 条 pinch 示教 · 留一 session 交叉验证 · 手册 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a> 的首个 run</span></h1>
+
+<p class="lede">这是 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a>的第一次实际运行：用 <a href="l20-robust-grasp-stage1.html">Stage 1.1</a> 当天采集的 95 条 Quest→retarget→L20 示教，按计划的阶梯（B0／B1／M0／方案 A／方案 B）训练并在留出的 session 上比较，附影子手视频。<b>结论先行：</b>抬离前 1 s，学习模型比「保持当前姿态」好 3 cm、比最近示教和常数预测好 0.5 cm；残差形式的小模型在抬离时刻误差 0.9 cm；方案 B（Flow Matching）与确定性回归无差异且候选无多模态，方案 A（VQ-VAE＋AR）停在码本重建；一个只看当前 25 维状态的线性模型在 1 s 提前量上是最好的。数据侧的两个发现比模型更重要：抓取提示与方向提示都没有在标签里留下痕迹。</p>
+
+<div class="callout"><b>本页不是 Stage 1.2 的正式结果。</b>计划要求的 240 条、144／48／48 按 session 划分不存在；所有 trial 都是 pinch，终点标签未经人工复核（每个 session 的 <code>stage11_training_ready=False</code>）。这里的数字是 PoC，用来决定协议和模型下一步怎么改。</div>
+
+<h2 id="data">数据：采到了什么，发现了什么</h2>
+<div class="tw"><table>
+<tr><th>项</th><th>值</th></tr>
+<tr><td>session 目录</td><td>10 个（2026-09-13）。6 个 pilot（10／10／2／10／1／10 条）＋ 1 个正式 session（52 条，pinch-only，四个方向提示）有 Quest 记录；另 4 个目录 3 个启动即中止、1 个在第 1 条 trial 中结束且 Quest 未确认录制 flush，已移入 <code>quest_sessions/diagnostics/</code>，没有完成的 trial 丢失</td></tr>
+<tr><td>可用 trial</td><td><b>95</b>，全部 transferred、0 掉落；接近段（Quest trial 开始 → 抬离）中位 2.1 s</td></tr>
+<tr><td>标签</td><td>抬离瞬间（Quest 相位 Transport 第一个物理样本）的 sim-actual L20 状态：掌部相对 cube 的位置 3 ＋ 旋转 6D ＋ 16 个主动关节，共 25 维；未复核</td></tr>
+<tr><td>输入</td><td>过去 1 s，20 Hz × 26 维：头显施加的 mocap 腕部目标相对 cube 的位置 3 ＋ 旋转 6D（人手腕代理，与实际掌部差 6 mm 中位）、retarget 目标关节 16、有效位 1</td></tr>
+<tr><td>划分</td><td>留一 session（7 折），每条 trial 恰好测试一次；归一化只用训练折</td></tr>
+<tr><td>代码</td><td><code>Dex_Hand/human_machine_interaction/training/stage12_intent/</code>（build／run／report／visualize／predict-heldout／animate／closure-replay）；数据集 <code>training/artifacts/stage12_intent/dataset_all.npz</code>；结果 <code>results/&lt;run&gt;/results.json</code>；训练在家用 4090（Windows 11，torch 2.11 cu128）</td></tr>
+</table></div>
+
+<h3>三个只有录了才知道的事</h3>
+<ol>
+<li><b>抓取提示不是标签。</b>pilot 的 pinch／tripod／power 提示全程都以 pinch 完成（操作者确认）；36／43 条抬离时只有拇指＋食指两点接触，三组终点关节的最近质心分类准确率 0.37 等于多数类比例。协议缺一个「实际抓型」字段；正式采集已改为 pinch-only。</li>
+<li><b>方向提示不改变抓姿。</b>正式 session 的 front／left／right／top 四组，抬离掌部位置均值差不到 1 cm、姿态一样、接近方位角都是 −150° ± 10°，标签离散度（1.1／2.7／1.1 cm）比 pilot 还小。坐着的人对桌上一个 cube 只有一种自然的捏法；方向多样性只能来自布局（cube 出生到身体另一侧）或仿真。</li>
+<li><b><code>left_home</code> 在 transfer 模式下不是接近起点。</b>home 中心设在提示时刻，也就是上一条 cube 放下的地方，手要到搬运时才离开 home 半径；33 条有该事件的 trial 里 22 条在抬离之后触发。接近段改按 Quest trial 边界切。</li>
+</ol>
+
+<h2 id="protocol">协议与配置（实际生效值）</h2>
+<div class="tw"><table>
+<tr><th>项</th><th>值</th></tr>
+<tr><td>评测时刻</td><td>窗口终点在抬离前 τ = 1.0／0.75／0.5／0.25／0 s；指标 = 掌部平移误差 cm、旋转角误差 °、16 关节 MAE rad，按 trial 取均值；影子手关节限位检查</td></tr>
+<tr><td>B0／B1／常数</td><td>保持当前 sim-actual 状态；最近训练窗口的终点；训练折标签均值（3.52 cm）</td></tr>
+<tr><td>M0</td><td>MLP 520→256→128→128→25，AdamW 1e-3、wd 1e-4、cosine、batch 128、400 epoch；「残差」版预测相对窗口末帧 [p_OH, R_OH, q_ref] 的变化</td></tr>
+<tr><td>B · Flow Matching</td><td>x<sub>τ</sub>=(1−τ)ε+τy，MLP 速度场（条件 128 维、隐层 256×3），800 epoch，Euler 32 步，k=16 候选；同时训练绝对与残差两种目标</td></tr>
+<tr><td>A · VQ-VAE＋AR</td><td>1 s 状态块 → 1D 卷积编码 → 5 token，码本 64×64，EMA 更新＋数据初始化；3 层因果 Transformer，条件帧前缀，终点 token 权重 2；终点从解码序列按 τ 读出</td></tr>
+<tr><td>seed</td><td>0／1／2（43 条 pilot 的首个 run 三 seed 均在 ±0.1 cm 内）；本页表格为 seed 0</td></tr>
+<tr><td>run ID</td><td><code>full-*</code>／<code>seed1-*</code>／<code>seed2-*</code>（43 条 pilot），<code>all7-abs</code>／<code>all7-res</code>（95 条 7 折），<code>fms-abs</code>、<code>dps-abs</code>、<code>all7-linear</code>、<code>all7-lastframe</code>，<code>heldout_formal.*</code>（视频用，checkpoint 已存）</td></tr>
+</table></div>
+
+<h2 id="ladder">阶梯结果：7 折留一 session，95 条</h2>
+<p>三列，因为各折不一样：<b>正式 session 作测试</b>只用 43 条 pilot 训练，是最诚实的跨 session 数字；<b>6 个 pilot 折</b>的训练集多了 52 条正式数据；<b>全部 95</b> 混合两者。每格：掌部误差 cm，抬离前 1.0 · 0.5 · 0.25 · 0 s。</p>
+<div class="tw"><table>
+<tr><th>模型</th><th>正式 session 作测试</th><th>6 个 pilot 折（合并）</th><th>全部 95</th></tr>
+<tr><td>B0 保持当前姿态</td><td>4.54 · 2.98 · 1.39 · 0</td><td>6.57 · 3.47 · 0.94 · 0</td><td>5.46 · 3.20 · 1.19 · 0</td></tr>
+<tr><td>B1 最近示教</td><td>2.72 · 2.66 · 2.51 · 2.63</td><td>2.91 · 2.56 · 2.66 · 2.68</td><td>2.81 · 2.62 · 2.58 · 2.65</td></tr>
+<tr><td>M0 绝对</td><td>2.42 · 2.40 · 2.17 · 2.06</td><td>2.73 · 2.48 · 2.18 · 2.03</td><td>2.56 · 2.44 · 2.17 · 2.05</td></tr>
+<tr><td>B Flow Matching（16 候选均值）</td><td>2.62 · 2.34 · 2.20 · 2.20</td><td>3.04 · 2.50 · 2.16 · 1.84</td><td>2.81 · 2.41 · 2.18 · 2.04</td></tr>
+<tr><td>A VQ-VAE＋AR</td><td>2.74 · 2.55 · 2.50 · 2.51</td><td>4.23 · 3.44 · 2.99 · 2.85</td><td>3.41 · 2.95 · 2.72 · 2.67</td></tr>
+<tr><td><b>M0 残差</b></td><td><b>2.55 · 1.93 · 1.45 · 0.94</b></td><td>3.06 · 2.29 · 1.30 · 0.91</td><td>2.78 · 2.09 · 1.38 · 0.92</td></tr>
+<tr><td>B Flow Matching 残差</td><td>2.42 · 1.86 · 1.55 · 1.26</td><td>3.13 · 2.40 · 1.37 · 1.16</td><td>2.74 · 2.11 · 1.47 · 1.21</td></tr>
+</table></div>
+<p class="small">关节 MAE 同序：M0 绝对在正式折 1 s 时 0.064 rad，残差版抬离时 0.019 rad。43 条 pilot 的首个 run 配对 bootstrap：M0 − B1 = −0.48 cm，95% CI [−0.93, −0.06]；M0 − 常数 −0.56 [−1.04, −0.07]；FM − M0 +0.03 [−0.29, +0.34]。多 52 条正式数据后 pilot 折 1 s 误差 2.96 → 2.73，残差版抬离时 1.42 → 0.91 cm。</p>
+<figure class="fig"><img src="assets/l20-stage1-2-results/error-vs-time.png" alt="误差随抬离前时间的曲线，七个模型，三 seed 带"><figcaption>误差随抬离前时间（7 折，95 条；虚线为残差形式；带为 seed 离散度）。B0 在 0.25 s 内最好，说明模型不知道 τ、一直在预测「最终」抓姿；残差版把这段的误差减半。</figcaption></figure>
+
+<h2 id="video">视频：留出的正式 session，逐帧预测</h2>
+<div class="videos one">
+<figure><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-2-results/heldout-formal-animation.mp4"></video>
+<figcaption>正式 session 的三条 trial（残差 M0 在接近中段最好／中位／最差），模型只用 43 条 pilot 训练，每 0.05 s 预测一次，0.5 倍速。三个面板同一视角：<b>灰</b>录下的手，<b>蓝</b>真实抬离抓姿（标签），<b>绿</b>残差 M0 预测，<b>黄点</b>Flow Matching 16 个候选的掌心，<b>品红</b>方案 A 预测的未来 1 s 掌部轨迹与终点。影子是 <code>mj_forward</code> 摆姿势并按分割掩码合成，没有物理。 <a href="assets/l20-stage1-2-results/heldout-formal-animation.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
+</div>
+<p>能看到的规律：绿影子在抬离前约 0.5 s 落到蓝影子上；最差那条（S01-T008）操作者先把手停在 cube 旁等了一会儿，模型以为还要移 12 cm，而方案 A 倾向「保持现状」反而对；黄点始终挤在一起，Flow Matching 没有给出第二种抓法。</p>
+<figure class="fig"><img src="assets/l20-stage1-2-results/shadow-hand-m0-tau050.png" alt="影子手静态对比：抬离前 0.5 s 的手、真实抓姿、M0 预测"><figcaption>静态版：抬离前 0.5 s 的手 → 真实抓姿 → 残差 M0 预测，最好／中位／最差三条（7 折 run）。</figcaption></figure>
+
+<h2 id="sequence">序列生成器：A、FMS、DPS</h2>
+<p>方案 B 首轮按计划只生成终点。追问「Flow Matching 能不能像 A 那样生成未来序列」后加了两个 Diffusion Policy 形式的模型，都生成未来 1 s 的 20 步 × 25 维（相对当前状态的残差，8 条样本）：<b>FMS</b> 用 flow matching 目标，<b>DPS</b> 用 DDPM ε 预测＋DDIM 采样。</p>
+<div class="tw"><table>
+<tr><th>模型</th><th>终点 cm（正式折 / 全部 95，τ = 1.0 · 0.5 · 0.25 · 0）</th><th>未来 1 s 掌部 ADE cm</th><th>8 样本互差 @1 s</th></tr>
+<tr><td>M0 残差（只有终点）</td><td>2.55/2.78 · 1.93/2.09 · 1.45/1.38 · 0.94/0.92</td><td>—</td><td>—</td></tr>
+<tr><td>A VQ-VAE＋AR</td><td>2.74/3.41 · 2.55/2.95 · 2.50/2.72 · 2.51/2.67</td><td>3.33（一折 5.95）</td><td>—</td></tr>
+<tr><td>FMS</td><td>3.40/3.78 · 2.72/3.10 · 2.70/2.58 · 2.20/2.10</td><td><b>2.66</b></td><td>6.5 cm</td></tr>
+<tr><td>DPS</td><td>4.33/4.99 · 4.21/4.40 · 3.53/3.33 · 2.55/2.44</td><td>3.65</td><td>10.7 cm</td></tr>
+</table></div>
+<p>作为轨迹生成器 FMS 最好，且 flow matching 目标在这份数据上全面好于 DDPM 目标；作为终点预测器没有序列模型赢过残差 M0：500 维生成目标对两千个窗口太大，单条样本 6–9 cm，只有 8 条均值可看。A 的码本没有塌缩（64 码全用，perplexity 53–58）但重建误差 1.4–3.8 cm，已经和 M0 的总误差一样大。</p>
+
+<h2 id="ablation">输入消融：1 s 历史和 MLP 需要吗</h2>
+<p>PCA：520 维输入 21 个主成分占 90% 方差；16 个标签关节 5 个主成分占 90%，掌部位姿 3 个。线性岭回归的通道消融（抬离前 1 s）：只用手腕 9 维 2.32 cm，只用手指 16 维 5.23 cm。三个残差模型：</p>
+<div class="tw"><table>
+<tr><th>模型</th><th>输入</th><th>1.0 s</th><th>0.5 s</th><th>0.25 s</th><th>0 s</th><th>关节 rad @1 s</th></tr>
+<tr><td>RL 线性岭回归</td><td>当前帧 25 维</td><td><b>2.10 / 2.26</b></td><td>2.00 / 2.06</td><td>1.90 / 1.87</td><td>1.84 / 1.79</td><td>0.077</td></tr>
+<tr><td>RW 线性，PCA-34 整窗</td><td>1 s 窗口 → 34 维</td><td>3.24 / 3.30</td><td>2.71 / 2.73</td><td>2.38 / 2.45</td><td>2.57 / 2.46</td><td>0.095</td></tr>
+<tr><td>ML 小 MLP</td><td>当前帧 25 维</td><td>2.29 / 2.60</td><td><b>1.75 / 1.94</b></td><td>1.71 / 1.52</td><td>1.37 / 1.30</td><td>0.070</td></tr>
+<tr><td>M0 MLP</td><td>1 s 窗口 520 维</td><td>2.55 / 2.78</td><td>1.93 / 2.09</td><td><b>1.45 / 1.38</b></td><td><b>0.94 / 0.92</b></td><td>0.079</td></tr>
+</table></div>
+<p>远处线性最好，中段小 MLP 最好，最后 0.25 s 整窗 MLP 最好，差距都在半厘米内。手腕相对 cube 的位姿几乎是全部信息；历史窗口在这个数据量下没有帮助。Stage 1.3 要接的预测器可以只吃当前 25 维状态。</p>
+
+<h2 id="qref">重跑：标签关节改为 retarget 命令 q_ref（run <code>qref-abs</code> / <code>qref-res</code>）</h2>
+<p>物理回放证明达到姿态不能当命令后，把标签的 16 个关节换成抬离时刻的 retarget 命令 q_ref（<code>build --label-joints ref</code>），掌部 9 维不变，全部模型重训（7 折，seed 0，每折模型与归一化参数存为 checkpoint：<code>results/qref-abs/models/fold_&lt;session&gt;.pt</code>、<code>qref-res/models/</code>，留出正式 session 的推理模型 <code>qref-heldout/heldout_formal.models.pt</code>）。掌部误差与旧标签一致（差异 ≤ 0.1 cm），关节误差现在是命令空间的误差：</p>
+<div class="tw"><table>
+<tr><th>模型</th><th>掌部 cm，正式折 / 全部 95（τ = 1.0 · 0.5 · 0.25 · 0）</th><th>关节 MAE rad @1 s</th><th>@0 s</th></tr>
+<tr><td>B0 保持当前</td><td>4.54/5.46 · 2.98/3.20 · 1.39/1.19 · 0/0</td><td>0.161/0.179</td><td>0</td></tr>
+<tr><td>B1 最近示教</td><td>2.72/2.81 · 2.66/2.62 · 2.51/2.58 · 2.63/2.65</td><td>0.054/0.072</td><td>0.051/0.057</td></tr>
+<tr><td>RL 线性，当前帧</td><td><b>2.10/2.26</b> · 2.00/2.06 · 1.90/1.87 · 1.84/1.79</td><td>0.071/0.080</td><td>0.063/0.059</td></tr>
+<tr><td>ML 小 MLP，当前帧</td><td>2.38/2.64 · 1.85/2.07 · 1.77/1.57 · 1.25/1.21</td><td>0.064/0.071</td><td>0.036/0.034</td></tr>
+<tr><td>M0 绝对</td><td>2.41/2.58 · 2.29/2.39 · 2.11/2.15 · 2.00/2.02</td><td>0.070/0.077</td><td>0.057/0.057</td></tr>
+<tr><td>B Flow Matching 绝对</td><td>2.61/2.80 · 2.33/2.46 · 2.26/2.18 · 2.37/2.10</td><td>0.069/0.082</td><td>0.058/0.054</td></tr>
+<tr><td>A VQ-VAE＋AR</td><td>2.94/3.45 · 2.28/3.04 · 2.32/2.81 · 2.48/2.93</td><td>0.081/0.100</td><td>0.049/0.061</td></tr>
+<tr><td><b>M0 残差</b></td><td>2.59/2.78 · <b>1.74/2.05</b> · <b>1.35/1.30</b> · <b>1.00/0.93</b></td><td>0.075/0.083</td><td><b>0.019/0.018</b></td></tr>
+<tr><td>B Flow Matching 残差</td><td>2.50/2.76 · 1.94/2.05 · 1.61/1.53 · 1.23/1.13</td><td>0.072/0.080</td><td>0.026/0.024</td></tr>
+</table></div>
+<p>结论不变：远处线性、中段小 MLP、近处整窗残差 MLP，差距半厘米内；现在这些输出可以直接作为执行层的手指命令目标（回放里闭合到它保持率 96%）。</p>
+
+<h2 id="verdict">按计划判据的裁决</h2>
+<ul>
+<li><b>方案 A：</b>停在码本阶段。重建误差 ≈ M0 总误差，AR 终点 2.7–4.2 cm 不优于确定性基线 → 保留 M0。</li>
+<li><b>方案 B：</b>候选离散度 0.4–0.7 cm、关节 0.02 rad，只是抖动；best-of-16 只比均值好 0.5 cm → 保留 M0。这不是对 Flow Matching 的否定：标签里只有一种模式，没有多模态可覆盖。</li>
+<li><b>可部署预测器：</b>残差 M0／ML／RL 三选一（q_ref 标签版，checkpoint 已存），1 s 提前量 2.1–2.6 cm，抬离时 0.9–1.8 cm；一次前向 0.02 ms（Mac CPU）。</li>
+</ul>
+
+<h2 id="failures">失败解剖</h2>
+<ul>
+<li><b>停住等：</b>操作者在 cube 旁停下再抓，历史窗口里全是静止，残差模型仍预测「还要移动」；A 反而对。门控层用速度可以判掉，模型层要靠更多这类样本。</li>
+<li><b>每个 session 的第一条：</b>接近段包含接入后的调整动作，手腕转过 90° 以上，误差 9 cm。以后接近段只取 Quest trial 开始之后。</li>
+<li><b>关节限位：</b>残差形式的预测有 4–12% 的关节越限（预测增量会把关节推出范围），显示前要裁剪。</li>
+</ul>
+
+<h2 id="closure">Stage 1.3 第二步预检：录下的捏合在物理里抓得住吗</h2>
+<p>按 <code>hand_control/plan/stage13-shared-grasp-design.md</code> 第二步的思路做了一个无学习的物理回放（<code>closure-replay</code>）：会话导出的 MJCF 在 Mac MuJoCo 里以 500 Hz 跑真物理，腕部用 mocap weld 按录下的 100 Hz 腕部轨迹走（相对 cube 的位姿，cube 放在 MJCF 自己的桌面出生点），手指位置执行器 kp = 8、±2 N·m，54 mm／120 g cube。到录下的抬离时刻后，腕部脚本抬高 8 cm（1 s）再保持 1 s。两种手指命令：<b>replay</b> = 操作者当时的 retarget 目标；<b>goal</b> = 接近时同上，掌部进入标签掌姿 3 cm 内后 0.4 s 内线性闭合到标签的 16 个关节角（即 Stage 1.2 预测的那种「终点」）并保持。95 条全部跑完：</p>
+<div class="tw"><table>
+<tr><th>手指命令</th><th>抬离前 ≥2 指接触</th><th>抬起 ≥2.5 cm</th><th>保持 1 s 且滑移 &lt; 2 cm</th><th>掉落</th><th>滑移中位</th><th>穿透 &gt; 5 mm</th><th>峰值法向力 &gt; 40 N</th></tr>
+<tr><td>replay · 录下的 retarget 目标</td><td>99%</td><td>99%</td><td><b>99%</b>（94/95）</td><td>0%</td><td>0.3 cm</td><td>48/95</td><td>37/95（最大 219 N）</td></tr>
+<tr><td>goal · 闭合到标签关节角</td><td>80%</td><td>88%</td><td><b>47%</b>（45/95）</td><td>29%</td><td>2.1 cm</td><td>41/95</td><td>32/95</td></tr>
+</table></div>
+<div class="videos">
+<figure><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-2-results/closure-replay.mp4"></video>
+<figcaption><b>replay</b>（）：录下的手指命令 + 录下的腕部轨迹，真物理，抬起并保持。 <a href="assets/l20-stage1-2-results/closure-replay.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-2-results/closure-goal.mp4"></video>
+<figcaption><b>goal</b>（）：闭合到标签关节角后抬起——一条保持、一条滑落。 <a href="assets/l20-stage1-2-results/closure-goal.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
+</div>
+<p><b>同晚追加的两组修复</b>（数据集 <code>dataset_all_qref.npz</code>，run <code>results/closure_qref/</code>）：把标签的关节部分换成抬离时刻的 <b>retarget 命令 q_ref</b>；把腕部换成部署端的<b>有界六维 PD</b>（Kp 1000 N/m、Kr 80 N·m/rad、力 ≤ 60 N、扭矩 ≤ 4 N·m、整手重力与力矩补偿；阻尼放进自由关节的 <code>dof_damping</code> 由 implicitfast 隐式积分——显式施加时 500 Hz 下 30 步内发散）。腕部跟踪：位置 p95 13.6 mm、角度 p95 3.1°（审计参考 12.8 mm、1.1°）。</p>
+<div class="tw"><table>
+<tr><th>手指命令</th><th>腕部</th><th>抬离前 ≥2 指接触</th><th>抬起</th><th>保持 1 s 且滑移 &lt; 2 cm</th><th>掉落</th><th>从未触到 cube</th><th>穿透 &gt; 5 mm</th><th>峰值力 &gt; 40 N（最大）</th></tr>
+<tr><td>goal · 闭合到 <b>q_ref</b> 标签</td><td>weld</td><td>99%</td><td>98%</td><td><b>96%</b>（91/95）</td><td>0%</td><td>0</td><td>41/95</td><td>32/95（219 N）</td></tr>
+<tr><td>replay · 录下的 q_ref</td><td>有界 PD</td><td>85%</td><td>85%</td><td><b>83%</b>（79/95）</td><td>2%</td><td>13</td><td>1/95</td><td>1/95（96 N）</td></tr>
+<tr><td>goal · 闭合到 q_ref 标签</td><td>有界 PD</td><td>86%</td><td>83%</td><td><b>81%</b>（77/95）</td><td>2%</td><td>11</td><td>2/95</td><td>3/95</td></tr>
+</table></div>
+<div class="videos">
+<figure><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-2-results/closure-replay-bounded-pd.mp4"></video>
+<figcaption><b>replay · 有界 PD</b>：同样的录制，腕部柔顺后力和穿透消失；第二条 trial 手指闭在空气里——手滞后目标 1–2 cm，回放时没有人补偿。 <a href="assets/l20-stage1-2-results/closure-replay-bounded-pd.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
+<figure><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-2-results/closure-goal-qref-bounded-pd.mp4"></video>
+<figcaption><b>goal · q_ref 标签 · 有界 PD</b>：闭合到命令空间的标签，与 replay 同水平。 <a href="assets/l20-stage1-2-results/closure-goal-qref-bounded-pd.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
+</div>
+<p>三个结论：</p>
+<ol>
+<li><b>pinch 的执行不是瓶颈。</b>把操作者自己的手指命令原样回放，95 条里 94 条抬起并保持，滑移 3 mm。单 cube 的 pinch 不需要学习型执行器；Stage 1.3 的第一版执行模块可以是「retarget 命令 + 门控」。</li>
+<li><b>Stage 1.2 的标签是姿态，不是命令。</b>标签取的是抬离时 sim-actual 的关节角，也就是接触下<i>实际达到</i>的角度；位置控制要产生夹持力，目标必须越过接触面。直接把标签当命令，保持率从 99% 掉到 47%，滑移 2 cm；把标签换成抬离时刻的 retarget 命令 q_ref 后回到 96%。1.2 的预测目标因此改为 q_ref 空间（阶梯已重跑，见下）。</li>
+<li><b>刚性 weld 会顶穿，有界 PD 修好了它，但暴露出开环回放的下一个问题。</b>weld 下一半 trial 穿透超过 5 mm、峰值力超过 40 N（最大 219 N、27 mm）；换成部署端的有界 PD 后只剩 1/95。代价是 13/95 条手指闭在空气里：柔顺腕部滞后目标 1–2 cm，录制时操作者看着手实时补偿，回放时没有。1.3 的执行层因此不能按时间闭合，要按测得的手–cube 相对位姿或接触闭合，并允许一个小的伸手修正——这正是「几何修正」模块的第一项任务。</li>
+</ol>
+<p class="small">代码：<code>training/stage12_intent/services/level_3_experiment/closure_replay.py</code>；结果 <code>results/closure/closure_replay.json</code>、<code>closure_goal.json</code>。仿真接触不是人体接触真值，保持 1 s 不等于承重或抗扰。</p>
+
+<h2 id="next">缺口与下一步</h2>
+<ol>
+<li>正式 session 2–5（各 52 条 pinch），凑齐 144／48／48；采集脚本已是 pinch-only。</li>
+<li>方向／抓取面多样性改由布局提供（cube 出生到身体另一侧，需第二个 XML＋APK），不再依赖提示。</li>
+<li>终点抽查复核（<code>add-endpoint</code> 流程尚未走过）。</li>
+<li>Stage 1.3：按 <code>hand_control/plan/stage13-shared-grasp-design.md</code> 先做无学习的脚本闭合与 T0／T1 对照，再决定是否训练残差策略。</li>
+</ol>
+
+<footer><a href="l20-stage1-2-training.html">← Stage 1.2：Training（计划）</a> · <a href="l20-stage1-3-shared-grasp.html">Stage 1.3</a> · <a href="index.html">Machine Learning Handbook</a></footer>
+</div>
+</body>
+</html>

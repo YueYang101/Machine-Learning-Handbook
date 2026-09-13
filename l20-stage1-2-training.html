@@ -71,7 +71,7 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <div class="kicker">实验计划 · Stage 1.1 验收后执行 · 2026-09-13</div>
 <h1>Stage 1.2：Training</h1>
 <p class="lede">使用 Stage 1.1 冻结的单一 cube Quest→retarget→L20 示教，并行尝试两个 Human Model：A 是删除 gaze／物体分支的 Gaze-Guided VQ-VAE＋自回归 Transformer；B 是条件 Flow Matching 生成预测。两者都只根据尚未完成的手部动作前缀预测未来，不直接输出机器人当前控制命令。</p>
-<p class="meta">状态：待 Stage 1.1 数据验收，尚未训练。当前写的是模型与比较协议，不是训练结果；实际 optimizer、batch、训练轮数、随机种子、checkpoint 与运行时间在首个 run 中记录。</p>
+<p class="meta">状态：2026-09-13 在 pilot + 正式 session 1 的 95 条 pinch 示教上跑了首个 run，结果与视频见 <a href="l20-stage1-2-results.html">Stage 1.2 结果</a>（实验记录）。本页保留模型与比较协议；240 条正式数据的 144／48／48 划分尚未采齐，正式结果待补。</p>
 <div class="key good"><b>明确是两个方案：</b>方案 A 学离散 motion token 的序列条件概率，目标是复现“动作前缀 → 到接触为止的未来序列”；方案 B 学连续未来手姿的条件分布，目标是避免不确定时只输出一只“平均手”。它们共享数据，但编码、loss 和推理过程都不同。</div>
 <div class="key warn"><b>小数据取舍：</b>240 条 trial 可能不足以同时稳定训练 codebook、Transformer 和高维轨迹生成器。因此 A 保留论文式完整序列任务；B 首轮只生成物体坐标系中的多个最终 L20 手姿候选。两者先在相同终点指标上比较，不把不同额外能力混成一个总分。</div>
 <nav class="toc" aria-label="本页目录"><a href="#schemes">两个方案</a> · <a href="#boundary">与 IL 的关系</a> · <a href="#data">共同数据</a> · <a href="#scheme-a">方案 A</a> · <a href="#flow">方案 B</a> · <a href="#comparison">对照与判据</a> · <a href="#runbook">当前五步</a></nav>

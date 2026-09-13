@@ -40,7 +40,7 @@
 |---|---|
 | [l20-robust-grasp.html](l20-robust-grasp.html) | L20 Robust Grasp：三条长期主线——L20 robust grasp、真人手预训练并经 retargeting 迁移到 L20、面向残障用户的 online learning；当前短期先数采，再做 L20 抓姿训练 |
 | [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | Stage 1.1 数采（preparation 待验收）：10 条试跑回放 → 3 手形 × 4 方向 × 2 位置 × 10 重复，共 240 条平衡 L20 示教 + 24 条改意图／取消诊断 → 冻结字段、坐标、标签与 144／48／48 session 划分 |
-| [l20-stage1-2-training.html](l20-stage1-2-training.html) | Stage 1.2 Training（待 Stage 1.1 数据验收）：两个方案并列——A 删除 gaze／物体分支的 VQ-VAE＋自回归 Transformer 预测未来序列；B 状态条件 Flow Matching 生成多个最终 L20 手姿候选；共享确定性基线与冻结划分 |
+| [l20-stage1-2-training.html](l20-stage1-2-training.html) | Stage 1.2 Training（首个 run 结果见 [l20-stage1-2-results.html](l20-stage1-2-results.html)）：两个方案并列——A 删除 gaze／物体分支的 VQ-VAE＋自回归 Transformer 预测未来序列；B 状态条件 Flow Matching 生成多个最终 L20 手姿候选；共享确定性基线与冻结划分 |
 | [l20-stage1-3-shared-grasp.html](l20-stage1-3-shared-grasp.html) | Stage 1.3 意图条件的共享抓取控制（方案已记录，待执行）：复用 1.2 预测 → 候选选择与几何修正 → 目标条件闭环执行；T0–T3 分开验证预测与执行收益，按需升级 RL／残差；参考 DexGen 动作先验 |
 | ↳ [l20-grasp-sources-review.html](l20-grasp-sources-review.html) | 配套项目选型综述（计划）：人类数据库与几何／捏合／接触／物理 retarget；模型生成与数学优化；既有 ORCA BODex 资产审计、L20 适配缺口；GraspADMM / DexEvolve / CoToGrasp 等近期进展；可用性与后续接口备忘；是独立文献库，不是并行待办 |
 | [shared-control.html](shared-control.html) | 共享控制路线：从 To the Noise and Back 到 EMG 灵巧手 |
@@ -56,6 +56,7 @@
 
 | 页面 | 内容 |
 |---|---|
+| [l20-stage1-2-results.html](l20-stage1-2-results.html) | Stage 1.2 结果：意图预测／人类模型建模——95 条 pinch 示教留一 session 的阶梯结果、影子手逐帧预测视频、序列生成器与输入消融、数据侧发现、Stage 1.3 第二步物理回放预检 |
 | [dexhand-rl.html](dexhand-rl.html) | 灵巧手 RL 实验记录：锤钉与抓取，每个 reward 版本的视频与失败解剖 |
 | [dexhand-engineering.html](dexhand-engineering.html) | 灵巧手工程记录：Quest 真人搬运与物理力审计、RT 已试／未验证对照、新手势测试；历史碰撞简化与 JAX→Warp 迁移 |
 | [hand-control.html](hand-control.html) | Hand Control 技术路线手册：EMG + Quest 手部追踪 + L20 遥操作 |

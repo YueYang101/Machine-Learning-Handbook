@@ -86,7 +86,7 @@ details.box li { margin:5px 0; font-size:.9rem; color:var(--sub); }
   <div class="tabs" role="tablist" aria-label="内容分类">
     <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="true" tabindex="0">理论<span class="cnt">6</span></button>
     <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">6</span></button>
-    <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验记录<span class="cnt">3</span></button>
+    <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验记录<span class="cnt">4</span></button>
     <button type="button" role="tab" id="tab-tools" aria-controls="panel-tools" aria-selected="false" tabindex="-1">工具</button>
   </div>
 </nav>
@@ -179,6 +179,11 @@ details.box li { margin:5px 0; font-size:.9rem; color:var(--sub); }
 
 <h2>实验记录<span class="en">EXPERIMENTS</span></h2>
 <p class="note">自己跑出来的东西：版本、曲线、视频、失败解剖。</p>
+
+<a class="card" href="l20-stage1-2-results.html">
+  <div class="t">Stage 1.2 结果：意图预测／人类模型建模</div>
+  <div class="d">95 条 pinch 示教（6 pilot + 正式 session 1）留一 session：M0 抬离前 1 s 2.4–2.8 cm、残差版抬离时 0.9 cm；方案 A 停在码本重建、方案 B 无多模态、FMS 是最好的序列生成器但终点不如 M0；只看当前 25 维状态的线性模型在 1 s 上最好 · 影子手逐帧预测视频 · 发现：抓取提示与方向提示都没进标签 · Stage 1.3 预检：录下的 pinch 原样回放 99% 抓住，闭合到标签关节角只有 47%</div>
+</a>
 
 <a class="card" href="dexhand-rl.html">
   <div class="t">灵巧手 RL 实验记录：锤钉与抓取</div>
