@@ -67,7 +67,7 @@ a { color:var(--blue); text-decoration:none; }
 <body>
 <div class="wrap">
 <a class="bk" href="l20-stage1-2-training.html">← Stage 1.2：Training（计划）</a> · <a class="bk" href="l20-stage1-3-shared-grasp.html">Stage 1.3</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.2 · 2026-09-13 · 更新 2026-09-14（<a href="#live">实时演示</a>、<a href="#contacts">接触点消融</a>）</div>
+<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.2 · 2026-09-13 · 更新 2026-09-14（<a href="#live">实时演示</a>、<a href="#contacts">接触点消融</a>、<a href="#confidence">置信度</a>）</div>
 <h1>Stage 1.2 结果：意图预测／人类模型建模<br><span class="small" style="font-weight:400">pilot 6 个 session + 正式 session 1 · 95 条 pinch 示教 · 留一 session 交叉验证 · 手册 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a> 的首个 run</span></h1>
 
 <p class="lede">这是 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a>的第一次实际运行：用 <a href="l20-robust-grasp-stage1.html">Stage 1.1</a> 当天采集的 95 条 Quest→retarget→L20 示教，按计划的阶梯（B0／B1／M0／方案 A／方案 B）训练并在留出的 session 上比较，附影子手视频。<b>结论先行：</b>抬离前 1 s，学习模型比「保持当前姿态」好 3 cm、比最近示教和常数预测好 0.5 cm；残差形式的小模型在抬离时刻误差 0.9 cm；方案 B（Flow Matching）与确定性回归无差异且候选无多模态，方案 A（VQ-VAE＋AR）停在码本重建；一个只看当前 25 维状态的线性模型在 1 s 提前量上是最好的。数据侧的两个发现比模型更重要：抓取提示与方向提示都没有在标签里留下痕迹。</p>
@@ -282,6 +282,34 @@ mjpython -m training.stage12_intent live --source udp --port 5599 --ghost-udp 56
 </ul></div>
 <p class="small">脚本与数字：<code>training/stage12_intent/services/level_3_experiment/tips_ablation.py</code>、<code>contacts_ablation.py</code>，结果 <code>results/tips_ablation/</code>、<code>results/contacts_ablation/</code>；计划文档 <code>training/plan/stage12_intent_poc.md</code>；提交 79723aa、8a0e10c。</p>
 
+<h2 id="confidence">置信度：预测何时可信、低置信度过滤、仲裁系数（2026-09-14）</h2>
+<p>问题有两个：Quest 手势识别本身能否给出置信度并把低置信度的过滤掉；模型的手势／接触点预测能否输出置信度，作为共享控制的仲裁系数。两个都做了，分别在数据链路的两端。</p>
+<h3>Quest 手势识别的置信度（数采端）</h3>
+<p>Quest 应用早已在每条 landmark 报文头里发两个置信度：整手 <code>c</code>（Meta 的 <code>IsHighConfidence</code>，0／1）和逐指 <code>fc</code>（五个比特，bit 0 = 拇指）。整手那个一直在用：整手低置信度的帧不产生命令（头显 0.35 s 后判定命令丢失、保持姿态），记录里 <code>source</code> 行的 <code>tracked</code>／<code>confidence</code> 就是它。逐指比特此前解析了但没有消费——手指被手掌或物体挡住时 Meta 会把那根手指标低，而整手仍算跟踪，此时 retarget 用的是追踪器猜出来的关节。现在逐指判定进帧（<code>LandmarkFrame.finger_confidence</code>）和记录（<code>source</code> 行 <code>finger_confidence</code>，<code>command</code> 行 <code>finger_hold</code>）；<code>quest_teleop.py --finger-confidence hold</code> 让低置信度的手指保持它最后一次高置信度的命令，其余手指照常。合并 demo 默认开（<code>MJQUEST_FINGER_CONFIDENCE=ignore</code> 关），采集脚本默认不变；会话结束行打印 <code>finger low-confidence frames N/M</code>。头显端无需改动。</p>
+<h3>模型预测的置信度</h3>
+<p>先在今天的合并 demo 记录上诚实地量（残差 M0，一位操作者，6 条 trial，抬起前 1337 次预测，没有一条在训练集里；真值取该 trial 第一条 Transport 采样时的状态）：</p>
+<div class="tw"><table>
+<tr><th>距抬起</th><th>n</th><th>手掌误差中位数</th><th>模型预计剩余位移中位数</th></tr>
+<tr><td>&lt; 0.25 s</td><td>24</td><td>2.9 cm</td><td>2.8 cm</td></tr>
+<tr><td>0.25–0.5 s</td><td>26</td><td>3.2 cm</td><td>3.3 cm</td></tr>
+<tr><td>0.5–1 s</td><td>57</td><td>4.6 cm</td><td>4.6 cm</td></tr>
+<tr><td>1–2 s</td><td>108</td><td>7.7 cm</td><td>8.0 cm</td></tr>
+<tr><td>2–5 s</td><td>268</td><td>8.7 cm</td><td>9.1 cm</td></tr>
+<tr><td>&gt; 5 s</td><td>854</td><td>16.3 cm</td><td>17.0 cm</td></tr>
+</table></div>
+<p>误差几乎就等于模型自己预计还要走的位移（Spearman 0.62，抬起前 2 s 内 0.82）——残差模型离目标越远越向当前姿态回归。剩下"自信却错"的一类（剩余 ≤ 5 cm 但错 &gt; 10 cm，46／1337）全是手快速（14 cm/s）背离 cube、手指在动、离真正抓取还有 ~20 s 时做出的预测。于是<b>预期误差 = 剩余位移 + 0.3 s × 手掌速度</b>（手还得走完剩余位移，且按当前速度至少再走一个反应时间），<b>置信度 = 0.5<sup>预期误差／门限</sup></b>，门限默认 6 cm，±1 cm 滞回加 0.2 s 驻留防止 20 Hz 闪烁。今天记录上的门控效果：</p>
+<div class="tw"><table>
+<tr><th>门控</th><th>保留</th><th>保留部分误差中位数</th><th>p90</th><th>"自信却错"保留</th><th>好预测（≤ 5 cm）保留</th></tr>
+<tr><td>仅剩余 ≤ 5 cm</td><td>14 %</td><td>3.7 cm</td><td>15.8 cm</td><td>46/46</td><td>114/114</td></tr>
+<tr><td>预期误差 ≤ 5 cm</td><td>6 %</td><td>2.9 cm</td><td>11.0 cm</td><td>8/46</td><td>59/114</td></tr>
+<tr><td>预期误差 ≤ 6 cm（默认）</td><td>9 %</td><td>3.2 cm</td><td>14.5 cm</td><td>14/46</td><td>88/114</td></tr>
+<tr><td>预期误差 ≤ 8 cm</td><td>15 %</td><td>4.1 cm</td><td>15.2 cm</td><td>26/46</td><td>109/114</td></tr>
+</table></div>
+<p>试过并放弃的信号：flow matching 采样离散度（各时距都是 0.5–0.7 cm，见阶梯表）；5 个随机种子的残差 M0 集成（错与对的离散度 2.1 vs 1.9 cm，Spearman 0.42，只跟时距走、找不出错的）；输入 z 分数（AUC 0.71，记录在 <code>zmax</code> 但不门控）；预测在标签空间的 z 分数（把整场都标掉——今天的抓取在手掌位置上离训练标签分布 4–6 σ，这也是抬起时误差 3 cm 而留一 session 只有 0.9 cm 的原因：数据缺口，过滤器补不了）。这些是一位操作者一场记录上的观察，不是校准过的保证。</p>
+<p><b>接进链路。</b>预测器每条日志与每条影子报文带 <code>confidence</code>、<code>err_hat_m</code>、<code>gated</code>；被门控的预测照样算、照样发，遥操作脚本把它从控制包里去掉（头显立即隐藏，面板不再显示 overlay ON）并以 <code>attached=false</code> 记成 <code>ghost</code> 行。按键：<code>f</code> 过滤开关，<code>[</code> <code>]</code> 门限 ∓1 cm（<code>--no-filter</code>、<code>--threshold-cm</code>）。置信度也随控制包进头显（<code>ghost.confidence</code>，头显端按它淡化影子并显示在面板——C# 已写好并加了检查，但今天 demo 一直在跑，未编译、未安装；现装 APK 会忽略这个字段，过滤完全在主机端生效）。</p>
+<p><b>仲裁系数。</b><code>quest_teleop.py --alpha-from-confidence</code>：残差权限 α = α<sub>max</sub> × 最新预测的置信度（0.5 s 内无报文则不缩放），每条命令记 <code>prediction_confidence</code>。目前是遥操作脚本对 Stage 1.3 门控对象的一个垫片（改 <code>gate.alpha_max</code>），已告知 Stage 1.3 会话给控制器加正式的 trust 输入。合并 demo 默认开（<code>MJQUEST_ALPHA_FROM_CONFIDENCE=0</code> 关）。</p>
+<p class="small">代码：<code>training/stage12_intent/services/level_3_experiment/live.py</code>（<code>Confidence</code>）、<code>hand_control/services/level_3_teleop_runtime/l20_sources.py</code>（逐指比特）、<code>hand_control/demo/quest_teleop.py</code>（<code>hold_low_confidence_fingers</code>、<code>--alpha-from-confidence</code>）；分析脚本在会话草稿区，数字见 README 的 Confidence gate 一节；测试 <code>test_stage12_intent.py::test_confidence_gate_expected_error_hysteresis_and_keys</code>、<code>test_quest_teleop_demo_keys.py</code>、<code>test_quest_workspace.py</code>。</p>
+
 <h2 id="next">缺口与下一步</h2>
 <ol>
 <li>正式 session 2–5（各 52 条 pinch），凑齐 144／48／48；采集脚本已是 pinch-only。</li>
@@ -290,6 +318,7 @@ mjpython -m training.stage12_intent live --source udp --port 5599 --ghost-udp 56
 <li>Stage 1.3：按 <code>hand_control/plan/stage13-shared-grasp-design.md</code> 先做无学习的脚本闭合与 T0／T1 对照，再决定是否训练残差策略。</li>
 <li>（2026-09-14 追加）接触点要成为模型，需要 cube 朝向随机或第二布局／物体，让接触面随接近过程变化；在此之前接触目标用平均先验。</li>
 <li>（2026-09-14 追加）头显内影子与接触点的人眼确认和帧率测量；确认后把 demo 会话的头显记录（<code>ghost_display</code> 行）与日志对齐一次。</li>
+<li>（2026-09-14 追加）置信度门限只在一场记录上量过，下一场 demo 后用 <code>err_hat_m</code>／<code>gated</code> 与真值重算一次表；Stage 1.3 控制器加 trust 输入替换垫片；头显端置信度淡化待编译安装。抬起时 3 cm 对 0.9 cm 的差距要靠这些抓取方向的数据，不靠过滤。</li>
 </ol>
 
 <footer><a href="l20-stage1-2-training.html">← Stage 1.2：Training（计划）</a> · <a href="l20-stage1-3-shared-grasp.html">Stage 1.3</a> · <a href="index.html">Machine Learning Handbook</a></footer>
