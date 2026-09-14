@@ -72,7 +72,7 @@ a { color:var(--blue); text-decoration:none; }
 
 <p class="lede">这是 <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a>第 4 步（RL 残差策略）的第一次实际运行，接在第 2 步物理回放预检之后（预检结果记在 <a href="l20-stage1-2-results.html#closure">Stage 1.2 结果页</a>）。同一晚还做了三件配套的事：按录像核对并修订了腕部模拟方案、做了 Stage 1.3 相关工作的批判性综述、并按综述里的收益加训了两条对照臂。设计文档：<code>Dex_Hand/human_machine_interaction/hand_control/plan/stage13-shared-grasp-design.md</code>（§1.1 录像核对、§2.1 动态参与、§6c 环境实现、§8 学习曲线）；综述：<code>hand_control/plan/2026-09-13-stage13-related-work.md</code>。</p>
 
-<div class="callout"><b>本页不是 Stage 1.3 的正式结果。</b>全部在仿真里、只有一名操作者的 95 条 pinch 示教作人手来源、腕部用软 weld 而不是部署的有界 PD、每条臂只跑了 20M 步一个 seed。它回答的只是「这套环境能不能训、零残差的人自己能抓多少、第一版门控残差有没有动静」。结论先写在前面：<b>门控残差策略（α_max 0.3）两个 seed 在 20M 步后与 α=0 的配对差别在 1 到 7 个百分点内，施加的残差只有 2 到 5 mrad；把授权放开到 α≡1 训练的对照臂，在部署门控（α_max=1）下高 8 到 16 个百分点，完全不设门控再高 8 个百分点，掉落从 10% 降到 1%–4%，且不改变用户的抓法。</b>第一版没动静的主因是授权上限（45 mrad），不是没有学习信号。<b>2026-09-14 上午的 α 扫描</b>（<a href="#sweep">同一策略换 arbitration</a>）：收益在 α 0.3–0.5 饱和；几何门控比常数 α 低 6–8 个百分点；喂数据集平均抓取位姿与 oracle 目标成绩相同，真机不需要预测器。真机接线代码已就绪（<a href="#deploy">影子仿真 + 部署包络</a>），未上头显。</div>
+<div class="callout"><b>本页不是 Stage 1.3 的正式结果。</b>全部在仿真里、只有一名操作者的 95 条 pinch 示教作人手来源、腕部用软 weld 而不是部署的有界 PD、每条臂只跑了 20M 步一个 seed。它回答的只是「这套环境能不能训、零残差的人自己能抓多少、第一版门控残差有没有动静」。结论先写在前面：<b>门控残差策略（α_max 0.3）两个 seed 在 20M 步后与 α=0 的配对差别在 1 到 7 个百分点内，施加的残差只有 2 到 5 mrad；把授权放开到 α≡1 训练的对照臂，在部署门控（α_max=1）下高 8 到 16 个百分点，完全不设门控再高 8 个百分点，掉落从 10% 降到 1%–4%，且不改变用户的抓法。</b>第一版没动静的主因是授权上限（45 mrad），不是没有学习信号。<b>2026-09-14 上午的 α 扫描</b>（<a href="#sweep">同一策略换 arbitration</a>）：收益在 α 0.3–0.5 饱和；几何门控比常数 α 低 6–8 个百分点；喂数据集平均抓取位姿与 oracle 目标成绩相同，真机不需要预测器。真机接线代码已就绪（<a href="#deploy">影子仿真 + 部署包络</a>），第一次真机试跑暴露并修掉了包络的判据问题。<b>2026-09-14 下午的发现改变本页全部仿真数字的读法：</b>jax 与 Warp 后端不等价，离群的是 jax；在 Warp（与 MuJoCo C 一致）下纯人手回放已 98%–100% 成功，手指残差没有东西可补（<a href="#pred">§C</a>）。</div>
 
 <h2 id="setup">环境：实现了什么，和设计初值差在哪</h2>
 <div class="tw"><table>
@@ -191,6 +191,40 @@ a { color:var(--blue); text-decoration:none; }
 <p>用录好的 session 离线预演（命令流按真实 ack 时序过一遍控制器，和头显自己的 100 Hz 物理日志比）：关节 RMS 中位数 6 mrad；手掌 6–8 mm、1–2°；方块 4–7 mm 中位数但 p95 14 到 21 cm——影子里抓没抓住与头显不一致时方块分道扬镳，1 Hz 记录的 ack 才纠一次；五指接触标志逐位一致 86–89%。观测 z 分数：相对位姿与手腕误差各槽都在 1σ 内（坐标系与单位对了），但中指、无名指、小指屈曲在包络打开的 tick 上中位数 −1.7 到 −2.8σ：训练窗口只覆盖抬离前 1.5 s 的预塑形手，真人靠近方块 6 cm 内时其他手指还张着，策略没见过这种手。两份预演报告：<code>dryrun-20260913T191049Z-gate1.json</code>、<code>dryrun-20260913T171559Z-const0.5.json</code>。</p>
 <p>入口 <code>sh hand_control/demo/collect_stage13_shared.sh</code>（默认 const 0.5；<code>MJQUEST_ALPHA_MODE=gate</code> 门控对照；<code>off</code> 为同一记录格式的直接遥操作基线），<code>--purpose shared</code>，记录里 <code>ctrl</code> 是实际发出的混合命令，另存 <code>ctrl_human</code> 与每条命令的 α、包络原因、Δu、接触、z 分数。头显侧把回报周期 0.5 s → 0.02 s 并加上五指接触与掌部位姿的 C# 改动已写好，<b>未构建、未安装</b>。</p>
 
+
+<h2 id="pred">预测器接入、接触点目标、以及一个改变读法的发现：jax 与 Warp 后端不等价（2026-09-14 下午）</h2>
+<h3>A. 现有 α≡1 策略换目标来源（不重训）</h3>
+<p>目标槽由 <code>training/stage12_intent … bank_predictions</code> 在轨迹库每个 50 Hz 网格点上预先算好，环境每步更新，等价于 20 ms 一次的实时预测。<b>pred_m0</b> 是留一 session 的残差 M0（预测这条 trial 的模型没见过它所在的 session；抬离前 1 s 误差 2.78 cm、抬离时 1.01 cm，与 Stage 1.2 页面一致）；<b>pred_final_*</b> 是部署 checkpoint，在全部 95 条上训过、此处样本内（1 s 误差 0.3 cm，看着好但不算数）。JSON 在 <code>assets/l20-stage1-3-results/pred/</code>。</p>
+<div class="tw"><table>
+<tr><th>目标来源</th><th>const 1.0</th><th>gate ≤1.0</th></tr>
+<tr><td>oracle（本条真实抬离位姿）</td><td>0.83 / 0.85 / 0.50 / 0.63</td><td>0.75 / 0.75 / 0.43 / 0.55</td></tr>
+<tr><td>数据集平均位姿</td><td>0.83 / 0.84 / 0.50 / 0.62</td><td>0.68 / 0.71 / 0.40 / 0.54</td></tr>
+<tr><td><b>pred_m0 留一 session</b></td><td>0.84 / 0.86 / 0.48 / 0.62</td><td><b>0.76 / 0.76 / 0.43 / 0.55</b></td></tr>
+<tr><td>pred_final_m0 样本内</td><td>0.83 / 0.84 / 0.50 / 0.62</td><td>0.75 / 0.73 / 0.45 / 0.54</td></tr>
+<tr><td>pred_final_ml 样本内</td><td>0.81 / 0.81 / 0.50 / 0.63</td><td>0.75 / 0.72 / 0.43 / 0.55</td></tr>
+<tr><td>pred_final_rl 样本内</td><td>0.81 / 0.82 / 0.48 / 0.61</td><td>0.77 / 0.76 / 0.42 / 0.54</td></tr>
+</table></div>
+<p>const 下预测器接不接都一样，策略不看目标槽；gate 下预测器把平均位姿丢掉的 6 到 7 个百分点全补回来、与 oracle 持平。预测器的价值在<b>时机</b>（门控用目标算距离），不在手指动作。仿真里接不接一样不是目标没信息（抬离位姿到平均值平均差 3.1 cm，抬离前 1.5 s 手掌还要走 11.8 cm），而是手指残差的最佳动作不取决于它：手掌到哪是手腕带过去的，何时合拢看 u_h、合多紧看接触。</p>
+<h3>B. 三条新臂：窗口拉长到抬离前 3 s，预测器接入，接触点作目标</h3>
+<p>α≡1，20M 步，berlin；接触点来自头显物理记录的真实接触位置（<code>contact_label</code>，cube 系；随终点扰动一起平移），接触误差用真实接触点算、未接触时退化到指尖 site；<b>这批数据的接触点没有变化</b>（各轴 std 0.7–0.9 cm，永远捏 ±x 两面同一处），所以它只能回答"表示方式有没有用"，回答不了"不同位置"。接触误差列只在 LongPred 臂里是到记录接触点的距离，其余臂是到方块中心的距离，不可跨臂比。</p>
+<div class="tw"><table>
+<tr><th>臂</th><th>成功 α=0</th><th>成功 策略</th><th>掉落（混合）</th><th>接触误差@抬离 α=0 → 策略（cm）</th></tr>
+<tr><td>Long：oracle 目标，只拉长窗口</td><td>0.54 / 0.57 / 0.37 / 0.48</td><td>0.78 / 0.77 / 0.50 / 0.61</td><td>0.02</td><td>—</td></tr>
+<tr><td>LongPredNoContact：目标 = pred_m0</td><td>0.53 / 0.55 / 0.38 / 0.48</td><td>0.77 / 0.78 / 0.50 / 0.59</td><td>0.02</td><td>—</td></tr>
+<tr><td>LongPred seed 0：+ 接触点目标与奖励</td><td>0.53 / 0.55 / 0.38 / 0.48</td><td><b>0.82 / 0.82 / 0.50 / 0.61</b></td><td>0.02</td><td>2.29 / 2.24 / 2.60 / 2.48 → 2.36 / 2.28 / 2.75 / 2.54</td></tr>
+<tr><td>LongPred seed 1（4090，jax 路径）</td><td>同上</td><td>0.82 / 0.83 / 0.54 / 0.63</td><td>0.02</td><td>→ 2.35 / 2.24 / 2.59 / 2.46</td></tr>
+</table></div>
+<p>窗口拉长后策略照样能学，提升幅度与短窗口一致；预测器接进来对手指动作无影响；接触点目标让成功率再高 4 到 5 个百分点（两个 seed 同向），但抬离时的接触点误差没有变小，策略拿的是"更早更实地合上"，不是"合到记录的那个点"。<b>以上全部是 jax 后端的数字，下一节改变它们的读法。</b></p>
+<h3>C. jax 与 Warp 不等价：离群的是 jax</h3>
+<p>为了让 4090 走 Warp（要求最新正式版 warp，不降级），4090 的 venv 升到 mujoco 3.13.0 / mujoco-mjx 3.13.0 / warp-lang 1.17.0（每个 MJX 版本钉死一个 warp：3.6→1.11.1、3.12→1.16、3.13→1.17），环境的指尖接触改读 MJCF contact sensor（jax 下与原读法逐步一致），Warp 下关掉每步一条的求解器截断警告。Warp 跑通：Long 臂 20.6M 步训练 91 s（约 13M 步/分，berlin H200 jax 路径的 8 倍）。然后拿同一个 berlin 训的 Long 策略在两个后端下评测，再在 Warp 下重训一次：</p>
+<div class="tw"><table>
+<tr><th>物理</th><th>零残差（纯人手）</th><th>Long 策略，jax 训</th><th>Long 策略，Warp 训</th><th>手掌到目标</th></tr>
+<tr><td>jax，mujoco 3.6.0（berlin）</td><td>0.54 / 0.57 / 0.37 / 0.48</td><td>0.78 / 0.77 / 0.50 / 0.61</td><td>—</td><td>6.1–6.9 cm</td></tr>
+<tr><td>jax，mujoco 3.13（4090）</td><td>—</td><td>0.78 / 0.77 / 0.51 / 0.61</td><td>—</td><td>6.1–6.9 cm</td></tr>
+<tr><td><b>Warp，mujoco 3.13（4090）</b></td><td><b>1.00 / 0.98 / 0.68 / 0.80</b></td><td>0.99 / 0.98 / 0.65 / 0.80</td><td><b>0.99 / 0.98 / 0.66 / 0.80</b></td><td>2.0–2.5 cm</td></tr>
+</table></div>
+<p>3.6 → 3.13 对 jax 路径零影响；但 Warp 下纯人手回放在干净来源上 98%–100% 成功、滑移 0.2 cm，与另一会话昨晚 MuJoCo C 物理的闭合回放（99% 保持）和真机上这些录像全部成功一致；jax 下方块常被推走或在指间转动。<b>离群的是 jax 后端。</b>因此本页前面 jax 上的 +16–24 个百分点、掉落 10% → 1%，相当一部分是策略在补偿 jax 求解的接触损失；在接近真实的物理里，单方块 pinch 上手指残差没有东西可补，Warp 训的策略与纯人手持平，扰动来源上也不帮忙（手腕偏了手指救不了）。这不否定共享控制，但否定了当前仿真设定能证明它：录像回放的人没有多样性、没有犹豫、手腕永远正确。下一步先把 Stage 1.1 的回放基线在 Warp 上重算，再决定 T2 以后还训不训手指残差；真机上 const 0.5 + 包络的第一版可以继续试，但预期按 Warp 的数字看。</p>
+
 <h2 id="compute">算力与运行方式</h2>
 <div class="tw"><table>
 <tr><th>盒子</th><th>状态</th><th>用法</th></tr>
@@ -206,7 +240,8 @@ a { color:var(--blue); text-decoration:none; }
 <li>Stage 1.2 预测器 ĝ 接入（T3）——α 扫描显示当前策略不需要它，但接触前的「往哪抓」仍只有预测器能给；预测器在全部 95 条上训练并保存的版本目前不存在。</li>
 <li>多 seed（Finger 臂只有一个 seed；α 扫描只用了 Const 的一个 seed）。</li>
 <li>训练窗口延长到靠近方块前的张手阶段（真机包络打开时其他手指的屈曲在训练分布外 2–3σ）；PD 腕部前馈。</li>
-<li>头显 APK 重建与安装（50 Hz 回报、指尖接触）；然后是第一次真人在环 session（const 0.5 对 off，各 10 次）。</li>
+<li>头显 APK 已重建安装（50 Hz 回报、指尖接触）；第一次真人在环 session 已跑一次并修了包络判据（指尖距离、对称目标、分布外守卫），下一次 const 0.5 对 off 各 10 次。</li>
+<li>Stage 1.1 回放基线在 Warp 上重算；决定 T2 以后是否还训手指残差，价值只能来自真人多样性、手腕层面的辅助或多物体多抓型。</li>
 </ul>
 
 <footer>Yue Yang · 2026-09-13 / 09-14 · <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a> · <a href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a href="index.html">Machine Learning Handbook</a></footer>
