@@ -285,7 +285,7 @@ mjpython -m training.stage12_intent live --source udp --port 5599 --ghost-udp 56
 <h2 id="confidence">置信度：预测何时可信、低置信度过滤、仲裁系数（2026-09-14）</h2>
 <p>问题有两个：Quest 手势识别本身能否给出置信度并把低置信度的过滤掉；模型的手势／接触点预测能否输出置信度，作为共享控制的仲裁系数。两个都做了，分别在数据链路的两端。</p>
 <h3>Quest 手势识别的置信度（数采端）</h3>
-<p>Quest 应用早已在每条 landmark 报文头里发两个置信度：整手 <code>c</code>（Meta 的 <code>IsHighConfidence</code>，0／1）和逐指 <code>fc</code>（五个比特，bit 0 = 拇指）。整手那个一直在用：整手低置信度的帧不产生命令（头显 0.35 s 后判定命令丢失、保持姿态），记录里 <code>source</code> 行的 <code>tracked</code>／<code>confidence</code> 就是它。逐指比特此前解析了但没有消费——手指被手掌或物体挡住时 Meta 会把那根手指标低，而整手仍算跟踪，此时 retarget 用的是追踪器猜出来的关节。现在逐指判定进帧（<code>LandmarkFrame.finger_confidence</code>）和记录（<code>source</code> 行 <code>finger_confidence</code>，<code>command</code> 行 <code>finger_hold</code>）；<code>quest_teleop.py --finger-confidence hold</code> 让低置信度的手指保持它最后一次高置信度的命令，其余手指照常。合并 demo 默认开（<code>MJQUEST_FINGER_CONFIDENCE=ignore</code> 关），采集脚本默认不变；会话结束行打印 <code>finger low-confidence frames N/M</code>。头显端无需改动。</p>
+<p>Quest 应用早已在每条 landmark 报文头里发两个置信度：整手 <code>c</code>（Meta 的 <code>IsHighConfidence</code>，0／1）和逐指 <code>fc</code>（五个比特，bit 0 = 拇指）。整手那个一直在用：整手低置信度的帧不产生命令（头显 0.35 s 后判定命令丢失、保持姿态），记录里 <code>source</code> 行的 <code>tracked</code>／<code>confidence</code> 就是它。逐指比特此前解析了但没有消费——手指被手掌或物体挡住时 Meta 会把那根手指标低，而整手仍算跟踪，此时 retarget 用的是追踪器猜出来的关节。现在逐指判定进帧（<code>LandmarkFrame.finger_confidence</code>）和记录（<code>source</code> 行 <code>finger_confidence</code>，<code>command</code> 行 <code>finger_hold</code>）；<code>quest_teleop.py --finger-confidence hold</code> 让低置信度的手指保持它最后一次高置信度的命令，其余手指照常。默认只记录不保持（还没有任何一场记录有这些比特；捏合闭合时被 cube 挡住的拇指／食指若被保持，会停在接触前的命令上），先看会话结束行的 <code>finger low-confidence frames N/M</code>，再用 <code>MJQUEST_FINGER_CONFIDENCE=hold</code> 打开。头显端无需改动。</p>
 <h3>模型预测的置信度</h3>
 <p>先在今天的合并 demo 记录上诚实地量（残差 M0，一位操作者，6 条 trial，抬起前 1337 次预测，没有一条在训练集里；真值取该 trial 第一条 Transport 采样时的状态）：</p>
 <div class="tw"><table>
@@ -297,7 +297,7 @@ mjpython -m training.stage12_intent live --source udp --port 5599 --ghost-udp 56
 <tr><td>2–5 s</td><td>268</td><td>8.7 cm</td><td>9.1 cm</td></tr>
 <tr><td>&gt; 5 s</td><td>854</td><td>16.3 cm</td><td>17.0 cm</td></tr>
 </table></div>
-<p>误差几乎就等于模型自己预计还要走的位移（Spearman 0.62，抬起前 2 s 内 0.82）——残差模型离目标越远越向当前姿态回归。剩下"自信却错"的一类（剩余 ≤ 5 cm 但错 &gt; 10 cm，46／1337）全是手快速（14 cm/s）背离 cube、手指在动、离真正抓取还有 ~20 s 时做出的预测。于是<b>预期误差 = 剩余位移 + 0.3 s × 手掌速度</b>（手还得走完剩余位移，且按当前速度至少再走一个反应时间），<b>置信度 = 0.5<sup>预期误差／门限</sup></b>，门限默认 6 cm，±1 cm 滞回加 0.2 s 驻留防止 20 Hz 闪烁。今天记录上的门控效果：</p>
+<p>误差几乎就等于模型自己预计还要走的位移（Spearman 0.62，抬起前 2 s 内 0.82）——残差模型离目标越远越向当前姿态回归。剩下"自信却错"的一类（剩余 ≤ 5 cm 但错 &gt; 10 cm，46／1337）全是手快速（14 cm/s）背离 cube、手指在动、离真正抓取还有 ~20 s 时做出的预测。于是<b>预期误差 = 剩余位移 + 0.3 s × 手掌速度</b>（手还得走完剩余位移，且按当前速度至少再走一个反应时间），<b>置信度 = 0.5<sup>预期误差／6 cm</sup></b>（固定参考，不随显示门限变——它还要当仲裁系数，改显示不能改 α），显示门限默认 6 cm，±1 cm 滞回加 0.2 s 驻留防止 20 Hz 闪烁。今天记录上的门控效果：</p>
 <div class="tw"><table>
 <tr><th>门控</th><th>保留</th><th>保留部分误差中位数</th><th>p90</th><th>"自信却错"保留</th><th>好预测（≤ 5 cm）保留</th></tr>
 <tr><td>仅剩余 ≤ 5 cm</td><td>14 %</td><td>3.7 cm</td><td>15.8 cm</td><td>46/46</td><td>114/114</td></tr>
