@@ -1,0 +1,1229 @@
+{
+ "session": "20260913T191049Z-c93707c841d342e99294b20e38561761",
+ "xml": "/Users/yang/Desktop/Projects/Education/Dex_Hand/human_machine_interaction/hand_control/data/quest_models/cube-transfer-20260912/default/default.xml",
+ "policy": "/Users/yang/Desktop/Projects/Education/Dex_Hand/human_machine_interaction/hand_control/data/policies/stage13/l20_shared_pinch_const20M.npz",
+ "policy_sha256": "b2479b08dc50ca258bdb2352d611dc7676fb7f061672b98c22e5a1ecc5a630cd",
+ "alpha_mode": "gate",
+ "alpha_max": 1.0,
+ "commands": 23250,
+ "replies": 257,
+ "ack_fields": {
+  "object_qpos": 257,
+  "task_phase": 257
+ },
+ "device_physics_rows": 27553,
+ "session_seconds": 260.3,
+ "frame": {
+  "source": "workspace.translation",
+  "b": [
+   0.6429,
+   0.9748,
+   0.494
+  ]
+ },
+ "anchoring_events": {
+  "synced": 1,
+  "trial": 52,
+  "cube": 12
+ },
+ "fidelity_off_mode": {
+  "n": 15641,
+  "q_rms_rad": {
+   "median": 0.00579862593817854,
+   "p95": 0.04531469875308676,
+   "mean": 0.012101212615295932
+  },
+  "palm_pos_m": {
+   "median": 0.0054506300157199875,
+   "p95": 0.014914488308159548,
+   "mean": 0.006551194666880893
+  },
+  "palm_ang_deg": {
+   "median": 1.0078524119733352,
+   "p95": 1.6641588802403244,
+   "mean": 1.0859887185344748
+  },
+  "cube_pos_m": {
+   "median": 0.006908034073170451,
+   "p95": 0.20862968185388733,
+   "mean": 0.034958880073761536
+  },
+  "cube_ang_deg": {
+   "median": 4.747271410021433,
+   "p95": 34.248361848947695,
+   "mean": 8.277797091887411
+  },
+  "tips_equal": {
+   "median": 1.0,
+   "p95": 1.0,
+   "mean": 0.8592800971804871
+  },
+  "any_equal": {
+   "median": 1.0,
+   "p95": 1.0,
+   "mean": 0.9384310466082731
+  },
+  "n_dev_tips": {
+   "median": 0.0,
+   "p95": 2.0,
+   "mean": 0.8164439613835432
+  },
+  "n_shadow_tips": {
+   "median": 0.0,
+   "p95": 2.0,
+   "mean": 0.8376702256888946
+  }
+ },
+ "would_have": {
+  "ticks": 9954,
+  "alpha_on_frac": 0.3442837050431987,
+  "reasons": {
+   "far": 4008,
+   "released": 1235,
+   "ok": 3427,
+   "phase_Success": 1284
+  },
+  "obs_zmax_median": 2.6641266345977783,
+  "obs_zmax_p95": 6.9431562423706055,
+  "trials": {
+   "1": {
+    "ticks": 223,
+    "seconds": 5.97,
+    "alpha_on_frac": 0.04035874439461883,
+    "alpha_mean_when_on": 0.2891532970166275,
+    "first_alpha_on_s": 1.82,
+    "du_applied_mrad_when_on": 12.394461792012736,
+    "du_raw_mrad": 36.523253093676864,
+    "reasons": {
+     "far": 162,
+     "released": 16,
+     "ok": 9,
+     "phase_Success": 36
+    },
+    "phases": {
+     "Ready": 151,
+     "Transport": 36,
+     "Success": 36
+    },
+    "released_ticks": 70,
+    "d_goal_min_cm": 1.8
+   },
+   "2": {
+    "ticks": 153,
+    "seconds": 3.99,
+    "alpha_on_frac": 0.5686274509803921,
+    "alpha_mean_when_on": 0.9310286115774093,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 26.823492821726425,
+    "du_raw_mrad": 33.12316870796274,
+    "reasons": {
+     "ok": 87,
+     "released": 19,
+     "far": 47
+    },
+    "phases": {
+     "Ready": 76,
+     "Transport": 38,
+     "PlaceCandidate": 39
+    },
+    "released_ticks": 66,
+    "d_goal_min_cm": 0.9
+   },
+   "3": {
+    "ticks": 199,
+    "seconds": 5.03,
+    "alpha_on_frac": 0.5477386934673367,
+    "alpha_mean_when_on": 0.8218846746049012,
+    "first_alpha_on_s": 0.17,
+    "du_applied_mrad_when_on": 28.732272891301626,
+    "du_raw_mrad": 36.04576135202262,
+    "reasons": {
+     "far": 59,
+     "ok": 109,
+     "released": 31
+    },
+    "phases": {
+     "Ready": 80,
+     "Transport": 79,
+     "PlaceCandidate": 40
+    },
+    "released_ticks": 72,
+    "d_goal_min_cm": 1.3
+   },
+   "4": {
+    "ticks": 196,
+    "seconds": 5.01,
+    "alpha_on_frac": 0.40816326530612246,
+    "alpha_mean_when_on": 0.1128865356764687,
+    "first_alpha_on_s": 0.37,
+    "du_applied_mrad_when_on": 4.855970805355979,
+    "du_raw_mrad": 39.28807578510479,
+    "reasons": {
+     "far": 31,
+     "ok": 80,
+     "released": 44,
+     "phase_Success": 41
+    },
+    "phases": {
+     "Ready": 79,
+     "Transport": 76,
+     "Success": 41
+    },
+    "released_ticks": 101,
+    "d_goal_min_cm": 2.9
+   },
+   "5": {
+    "ticks": 231,
+    "seconds": 6.01,
+    "alpha_on_frac": 0.5238095238095238,
+    "alpha_mean_when_on": 0.12062431246843089,
+    "first_alpha_on_s": 0.23,
+    "du_applied_mrad_when_on": 4.856960259993407,
+    "du_raw_mrad": 38.50240946070754,
+    "reasons": {
+     "far": 35,
+     "ok": 121,
+     "released": 37,
+     "phase_Success": 38
+    },
+    "phases": {
+     "Ready": 78,
+     "Transport": 115,
+     "Success": 38
+    },
+    "released_ticks": 99,
+    "d_goal_min_cm": 0.3
+   },
+   "6": {
+    "ticks": 234,
+    "seconds": 6.02,
+    "alpha_on_frac": 0.3418803418803419,
+    "alpha_mean_when_on": 0.7709416520037007,
+    "first_alpha_on_s": 2.03,
+    "du_applied_mrad_when_on": 29.450754960756296,
+    "du_raw_mrad": 36.00448849192423,
+    "reasons": {
+     "far": 87,
+     "released": 26,
+     "ok": 80,
+     "phase_Success": 41
+    },
+    "phases": {
+     "Ready": 155,
+     "Transport": 38,
+     "Success": 41
+    },
+    "released_ticks": 83,
+    "d_goal_min_cm": 2.8
+   },
+   "7": {
+    "ticks": 193,
+    "seconds": 4.99,
+    "alpha_on_frac": 0.41968911917098445,
+    "alpha_mean_when_on": 0.084937506065108,
+    "first_alpha_on_s": 0.15,
+    "du_applied_mrad_when_on": 4.096615852131519,
+    "du_raw_mrad": 46.26721311034923,
+    "reasons": {
+     "far": 93,
+     "ok": 81,
+     "released": 19
+    },
+    "phases": {
+     "Ready": 79,
+     "Transport": 76,
+     "PlaceCandidate": 38
+    },
+    "released_ticks": 44,
+    "d_goal_min_cm": 1.7
+   },
+   "8": {
+    "ticks": 234,
+    "seconds": 6.02,
+    "alpha_on_frac": 0.16666666666666666,
+    "alpha_mean_when_on": 0.8896632784797575,
+    "first_alpha_on_s": 0.89,
+    "du_applied_mrad_when_on": 31.852704485319357,
+    "du_raw_mrad": 45.63921510973046,
+    "reasons": {
+     "far": 81,
+     "released": 75,
+     "ok": 39,
+     "phase_Success": 39
+    },
+    "phases": {
+     "Ready": 78,
+     "Transport": 78,
+     "PlaceCandidate": 39,
+     "Success": 39
+    },
+    "released_ticks": 180,
+    "d_goal_min_cm": 0.8
+   },
+   "9": {
+    "ticks": 200,
+    "seconds": 5.01,
+    "alpha_on_frac": 0.0,
+    "alpha_mean_when_on": null,
+    "first_alpha_on_s": null,
+    "du_applied_mrad_when_on": null,
+    "du_raw_mrad": 44.477147696921975,
+    "reasons": {
+     "far": 161,
+     "phase_Success": 39
+    },
+    "phases": {
+     "Ready": 82,
+     "Transport": 79,
+     "Success": 39
+    },
+    "released_ticks": 108,
+    "d_goal_min_cm": 6.2
+   },
+   "10": {
+    "ticks": 155,
+    "seconds": 4.03,
+    "alpha_on_frac": 0.45161290322580644,
+    "alpha_mean_when_on": 0.12904569971180305,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 5.865559764300682,
+    "du_raw_mrad": 42.42949679160449,
+    "reasons": {
+     "ok": 70,
+     "far": 85
+    },
+    "phases": {
+     "Ready": 77,
+     "Transport": 40,
+     "PlaceCandidate": 38
+    },
+    "released_ticks": 82,
+    "d_goal_min_cm": 3.1
+   },
+   "11": {
+    "ticks": 192,
+    "seconds": 5.01,
+    "alpha_on_frac": 0.3333333333333333,
+    "alpha_mean_when_on": 0.6394000215795643,
+    "first_alpha_on_s": 0.11,
+    "du_applied_mrad_when_on": 27.51361074507034,
+    "du_raw_mrad": 49.40176980156963,
+    "reasons": {
+     "far": 89,
+     "ok": 64,
+     "phase_Success": 39
+    },
+    "phases": {
+     "Ready": 75,
+     "Transport": 78,
+     "Success": 39
+    },
+    "released_ticks": 92,
+    "d_goal_min_cm": 2.5
+   },
+   "12": {
+    "ticks": 191,
+    "seconds": 5.0,
+    "alpha_on_frac": 0.4973821989528796,
+    "alpha_mean_when_on": 0.7390200504799258,
+    "first_alpha_on_s": 0.03,
+    "du_applied_mrad_when_on": 30.506296358486967,
+    "du_raw_mrad": 41.21177367042442,
+    "reasons": {
+     "far": 58,
+     "ok": 95,
+     "phase_Success": 38
+    },
+    "phases": {
+     "Ready": 77,
+     "Transport": 76,
+     "Success": 38
+    },
+    "released_ticks": 93,
+    "d_goal_min_cm": 0.7
+   },
+   "13": {
+    "ticks": 156,
+    "seconds": 4.0,
+    "alpha_on_frac": 0.4935897435897436,
+    "alpha_mean_when_on": 0.1677549088079743,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 7.111472492763837,
+    "du_raw_mrad": 48.09556422698664,
+    "reasons": {
+     "ok": 77,
+     "far": 79
+    },
+    "phases": {
+     "Ready": 39,
+     "LiftCandidate": 39,
+     "Transport": 39,
+     "PlaceCandidate": 39
+    },
+    "released_ticks": 71,
+    "d_goal_min_cm": 1.7
+   },
+   "14": {
+    "ticks": 160,
+    "seconds": 4.0,
+    "alpha_on_frac": 0.0625,
+    "alpha_mean_when_on": 0.0353207634256939,
+    "first_alpha_on_s": 1.01,
+    "du_applied_mrad_when_on": 1.7157690737271039,
+    "du_raw_mrad": 50.5186948321068,
+    "reasons": {
+     "far": 150,
+     "ok": 10
+    },
+    "phases": {
+     "Ready": 83,
+     "Transport": 39,
+     "PlaceCandidate": 38
+    },
+    "released_ticks": 65,
+    "d_goal_min_cm": 5.2
+   },
+   "15": {
+    "ticks": 194,
+    "seconds": 5.02,
+    "alpha_on_frac": 0.4020618556701031,
+    "alpha_mean_when_on": 1.0,
+    "first_alpha_on_s": 0.95,
+    "du_applied_mrad_when_on": 38.501073394903216,
+    "du_raw_mrad": 42.25819351006829,
+    "reasons": {
+     "far": 34,
+     "released": 43,
+     "ok": 78,
+     "phase_Success": 39
+    },
+    "phases": {
+     "Ready": 77,
+     "Transport": 78,
+     "Success": 39
+    },
+    "released_ticks": 105,
+    "d_goal_min_cm": 2.0
+   },
+   "16": {
+    "ticks": 198,
+    "seconds": 5.01,
+    "alpha_on_frac": 0.0707070707070707,
+    "alpha_mean_when_on": 0.02119400454492213,
+    "first_alpha_on_s": 0.7,
+    "du_applied_mrad_when_on": 1.0507878030128541,
+    "du_raw_mrad": 48.5692023092791,
+    "reasons": {
+     "far": 125,
+     "ok": 14,
+     "released": 18,
+     "phase_Success": 41
+    },
+    "phases": {
+     "Ready": 81,
+     "Transport": 76,
+     "Success": 41
+    },
+    "released_ticks": 79,
+    "d_goal_min_cm": 3.6
+   },
+   "17": {
+    "ticks": 269,
+    "seconds": 7.03,
+    "alpha_on_frac": 0.040892193308550186,
+    "alpha_mean_when_on": 0.035099581748961,
+    "first_alpha_on_s": 1.18,
+    "du_applied_mrad_when_on": 1.6808381909533454,
+    "du_raw_mrad": 43.681146745645115,
+    "reasons": {
+     "far": 258,
+     "ok": 11
+    },
+    "phases": {
+     "Ready": 192,
+     "Transport": 38,
+     "PlaceCandidate": 39
+    },
+    "released_ticks": 67,
+    "d_goal_min_cm": 4.8
+   },
+   "18": {
+    "ticks": 192,
+    "seconds": 5.02,
+    "alpha_on_frac": 0.375,
+    "alpha_mean_when_on": 0.14560678689064735,
+    "first_alpha_on_s": 0.89,
+    "du_applied_mrad_when_on": 6.157214603748046,
+    "du_raw_mrad": 44.491074346648674,
+    "reasons": {
+     "far": 76,
+     "released": 44,
+     "ok": 72
+    },
+    "phases": {
+     "Ready": 77,
+     "Transport": 77,
+     "PlaceCandidate": 38
+    },
+    "released_ticks": 108,
+    "d_goal_min_cm": 0.3
+   },
+   "19": {
+    "ticks": 230,
+    "seconds": 6.0,
+    "alpha_on_frac": 0.508695652173913,
+    "alpha_mean_when_on": 0.13666468769626544,
+    "first_alpha_on_s": 0.23,
+    "du_applied_mrad_when_on": 4.778673412299865,
+    "du_raw_mrad": 39.299750171369894,
+    "reasons": {
+     "far": 39,
+     "ok": 117,
+     "released": 34,
+     "phase_Success": 40
+    },
+    "phases": {
+     "Ready": 74,
+     "Transport": 116,
+     "Success": 40
+    },
+    "released_ticks": 95,
+    "d_goal_min_cm": 1.9
+   },
+   "20": {
+    "ticks": 158,
+    "seconds": 4.01,
+    "alpha_on_frac": 0.4936708860759494,
+    "alpha_mean_when_on": 0.1470725231910393,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 5.504481985977917,
+    "du_raw_mrad": 39.790707205794746,
+    "reasons": {
+     "ok": 78,
+     "released": 37,
+     "far": 43
+    },
+    "phases": {
+     "Ready": 41,
+     "Transport": 78,
+     "PlaceCandidate": 39
+    },
+    "released_ticks": 80,
+    "d_goal_min_cm": 0.7
+   },
+   "21": {
+    "ticks": 194,
+    "seconds": 5.0,
+    "alpha_on_frac": 0.4639175257731959,
+    "alpha_mean_when_on": 0.6844095618222761,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 20.279183285140082,
+    "du_raw_mrad": 34.83044084800659,
+    "reasons": {
+     "ok": 90,
+     "released": 16,
+     "far": 49,
+     "phase_Success": 39
+    },
+    "phases": {
+     "Ready": 76,
+     "Transport": 40,
+     "PlaceCandidate": 39,
+     "Success": 39
+    },
+    "released_ticks": 104,
+    "d_goal_min_cm": 1.4
+   },
+   "22": {
+    "ticks": 155,
+    "seconds": 4.0,
+    "alpha_on_frac": 0.4,
+    "alpha_mean_when_on": 0.10396358165585592,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 3.4371376631867565,
+    "du_raw_mrad": 35.603967126593815,
+    "reasons": {
+     "ok": 62,
+     "far": 30,
+     "released": 27,
+     "phase_Success": 36
+    },
+    "phases": {
+     "Ready": 39,
+     "Transport": 80,
+     "Success": 36
+    },
+    "released_ticks": 89,
+    "d_goal_min_cm": 0.6
+   },
+   "23": {
+    "ticks": 157,
+    "seconds": 4.01,
+    "alpha_on_frac": 0.3375796178343949,
+    "alpha_mean_when_on": 0.1249753853048981,
+    "first_alpha_on_s": 0.55,
+    "du_applied_mrad_when_on": 5.270225366326465,
+    "du_raw_mrad": 40.2065740673917,
+    "reasons": {
+     "far": 68,
+     "ok": 53,
+     "released": 36
+    },
+    "phases": {
+     "Ready": 39,
+     "LiftCandidate": 39,
+     "Transport": 38,
+     "PlaceCandidate": 41
+    },
+    "released_ticks": 60,
+    "d_goal_min_cm": 1.5
+   },
+   "24": {
+    "ticks": 194,
+    "seconds": 5.01,
+    "alpha_on_frac": 0.3917525773195876,
+    "alpha_mean_when_on": 0.8747510817675187,
+    "first_alpha_on_s": 0.82,
+    "du_applied_mrad_when_on": 25.80183238367305,
+    "du_raw_mrad": 32.49691014789231,
+    "reasons": {
+     "far": 48,
+     "released": 31,
+     "ok": 76,
+     "phase_Success": 39
+    },
+    "phases": {
+     "Ready": 80,
+     "Transport": 75,
+     "Success": 39
+    },
+    "released_ticks": 111,
+    "d_goal_min_cm": 0.7
+   },
+   "25": {
+    "ticks": 155,
+    "seconds": 4.02,
+    "alpha_on_frac": 0.36774193548387096,
+    "alpha_mean_when_on": 0.13839817302696591,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 4.365492209021266,
+    "du_raw_mrad": 34.8027259316611,
+    "reasons": {
+     "ok": 57,
+     "released": 30,
+     "far": 30,
+     "phase_Success": 38
+    },
+    "phases": {
+     "Ready": 78,
+     "Transport": 39,
+     "Success": 38
+    },
+    "released_ticks": 98,
+    "d_goal_min_cm": 2.8
+   },
+   "26": {
+    "ticks": 160,
+    "seconds": 4.01,
+    "alpha_on_frac": 0.475,
+    "alpha_mean_when_on": 0.11579819548997666,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 4.771947659600946,
+    "du_raw_mrad": 37.68575553341682,
+    "reasons": {
+     "ok": 76,
+     "released": 20,
+     "far": 23,
+     "phase_Success": 41
+    },
+    "phases": {
+     "Ready": 81,
+     "Transport": 38,
+     "Success": 41
+    },
+    "released_ticks": 56,
+    "d_goal_min_cm": 2.3
+   },
+   "27": {
+    "ticks": 152,
+    "seconds": 3.98,
+    "alpha_on_frac": 0.4276315789473684,
+    "alpha_mean_when_on": 0.7686231623860373,
+    "first_alpha_on_s": 0.15,
+    "du_applied_mrad_when_on": 28.443197977947023,
+    "du_raw_mrad": 38.59860705472329,
+    "reasons": {
+     "far": 69,
+     "ok": 65,
+     "released": 18
+    },
+    "phases": {
+     "Ready": 75,
+     "Transport": 39,
+     "PlaceCandidate": 38
+    },
+    "released_ticks": 78,
+    "d_goal_min_cm": 2.7
+   },
+   "28": {
+    "ticks": 271,
+    "seconds": 7.03,
+    "alpha_on_frac": 0.2177121771217712,
+    "alpha_mean_when_on": 0.13118501567840277,
+    "first_alpha_on_s": 3.39,
+    "du_applied_mrad_when_on": 5.14111887548456,
+    "du_raw_mrad": 36.827784172899015,
+    "reasons": {
+     "far": 144,
+     "ok": 59,
+     "released": 28,
+     "phase_Success": 40
+    },
+    "phases": {
+     "Ready": 192,
+     "Transport": 39,
+     "Success": 40
+    },
+    "released_ticks": 83,
+    "d_goal_min_cm": 1.0
+   },
+   "29": {
+    "ticks": 154,
+    "seconds": 4.0,
+    "alpha_on_frac": 0.5064935064935064,
+    "alpha_mean_when_on": 0.09265053109167057,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 3.1013822960440347,
+    "du_raw_mrad": 35.74066235477722,
+    "reasons": {
+     "ok": 78,
+     "far": 54,
+     "released": 22
+    },
+    "phases": {
+     "Ready": 78,
+     "Transport": 76
+    },
+    "released_ticks": 68,
+    "d_goal_min_cm": 3.9
+   },
+   "30": {
+    "ticks": 269,
+    "seconds": 6.98,
+    "alpha_on_frac": 0.01486988847583643,
+    "alpha_mean_when_on": 0.06284694211820627,
+    "first_alpha_on_s": 3.35,
+    "du_applied_mrad_when_on": 2.4065343137235744,
+    "du_raw_mrad": 31.851206122467104,
+    "reasons": {
+     "far": 253,
+     "released": 12,
+     "ok": 4
+    },
+    "phases": {
+     "Ready": 192,
+     "Transport": 38,
+     "PlaceCandidate": 39
+    },
+    "released_ticks": 91,
+    "d_goal_min_cm": 4.1
+   },
+   "31": {
+    "ticks": 190,
+    "seconds": 5.02,
+    "alpha_on_frac": 0.37894736842105264,
+    "alpha_mean_when_on": 0.6225498032563029,
+    "first_alpha_on_s": 0.82,
+    "du_applied_mrad_when_on": 18.645912374984025,
+    "du_raw_mrad": 36.45622048770897,
+    "reasons": {
+     "far": 59,
+     "ok": 72,
+     "released": 21,
+     "phase_Success": 38
+    },
+    "phases": {
+     "Ready": 78,
+     "LiftCandidate": 36,
+     "Transport": 38,
+     "Success": 38
+    },
+    "released_ticks": 83,
+    "d_goal_min_cm": 0.8
+   },
+   "32": {
+    "ticks": 194,
+    "seconds": 5.01,
+    "alpha_on_frac": 0.4793814432989691,
+    "alpha_mean_when_on": 0.8336956677949527,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 23.409915592103314,
+    "du_raw_mrad": 35.97107747355063,
+    "reasons": {
+     "ok": 93,
+     "released": 22,
+     "far": 41,
+     "phase_Success": 38
+    },
+    "phases": {
+     "Ready": 77,
+     "Transport": 79,
+     "Success": 38
+    },
+    "released_ticks": 99,
+    "d_goal_min_cm": 0.7
+   },
+   "33": {
+    "ticks": 192,
+    "seconds": 5.01,
+    "alpha_on_frac": 0.5104166666666666,
+    "alpha_mean_when_on": 0.6785384069404723,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 23.147706511017624,
+    "du_raw_mrad": 41.28466952508303,
+    "reasons": {
+     "ok": 98,
+     "released": 8,
+     "far": 48,
+     "phase_Success": 38
+    },
+    "phases": {
+     "Ready": 77,
+     "LiftCandidate": 38,
+     "Transport": 39,
+     "Success": 38
+    },
+    "released_ticks": 81,
+    "d_goal_min_cm": 1.5
+   },
+   "34": {
+    "ticks": 156,
+    "seconds": 4.02,
+    "alpha_on_frac": 0.038461538461538464,
+    "alpha_mean_when_on": 0.10662886286146289,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 4.227275470218126,
+    "du_raw_mrad": 35.285692781147375,
+    "reasons": {
+     "ok": 6,
+     "far": 111,
+     "phase_Success": 39
+    },
+    "phases": {
+     "Ready": 40,
+     "Transport": 77,
+     "Success": 39
+    },
+    "released_ticks": 100,
+    "d_goal_min_cm": 3.2
+   },
+   "35": {
+    "ticks": 195,
+    "seconds": 4.97,
+    "alpha_on_frac": 0.5692307692307692,
+    "alpha_mean_when_on": 0.6381855658923445,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 24.222760555578734,
+    "du_raw_mrad": 37.89710070436613,
+    "reasons": {
+     "ok": 111,
+     "far": 52,
+     "released": 32
+    },
+    "phases": {
+     "Ready": 117,
+     "Transport": 78
+    },
+    "released_ticks": 76,
+    "d_goal_min_cm": 1.8
+   },
+   "36": {
+    "ticks": 194,
+    "seconds": 5.02,
+    "alpha_on_frac": 0.4175257731958763,
+    "alpha_mean_when_on": 0.6765354603935599,
+    "first_alpha_on_s": 0.57,
+    "du_applied_mrad_when_on": 25.696357088172864,
+    "du_raw_mrad": 37.80650270644339,
+    "reasons": {
+     "far": 49,
+     "ok": 81,
+     "released": 25,
+     "phase_Success": 39
+    },
+    "phases": {
+     "Ready": 116,
+     "Transport": 39,
+     "Success": 39
+    },
+    "released_ticks": 84,
+    "d_goal_min_cm": 1.1
+   },
+   "37": {
+    "ticks": 189,
+    "seconds": 5.0,
+    "alpha_on_frac": 0.4603174603174603,
+    "alpha_mean_when_on": 0.08460977208861035,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 3.6760964741340025,
+    "du_raw_mrad": 43.031470584056386,
+    "reasons": {
+     "ok": 87,
+     "far": 87,
+     "released": 15
+    },
+    "phases": {
+     "Ready": 115,
+     "Transport": 37,
+     "PlaceCandidate": 37
+    },
+    "released_ticks": 67,
+    "d_goal_min_cm": 0.4
+   },
+   "38": {
+    "ticks": 154,
+    "seconds": 4.01,
+    "alpha_on_frac": 0.35064935064935066,
+    "alpha_mean_when_on": 0.12217780596542012,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 5.051742352535565,
+    "du_raw_mrad": 40.03942288977521,
+    "reasons": {
+     "ok": 54,
+     "far": 42,
+     "released": 19,
+     "phase_Success": 39
+    },
+    "phases": {
+     "Ready": 39,
+     "LiftCandidate": 38,
+     "Transport": 38,
+     "Success": 39
+    },
+    "released_ticks": 91,
+    "d_goal_min_cm": 1.2
+   },
+   "39": {
+    "ticks": 193,
+    "seconds": 4.99,
+    "alpha_on_frac": 0.3626943005181347,
+    "alpha_mean_when_on": 0.7791525272833535,
+    "first_alpha_on_s": 0.76,
+    "du_applied_mrad_when_on": 27.20982515922503,
+    "du_raw_mrad": 36.21387917493676,
+    "reasons": {
+     "far": 63,
+     "ok": 70,
+     "released": 19,
+     "phase_Success": 41
+    },
+    "phases": {
+     "Ready": 75,
+     "Transport": 39,
+     "PlaceCandidate": 38,
+     "Success": 41
+    },
+    "released_ticks": 95,
+    "d_goal_min_cm": 2.7
+   },
+   "40": {
+    "ticks": 159,
+    "seconds": 4.01,
+    "alpha_on_frac": 0.4779874213836478,
+    "alpha_mean_when_on": 0.8434210526315788,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 28.33288291650074,
+    "du_raw_mrad": 40.4150081893568,
+    "reasons": {
+     "ok": 76,
+     "released": 25,
+     "far": 18,
+     "phase_Success": 40
+    },
+    "phases": {
+     "Ready": 79,
+     "Transport": 40,
+     "Success": 40
+    },
+    "released_ticks": 83,
+    "d_goal_min_cm": 1.2
+   },
+   "41": {
+    "ticks": 197,
+    "seconds": 5.02,
+    "alpha_on_frac": 0.5126903553299492,
+    "alpha_mean_when_on": 0.6509307676615734,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 20.276205464314486,
+    "du_raw_mrad": 35.507911888105596,
+    "reasons": {
+     "ok": 101,
+     "released": 42,
+     "far": 54
+    },
+    "phases": {
+     "Ready": 116,
+     "Transport": 40,
+     "PlaceCandidate": 41
+    },
+    "released_ticks": 96,
+    "d_goal_min_cm": 1.1
+   },
+   "42": {
+    "ticks": 231,
+    "seconds": 6.01,
+    "alpha_on_frac": 0.08658008658008658,
+    "alpha_mean_when_on": 0.017744615135720558,
+    "first_alpha_on_s": 1.05,
+    "du_applied_mrad_when_on": 0.8511655035903605,
+    "du_raw_mrad": 39.35716046455425,
+    "reasons": {
+     "far": 134,
+     "ok": 20,
+     "released": 77
+    },
+    "phases": {
+     "Ready": 154,
+     "Transport": 39,
+     "PlaceCandidate": 38
+    },
+    "released_ticks": 169,
+    "d_goal_min_cm": 2.9
+   },
+   "43": {
+    "ticks": 196,
+    "seconds": 5.0,
+    "alpha_on_frac": 0.3979591836734694,
+    "alpha_mean_when_on": 0.1233861786197226,
+    "first_alpha_on_s": 0.99,
+    "du_applied_mrad_when_on": 5.013066407476937,
+    "du_raw_mrad": 37.8714755736104,
+    "reasons": {
+     "far": 90,
+     "ok": 78,
+     "released": 28
+    },
+    "phases": {
+     "Ready": 117,
+     "Transport": 79
+    },
+    "released_ticks": 64,
+    "d_goal_min_cm": 0.7
+   },
+   "44": {
+    "ticks": 193,
+    "seconds": 5.0,
+    "alpha_on_frac": 0.38860103626943004,
+    "alpha_mean_when_on": 0.12932294986313425,
+    "first_alpha_on_s": 1.02,
+    "du_applied_mrad_when_on": 5.101948891362793,
+    "du_raw_mrad": 36.700170601422194,
+    "reasons": {
+     "far": 43,
+     "released": 36,
+     "ok": 75,
+     "phase_Success": 39
+    },
+    "phases": {
+     "Ready": 115,
+     "Transport": 39,
+     "Success": 39
+    },
+    "released_ticks": 102,
+    "d_goal_min_cm": 3.1
+   },
+   "45": {
+    "ticks": 153,
+    "seconds": 4.0,
+    "alpha_on_frac": 0.49673202614379086,
+    "alpha_mean_when_on": 0.6567489051984867,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 21.870800401646147,
+    "du_raw_mrad": 34.42156230810779,
+    "reasons": {
+     "ok": 76,
+     "far": 19,
+     "released": 21,
+     "phase_Success": 37
+    },
+    "phases": {
+     "Ready": 78,
+     "Transport": 38,
+     "Success": 37
+    },
+    "released_ticks": 31,
+    "d_goal_min_cm": 1.1
+   },
+   "46": {
+    "ticks": 156,
+    "seconds": 4.02,
+    "alpha_on_frac": 0.5769230769230769,
+    "alpha_mean_when_on": 0.6397567240860336,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 19.529575409880653,
+    "du_raw_mrad": 33.39340690422942,
+    "reasons": {
+     "ok": 90,
+     "released": 10,
+     "far": 17,
+     "phase_Success": 39
+    },
+    "phases": {
+     "Ready": 79,
+     "Transport": 38,
+     "Success": 39
+    },
+    "released_ticks": 66,
+    "d_goal_min_cm": 0.7
+   },
+   "47": {
+    "ticks": 194,
+    "seconds": 4.99,
+    "alpha_on_frac": 0.3711340206185567,
+    "alpha_mean_when_on": 0.48516637454064937,
+    "first_alpha_on_s": 0.3,
+    "du_applied_mrad_when_on": 17.261598741274103,
+    "du_raw_mrad": 36.04961894350163,
+    "reasons": {
+     "far": 55,
+     "ok": 72,
+     "released": 29,
+     "phase_Success": 38
+    },
+    "phases": {
+     "Ready": 78,
+     "LiftCandidate": 38,
+     "Transport": 40,
+     "Success": 38
+    },
+    "released_ticks": 54,
+    "d_goal_min_cm": 1.2
+   },
+   "48": {
+    "ticks": 119,
+    "seconds": 3.01,
+    "alpha_on_frac": 0.11764705882352941,
+    "alpha_mean_when_on": 0.11894496327226094,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 3.7780496943553805,
+    "du_raw_mrad": 36.47402021374164,
+    "reasons": {
+     "ok": 14,
+     "far": 105
+    },
+    "phases": {
+     "Ready": 39,
+     "Transport": 80
+    },
+    "released_ticks": 69,
+    "d_goal_min_cm": 2.2
+   },
+   "49": {
+    "ticks": 195,
+    "seconds": 5.01,
+    "alpha_on_frac": 0.2512820512820513,
+    "alpha_mean_when_on": 0.965111719179736,
+    "first_alpha_on_s": 1.55,
+    "du_applied_mrad_when_on": 33.14564714079038,
+    "du_raw_mrad": 34.556217376490025,
+    "reasons": {
+     "far": 61,
+     "released": 46,
+     "ok": 49,
+     "phase_Success": 39
+    },
+    "phases": {
+     "Ready": 119,
+     "Transport": 37,
+     "Success": 39
+    },
+    "released_ticks": 121,
+    "d_goal_min_cm": 1.7
+   },
+   "50": {
+    "ticks": 153,
+    "seconds": 3.99,
+    "alpha_on_frac": 0.4117647058823529,
+    "alpha_mean_when_on": 0.45455205973924445,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 15.055677486414481,
+    "du_raw_mrad": 36.73825841631658,
+    "reasons": {
+     "ok": 63,
+     "far": 90
+    },
+    "phases": {
+     "Ready": 77,
+     "Transport": 37,
+     "PlaceCandidate": 39
+    },
+    "released_ticks": 66,
+    "d_goal_min_cm": 2.4
+   },
+   "51": {
+    "ticks": 269,
+    "seconds": 7.02,
+    "alpha_on_frac": 0.24535315985130113,
+    "alpha_mean_when_on": 0.1703486912917869,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 6.583278009275329,
+    "du_raw_mrad": 39.73991905646665,
+    "reasons": {
+     "ok": 66,
+     "far": 81,
+     "released": 6,
+     "phase_Success": 116
+    },
+    "phases": {
+     "Ready": 76,
+     "LiftCandidate": 39,
+     "PlaceCandidate": 38,
+     "Success": 116
+    },
+    "released_ticks": 100,
+    "d_goal_min_cm": 0.8
+   },
+   "52": {
+    "ticks": 154,
+    "seconds": 4.0,
+    "alpha_on_frac": 0.4090909090909091,
+    "alpha_mean_when_on": 0.6633317011963432,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 21.811798366107887,
+    "du_raw_mrad": 36.8747706468642,
+    "reasons": {
+     "ok": 63,
+     "released": 54,
+     "far": 37
+    },
+    "phases": {
+     "Ready": 76,
+     "Transport": 40,
+     "PlaceCandidate": 38
+    },
+    "released_ticks": 71,
+    "d_goal_min_cm": 1.8
+   },
+   "53": {
+    "ticks": 109,
+    "seconds": 2.83,
+    "alpha_on_frac": 0.0,
+    "alpha_mean_when_on": null,
+    "first_alpha_on_s": null,
+    "du_applied_mrad_when_on": null,
+    "du_raw_mrad": 32.699449157735636,
+    "reasons": {
+     "far": 92,
+     "released": 17
+    },
+    "phases": {
+     "Ready": 109
+    },
+    "released_ticks": 56,
+    "d_goal_min_cm": 5.7
+   }
+  }
+ },
+ "replay_wall_s": 17.5,
+ "per_command_us": 377.0
+}

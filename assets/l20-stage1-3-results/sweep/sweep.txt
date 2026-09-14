@@ -1,0 +1,62 @@
+gpu 1 Mon Sep 14 07:31:04 BST 2026
+== const alpha=0.15
+[replay_clean] success 0.70 (strict 0.11, palm-goal 5.0 cm) lifted 0.76 contact 0.94 dropped 0.05 slip 0.5 cm | wrist p95 6.0 mm 1.2 deg | alpha mean 0.15 (>=0.3 0.00) | du 6.0 mrad sat 0.00 qdev 0.786 rad | 67.0 s
+[script_clean] success 0.75 (strict 0.07, palm-goal 5.1 cm) lifted 0.80 contact 0.94 dropped 0.05 slip 0.6 cm | wrist p95 6.6 mm 1.3 deg | alpha mean 0.15 (>=0.3 0.00) | du 6.0 mrad sat 0.00 qdev 0.787 rad | 64.7 s
+[replay_perturbed] success 0.40 (strict 0.04, palm-goal 6.0 cm) lifted 0.45 contact 0.65 dropped 0.05 slip 0.6 cm | wrist p95 4.5 mm 1.0 deg | alpha mean 0.15 (>=0.3 0.00) | du 5.8 mrad sat 0.00 qdev 0.781 rad | 64.7 s
+[mixed_default] success 0.54 (strict 0.07, palm-goal 5.5 cm) lifted 0.60 contact 0.77 dropped 0.06 slip 0.7 cm | wrist p95 5.2 mm 1.1 deg | alpha mean 0.15 (>=0.3 0.00) | du 5.9 mrad sat 0.00 qdev 0.783 rad | 64.4 s
+== gate alpha_max=0.15
+[replay_clean] success 0.70 (strict 0.11, palm-goal 4.8 cm) lifted 0.75 contact 0.94 dropped 0.05 slip 0.5 cm | wrist p95 6.0 mm 1.3 deg | alpha mean 0.08 (>=0.3 0.00) | du 3.4 mrad sat 0.00 qdev 0.786 rad | 65.9 s
+[script_clean] success 0.71 (strict 0.07, palm-goal 5.0 cm) lifted 0.78 contact 0.93 dropped 0.07 slip 0.6 cm | wrist p95 6.2 mm 1.2 deg | alpha mean 0.09 (>=0.3 0.00) | du 3.6 mrad sat 0.00 qdev 0.787 rad | 64.0 s
+[replay_perturbed] success 0.37 (strict 0.03, palm-goal 6.1 cm) lifted 0.45 contact 0.66 dropped 0.08 slip 0.6 cm | wrist p95 4.5 mm 1.0 deg | alpha mean 0.04 (>=0.3 0.00) | du 1.8 mrad sat 0.00 qdev 0.779 rad | 65.0 s
+[mixed_default] success 0.51 (strict 0.06, palm-goal 5.7 cm) lifted 0.59 contact 0.78 dropped 0.08 slip 0.7 cm | wrist p95 5.2 mm 1.1 deg | alpha mean 0.05 (>=0.3 0.00) | du 2.2 mrad sat 0.00 qdev 0.782 rad | 63.9 s
+== const alpha=0.3
+[replay_clean] success 0.77 (strict 0.12, palm-goal 5.2 cm) lifted 0.80 contact 0.95 dropped 0.03 slip 0.5 cm | wrist p95 6.3 mm 1.3 deg | alpha mean 0.30 (>=0.3 1.00) | du 12.0 mrad sat 0.00 qdev 0.788 rad | 65.3 s
+[script_clean] success 0.80 (strict 0.08, palm-goal 5.5 cm) lifted 0.82 contact 0.94 dropped 0.03 slip 0.6 cm | wrist p95 6.8 mm 1.3 deg | alpha mean 0.30 (>=0.3 1.00) | du 12.0 mrad sat 0.00 qdev 0.788 rad | 63.2 s
+[replay_perturbed] success 0.46 (strict 0.05, palm-goal 5.8 cm) lifted 0.49 contact 0.67 dropped 0.03 slip 0.6 cm | wrist p95 4.6 mm 1.1 deg | alpha mean 0.30 (>=0.3 1.00) | du 11.5 mrad sat 0.00 qdev 0.782 rad | 66.2 s
+[mixed_default] success 0.59 (strict 0.06, palm-goal 5.5 cm) lifted 0.61 contact 0.78 dropped 0.02 slip 0.7 cm | wrist p95 5.3 mm 1.1 deg | alpha mean 0.30 (>=0.3 1.00) | du 11.6 mrad sat 0.00 qdev 0.784 rad | 65.2 s
+== gate alpha_max=0.3
+[replay_clean] success 0.73 (strict 0.12, palm-goal 4.8 cm) lifted 0.75 contact 0.95 dropped 0.02 slip 0.5 cm | wrist p95 6.0 mm 1.3 deg | alpha mean 0.13 (>=0.3 0.29) | du 5.3 mrad sat 0.00 qdev 0.788 rad | 65.4 s
+[script_clean] success 0.72 (strict 0.08, palm-goal 5.2 cm) lifted 0.78 contact 0.93 dropped 0.06 slip 0.5 cm | wrist p95 6.2 mm 1.3 deg | alpha mean 0.13 (>=0.3 0.27) | du 5.3 mrad sat 0.00 qdev 0.787 rad | 63.6 s
+[replay_perturbed] success 0.40 (strict 0.04, palm-goal 6.0 cm) lifted 0.45 contact 0.66 dropped 0.05 slip 0.6 cm | wrist p95 4.5 mm 1.0 deg | alpha mean 0.06 (>=0.3 0.11) | du 2.5 mrad sat 0.00 qdev 0.782 rad | 63.7 s
+[mixed_default] success 0.53 (strict 0.06, palm-goal 5.7 cm) lifted 0.59 contact 0.78 dropped 0.05 slip 0.7 cm | wrist p95 5.2 mm 1.1 deg | alpha mean 0.08 (>=0.3 0.15) | du 3.2 mrad sat 0.00 qdev 0.782 rad | 63.8 s
+== const alpha=0.5
+[replay_clean] success 0.82 (strict 0.10, palm-goal 5.5 cm) lifted 0.82 contact 0.95 dropped 0.00 slip 0.5 cm | wrist p95 6.6 mm 1.3 deg | alpha mean 0.50 (>=0.3 1.00) | du 19.8 mrad sat 0.00 qdev 0.787 rad | 66.5 s
+[script_clean] success 0.82 (strict 0.07, palm-goal 5.9 cm) lifted 0.85 contact 0.94 dropped 0.02 slip 0.5 cm | wrist p95 7.2 mm 1.4 deg | alpha mean 0.50 (>=0.3 1.00) | du 19.9 mrad sat 0.00 qdev 0.788 rad | 64.8 s
+[replay_perturbed] success 0.50 (strict 0.05, palm-goal 6.0 cm) lifted 0.51 contact 0.69 dropped 0.02 slip 0.6 cm | wrist p95 4.7 mm 1.1 deg | alpha mean 0.50 (>=0.3 1.00) | du 19.2 mrad sat 0.00 qdev 0.780 rad | 65.3 s
+[mixed_default] success 0.61 (strict 0.06, palm-goal 5.8 cm) lifted 0.63 contact 0.79 dropped 0.02 slip 0.7 cm | wrist p95 5.3 mm 1.1 deg | alpha mean 0.50 (>=0.3 1.00) | du 19.3 mrad sat 0.00 qdev 0.782 rad | 64.4 s
+== gate alpha_max=0.5
+[replay_clean] success 0.76 (strict 0.11, palm-goal 4.9 cm) lifted 0.77 contact 0.95 dropped 0.02 slip 0.5 cm | wrist p95 6.1 mm 1.3 deg | alpha mean 0.19 (>=0.3 0.30) | du 7.9 mrad sat 0.00 qdev 0.787 rad | 65.7 s
+[script_clean] success 0.75 (strict 0.08, palm-goal 5.3 cm) lifted 0.79 contact 0.93 dropped 0.03 slip 0.5 cm | wrist p95 6.4 mm 1.3 deg | alpha mean 0.19 (>=0.3 0.29) | du 7.9 mrad sat 0.00 qdev 0.786 rad | 67.1 s
+[replay_perturbed] success 0.43 (strict 0.03, palm-goal 5.9 cm) lifted 0.45 contact 0.67 dropped 0.03 slip 0.6 cm | wrist p95 4.5 mm 1.0 deg | alpha mean 0.09 (>=0.3 0.12) | du 3.5 mrad sat 0.00 qdev 0.781 rad | 66.9 s
+[mixed_default] success 0.55 (strict 0.05, palm-goal 5.8 cm) lifted 0.60 contact 0.78 dropped 0.05 slip 0.7 cm | wrist p95 5.3 mm 1.1 deg | alpha mean 0.12 (>=0.3 0.17) | du 4.7 mrad sat 0.00 qdev 0.782 rad | 65.7 s
+== const alpha=0.7
+[replay_clean] success 0.82 (strict 0.09, palm-goal 5.8 cm) lifted 0.83 contact 0.96 dropped 0.01 slip 0.5 cm | wrist p95 6.8 mm 1.3 deg | alpha mean 0.70 (>=0.3 1.00) | du 27.8 mrad sat 0.00 qdev 0.786 rad | 67.9 s
+[script_clean] success 0.84 (strict 0.07, palm-goal 6.1 cm) lifted 0.84 contact 0.93 dropped 0.00 slip 0.5 cm | wrist p95 7.1 mm 1.4 deg | alpha mean 0.70 (>=0.3 1.00) | du 27.9 mrad sat 0.00 qdev 0.786 rad | 65.4 s
+[replay_perturbed] success 0.50 (strict 0.03, palm-goal 6.3 cm) lifted 0.52 contact 0.69 dropped 0.01 slip 0.6 cm | wrist p95 4.7 mm 1.1 deg | alpha mean 0.70 (>=0.3 1.00) | du 27.1 mrad sat 0.00 qdev 0.781 rad | 66.8 s
+[mixed_default] success 0.62 (strict 0.04, palm-goal 6.4 cm) lifted 0.65 contact 0.80 dropped 0.03 slip 0.7 cm | wrist p95 5.5 mm 1.2 deg | alpha mean 0.70 (>=0.3 1.00) | du 27.1 mrad sat 0.00 qdev 0.781 rad | 66.1 s
+== gate alpha_max=0.7
+[replay_clean] success 0.76 (strict 0.10, palm-goal 5.3 cm) lifted 0.77 contact 0.96 dropped 0.01 slip 0.5 cm | wrist p95 6.1 mm 1.3 deg | alpha mean 0.26 (>=0.3 0.31) | du 10.6 mrad sat 0.00 qdev 0.787 rad | 68.0 s
+[script_clean] success 0.76 (strict 0.08, palm-goal 5.5 cm) lifted 0.78 contact 0.93 dropped 0.02 slip 0.5 cm | wrist p95 6.3 mm 1.3 deg | alpha mean 0.25 (>=0.3 0.30) | du 10.4 mrad sat 0.00 qdev 0.786 rad | 66.0 s
+[replay_perturbed] success 0.42 (strict 0.03, palm-goal 6.0 cm) lifted 0.45 contact 0.66 dropped 0.03 slip 0.6 cm | wrist p95 4.5 mm 1.0 deg | alpha mean 0.11 (>=0.3 0.12) | du 4.4 mrad sat 0.00 qdev 0.781 rad | 66.3 s
+[mixed_default] success 0.55 (strict 0.06, palm-goal 5.7 cm) lifted 0.59 contact 0.78 dropped 0.04 slip 0.7 cm | wrist p95 5.2 mm 1.1 deg | alpha mean 0.15 (>=0.3 0.17) | du 6.0 mrad sat 0.00 qdev 0.782 rad | 65.8 s
+== const alpha=1.0 goal=mean
+[replay_clean] success 0.83 (strict 0.08, palm-goal 6.4 cm) lifted 0.83 contact 0.97 dropped 0.00 slip 0.5 cm | wrist p95 6.7 mm 1.4 deg | alpha mean 1.00 (>=0.3 1.00) | du 37.1 mrad sat 0.00 qdev 0.774 rad | 68.0 s
+[script_clean] success 0.84 (strict 0.08, palm-goal 6.5 cm) lifted 0.84 contact 0.95 dropped 0.00 slip 0.5 cm | wrist p95 7.1 mm 1.4 deg | alpha mean 1.00 (>=0.3 1.00) | du 37.1 mrad sat 0.00 qdev 0.773 rad | 65.7 s
+[replay_perturbed] success 0.50 (strict 0.05, palm-goal 6.9 cm) lifted 0.51 contact 0.69 dropped 0.02 slip 0.6 cm | wrist p95 4.7 mm 1.1 deg | alpha mean 1.00 (>=0.3 1.00) | du 36.0 mrad sat 0.00 qdev 0.770 rad | 67.8 s
+[mixed_default] success 0.62 (strict 0.04, palm-goal 7.0 cm) lifted 0.65 contact 0.80 dropped 0.02 slip 0.7 cm | wrist p95 5.4 mm 1.2 deg | alpha mean 1.00 (>=0.3 1.00) | du 36.6 mrad sat 0.00 qdev 0.772 rad | 66.0 s
+== gate alpha_max=1.0 goal=mean
+[replay_clean] success 0.68 (strict 0.09, palm-goal 6.1 cm) lifted 0.76 contact 0.95 dropped 0.08 slip 0.5 cm | wrist p95 6.0 mm 1.3 deg | alpha mean 0.24 (>=0.3 0.20) | du 9.1 mrad sat 0.00 qdev 0.775 rad | 67.2 s
+[script_clean] success 0.71 (strict 0.09, palm-goal 6.0 cm) lifted 0.79 contact 0.93 dropped 0.08 slip 0.5 cm | wrist p95 6.4 mm 1.3 deg | alpha mean 0.24 (>=0.3 0.20) | du 9.1 mrad sat 0.00 qdev 0.775 rad | 65.6 s
+[replay_perturbed] success 0.40 (strict 0.05, palm-goal 6.0 cm) lifted 0.45 contact 0.66 dropped 0.05 slip 0.6 cm | wrist p95 4.5 mm 1.0 deg | alpha mean 0.11 (>=0.3 0.08) | du 3.9 mrad sat 0.00 qdev 0.771 rad | 66.0 s
+[mixed_default] success 0.54 (strict 0.06, palm-goal 6.0 cm) lifted 0.59 contact 0.77 dropped 0.05 slip 0.7 cm | wrist p95 5.2 mm 1.1 deg | alpha mean 0.14 (>=0.3 0.12) | du 5.3 mrad sat 0.00 qdev 0.772 rad | 65.8 s
+== alpha=0 goal=mean (human only, sanity)
+[replay_clean] success 0.59 (strict 0.10, palm-goal 5.5 cm) lifted 0.70 contact 0.94 dropped 0.11 slip 0.5 cm | wrist p95 5.6 mm 1.1 deg | alpha mean 0.08 (>=0.3 0.16) | du 0.0 mrad sat 0.00 qdev 0.775 rad | 65.2 s
+[script_clean] success 0.63 (strict 0.11, palm-goal 5.5 cm) lifted 0.73 contact 0.93 dropped 0.10 slip 0.6 cm | wrist p95 5.9 mm 1.2 deg | alpha mean 0.09 (>=0.3 0.15) | du 0.0 mrad sat 0.00 qdev 0.775 rad | 66.6 s
+[replay_perturbed] success 0.34 (strict 0.04, palm-goal 5.9 cm) lifted 0.43 contact 0.65 dropped 0.09 slip 0.6 cm | wrist p95 4.4 mm 1.0 deg | alpha mean 0.04 (>=0.3 0.06) | du 0.0 mrad sat 0.00 qdev 0.771 rad | 67.2 s
+[mixed_default] success 0.47 (strict 0.07, palm-goal 5.5 cm) lifted 0.55 contact 0.76 dropped 0.08 slip 0.7 cm | wrist p95 5.0 mm 1.1 deg | alpha mean 0.05 (>=0.3 0.09) | du 0.0 mrad sat 0.00 qdev 0.773 rad | 66.1 s
+== gated-trained policy (alpha_max 0.3) given const alpha=1.0
+[replay_clean] success 0.68 (strict 0.03, palm-goal 7.1 cm) lifted 0.79 contact 0.94 dropped 0.10 slip 0.7 cm | wrist p95 6.2 mm 1.3 deg | alpha mean 1.00 (>=0.3 1.00) | du 40.2 mrad sat 0.00 qdev 0.777 rad | 67.9 s
+[script_clean] success 0.69 (strict 0.01, palm-goal 7.0 cm) lifted 0.81 contact 0.94 dropped 0.12 slip 0.7 cm | wrist p95 6.6 mm 1.4 deg | alpha mean 1.00 (>=0.3 1.00) | du 40.4 mrad sat 0.00 qdev 0.777 rad | 66.4 s
+[replay_perturbed] success 0.42 (strict 0.02, palm-goal 7.3 cm) lifted 0.50 contact 0.66 dropped 0.07 slip 0.8 cm | wrist p95 4.6 mm 1.1 deg | alpha mean 1.00 (>=0.3 1.00) | du 38.4 mrad sat 0.00 qdev 0.771 rad | 67.0 s
+[mixed_default] success 0.55 (strict 0.03, palm-goal 7.1 cm) lifted 0.62 contact 0.77 dropped 0.07 slip 1.0 cm | wrist p95 5.3 mm 1.1 deg | alpha mean 1.00 (>=0.3 1.00) | du 38.6 mrad sat 0.00 qdev 0.773 rad | 66.0 s
+done Mon Sep 14 08:25:14 BST 2026

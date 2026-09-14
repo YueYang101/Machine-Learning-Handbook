@@ -72,7 +72,7 @@ a { color:var(--blue); text-decoration:none; }
 
 <p class="lede">这是 <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a>第 4 步（RL 残差策略）的第一次实际运行，接在第 2 步物理回放预检之后（预检结果记在 <a href="l20-stage1-2-results.html#closure">Stage 1.2 结果页</a>）。同一晚还做了三件配套的事：按录像核对并修订了腕部模拟方案、做了 Stage 1.3 相关工作的批判性综述、并按综述里的收益加训了两条对照臂。设计文档：<code>Dex_Hand/human_machine_interaction/hand_control/plan/stage13-shared-grasp-design.md</code>（§1.1 录像核对、§2.1 动态参与、§6c 环境实现、§8 学习曲线）；综述：<code>hand_control/plan/2026-09-13-stage13-related-work.md</code>。</p>
 
-<div class="callout"><b>本页不是 Stage 1.3 的正式结果。</b>全部在仿真里、只有一名操作者的 95 条 pinch 示教作人手来源、腕部用软 weld 而不是部署的有界 PD、每条臂只跑了 20M 步一个 seed。它回答的只是「这套环境能不能训、零残差的人自己能抓多少、第一版门控残差有没有动静」。结论先写在前面：<b>门控残差策略（α_max 0.3）两个 seed 在 20M 步后与 α=0 的配对差别在 1 到 7 个百分点内，施加的残差只有 2 到 5 mrad；把授权放开到 α≡1 训练的对照臂，在部署门控（α_max=1）下高 8 到 16 个百分点，完全不设门控再高 8 个百分点，掉落从 10% 降到 1%–4%，且不改变用户的抓法。</b>第一版没动静的主因是授权上限（45 mrad），不是没有学习信号；α_max 扫描是下一步，见 <a href="#arms">对照臂</a>。</div>
+<div class="callout"><b>本页不是 Stage 1.3 的正式结果。</b>全部在仿真里、只有一名操作者的 95 条 pinch 示教作人手来源、腕部用软 weld 而不是部署的有界 PD、每条臂只跑了 20M 步一个 seed。它回答的只是「这套环境能不能训、零残差的人自己能抓多少、第一版门控残差有没有动静」。结论先写在前面：<b>门控残差策略（α_max 0.3）两个 seed 在 20M 步后与 α=0 的配对差别在 1 到 7 个百分点内，施加的残差只有 2 到 5 mrad；把授权放开到 α≡1 训练的对照臂，在部署门控（α_max=1）下高 8 到 16 个百分点，完全不设门控再高 8 个百分点，掉落从 10% 降到 1%–4%，且不改变用户的抓法。</b>第一版没动静的主因是授权上限（45 mrad），不是没有学习信号。<b>2026-09-14 上午的 α 扫描</b>（<a href="#sweep">同一策略换 arbitration</a>）：收益在 α 0.3–0.5 饱和；几何门控比常数 α 低 6–8 个百分点；喂数据集平均抓取位姿与 oracle 目标成绩相同，真机不需要预测器。真机接线代码已就绪（<a href="#deploy">影子仿真 + 部署包络</a>），未上头显。</div>
 
 <h2 id="setup">环境：实现了什么，和设计初值差在哪</h2>
 <div class="tw"><table>
@@ -163,6 +163,34 @@ a { color:var(--blue); text-decoration:none; }
 <p class="small">评测 JSON（每来源 256 条的全部指标）在 <code>assets/l20-stage1-3-results/eval-*.json</code>。训练曲线（每 1.3M 步一次评测回报，10 条 episode）：门控 seed 0 在 2.4–4.0 间无趋势；seed 1 末段 3.4–3.6；Finger 末段 3.8；Const 末段见其 log。4090 上的两次训练结束时 brax 的收尾渲染在无显示的 WSL 里抛 Renderer 异常（exit 1），checkpoint 已完整写出，不影响结果。</p>
 <p class="small">综述另外三条不在环境里：把共适应当作测量项（部署日志）、保留调度 α 加一致性项与介入占比指标（介入占比已在评测输出：α&gt;0 时间、mean|α·Δu|、饱和比例）、kNN 检索式人类代理（只在 RL 启动后做）。</p>
 
+
+<h2 id="sweep">α 扫描与「不用预测器」：同一策略，只换 arbitration（2026-09-14 上午，berlin）</h2>
+<p>不重训。拿 <b>Const α≡1 训练出来的策略</b>，评测时把 α 换成手动常数（<code>const</code>）或几何门控的上限（<code>gate ≤α_max</code>），四个人手来源各 256 条、同 seed 配对。最后四行把策略与门控收到的「目标抓取位姿」从这条轨迹自己的抬离位姿（oracle）换成数据集 95 条的平均位姿，也就是真机上没有 Stage 1.2 预测时能喂的东西。原始 JSON 在 <code>assets/l20-stage1-3-results/sweep/</code>。</p>
+<div class="tw"><table>
+<tr><th>评测 α</th><th>回放</th><th>脚本</th><th>回放+扰动</th><th>混合</th><th>掉落（混合）</th><th>施加残差（混合）</th></tr>
+<tr><td>0（纯人手，同 seed）</td><td>0.59</td><td>0.63</td><td>0.34</td><td>0.47</td><td>0.11</td><td>0</td></tr>
+<tr><td>const 0.15</td><td>0.70</td><td>0.75</td><td>0.40</td><td>0.54</td><td>0.06</td><td>5.9 mrad</td></tr>
+<tr><td>const 0.3</td><td>0.77</td><td>0.80</td><td>0.46</td><td>0.59</td><td>0.02</td><td>11.6 mrad</td></tr>
+<tr><td>const 0.5</td><td>0.82</td><td>0.82</td><td>0.50</td><td>0.61</td><td>0.02</td><td>19.3 mrad</td></tr>
+<tr><td>const 0.7</td><td>0.82</td><td>0.84</td><td>0.50</td><td>0.62</td><td>0.03</td><td>27.1 mrad</td></tr>
+<tr><td>const 1.0（即上表「评测也 α≡1」行）</td><td>0.83</td><td>0.85</td><td>0.50</td><td>0.63</td><td>0.04</td><td>39.5 mrad</td></tr>
+<tr><td>gate ≤0.15</td><td>0.70</td><td>0.71</td><td>0.37</td><td>0.51</td><td>0.08</td><td>2.2 mrad</td></tr>
+<tr><td>gate ≤0.3</td><td>0.73</td><td>0.72</td><td>0.40</td><td>0.53</td><td>0.05</td><td>3.2 mrad</td></tr>
+<tr><td>gate ≤0.5</td><td>0.76</td><td>0.75</td><td>0.43</td><td>0.55</td><td>0.05</td><td>4.7 mrad</td></tr>
+<tr><td>gate ≤0.7</td><td>0.76</td><td>0.76</td><td>0.42</td><td>0.55</td><td>0.04</td><td>6.0 mrad</td></tr>
+<tr><td>gate ≤1.0（即上表「部署门控」行）</td><td>0.75</td><td>0.75</td><td>0.43</td><td>0.55</td><td>0.04</td><td>8.0 mrad</td></tr>
+<tr><td><b>const 1.0，目标 = 数据集平均位姿</b></td><td><b>0.83</b></td><td><b>0.84</b></td><td><b>0.50</b></td><td><b>0.62</b></td><td>0.02</td><td>36.6 mrad</td></tr>
+<tr><td>gate ≤1.0，目标 = 数据集平均位姿</td><td>0.68</td><td>0.71</td><td>0.40</td><td>0.54</td><td>0.05</td><td>5.3 mrad</td></tr>
+<tr><td>0，目标 = 数据集平均位姿（口径核对：应与第一行相同）</td><td>0.59</td><td>0.63</td><td>0.34</td><td>0.47</td><td>0.08</td><td>0.0 mrad</td></tr>
+<tr><td>门控 ≤0.3 训练出的首版策略，硬给 const 1.0</td><td>0.68</td><td>0.69</td><td>0.42</td><td>0.55</td><td>0.07</td><td>38.6 mrad</td></tr>
+</table></div>
+<p><b>读法。</b>（1）收益在 α 0.3 到 0.5 就饱和：const 0.5 与 const 1.0 差 1 到 2 个百分点，施加的残差只有一半（19 对 40 mrad），掉落同为 2%。第一轮 α_max 0.3 没效果，是因为策略在 0.3 授权下<i>训练</i>，不是 0.3 授权本身不够——最后一行证明了这点：把首版门控策略硬给 α=1，成功率只到 0.68 / 0.69 / 0.42 / 0.55，掉落 10%–12% 与纯人手一样多，它在 45 mrad 授权下学到的东西本来就少。（2）同一策略同一上限，gate 比 const 低 6 到 8 个百分点：门控在闭合前只给 alpha_pre=0.15，而残差的价值集中在闭合与抬起那几百毫秒。部署时门控保留张手归零与时机即可，幅度不必再压。（3）<b>不需要预测器</b>：喂平均位姿，const 1.0 的成绩与 oracle 目标完全一致（0.83 / 0.84 / 0.50 / 0.62 对 0.83 / 0.85 / 0.50 / 0.63），策略基本不看目标槽，看的是当前接触与关节状态；gate + 平均位姿反而掉到 0.68，因为 d_goal 用平均位姿算，门开得更少。真机第一版因此用 <b>const α 0.5 + 部署包络</b>，不用几何门控，也不接 Stage 1.2 预测。</p>
+
+<h2 id="deploy">真机接线：代码已就绪，未上头显</h2>
+<p>头显拥有物理，每 0.5 s 才回报一次状态，策略却要 50 Hz 的关节、掌-方块相对位姿与指尖接触。Mac 侧因此跑一个<b>影子仿真</b>：加载 APK 烘的同一份 MJCF，每条命令（u_h + 手腕 mocap 目标）先喂影子再发头显，按真实时间间隔步进；头显回报的方块位姿经固定的模型→头显世界映射（Unity 里 −90° 偏航加 workspace 平移，在一个 52 试次 session 上复现头显自己的 mocap 位置中位数 3 mm / p95 9 mm）映射回来锚定影子的方块。策略本身是 brax checkpoint 导出的 numpy MLP（512/256/128，与 brax 差 2e-7），观测构造逐槽复刻训练环境（对 48 步参考对误差 2e-7），推理 0.05 ms，影子 0.14 ms/命令。部署包络在任一条件下把 α 归零：无头显状态、追踪丢失、暂停、任务阶段不在 Ready/LiftCandidate/Transport/PlaceCandidate、掌到目标 > 6 cm、用户张手后直到再次闭合——策略从没见过松手，每个训练回合都在握稳 1 s 时结束，松手由包络管。</p>
+<p>用录好的 session 离线预演（命令流按真实 ack 时序过一遍控制器，和头显自己的 100 Hz 物理日志比）：关节 RMS 中位数 6 mrad；手掌 6–8 mm、1–2°；方块 4–7 mm 中位数但 p95 14 到 21 cm——影子里抓没抓住与头显不一致时方块分道扬镳，1 Hz 记录的 ack 才纠一次；五指接触标志逐位一致 86–89%。观测 z 分数：相对位姿与手腕误差各槽都在 1σ 内（坐标系与单位对了），但中指、无名指、小指屈曲在包络打开的 tick 上中位数 −1.7 到 −2.8σ：训练窗口只覆盖抬离前 1.5 s 的预塑形手，真人靠近方块 6 cm 内时其他手指还张着，策略没见过这种手。两份预演报告：<code>dryrun-20260913T191049Z-gate1.json</code>、<code>dryrun-20260913T171559Z-const0.5.json</code>。</p>
+<p>入口 <code>sh hand_control/demo/collect_stage13_shared.sh</code>（默认 const 0.5；<code>MJQUEST_ALPHA_MODE=gate</code> 门控对照；<code>off</code> 为同一记录格式的直接遥操作基线），<code>--purpose shared</code>，记录里 <code>ctrl</code> 是实际发出的混合命令，另存 <code>ctrl_human</code> 与每条命令的 α、包络原因、Δu、接触、z 分数。头显侧把回报周期 0.5 s → 0.02 s 并加上五指接触与掌部位姿的 C# 改动已写好，<b>未构建、未安装</b>。</p>
+
 <h2 id="compute">算力与运行方式</h2>
 <div class="tw"><table>
 <tr><th>盒子</th><th>状态</th><th>用法</th></tr>
@@ -175,11 +203,13 @@ a { color:var(--blue); text-decoration:none; }
 <li>数据集 builder 保留抬离后 1–2 s 的 Transport 段（设计稿 §6 前提）。</li>
 <li>PD 腕部的前馈：目标改为录像的实际掌部 + 速度前馈，再做腕部驱动预检。</li>
 <li>反应式 u_h、犹豫停顿、瞄准偏差；质量/摩擦随机化；接触力惩罚。</li>
-<li>Stage 1.2 预测器 ĝ 接入（T3）；预测器在全部 95 条上训练并保存的版本目前不存在。</li>
-<li>多 seed 与 α_max 扫描（0.15 / 0.3 / 0.5 / 1.0），它才回答「参与多少」。</li>
+<li>Stage 1.2 预测器 ĝ 接入（T3）——α 扫描显示当前策略不需要它，但接触前的「往哪抓」仍只有预测器能给；预测器在全部 95 条上训练并保存的版本目前不存在。</li>
+<li>多 seed（Finger 臂只有一个 seed；α 扫描只用了 Const 的一个 seed）。</li>
+<li>训练窗口延长到靠近方块前的张手阶段（真机包络打开时其他手指的屈曲在训练分布外 2–3σ）；PD 腕部前馈。</li>
+<li>头显 APK 重建与安装（50 Hz 回报、指尖接触）；然后是第一次真人在环 session（const 0.5 对 off，各 10 次）。</li>
 </ul>
 
-<footer>Yue Yang · 2026-09-13 · <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a> · <a href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a href="index.html">Machine Learning Handbook</a></footer>
+<footer>Yue Yang · 2026-09-13 / 09-14 · <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a> · <a href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a href="index.html">Machine Learning Handbook</a></footer>
 </div>
 </body>
 </html>

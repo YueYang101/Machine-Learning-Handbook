@@ -1,0 +1,371 @@
+{
+ "session": "20260913T171559Z-b7e8269b5846467b9298a83fd21f62c9",
+ "xml": "/Users/yang/Desktop/Projects/Education/Dex_Hand/human_machine_interaction/hand_control/data/quest_models/cube-transfer-20260912/default/default.xml",
+ "policy": "/Users/yang/Desktop/Projects/Education/Dex_Hand/human_machine_interaction/hand_control/data/policies/stage13/l20_shared_pinch_const20M.npz",
+ "policy_sha256": "b2479b08dc50ca258bdb2352d611dc7676fb7f061672b98c22e5a1ecc5a630cd",
+ "alpha_mode": "const",
+ "alpha_max": 0.5,
+ "commands": 7242,
+ "replies": 81,
+ "ack_fields": {
+  "object_qpos": 81,
+  "task_phase": 81
+ },
+ "device_physics_rows": 8380,
+ "session_seconds": 82.2,
+ "frame": {
+  "source": "workspace.translation",
+  "b": [
+   0.8558,
+   0.6324,
+   0.45799999999999996
+  ]
+ },
+ "anchoring_events": {
+  "synced": 1,
+  "cube": 4,
+  "trial": 10
+ },
+ "fidelity_off_mode": {
+  "n": 4895,
+  "q_rms_rad": {
+   "median": 0.006038077922021246,
+   "p95": 0.06078064760520246,
+   "mean": 0.013732115107960427
+  },
+  "palm_pos_m": {
+   "median": 0.007665965122832011,
+   "p95": 0.018187945912379867,
+   "mean": 0.008449380038040523
+  },
+  "palm_ang_deg": {
+   "median": 2.1216212550455444,
+   "p95": 3.704031228869038,
+   "mean": 2.3697135173122565
+  },
+  "cube_pos_m": {
+   "median": 0.004014912071355427,
+   "p95": 0.14389694995749988,
+   "mean": 0.02511346098975392
+  },
+  "cube_ang_deg": {
+   "median": 2.819165610625915,
+   "p95": 42.181267210130684,
+   "mean": 8.414420604346537
+  },
+  "tips_equal": {
+   "median": 1.0,
+   "p95": 1.0,
+   "mean": 0.8921348314606742
+  },
+  "any_equal": {
+   "median": 1.0,
+   "p95": 1.0,
+   "mean": 0.9291113381001022
+  },
+  "n_dev_tips": {
+   "median": 0.0,
+   "p95": 3.0,
+   "mean": 0.7552604698672114
+  },
+  "n_shadow_tips": {
+   "median": 0.0,
+   "p95": 3.0,
+   "mean": 0.6594484167517876
+  }
+ },
+ "would_have": {
+  "ticks": 3121,
+  "alpha_on_frac": 0.27587311759051586,
+  "reasons": {
+   "far": 1749,
+   "released": 276,
+   "ok": 861,
+   "phase_Success": 235
+  },
+  "obs_zmax_median": 3.8450801372528076,
+  "obs_zmax_p95": 10.330564498901367,
+  "obs_zslots_when_ok": {
+   "q16": {
+    "median": 3.0160250663757324,
+    "p95": 6.401167392730713
+   },
+   "dq16": {
+    "median": 0.7808209657669067,
+    "p95": 3.800440549850464
+   },
+   "p_op": {
+    "median": 0.4363400936126709,
+    "p95": 0.7679437398910522
+   },
+   "r_op": {
+    "median": 1.0457624197006226,
+    "p95": 1.5247894525527954
+   },
+   "uh": {
+    "median": 2.9943437576293945,
+    "p95": 6.647792816162109
+   },
+   "goal": {
+    "median": 0.008898049592971802,
+    "p95": 0.008898049592971802
+   },
+   "tips": {
+    "median": 1.5997607707977295,
+    "p95": 6.9431562423706055
+   },
+   "alpha": {
+    "median": 0.24467390775680542,
+    "p95": 0.24467390775680542
+   },
+   "push_p": {
+    "median": 0.45139166712760925,
+    "p95": 3.3550260066986084
+   },
+   "push_r": {
+    "median": 0.5147802829742432,
+    "p95": 2.2065587043762207
+   }
+  },
+  "trials": {
+   "1": {
+    "ticks": 1403,
+    "seconds": 36.16,
+    "alpha_on_frac": 0.04918032786885246,
+    "alpha_mean_when_on": 0.5,
+    "first_alpha_on_s": 23.37,
+    "du_applied_mrad_when_on": 14.82809459760556,
+    "du_raw_mrad": 32.888986955639346,
+    "reasons": {
+     "far": 1151,
+     "released": 145,
+     "ok": 69,
+     "phase_Success": 38
+    },
+    "phases": {
+     "Ready": 968,
+     "Transport": 397,
+     "Success": 38
+    },
+    "released_ticks": 757,
+    "d_goal_min_cm": 1.2
+   },
+   "2": {
+    "ticks": 198,
+    "seconds": 5.04,
+    "alpha_on_frac": 0.3888888888888889,
+    "alpha_mean_when_on": 0.5,
+    "first_alpha_on_s": 0.67,
+    "du_applied_mrad_when_on": 15.125056519111665,
+    "du_raw_mrad": 32.69800883721946,
+    "reasons": {
+     "far": 77,
+     "ok": 77,
+     "released": 3,
+     "phase_Success": 41
+    },
+    "phases": {
+     "Ready": 78,
+     "Transport": 38,
+     "PlaceCandidate": 41,
+     "Success": 41
+    },
+    "released_ticks": 96,
+    "d_goal_min_cm": 3.2
+   },
+   "3": {
+    "ticks": 191,
+    "seconds": 4.98,
+    "alpha_on_frac": 0.5078534031413613,
+    "alpha_mean_when_on": 0.5,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 14.1155029393591,
+    "du_raw_mrad": 30.766070733088913,
+    "reasons": {
+     "ok": 97,
+     "far": 45,
+     "released": 11,
+     "phase_Success": 38
+    },
+    "phases": {
+     "Ready": 76,
+     "Transport": 77,
+     "Success": 38
+    },
+    "released_ticks": 71,
+    "d_goal_min_cm": 0.8
+   },
+   "4": {
+    "ticks": 156,
+    "seconds": 3.98,
+    "alpha_on_frac": 0.5,
+    "alpha_mean_when_on": 0.5,
+    "first_alpha_on_s": 0.61,
+    "du_applied_mrad_when_on": 14.650267785356892,
+    "du_raw_mrad": 32.30731182282817,
+    "reasons": {
+     "far": 66,
+     "ok": 78,
+     "released": 12
+    },
+    "phases": {
+     "Ready": 79,
+     "Transport": 77
+    },
+    "released_ticks": 55,
+    "d_goal_min_cm": 0.8
+   },
+   "5": {
+    "ticks": 191,
+    "seconds": 4.99,
+    "alpha_on_frac": 0.450261780104712,
+    "alpha_mean_when_on": 0.5,
+    "first_alpha_on_s": 0.86,
+    "du_applied_mrad_when_on": 15.504252934603919,
+    "du_raw_mrad": 33.01517082434274,
+    "reasons": {
+     "far": 63,
+     "ok": 86,
+     "released": 5,
+     "phase_Success": 37
+    },
+    "phases": {
+     "Ready": 114,
+     "Transport": 40,
+     "Success": 37
+    },
+    "released_ticks": 73,
+    "d_goal_min_cm": 2.8
+   },
+   "6": {
+    "ticks": 118,
+    "seconds": 3.02,
+    "alpha_on_frac": 0.3559322033898305,
+    "alpha_mean_when_on": 0.5,
+    "first_alpha_on_s": 0.0,
+    "du_applied_mrad_when_on": 14.500577666364649,
+    "du_raw_mrad": 34.22871326437458,
+    "reasons": {
+     "ok": 42,
+     "far": 58,
+     "released": 18
+    },
+    "phases": {
+     "Ready": 39,
+     "Transport": 39,
+     "PlaceCandidate": 40
+    },
+    "released_ticks": 27,
+    "d_goal_min_cm": 2.2
+   },
+   "7": {
+    "ticks": 280,
+    "seconds": 7.03,
+    "alpha_on_frac": 0.4607142857142857,
+    "alpha_mean_when_on": 0.5,
+    "first_alpha_on_s": 2.05,
+    "du_applied_mrad_when_on": 17.86268083108997,
+    "du_raw_mrad": 35.53041447035282,
+    "reasons": {
+     "far": 75,
+     "released": 35,
+     "ok": 129,
+     "phase_Success": 41
+    },
+    "phases": {
+     "Ready": 199,
+     "Transport": 40,
+     "Success": 41
+    },
+    "released_ticks": 129,
+    "d_goal_min_cm": 1.2
+   },
+   "8": {
+    "ticks": 153,
+    "seconds": 3.98,
+    "alpha_on_frac": 0.45751633986928103,
+    "alpha_mean_when_on": 0.5,
+    "first_alpha_on_s": 0.94,
+    "du_applied_mrad_when_on": 15.576756279082408,
+    "du_raw_mrad": 32.465192170979265,
+    "reasons": {
+     "far": 69,
+     "released": 14,
+     "ok": 70
+    },
+    "phases": {
+     "Ready": 77,
+     "LiftCandidate": 37,
+     "Transport": 39
+    },
+    "released_ticks": 58,
+    "d_goal_min_cm": 2.2
+   },
+   "9": {
+    "ticks": 154,
+    "seconds": 4.0,
+    "alpha_on_frac": 0.525974025974026,
+    "alpha_mean_when_on": 0.5,
+    "first_alpha_on_s": 0.42,
+    "du_applied_mrad_when_on": 14.731819435956979,
+    "du_raw_mrad": 31.496787036286083,
+    "reasons": {
+     "far": 50,
+     "ok": 81,
+     "released": 23
+    },
+    "phases": {
+     "Ready": 78,
+     "Transport": 38,
+     "PlaceCandidate": 38
+    },
+    "released_ticks": 57,
+    "d_goal_min_cm": 0.6
+   },
+   "10": {
+    "ticks": 196,
+    "seconds": 5.0,
+    "alpha_on_frac": 0.3877551020408163,
+    "alpha_mean_when_on": 0.5,
+    "first_alpha_on_s": 0.43,
+    "du_applied_mrad_when_on": 14.00711128981189,
+    "du_raw_mrad": 29.70457845520227,
+    "reasons": {
+     "far": 70,
+     "ok": 76,
+     "released": 10,
+     "phase_Success": 40
+    },
+    "phases": {
+     "Ready": 79,
+     "Transport": 38,
+     "PlaceCandidate": 39,
+     "Success": 40
+    },
+    "released_ticks": 82,
+    "d_goal_min_cm": 1.5
+   },
+   "11": {
+    "ticks": 81,
+    "seconds": 2.01,
+    "alpha_on_frac": 0.691358024691358,
+    "alpha_mean_when_on": 0.5,
+    "first_alpha_on_s": 0.63,
+    "du_applied_mrad_when_on": 14.082330783111274,
+    "du_raw_mrad": 30.20219034077641,
+    "reasons": {
+     "far": 25,
+     "ok": 56
+    },
+    "phases": {
+     "Ready": 80,
+     "Transport": 1
+    },
+    "released_ticks": 19,
+    "d_goal_min_cm": 2.4
+   }
+  }
+ },
+ "replay_wall_s": 6.0,
+ "per_command_us": 416.5
+}
