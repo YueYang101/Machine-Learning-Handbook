@@ -81,6 +81,12 @@ mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:10
 .bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
 .bk:hover { color:var(--blue); }
 footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+.stage-nav { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; margin:16px 0; }
+.stage-nav a { display:block; min-height:44px; padding:12px 14px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
+.stage-nav span { display:block; color:var(--sub); font-size:.88rem; }
+a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
+.bk, .toc a { display:inline-flex; min-height:44px; align-items:center; }
+#stages { margin-top:1.2em; }
 </style>
 </head>
 <body>
@@ -90,7 +96,17 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <div class="kicker">MACHINE LEARNING HANDBOOK · SHARED CONTROL</div>
 <h1>共享控制路线：从 To the Noise and Back 到 EMG 灵巧手<br><span style="font-size:.72em;color:var(--sub)">参照论文的流程、它的实验、我们的架构与当前进度</span></h1>
 
-<p class="lede">参照论文是 <b>To the Noise and Back: Diffusion for Shared Autonomy</b>（Yoneda et al., RSS 2023, arXiv:2302.12244）：用扩散模型的「部分加噪 + 去噪」把用户动作拉回专家分布，不需要知道用户目标、不需要 reward、不需要在线人类参与训练。本页把它的流程和实验讲清楚，然后对照我们的系统：<b>EMG 采集 → emg2pose 解码手指、Quest 只供 wrist pose、MuJoCo 里的 L20 共享控制</b>——同一套配方，但动作空间从他们的 2–3 维升到 16+6 维。我们目前在 RL 阶段生成专家数据（论文也是这么造 demo 的），正在找合适的长程任务。</p>
+<section aria-labelledby="stages">
+<h2 id="stages">路线内的小阶段</h2>
+<p>Stage 1.x 是这条共享控制路线的短期验证单元。这里统一跳转；各页维护协议，带 run ID 的实际结果留在实验记录。长期能力线另见 <a href="l20-robust-grasp.html">L20 长期路线</a>。</p>
+<nav class="stage-nav" aria-label="共享控制小阶段">
+<a href="l20-robust-grasp-stage1.html"><b>1.1 数采与标签</b><span>记录、标签与数据边界</span></a>
+<a href="l20-stage1-2-training.html"><b>1.2 意图预测</b><span>最终抓姿与模型比较</span></a>
+<a href="l20-stage1-3-shared-grasp.html"><b>1.3 共享抓取</b><span>执行、残差与仲裁</span></a>
+</nav>
+<p>已有记录：<a href="l20-stage1-2-results.html">1.2 预测结果</a> · <a href="l20-stage1-3-results.html">1.3 控制结果与物理后端核验</a>。下文保留参照论文与历史架构，不代表所有设计已经实现。</p>
+</section>
+<p class="lede">参照论文是 <b>To the Noise and Back: Diffusion for Shared Autonomy</b>（Yoneda et al., RSS 2023, arXiv:2302.12244）：用扩散模型的「部分加噪 + 去噪」把用户动作拉回专家分布，不需要知道用户目标、不需要 reward、不需要在线人类参与训练。本页把它的流程和实验讲清楚，然后对照我们的系统：<b>EMG 采集 → emg2pose 解码手指、Quest 只供 wrist pose、MuJoCo 里的 L20 共享控制</b>——同一套配方，但动作空间从他们的 2–3 维升到 16+6 维。这部分是路线的架构设想；当前短期验证与状态见上方小阶段入口。</p>
 
 <div class="toc"><b>目录</b> ·
 <a href="#s1">§1 论文的核心想法与流程</a> ·
@@ -98,7 +114,7 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <a href="#s3">§3 论文的实验与结果</a> ·
 <a href="#s4">§4 映射到我们的系统</a> ·
 <a href="#s5">§5 我们的架构现状</a> ·
-<a href="#s6">§6 进度:走到哪一步了</a> ·
+<a href="#s6">§6 旧计划与历史资产</a> ·
 <a href="#s7">§7 参考</a></div>
 
 <h2 id="s1"><span class="n">§ 1</span>论文的核心想法与流程</h2>
@@ -236,14 +252,9 @@ $\gamma\!\approx\!0.1$：输出紧贴 $a^h$（几乎不帮忙）；$\gamma\!\app
 <b>与论文架构的一个刻意差异。</b>论文的 copilot 每步重采整个动作；我们 Phase 1 采用 <b>residual + α</b> 而不是直接 partial diffusion——因为手腕必须无条件归用户、且要保证「张手一个控制周期内解除辅助」这类硬性 fail-safe。partial diffusion 的 γ 路线是 Phase 1 之后的模型升级：把 residual 换成 DP chunk 模型后，γ 和 α 扮演同一个角色（都是 fidelity↔conformity 的旋钮），且 γ 有论文那条随 $k_{sw}$ 单调的偏离上界可引用。
 </div>
 
-<h2 id="s6"><span class="n">§ 6</span>进度：走到哪一步了</h2>
+<h2 id="s6"><span class="n">§ 6</span>旧计划与历史资产</h2>
 
-<div class="key warn">
-<b>2026-09-08 最新 PoC。</b><a href="l20-robust-grasp.html#long-term">长期路线</a>保持稳定持物 → 完整局部抓取 → 用户共享 → 动态辅助权重 → 跨任务评估；robust grasp 是全程共享控制中的一项能力。
-当前短期先做 <a href="l20-robust-grasp-stage1.html">Stage 1.1：数采</a>，验收后进入 <a href="l20-stage1-2-training.html">Stage 1.2：Training</a>，并列测试 No-Gaze VQ-VAE＋自回归 Transformer 与状态条件 Flow Matching；不做稳定性或 pick。
-后续 <a href="l20-stage1-3-shared-grasp.html">Stage 1.3：意图条件的共享抓取控制</a> 将预测接入闭环执行，参考 DexGen 并用 T0–T3 区分预测与执行收益；本页保留共享控制背景与方法映射。
-下方系统设计与旧专家记录保留作背景，不是当前待办；实际运行后再补结果。
-</div>
+<div class="key warn"><b>历史快照，不是当前进度。</b>下面保留 2026-08 主计划与早期专家实验的状态，不据此判断当前模块是否存在。2026-09 的短期验证统一从<a href="#stages">小阶段入口</a>阅读；1.2 / 1.3 已有 PoC 结果，但正式验收与完整任务结论仍需独立证据。</div>
 
 <h3>6.1 共享控制主计划（plan of record，2026-08-17 采纳）</h3>
 <p>0/10 个 Go/No-Go gate 正式通过——但这句话会误导：gate 只认落盘证据，而<b>大量基建已经建成并每日在用</b>。逐项看：</p>
@@ -259,7 +270,7 @@ $\gamma\!\approx\!0.1$：输出紧贴 $a^h$（几乎不帮忙）；$\gamma\!\app
 <tr><td>Stage 6–8 · pilot/正式实验/分析</td><td><span class="status-todo">未动</span></td><td>—</td></tr>
 </table></div>
 
-<h3>6.2 RL 专家（当前主战场）</h3>
+<h3>6.2 早期 RL 专家记录</h3>
 <ul>
 <li><b>环境</b>：Playground fork 注册 <code>l20_hand</code>，已有 <b>reorient</b>（掌内重定向）、<b>pick_cube</b>、<b>hammer_nail</b> 三个 env。</li>
 <li><b>锤钉一弧已收口</b>：reward 迭代到 v4（瞬时门 → 锁存链 → 「打击必须来自锤子」的 legit-depth 记账 → 30% 锤在手课程），6/6 评估 episode 用锤子把钉打入，reward 7533。</li>

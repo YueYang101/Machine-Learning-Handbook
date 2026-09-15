@@ -73,6 +73,14 @@ details.box th { color:var(--muted); font-weight:600; }
 details.box code { font:.82rem ui-monospace,Menlo,Consolas,monospace; color:var(--ink); }
 details.box ul { margin:6px 0 14px; padding-left:20px; }
 details.box li { margin:5px 0; font-size:.9rem; color:var(--sub); }
+.plan-jumps { display:flex; flex-wrap:wrap; gap:4px 18px; margin:16px 0; }
+.plan-jumps a { display:inline-flex; align-items:center; min-height:44px; color:var(--sub); text-decoration:underline; text-underline-offset:4px; }
+.stage-list { margin-top:0; }
+.stage-list a { min-height:44px; padding:12px 0; border-bottom:1px solid var(--line); }
+.stage-list a:last-child { border-bottom:0; }
+.stage-list .rel, .stage-list .d2 { color:var(--sub); }
+a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
+[id^="plan-"] { scroll-margin-top:20px; }
 </style>
 </head>
 <body>
@@ -85,7 +93,7 @@ details.box li { margin:5px 0; font-size:.9rem; color:var(--sub); }
 <nav aria-label="内容分类">
   <div class="tabs" role="tablist" aria-label="内容分类">
     <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="true" tabindex="0">理论<span class="cnt">6</span></button>
-    <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">6</span></button>
+    <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">8</span></button>
     <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验记录<span class="cnt">4</span></button>
     <button type="button" role="tab" id="tab-tools" aria-controls="panel-tools" aria-selected="false" tabindex="-1">工具</button>
   </div>
@@ -132,42 +140,30 @@ details.box li { margin:5px 0; font-size:.9rem; color:var(--sub); }
 
 <section id="panel-plans" role="tabpanel" aria-labelledby="tab-plans" tabindex="0">
 
-<h2>实验计划<span class="en">PLANNED</span></h2>
+<h2 id="plans-heading">实验计划<span class="en">PLANNED</span></h2>
 <p class="note">研究路线、项目选型综述和待执行操作说明。实际运行后在「实验记录」保留带 run ID 的结果；长期维护的操作协议留在此处并双向索引。</p>
 
+<nav class="plan-jumps" aria-label="实验计划快速跳转"><a href="#plan-long-term">长期能力路线</a><a href="#plan-shared-control">共享控制与小阶段</a><a href="#plan-options">待验证方案</a></nav>
 <h3>研究路线</h3>
 <p class="note">论文地图 + 自己的架构与实验设计。</p>
-<a class="card" href="l20-robust-grasp.html">
+<a class="card" id="plan-long-term" href="l20-robust-grasp.html">
   <div class="t">L20 Robust Grasp：长期路线与研究候选<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">方案稿</span></div>
   <div class="d">三条长期主线：L20 robust grasp、真人手预训练并经 retargeting 迁移到 L20、面向残障用户的 online learning；当前短期先数采，再做 L20 抓姿训练</div>
 </a>
-<a class="card" href="l20-robust-grasp-stage1.html">
-  <div class="t">Stage 1.1：数采<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">当前第一步 · preparation 待验收</span></div>
-  <div class="d">10 条试跑回放 → 240 条平衡 L20 示教 + 24 条改意图／取消诊断 → 冻结字段、坐标、标签与 144／48／48 session 划分</div>
-</a>
-<a class="card" href="l20-stage1-2-training.html">
-  <div class="t">Stage 1.2：Training<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">待 Stage 1.1 数据验收</span></div>
-  <div class="d">两个方案并列：A 删除 gaze／物体分支的 VQ-VAE＋自回归 Transformer 预测未来序列；B 状态条件 Flow Matching 生成多个最终 L20 手姿候选；共享确定性基线与冻结划分</div>
-</a>
-<a class="card" href="l20-stage1-3-shared-grasp.html">
-  <div class="t">Stage 1.3：意图条件的共享抓取控制<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">方案已记录 · 待执行</span></div>
-  <div class="d">复用 1.2 预测 → 候选选择与几何修正 → 目标条件闭环执行；T0–T3 分开验证预测与执行收益，按需升级 RL／残差；参考 DexGen 动作先验</div>
-</a>
-<div class="sub">
-  <a href="l20-grasp-sources-review.html"><span class="rel">项目选型综述 ·</span> <span class="t2">抓姿来源：人手 Retarget / 模型生成 / 数学优化</span><br>
-    <span class="d2">人类数据库、不同 retarget 方法、模型生成与数学优化；保留 SOTA 资料及已有 BODex 资产审计，按实际需要查阅，不同时展开</span></a>
-</div>
-<a class="card" href="shared-control.html">
+<a class="card" id="plan-shared-control" href="shared-control.html">
   <div class="t">共享控制路线：从 To the Noise and Back 到 EMG 灵巧手</div>
-  <div class="d">参照论文的完整流程与它的实验设计 · 部分扩散（partial diffusion）演示 · 我们的架构映射与当前进度</div>
+  <div class="d">全程共享控制的母路线：方法背景、系统分工与阶段入口；Stage 1.1–1.3 是路线内的小阶段，协议与实验结果分别维护。</div>
 </a>
+<nav class="sub stage-list" aria-label="共享控制路线的小阶段">
+  <a href="l20-robust-grasp-stage1.html"><span class="rel">Stage 1.1 ·</span> <span class="t2">数采与标签</span><br><span class="d2">已有单 cube 的 95 条 pinch PoC；保留采集协议，正式数据验收另记。</span></a>
+  <a href="l20-stage1-2-training.html"><span class="rel">Stage 1.2 ·</span> <span class="t2">意图预测与模型比较</span><br><span class="d2">已有终点回归与序列生成对照；输入历史长度、预测提前量和输出目标分别说明。</span></a>
+  <a href="l20-stage1-3-shared-grasp.html"><span class="rel">Stage 1.3 ·</span> <span class="t2">意图条件的共享抓取控制</span><br><span class="d2">已有残差 RL 与仲裁 PoC；物理后端差异限制收益结论，完整任务仍待验证。</span></a>
+  <a href="l20-stage1-alternatives.html"><span class="rel">1.2 配套候选 ·</span> <span class="t2">数学推断与 VLM 辅助</span><br><span class="d2">几何评分、递归贝叶斯、VLM 先验及融合；按问题选用，均待验证。</span></a>
+  <a href="l20-grasp-sources-review.html"><span class="rel">配套选型综述 ·</span> <span class="t2">抓姿来源：人手 Retarget / 模型生成 / 数学优化</span><br><span class="d2">数据库、方法与已有资产审计；按需查阅，不作为同时执行的任务。</span></a>
+</nav>
 
-<h3>待验证方案</h3>
-<p class="note">针对某个已知缺陷排出来的候选清单，每条都带验证判据，状态全是「未跑」。</p>
-<a class="card" href="l20-stage1-alternatives.html">
-  <div class="t">Stage 1.2 其他方案：数学推断与 VLM 辅助<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">四条待验证</span></div>
-  <div class="d">与主方案共享 Quest 示教；几何评分、递归贝叶斯、VLM 语义先验及融合；统一完整抓姿、数据划分与误差／提前量对照</div>
-</a>
+<h3 id="plan-options">待验证方案</h3>
+<p class="note">配套候选随所属路线维护；下列保留独立的缺陷分析与验证方案。</p>
 <a class="card" href="retargeting-research.html">
   <div class="t">Retargeting 的局限与候选解法<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">六条全部未跑</span></div>
   <div class="d">前置阅读「Hand Control 技术路线手册」（在<b>实验记录</b>标签页）· 小指 curl 与侧摆收敛成同一组根因（目标只有指尖向量 / 单一全局缩放 / L20 小指 1.44 掌宽且不能反向伸展）· 六条待验证候选与各自的判据 · AnyTeleop 详档：同一条公式、单标量 α、Shadow 的中间关节向量、DexPilot 捏合投影与它的死区 · 整包引进的四个阻塞点</div>
@@ -288,7 +284,13 @@ details.box li { margin:5px 0; font-size:.9rem; color:var(--sub); }
     });
   });
 
-  function fromHash() { select(byHash[location.hash] || 0, false); }
+  function fromHash() {
+    var target = document.getElementById(location.hash.slice(1));
+    var panel = target && target.closest('[role="tabpanel"]');
+    var i = panel ? tabs.findIndex(function (tab) { return tab.getAttribute('aria-controls') === panel.id; }) : (byHash[location.hash] || 0);
+    select(i < 0 ? 0 : i, false);
+    if (target && panel && target !== panel) target.scrollIntoView();
+  }
   window.addEventListener('hashchange', fromHash);
   fromHash();
 })();

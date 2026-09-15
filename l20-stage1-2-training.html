@@ -67,7 +67,7 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 </head>
 <body>
 <main class="wrap">
-<a class="bk" href="l20-robust-grasp-stage1.html">← Stage 1.1：数采</a> · <a class="bk" href="l20-robust-grasp.html">长期路线</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
+<a class="bk" href="shared-control.html#stages">← 共享控制路线 · 小阶段</a> · <a class="bk" href="l20-robust-grasp-stage1.html">← Stage 1.1：数采</a> · <a class="bk" href="l20-robust-grasp.html">长期路线</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
 <div class="kicker">实验计划 · Stage 1.1 验收后执行 · 2026-09-13</div>
 <h1>Stage 1.2：Training</h1>
 <p class="lede">使用 Stage 1.1 冻结的单一 cube Quest→retarget→L20 示教，并行尝试两个 Human Model：A 是删除 gaze／物体分支的 Gaze-Guided VQ-VAE＋自回归 Transformer；B 是条件 Flow Matching 生成预测。两者都只根据尚未完成的手部动作前缀预测未来，不直接输出机器人当前控制命令。</p>
@@ -157,7 +157,7 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <div class="key bad"><b>本阶段不做：</b>不训练直接电机 action policy，不在线更新模型，不把 Flow Matching 候选直接送给真实机器人，不把“覆盖到真实姿态”解释成抓取稳定、承重或 pick 成功。</div>
 <p>后续接入见 <a href="l20-stage1-3-shared-grasp.html">Stage 1.3：意图条件的共享抓取控制</a>：本页验收预测，1.3 比较直接跟踪与目标条件执行，并参考 DexGen 的动作先验分工。</p>
 
-<footer><a href="l20-robust-grasp-stage1.html">← Stage 1.1：数采</a> · <a href="l20-robust-grasp.html">长期路线</a> · <a href="index.html">Machine Learning Handbook</a></footer>
+<footer><a href="shared-control.html#stages">共享控制路线 · 小阶段</a> · <a href="l20-robust-grasp-stage1.html">← Stage 1.1：数采</a> · <a href="l20-robust-grasp.html">长期路线</a> · <a href="index.html">Machine Learning Handbook</a></footer>
 </main>
 </body>
 </html>
