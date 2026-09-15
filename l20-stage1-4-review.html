@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 1.4：阶段性总结与待决问题 · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap canvas { width:100%; display:block; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; }
+.ctl button { font:600 .85rem/1 inherit; color:var(--ink); background:var(--bg);
+  border:1px solid var(--line2); border-radius:7px; padding:7px 11px; cursor:pointer; }
+.ctl button:hover { border-color:var(--blue); color:var(--blue); }
+.ctl button.pri { background:var(--blue); border-color:var(--blue); color:#fff; }
+.ctl label { display:inline-flex; gap:5px; align-items:center; font-size:.85rem; color:var(--sub);
+  cursor:pointer; user-select:none; }
+.ctl input[type=range] { flex:1 1 140px; min-width:120px; accent-color:var(--blue); }
+.ctl .ro { font:.8rem/1.4 ui-monospace,Menlo,monospace; color:var(--sub); }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+
+
+.bk, .toc a { display:inline-flex; min-height:44px; align-items:center; }
+a { color:var(--ink); text-decoration:underline; text-underline-offset:3px; }
+h2 .n { color:var(--sub); }
+a:focus-visible, .tw:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
+.kicker, .bk, footer { color:var(--sub); }
+.toc { display:flex; flex-wrap:wrap; gap:2px 16px; }
+.status { color:var(--sub); font-size:.9rem; }
+.discussion { border-top:1px solid var(--line); padding:12px 0; }
+.discussion h3 { margin:.3em 0; }
+.discussion p { margin:.3em 0; }
+.tw table { min-width:620px; }
+caption { text-align:left; color:var(--sub); margin-bottom:8px; }
+[id] { scroll-margin-top:20px; }
+code { overflow-wrap:anywhere; }
+</style></head><body>
+<main class="wrap">
+<a class="bk" href="shared-control.html#stages">← 共享控制路线 · 小阶段</a> · <a class="bk" href="index.html#plans">Machine Learning Handbook</a>
+<div class="kicker">实验计划 · 阶段性总结 · 2026-09-15</div>
+<h1>Stage 1.4：阶段性总结与待决问题</h1>
+<p class="lede">汇总 Stage 1.1–1.3 的证据边界，以及 9 月 14–15 日的讨论。这里逐项确定接下来研究什么；具体实验仍回到所属小阶段维护。</p>
+<p class="status"><b>状态：讨论中。</b>1.4 是总结与下一轮议题入口，不表示新的训练阶段已执行，也不把此前提出的方案当成已达成共识。当前先讨论 <a href="#terminal">最终抓取目标的定义</a>。</p>
+<nav class="toc" aria-label="阶段总结跳转"><a href="#snapshot">已有证据</a><a href="#terminal">最终抓姿与物体约束</a><a href="#questions">问题清单</a><a href="#gaps">还缺什么</a><a href="#next">逐项讨论顺序</a></nav>
+
+<h2 id="snapshot"><span class="n">§ 1</span>当前小结：有 PoC，完整共享控制尚待验证</h2>
+<div class="key"><b>最需要重新确认的是任务与辅助价值。</b>现有数据中的成功 pinch 很集中；预测信息是否改变执行、残差是否解决真实困难，必须在可信物理和相同测试条件下分别检验。先保留有效资产，再定位缺口。</div>
+<div class="tw" tabindex="0" role="region" aria-label="小阶段证据边界"><table>
+<caption>原始结果留在实验记录，本页只说明能据此得出什么</caption>
+<thead><tr><th scope="col">小阶段</th><th scope="col">已有资产／证据</th><th scope="col">不能据此声称</th></tr></thead><tbody>
+<tr><td><a href="l20-robust-grasp-stage1.html">1.1 数采</a></td><td>95 条单 cube pinch PoC；用户动作、机器人状态与派生终点标签。</td><td>多抓法、多物体或目标用户分布已覆盖；正式采集矩阵已完成。</td></tr>
+<tr><td><a href="l20-stage1-2-training.html">1.2 意图预测</a></td><td>终点回归与序列生成对照、留一 session 评测和实时显示。M0 的目标是抬离终点，FMS 的目标是未来一秒轨迹。</td><td>预测已经满足碰撞、承重与路径可达约束；显示预测等于预测驱动控制。</td></tr>
+<tr><td><a href="l20-stage1-3-shared-grasp.html">1.3 共享抓取</a></td><td>残差策略、固定／几何 α、目标来源消融与部署保护逻辑；已有物理后端比较。</td><td>完整搬运释放已训练；人在辅助下的适应已模拟；JAX 上的收益可直接迁移。</td></tr>
+</tbody></table></div>
+<p>较新的证据改变了早期 RL 数字的读法：结果页报告，Warp 下无扰动回放／脚本来源的零残差成功率为 98%–100%；同表扰动来源为 68%、混合来源为 80%，不能把 98%–100% 当成所有条件的成绩。所比较的策略没有带来相应提升，提示此前部分收益可能来自后端接触差异。详见 <a href="l20-stage1-3-results.html#pred">1.3 结果 §C：后端核验</a>。这要求先验证任务中的真实困难，而不是直接增加训练量。</p>
+<p>预测结果与口径见 <a href="l20-stage1-2-results.html">1.2 结果</a>；控制实验见 <a href="l20-stage1-3-results.html">1.3 结果</a>。本总结没有新增实验结果。</p>
+
+<h2 id="terminal"><span class="n">§ 2</span>新增首要议题：实时更新的最终抓取目标</h2>
+<div class="key"><b>建议的主输出：</b>根据截至当前的用户动作与物体状态，持续更新“用户最终想怎样抓”的估计，并给出经过约束检查的可执行候选和可校准的可靠性。它不固定为“当前时刻往后一秒的姿势”。这仍是待共同细化的接口方向。</div>
+<p><b>先澄清三个时间概念。</b>过去一秒是输入窗口；抬离前一秒是评测提前量；未来一秒是轨迹输出长度。现有 M0 使用过去窗口预测抬离时终点，已经不是固定一秒后的状态；FMS 才生成未来一秒轨迹。短时轨迹仍可能用于接近和避障，但不作为最终抓姿的替代目标。</p>
+<div class="tw" tabindex="0" role="region" aria-label="拟议的抓取目标接口"><table>
+<caption>把意图、可执行性与可信度分开，避免一只“预测手”承担全部含义</caption>
+<thead><tr><th scope="col">拟议输出</th><th scope="col">含义</th><th scope="col">需要验证</th></tr></thead><tbody>
+<tr><td>用户意图终点</td><td>物体坐标系中的掌部目标位姿、手形，或目标接触区域；随当前证据更新。</td><td>预测是否保留用户抓法；多候选时是否错误平均出一只不可用的手。</td></tr>
+<tr><td>约束后的候选</td><td>在 L20 关节范围、物体表面和允许接触条件下检查或修正目标。</td><td>修正是否改变用户意图；无可行解时明确返回不可行，不能强行输出。</td></tr>
+<tr><td>接近条件</td><td>允许的接近方向／预抓姿／局部路径，以及相对当前腕姿的可达性。</td><td>终点可行不等于到达路径无碰撞；腕部由用户控制时，不能假设 RL 可自行换切入角。</td></tr>
+<tr><td>可靠性与有效性</td><td>意图候选的概率／误差范围，加上约束检查结果、观测质量和时间戳。</td><td>统计置信度须校准；几何检查通过不等于抓取成功概率为 1。</td></tr>
+</tbody></table></div>
+<p><b>物理约束不是“禁止所有碰撞”。</b>抓取必须接触物体，需要区分目标接触与非预期碰撞／自碰撞，并控制允许的穿透和作用力。手指控制命令 q_ref 可以通过过闭合建立夹持；用于展示或几何检验的实际手形、接触目标和执行器命令应分别表示。直接把 q_ref 的运动学手画在物体里，不足以判断预测错误。</p>
+<p><b>形状吻合也不等于稳定抓取。</b>承重与抗扰还取决于摩擦、接触力、物体质量和动力学，须由执行与扰动测试验证。第一版可以先输出候选，再做几何筛选和局部修正；是否加入可微物理／优化，留到基本对照后讨论。</p>
+<p><b>实时更新不等于无条件逐帧换目标。</b>接近时允许修正；形成接触后需要目标稳定机制，同时允许可靠的新证据、改意图或取消触发重选。低 confidence 不应自动触发释放。</p>
+<p><b>本议题要先定的三件事：</b>“最终”是接触建立、稳定夹持还是抬离时刻；主表示是掌姿＋手形还是接触区域；切入角作为可行性条件、用户引导还是允许的控制自由度。现有抬离标签保留版本，不能静默改写为稳定抓取真值。</p>
+
+<h2 id="questions"><span class="n">§ 3</span>问题清单：保留用户提出的每一个问题</h2>
+<p>Q1–Q6 对应最初六项；Q7–Q9 来自后续讨论；Q10 是本次新增问题。全部保留为待讨论议题，尚未统一决定实施顺序。</p>
+<section class="discussion" id="q1"><h3>Q1 · 手势预测不准</h3><p>区分位置／姿态／手形误差、时间抖动、坐标映射及命令空间穿透。先按误差来源审视，不能把换模型当成统一解法。</p></section>
+<section class="discussion" id="q2"><h3>Q2 · task 的价值或辅助效果不明显</h3><p>待澄清：辅助开关前后没感觉，任务过于简单，还是目标／阶段反馈不清。检查实际 αΔu 和生效时间；任务应要求用户意图或辅助真正改变结果。</p></section>
+<section class="discussion" id="q3"><h3>Q3 · 知道 grasping，不知道何时松手</h3><p>区分用户明确释放与系统判断可辅助释放。补足放置、支撑、取消、误释放和重试；完整任务成功不能只记为抬起保持一秒。</p></section>
+<section class="discussion" id="q4"><h3>Q4 · confidence / belief 驱动 arbitration</h3><p>分别定义追踪质量、预测可靠性、抓法／阶段 belief 和当前执行稳定性。当前已有几何门控，缺的是校准可靠性如何参与决策；高 confidence 不自动等于强辅助。</p></section>
+<section class="discussion" id="q5"><h3>Q5 · 泛化与 benchmark 水杯</h3><p>区分跨 session、摆放、物体、抓法和用户。YCB <code>025_mug</code> 已选为候选，未导入；杯身／杯柄能否形成 L20 可行的不同抓法待查。小型多样性实验与大规模扩展分开。</p></section>
+<section class="discussion" id="q6"><h3>Q6 · RL 流程怎样模拟人的介入</h3><p>回放／闭合脚本没有充分模拟人看到辅助后的等待、纠偏、反对与减小用力。先核验物理基线与观测可得性，再讨论反应式人模型、完整任务和是否继续使用手指残差。</p></section>
+<section class="discussion" id="q7"><h3>Q7 · 面向残障用户的数据与输入</h3><p>目标使用者及保留能力尚未确定。机器人 skill 示教与个人意图解码数据分开：健全人／机器人产生执行示教；目标用户可通过尝试运动、提示与确认提供意图信号。缺失手部的完整姿态不能作为部署必需输入。</p></section>
+<section class="discussion" id="q8"><h3>Q8 · 抓型分类、tokenization 与真正的 skill</h3><p>GRASP taxonomy 是静态抓型分类，姿态 token 是一种表示，skill 则还包括反馈动作与退出条件。可讨论“少量抓型＋连续参数＋条件 RL”，先验证明确选型下的技能；不预设逐帧硬分类或每类独立训练。</p></section>
+<section class="discussion" id="q9"><h3>Q9 · Quest 抽搐、置信度与滤波</h3><p>对齐原始追踪、retarget、混合命令和实际关节找跳变源。比较简单滤波与质量自适应 Kalman；同时测延迟和释放响应。Quest 质量标志不是意图概率，EMG Kalman 解码也不是 Quest 坐标滤波。</p></section>
+<section class="discussion" id="q10"><h3>Q10 · 最终抓姿＋物体形状／碰撞／切入角＋置信度</h3><p>作为当前优先讨论项，详见<a href="#terminal">§2 输出接口</a>。先定语义、标签和约束责任，再选模型；不能仅增加一个 confidence 输出头就宣称目标可执行。</p></section>
+<p>前两轮讨论的一手参考：<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12689642/">Trout 等，2025：EMG 与共享控制</a> · <a href="https://www.eng.yale.edu/grablab/pubs/Feix_THMS2016.pdf">Feix 等，2016：GRASP taxonomy</a> · <a href="https://ycb-benchmarks.s3.amazonaws.com/index.html">YCB 模型列表</a> · <a href="https://proceedings.mlr.press/v70/guo17a.html">Guo 等，2017：概率校准</a>。</p>
+
+<h2 id="gaps"><span class="n">§ 4</span>还缺少的共同前提</h2>
+<ul>
+<li><b>可观测信息清单：</b>训练、头显仿真与未来实体手各自能获得什么。物体几何、位姿、接触和力从哪里来；不能把仿真真值默认为实体传感器。</li>
+<li><b>标签语义与版本：</b>人想达到的姿态、实际接触姿态、控制命令和系统修正目标分别保存；抬离成功只是证据之一，失败与改意图不能被过滤掉。</li>
+<li><b>可行解与退出规则：</b>不可达、低置信、追踪丢失、用户改意图、持物和主动释放各如何处理。拒绝辅助与主动张手是不同动作。</li>
+<li><b>公平的价值验证：</b>先有可信的无辅助基线，再分开测预测、约束修正和仲裁的收益；固定物理、输入滤波、目标来源与控制权限，报告辅助量和失败类型。</li>
+<li><b>目标使用者和控制权限：</b>是否允许系统只修手指、是否提供腕部引导、用户能否提供连续开合。技能生成基础命令会扩大机器责任，不能视为现有 residual 的等价替换。</li>
+</ul>
+
+<h2 id="next"><span class="n">§ 5</span>一个个讨论，当前只展开输出定义</h2>
+<ol>
+<li><b>先定 Q10：</b>最终事件、输出表示、物体约束与 confidence 的含义。交付一份短接口约定，暂不指定网络规模或训练预算。</li>
+<li><b>再定 Q1 / Q9：</b>用已有记录分清预测误差与追踪／控制抖动，确认输入和标签可信。</li>
+<li><b>再定 Q2 / Q3 / Q4 / Q6：</b>选一个能看出辅助价值的完整任务，确定人如何介入、何时释放以及仲裁对照。</li>
+<li><b>随后讨论 Q7 / Q8 / Q5：</b>根据目标使用者的输入，决定 skill、数据采集与最小物体扩展。使用者信息可提前补充，不必等到这一项才收集。</li>
+</ol>
+<p>以上是建议的讨论次序，不是四项已批准的训练任务。前一项形成结论后，再更新所属阶段的当前 3–5 个动作与交付物；这一页保留问题和决策依据。</p>
+<footer><a href="shared-control.html#stages">← 共享控制路线 · 小阶段</a> · <a href="l20-stage1-3-shared-grasp.html">1.3 控制协议</a> · <a href="index.html#plans">Machine Learning Handbook</a></footer>
+</main></body></html>

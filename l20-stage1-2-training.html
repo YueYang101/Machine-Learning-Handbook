@@ -74,6 +74,8 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <p class="meta">状态：2026-09-13 在 pilot + 正式 session 1 的 95 条 pinch 示教上跑了首个 run，结果与视频见 <a href="l20-stage1-2-results.html">Stage 1.2 结果</a>（实验记录）。本页保留模型与比较协议；240 条正式数据的 144／48／48 划分尚未采齐，正式结果待补。</p>
 <div class="key good"><b>明确是两个方案：</b>方案 A 学离散 motion token 的序列条件概率，目标是复现“动作前缀 → 到接触为止的未来序列”；方案 B 学连续未来手姿的条件分布，目标是避免不确定时只输出一只“平均手”。它们共享数据，但编码、loss 和推理过程都不同。</div>
 <div class="key warn"><b>小数据取舍：</b>240 条 trial 可能不足以同时稳定训练 codebook、Transformer 和高维轨迹生成器。因此 A 保留论文式完整序列任务；B 首轮只生成物体坐标系中的多个最终 L20 手姿候选。两者先在相同终点指标上比较，不把不同额外能力混成一个总分。</div>
+<p class="meta">路线复盘：<a href="l20-stage1-4-review.html">Stage 1.4 阶段性总结与待决问题</a> 汇总最新讨论；本页保留本阶段协议，不把讨论方案回填为已完成验收。</p>
+<p class="meta"><b>输出口径：</b>现有 M0／终点模型预测抬离时的最终抓姿；过去一秒是输入窗口，抬离前一秒是评测位置，FMS 的未来一秒才是固定输出时域。下一轮的实时最终目标与物体约束见 <a href="l20-stage1-4-review.html#terminal">1.4 输出讨论</a>。</p>
 <nav class="toc" aria-label="本页目录"><a href="#schemes">两个方案</a> · <a href="#boundary">与 IL 的关系</a> · <a href="#data">共同数据</a> · <a href="#scheme-a">方案 A</a> · <a href="#flow">方案 B</a> · <a href="#comparison">对照与判据</a> · <a href="#runbook">当前五步</a></nav>
 
 <h2 id="schemes">两个方案，不是同一个方法</h2>

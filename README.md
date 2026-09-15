@@ -43,6 +43,7 @@
 | ↳ [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | Stage 1.1 数采与标签：已有单 cube 的 95 条 pinch PoC；保留采集协议，正式数据验收另记 |
 | ↳ [l20-stage1-2-training.html](l20-stage1-2-training.html) | Stage 1.2 意图预测与模型比较：已有终点回归与序列生成对照，区分输入历史、预测提前量与输出目标 |
 | ↳ [l20-stage1-3-shared-grasp.html](l20-stage1-3-shared-grasp.html) | Stage 1.3 意图条件的共享抓取控制：已有残差 RL 与仲裁 PoC，物理后端差异限制收益结论，完整任务仍待验证 |
+| ↳ [l20-stage1-4-review.html](l20-stage1-4-review.html) | Stage 1.4 阶段性总结与待决问题（讨论中）：汇总十项问题，当前先讨论实时更新的最终抓姿＋物体约束＋置信度；已有证据与方案分开 |
 | ↳ [l20-stage1-alternatives.html](l20-stage1-alternatives.html) | Stage 1.2 配套候选：几何评分、递归贝叶斯、VLM 先验及融合；按问题选用，均待验证 |
 | ↳ [l20-grasp-sources-review.html](l20-grasp-sources-review.html) | 配套选型综述：人手 Retarget / 模型生成 / 数学优化，数据库、方法与已有资产审计；按需查阅，不作为同时执行的任务 |
 

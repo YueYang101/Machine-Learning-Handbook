@@ -151,9 +151,9 @@
 </section>
 <section id="current">
 <h2 id="current-poc">当前短期 PoC（与长期路线分开）</h2>
-<p>当前短期路线拆成连续两步：<a href="l20-robust-grasp-stage1.html">Stage 1.1：数采</a>先冻结 Quest→retarget→L20 的单一 cube 多样抓姿数据；<a href="l20-stage1-2-training.html">Stage 1.2：Training</a>再并列测试删除 gaze／物体分支的 VQ-VAE＋自回归 Transformer，以及状态条件 Flow Matching，并以确定性最终抓姿回归作共同基线。</p>
-<p>这两步不加入真人手大规模预训练、human-to-L20 transfer 或 online model update，也不考核承重、稳定性、抗扰或 pick；这些是后续长期目标，不是被删除。数据是否可信与模型是否有效分别验收。</p>
-<p>后续方案已记录于 <a href="l20-stage1-3-shared-grasp.html">Stage 1.3：意图条件的共享抓取控制</a>：复用 1.2 预测，连接几何修正和目标条件执行；先比较直接跟踪与基础辅助，再按失败证据升级 RL／残差。参考 DexGen 分工，以单 cube 仿真验证抓法保持、接触与短时保持，尚未执行。</p>
+<p>Stage 1.1–1.4 统一归入 <a href="shared-control.html#stages">共享控制路线的小阶段</a>：数采与标签 → 意图预测 → 共享抓取 → 阶段性总结与待决问题。长期三条能力线保持不变。</p>
+<p>1.1 / 1.2 已有单 cube pinch PoC，1.3 已有残差与仲裁实验；结果分别见 <a href="l20-stage1-2-results.html">预测记录</a> 与 <a href="l20-stage1-3-results.html">控制记录</a>，不表示正式验收已经完成。</p>
+<p>当前从 <a href="l20-stage1-4-review.html">1.4 阶段性总结</a> 逐项讨论下一步，先明确实时更新的最终抓姿、物体约束和置信度。大规模预训练、迁移和 online learning 继续保留为长期目标。</p>
 </section>
 <section id="reading">
 <h2 id="research-reading">研究候选：保留，按需启用</h2>

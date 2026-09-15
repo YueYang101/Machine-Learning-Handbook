@@ -83,6 +83,7 @@ mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:10
 footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
 .stage-nav { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; margin:16px 0; }
 .stage-nav a { display:block; min-height:44px; padding:12px 14px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
+.stage-nav a { color:var(--ink); text-decoration:underline; text-underline-offset:3px; }
 .stage-nav span { display:block; color:var(--sub); font-size:.88rem; }
 a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 .bk, .toc a { display:inline-flex; min-height:44px; align-items:center; }
@@ -103,7 +104,9 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 <a href="l20-robust-grasp-stage1.html"><b>1.1 数采与标签</b><span>记录、标签与数据边界</span></a>
 <a href="l20-stage1-2-training.html"><b>1.2 意图预测</b><span>最终抓姿与模型比较</span></a>
 <a href="l20-stage1-3-shared-grasp.html"><b>1.3 共享抓取</b><span>执行、残差与仲裁</span></a>
+<a href="l20-stage1-4-review.html"><b>1.4 阶段性总结</b><span>待决问题 · 逐项讨论</span></a>
 </nav>
+<p><b>当前讨论：</b><a href="l20-stage1-4-review.html#terminal">实时更新的最终抓姿、物体约束与置信度</a>。汇总入口见 <a href="l20-stage1-4-review.html#questions">十项问题</a>，不把待讨论方案当成已经执行。</p>
 <p>已有记录：<a href="l20-stage1-2-results.html">1.2 预测结果</a> · <a href="l20-stage1-3-results.html">1.3 控制结果与物理后端核验</a>。下文保留参照论文与历史架构，不代表所有设计已经实现。</p>
 </section>
 <p class="lede">参照论文是 <b>To the Noise and Back: Diffusion for Shared Autonomy</b>（Yoneda et al., RSS 2023, arXiv:2302.12244）：用扩散模型的「部分加噪 + 去噪」把用户动作拉回专家分布，不需要知道用户目标、不需要 reward、不需要在线人类参与训练。本页把它的流程和实验讲清楚，然后对照我们的系统：<b>EMG 采集 → emg2pose 解码手指、Quest 只供 wrist pose、MuJoCo 里的 L20 共享控制</b>——同一套配方，但动作空间从他们的 2–3 维升到 16+6 维。这部分是路线的架构设想；当前短期验证与状态见上方小阶段入口。</p>

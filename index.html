@@ -93,7 +93,7 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 <nav aria-label="内容分类">
   <div class="tabs" role="tablist" aria-label="内容分类">
     <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="true" tabindex="0">理论<span class="cnt">6</span></button>
-    <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">8</span></button>
+    <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">9</span></button>
     <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验记录<span class="cnt">4</span></button>
     <button type="button" role="tab" id="tab-tools" aria-controls="panel-tools" aria-selected="false" tabindex="-1">工具</button>
   </div>
@@ -140,7 +140,7 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 
 <section id="panel-plans" role="tabpanel" aria-labelledby="tab-plans" tabindex="0">
 
-<h2 id="plans-heading">实验计划<span class="en">PLANNED</span></h2>
+<h2 id="plans">实验计划<span class="en">PLANNED</span></h2>
 <p class="note">研究路线、项目选型综述和待执行操作说明。实际运行后在「实验记录」保留带 run ID 的结果；长期维护的操作协议留在此处并双向索引。</p>
 
 <nav class="plan-jumps" aria-label="实验计划快速跳转"><a href="#plan-long-term">长期能力路线</a><a href="#plan-shared-control">共享控制与小阶段</a><a href="#plan-options">待验证方案</a></nav>
@@ -152,12 +152,13 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 </a>
 <a class="card" id="plan-shared-control" href="shared-control.html">
   <div class="t">共享控制路线：从 To the Noise and Back 到 EMG 灵巧手</div>
-  <div class="d">全程共享控制的母路线：方法背景、系统分工与阶段入口；Stage 1.1–1.3 是路线内的小阶段，协议与实验结果分别维护。</div>
+  <div class="d">全程共享控制的母路线：方法背景、系统分工与阶段入口；Stage 1.1–1.4 是路线内的小阶段，协议与实验结果分别维护。</div>
 </a>
 <nav class="sub stage-list" aria-label="共享控制路线的小阶段">
   <a href="l20-robust-grasp-stage1.html"><span class="rel">Stage 1.1 ·</span> <span class="t2">数采与标签</span><br><span class="d2">已有单 cube 的 95 条 pinch PoC；保留采集协议，正式数据验收另记。</span></a>
   <a href="l20-stage1-2-training.html"><span class="rel">Stage 1.2 ·</span> <span class="t2">意图预测与模型比较</span><br><span class="d2">已有终点回归与序列生成对照；输入历史长度、预测提前量和输出目标分别说明。</span></a>
   <a href="l20-stage1-3-shared-grasp.html"><span class="rel">Stage 1.3 ·</span> <span class="t2">意图条件的共享抓取控制</span><br><span class="d2">已有残差 RL 与仲裁 PoC；物理后端差异限制收益结论，完整任务仍待验证。</span></a>
+  <a href="l20-stage1-4-review.html"><span class="rel">Stage 1.4 · 讨论中 ·</span> <span class="t2">阶段性总结与待决问题</span><br><span class="d2">汇总预测、任务、释放、仲裁、泛化、RL、人群、skill 与抖动；当前先讨论实时更新的最终抓姿＋物体约束＋置信度。</span></a>
   <a href="l20-stage1-alternatives.html"><span class="rel">1.2 配套候选 ·</span> <span class="t2">数学推断与 VLM 辅助</span><br><span class="d2">几何评分、递归贝叶斯、VLM 先验及融合；按问题选用，均待验证。</span></a>
   <a href="l20-grasp-sources-review.html"><span class="rel">配套选型综述 ·</span> <span class="t2">抓姿来源：人手 Retarget / 模型生成 / 数学优化</span><br><span class="d2">数据库、方法与已有资产审计；按需查阅，不作为同时执行的任务。</span></a>
 </nav>

@@ -119,6 +119,7 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 <p class="meta">状态：preparation 待验收，正式采集待执行。计划先回放 10 条试跑，再采集 240 条固定意图示教和 24 条改意图／取消诊断。训练与影子手预测验证已经拆到 <a href="l20-stage1-2-training.html">Stage 1.2：Training</a>；本次没有新增实验数据或性能成绩。</p>
 <div class="key good"><b>本阶段交付：</b>版本冻结、可回放、无 trial／session 泄漏的 Quest→retarget→L20 数据集。它必须保留模型训练所需的完整动作前缀和最终确认抓姿，但“数据已经采到”不等于“意图已经能被预测”。</div>
 <div class="key warn"><b>监督目标选择：</b>预测物体坐标系中的最终 L20 掌部 6D 位姿与 16 个主动关节目标；MuJoCo 接触位置、法向和接触 link 全部记录，但先作为派生验证量，不作为网络主标签。完整抓姿能经 FK／碰撞几何重建接触候选；只有接触点却不能唯一恢复掌姿、关节、接近路径或稳定力分配。</div>
+<p class="meta">路线复盘：<a href="l20-stage1-4-review.html">Stage 1.4 阶段性总结与待决问题</a> 汇总最新讨论；本页保留本阶段协议，不把讨论方案回填为已完成验收。</p>
 <nav class="toc" aria-label="本页目录"><a href="#preparation">采集前准备</a> · <a href="#runbook">当前三步</a> · <a href="#dataset">采集矩阵</a> · <a href="#io">数据字段</a> · <a href="#model">训练交接</a> · <a href="#alternatives">方案索引</a> · <a href="#intent-updates">改意图记录</a> · <a href="#handoff">抓取接口</a> · <a href="#checklist">交付与判据</a> · <a href="#next">后续边界</a></nav>
 
 <h2 id="preparation">Preparation：先让示教可用、记录可信</h2>
