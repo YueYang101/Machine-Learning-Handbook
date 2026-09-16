@@ -69,13 +69,23 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <body>
 <main class="wrap">
 <a class="bk" href="shared-control.html#stages">← 共享控制路线 · 小阶段</a> · <a class="bk" href="l20-stage1-2-training.html">← Stage 1.2：Training</a> · <a class="bk" href="l20-robust-grasp.html">长期路线</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">实验计划 · Stage 1.2 验收后接入 · 2026-09-13</div>
+<div class="kicker">实验计划 · Stage 1.2 验收后接入 · 2026-09-13 → 2026-09-16</div>
 <h1>Stage 1.3：意图条件的共享抓取控制</h1>
 <p class="lede">复用 Stage 1.2 的 A／B 预测作为用户意图，接入候选选择、几何修正和闭环执行。先比较直接跟踪与目标条件辅助，再根据接触失败决定是否训练 goal-conditioned RL／residual policy。DexGen 是动作先验与人类引导分工的主要参考。</p>
-<p class="meta">状态：2026-09-13 在仿真里跑了第 2 步物理回放预检和第 4 步残差 RL 的首轮（环境 L20SharedPinch、20M 步、三条对照臂），结果与视频见 <a href="l20-stage1-3-results.html">Stage 1.3 结果</a>（实验记录）；本页保留方案。没有实机验证结果。当前范围为单一 cube、Quest→retarget→L20，首轮在仿真中验证。以下保留原始接口与实验设计；已运行的残差、仲裁和物理后端核验见 <a href="l20-stage1-3-results.html">1.3 结果</a>，不等于完整接口与正式实验已通过。</p>
+<p class="meta">状态：<b>当前 v5</b>（2026-09-16）。09-13 在仿真里跑了第 2 步物理回放预检和第 4 步残差 RL 的首轮（v1：环境 L20SharedPinch、20M 步、四条臂，berlin jax）；09-14 上午不重训只换仲裁做了 α 扫描，把控制器接到头显并跑了第一次真人在环 session 20260914T113530Z、修了包络判据（v2）；09-14 下午加了三条长窗口／预测器臂并换到 Warp 后端，发现 jax ≠ Warp 且离群的是 jax，此后全部仿真数字按 Warp 读（v3）；09-16 修了训练器 full_reset bug，用「有缺陷、会反应」的人群 v2 重训并加了规则、行为克隆人、新预测器与 conf α（v4）；同日跑了 Stage 1.4 的首轮（v5）。全部数字与视频见 <a href="l20-stage1-3-results.html">Stage 1.3 结果</a>；本页保留方案，每个版本的协议在 <a href="#versions">§ 7</a>。当前范围为单一 cube、Quest→retarget→L20；真人在环只有一次调试性 session，<b>没有 const 对 off 的实机对比</b>。已运行的残差、仲裁和物理后端核验不等于完整接口与正式实验已通过。</p>
 <div class="key good"><b>选型：</b>1.2 负责“用户想怎样抓”，1.3 负责“如何辅助完成这个抓法”。保留直接跟踪预测的对照组；第一版执行模块可以不训练，出现明确的接触／动力学缺口后再引入学习型控制器。</div>
 <p class="meta">路线复盘：<a href="l20-stage1-4-review.html">Stage 1.4 阶段性总结与待决问题</a> 汇总最新讨论；本页保留本阶段协议，不把讨论方案回填为已完成验收。</p>
-<nav class="toc" aria-label="本页目录"><a href="#boundary">能力边界</a> · <a href="#architecture">接入架构</a> · <a href="#execution">执行选型</a> · <a href="#dexgen">DexGen 参考</a> · <a href="#evaluation">对照与判据</a> · <a href="#runbook">当前五步</a></nav>
+<div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
+<caption>版本索引 · 当前 v5 · 与 <a href="l20-stage1-3-results.html">结果页</a>共用版本号；协议本身在 <a href="#versions">§ 7</a></caption>
+<thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
+<tbody>
+<tr><td><a href="#v1">v1</a></td><td>2026-09-13</td><td>L20SharedPinch：腕部外生回放、手指 ±0.15 rad 有界残差、α 门控；四条臂 20M 步，berlin jax</td><td>计划第 4 步首跑；先验证环境可训与零线</td><td><a href="l20-stage1-3-results.html#v1">结果 v1</a>，策略数字被 v3／v4 取代</td><td><a href="l20-stage1-3-results.html#v1-fig">rollout</a></td></tr>
+<tr><td><a href="#v2">v2</a></td><td>2026-09-14 上午</td><td>评测期仲裁扫描（const／gate，目标换均值）；影子仿真控制器、包络、启动脚本；第一次真人 session</td><td>定 α 与「要不要预测器」；接线</td><td><a href="l20-stage1-3-results.html#v2">结果 v2</a>，扫描数字被 v3／v4 取代，接线有效</td><td><a href="l20-stage1-3-results.html#v2-fig">曲线</a>；头显截图待补</td></tr>
+<tr><td><a href="#v3">v3</a></td><td>2026-09-14 下午</td><td>Long／LongPred／LongPredNoContact；Warp 后端；jax 数字降为参考</td><td>预测器接入的仿真版；两后端不等价</td><td><a href="l20-stage1-3-results.html#v3">结果 v3</a>，策略数字被 v4 取代</td><td><a href="l20-stage1-3-results.html#v3-fig">图</a></td></tr>
+<tr><td><a href="#v4">v4</a></td><td>2026-09-16</td><td>full_reset 修复；人群 v2 重训 H2／H2Rand；C0 规则、C5 行为克隆人、H2Pred、conf α</td><td>回放的人开环、策略没见过缺陷</td><td><a href="l20-stage1-3-results.html#v4">结果 v4</a>，当前有效</td><td><a href="l20-stage1-3-results.html#v4-fig">图 + rollout</a></td></tr>
+<tr><td><a href="#v5">v5</a></td><td>2026-09-16</td><td>Stage 1.4 首轮：会话持续 K=5、历史 z、非对称 critic</td><td>跨 trial 推断操作者</td><td><a href="l20-stage1-3-results.html#v5">结果 v5</a>，验收未过；计划在 <a href="l20-stage1-4-review.html#v2">1.4 页 v2</a></td><td><a href="l20-stage1-3-results.html#v5-fig">曲线</a></td></tr>
+</tbody></table></div>
+<nav class="toc" aria-label="本页目录"><a href="#boundary">能力边界</a> · <a href="#architecture">接入架构</a> · <a href="#execution">执行选型</a> · <a href="#dexgen">DexGen 参考</a> · <a href="#evaluation">对照与判据</a> · <a href="#runbook">当前五步</a> · <a href="#versions">版本协议</a></nav>
 
 <h2 id="boundary">§ 1 · 预测抓姿之后，还缺什么？</h2>
 <p><a href="l20-stage1-2-training.html">Stage 1.2</a> 的 A（No-Gaze VQ-VAE＋自回归 Transformer）输出未来手部序列，B（Flow Matching）首轮输出多个最终抓姿候选。它们的标签来自 <a href="l20-robust-grasp-stage1.html">Stage 1.1 数采</a>，表示想达到的 L20 抓姿，尚未证明承重或抗扰。</p>
@@ -136,12 +146,12 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 
 <h2 id="evaluation">§ 5 · 分开验证预测收益和执行收益</h2>
 <div class="tw" tabindex="0" role="region" aria-label="Stage 1.3 实验对照"><table>
-<caption>状态全部为待执行；T2 的人工正确目标是执行诊断，不是可部署预测器</caption>
-<thead><tr><th scope="col">组别</th><th scope="col">系统组成</th><th scope="col">回答的问题</th></tr></thead><tbody>
-<tr><td>T0</td><td>当前 Quest retarget＋基础控制器</td><td>无预测辅助的直接控制能做到什么？</td></tr>
-<tr><td>T1</td><td>1.2 预测辅助＋同一基础控制器</td><td>仅有预测能否改善操作？</td></tr>
-<tr><td>T2</td><td>人工确认的可行目标＋专用执行模块</td><td>给对目标之后，执行器是否有效？</td></tr>
-<tr><td>T3</td><td>1.2 预测辅助＋同一专用执行模块</td><td>完整链路的效果及预测误差代价是什么？</td></tr>
+<caption>状态到 2026-09-16：「等价物」指已有同格式入口或仿真版，不等于该组正式跑过；正式对比一组都没跑。T2 的人工正确目标是执行诊断，不是可部署预测器</caption>
+<thead><tr><th scope="col">组别</th><th scope="col">系统组成</th><th scope="col">回答的问题</th><th scope="col">状态</th></tr></thead><tbody>
+<tr><td>T0</td><td>当前 Quest retarget＋基础控制器</td><td>无预测辅助的直接控制能做到什么？</td><td>等价物：<code>collect_stage13_shared.sh</code> 的 <code>MJQUEST_ALPHA_MODE=off</code>，同一记录格式（<a href="l20-stage1-3-results.html#deploy">结果 §真机接线</a>）；正式的 10 次对照未跑</td></tr>
+<tr><td>T1</td><td>1.2 预测辅助＋同一基础控制器</td><td>仅有预测能否改善操作？</td><td>有入口、未跑：<code>demo_shared_prediction.sh</code> 把 Stage 1.2 预测显示在头显（幽灵手／接触点）并可关掉残差；没有对照数据</td></tr>
+<tr><td>T2</td><td>人工确认的可行目标＋专用执行模块</td><td>给对目标之后，执行器是否有效？</td><td>雏形：const 0.5 的 H2Rand／const20M 残差，目标 = 数据集平均位姿（v2 证明与 oracle 目标同效，<a href="l20-stage1-3-results.html#sweep">§α 扫描</a>）；仿真里 v4 通过门槛（<a href="l20-stage1-3-results.html#v4">结果 v4</a>），实机只有一次调试 session</td></tr>
+<tr><td>T3</td><td>1.2 预测辅助＋同一专用执行模块</td><td>完整链路的效果及预测误差代价是什么？</td><td>仿真版：v3 LongPred、v4 H2Pred（ens5 目标 + 接触目标，<a href="l20-stage1-3-results.html#pred">§预测器接入</a>、<a href="l20-stage1-3-results.html#h2">§H</a>）——与不用预测器持平，策略不看目标槽；实机待执行</td></tr>
 </tbody></table></div>
 <p>T1／T3 使用相同预测器、候选选择和门控规则；T2／T3 使用相同执行器、初态与目标抓法分布。另以相同人工目标对基础与专用控制器做配对测试，隔离执行收益；如需判断预测是否必需，在 T3 中关闭预测、保留实时参考作消融。比较 A／B 时固定下游控制器。</p>
 <p><b>共同记录：</b>目标抓法／接触指保持程度、接触形成成功率、短时保持成功率与掉落、完成时间、辅助修正幅度、用户覆盖／取消响应、推理和控制延迟。按抓法、方向、初态与 session 分层，失败分为预测错误、目标不可行、执行失稳和仲裁错误。</p>
@@ -156,6 +166,19 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <li><b>按缺口启用专用执行。</b>需要时适配已有控制器或训练目标条件 RL／有界残差，完成 T2；成功后接入预测跑 T3。DexGen 式生成执行保留为数据充足后的分支。</li>
 <li><b>冻结评测并登记结果。</b>配对比较、保留失败回放；记录 run ID、模型／资产版本、实际配置、样本分母、结果与下一步。决定保留基础方案、升级执行器或补数采。</li>
 </ol>
+
+<h2 id="versions">§ 7 · 版本协议（与结果页共用版本号）</h2>
+<p class="meta">每个版本只写「这一版用的协议是什么」；数字、失败解剖与图在结果页同号锚点。设计细节在仓库 <code>hand_control/plan/stage13-shared-grasp-design.md</code>。</p>
+<h3 id="v1">v1 · 2026-09-13 · L20SharedPinch 首轮（berlin jax）</h3>
+<p>环境：录像的 95 条 pinch 示教作人手来源，腕部按录像外生回放（软 weld），手指命令 u = clip(u_h + α·Δu)，Δu ∈ ±0.15 rad；目标 g 为该条轨迹抬离时刻的抓姿（oracle）；窗口抬离前 1.5 s；来源混合 = 干净回放／脚本闭合／回放+腕扰动。臂：门控残差（几何门控 α_max 0.3，两个 seed）、Const（α≡1）、Finger（按指门控）、Speed（速度缩放），各 20M 步一个 seed。评测：256 条同 seed 配对，α=0 为零线。<a href="l20-stage1-3-results.html#v1">结果 v1</a>。</p>
+<h3 id="v2">v2 · 2026-09-14 上午 · 只换仲裁 + 真机接线</h3>
+<p>不重训。拿 v1 的 Const 策略，评测时把 α 换成 const 0.15–1.0 或 gate ≤α_max，另把目标换成数据集 95 条的平均位姿。接线：Mac 侧影子仿真加载 APK 同一份 MJCF，每条命令先喂影子再发头显，头显回报的方块位姿映射回来锚定；包络 = 指尖距方块 5 cm 内、非释放、观测 z 分数 ≤ 8σ；入口 <code>collect_stage13_shared.sh</code>（const 0.5 默认，gate／off 可选，<code>--purpose shared</code> 记录 <code>ctrl_human</code> 与 <code>shared</code>）。第一次真人 session 20260914T113530Z 用于修包络判据，不作对比数据。<a href="l20-stage1-3-results.html#v2">结果 v2</a>。</p>
+<h3 id="v3">v3 · 2026-09-14 下午 · 长窗口、预测器目标、Warp 后端</h3>
+<p>窗口延长到抬离前 3 s（Long）；LongPred 把目标槽换成 Stage 1.2 预测器的 LOSO 预测；LongPredNoContact 去掉接触点目标。后端：4090 走 mujoco 3.13 + Warp，同一策略在 jax 与 Warp 下评测，差 15–20 点且 Warp 下干净回放已饱和，因此自 v3 起所有仿真数字以 Warp 为准，jax 数字只作参考。<a href="l20-stage1-3-results.html#v3">结果 v3</a>。</p>
+<h3 id="v4">v4 · 2026-09-16 · full_reset 修复 + 人群 v2</h3>
+<p>训练器：playground 自动重置默认不清 <code>info</code>，改为 full_reset（影响 v1–v3 全部策略数字）。人：每个 episode 抽一组参数，30% 干净；缺陷 = 欠合拢幅度 0.6–1.0、晚合拢 0–0.4 s、一阶迟滞 0–0.3 s、门控噪声；反应 = 顺从（偏移追随 α·Δu，τ 0.2 s，封顶 0.15 rad）与卸载（自身合拢增益 1−0.5·α_h）；抬离改为拇指食指接触 0.2 s 触发。臂：H2（α≡1）、H2Rand（α ∈ {0.25, 0.5, 1} 按 episode）、H2Pred（ens5 联合模型作目标与接触目标）、H2BC（对着行为克隆的人训）；对照 C0 = 接触门控闭合器（不学习）；conf α = 预测器种子分散度决定 α。评测来源加硬化的单缺陷测试人（幅度 0.5、延迟 0.5 s、迟滞 0.4 s、噪声 0.2）与人群。门槛：无腕扰动人群上比 α=0 高 ≥10 点、干净不掉、赢过 C0。部署：H2Rand 导出为 numpy 包，启动脚本默认仍是 09-14 的 const20M，<code>MJQUEST_POLICY</code> 切换。<a href="l20-stage1-3-results.html#v4">结果 v4</a>。</p>
+<h3 id="v5">v5 · 2026-09-16 · Stage 1.4 首轮</h3>
+<p>在 v4 环境上：同一仿真人持续 K=5 个 episode（会话状态经训练封装的 preserve_info 跨 full reset 传递）；策略观测追加 5 维 z（顺从估计、接触时开合、接触步数、合拢速率、上一结局），critic 另看真实人参数（字典观测、非对称 critic）。臂：H2Hist（z 从历史算）、H2HistOracle（z = 真值）。评测：按会话内 episode 序号的成功率。协议与验收在 <a href="l20-stage1-4-review.html#v2">Stage 1.4 页 v2</a>，数字在 <a href="l20-stage1-3-results.html#v5">结果 v5</a>。</p>
 <footer><a href="shared-control.html#stages">共享控制路线 · 小阶段</a> · <a href="l20-stage1-2-training.html">← Stage 1.2：Training</a> · <a href="l20-robust-grasp.html">长期路线</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
 </main>
 </body>

@@ -92,11 +92,18 @@ code { overflow-wrap:anywhere; }
 </style></head><body>
 <main class="wrap">
 <a class="bk" href="shared-control.html#stages">← 共享控制路线 · 小阶段</a> · <a class="bk" href="index.html#plans">Machine Learning Handbook</a>
-<div class="kicker">实验计划 · 阶段性总结 · 2026-09-15</div>
+<div class="kicker">实验计划 · 阶段性总结 · 2026-09-15 → 2026-09-16</div>
 <h1>Stage 1.4：阶段性总结与待决问题</h1>
 <p class="lede">汇总 Stage 1.1–1.3 的证据边界，以及 9 月 14–15 日的讨论。这里逐项确定接下来研究什么；具体实验仍回到所属小阶段维护。</p>
-<p class="status"><b>状态：讨论中。</b>1.4 是总结与下一轮议题入口，不表示新的训练阶段已执行，也不把此前提出的方案当成已达成共识。当前先讨论 <a href="#terminal">最终抓取目标的定义</a>。</p>
-<nav class="toc" aria-label="阶段总结跳转"><a href="#snapshot">已有证据</a><a href="#terminal">最终抓姿与物体约束</a><a href="#questions">问题清单</a><a href="#gaps">还缺什么</a><a href="#next">逐项讨论顺序</a></nav>
+<p class="status"><b>状态：当前 v2（2026-09-16）。</b>v1 是 09-15 的讨论总结（本页主体）；v2 是 09-16 按讨论里 Q6 的分支 C3 跑的首轮实验——按操作者交互历史条件化残差——验收未过，数字在 <a href="l20-stage1-3-results.html#v5">1.3 结果页 v5</a>。本页仍是总结与议题入口，不把讨论方案当成已达成共识；当前先讨论 <a href="#terminal">最终抓取目标的定义</a>。</p>
+<div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
+<caption>版本索引 · 当前 v2</caption>
+<thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
+<tbody>
+<tr><td><a href="#v1">v1</a></td><td>2026-09-15</td><td>讨论总结：证据边界、最终抓姿输出接口、Q1–Q10 问题清单、讨论次序</td><td>09-14／15 的讨论；1.3 结果页的后端发现改变了早期数字的读法</td><td>本页 §1–§5</td><td>无</td></tr>
+<tr><td><a href="#v2">v2</a></td><td>2026-09-16</td><td>首轮实验：同一仿真人持续 K=5 个 episode，策略观测加 5 维交互历史 z，非对称 critic；H2Hist／H2HistOracle 两臂各 20M 步（4090 Warp）</td><td>研究备忘 C3（PALM／RILI／HSP）：跨 trial 推断「这次是谁」；Q6 的 RL 人群分支</td><td><a href="l20-stage1-3-results.html#v5">1.3 结果 v5</a>：历史 z 无增益，真值 z +4 点，验收未过；机制保留，等多操作者／多抓型数据</td><td><a href="l20-stage1-3-results.html#v5-fig">按序号曲线</a></td></tr>
+</tbody></table></div>
+<nav class="toc" aria-label="阶段总结跳转"><a href="#snapshot">已有证据</a><a href="#terminal">最终抓姿与物体约束</a><a href="#questions">问题清单</a><a href="#gaps">还缺什么</a><a href="#next">逐项讨论顺序</a><a href="#versions">版本</a></nav>
 
 <h2 id="snapshot"><span class="n">§ 1</span>当前小结：有 PoC，完整共享控制尚待验证</h2>
 <div class="key"><b>最需要重新确认的是任务与辅助价值。</b>现有数据中的成功 pinch 很集中；预测信息是否改变执行、残差是否解决真实困难，必须在可信物理和相同测试条件下分别检验。先保留有效资产，再定位缺口。</div>
@@ -157,5 +164,11 @@ code { overflow-wrap:anywhere; }
 <li><b>随后讨论 Q7 / Q8 / Q5：</b>根据目标使用者的输入，决定 skill、数据采集与最小物体扩展。使用者信息可提前补充，不必等到这一项才收集。</li>
 </ol>
 <p>以上是建议的讨论次序，不是四项已批准的训练任务。前一项形成结论后，再更新所属阶段的当前 3–5 个动作与交付物；这一页保留问题和决策依据。</p>
+
+<h2 id="versions"><span class="n">§ 6</span>版本</h2>
+<h3 id="v1">v1 · 2026-09-15 · 讨论总结</h3>
+<p>本页 §1–§5 的内容：三个小阶段的证据边界、最终抓姿输出接口（Q10）、Q1–Q10 的问题清单与讨论次序。没有实验。</p>
+<h3 id="v2">v2 · 2026-09-16 · 首轮实验：按操作者的交互历史条件化残差</h3>
+<p>协议：在 1.3 v4 的人群 v2 环境上，同一仿真人连续 K=5 个 episode（会话状态经训练封装的 <code>preserve_info</code> 跨 full reset 传递）；策略观测追加 5 维 z（顺从估计、接触时开合、接触步数、合拢速率、上一结局），critic 另看真实人参数。两臂：H2Hist（z 从历史算）、H2HistOracle（z = 真值），各 20M 步。验收：同一槽连续 K 个 episode 人参数相同（过）；H2Hist 从第 2 个 episode 起高于 H2 ≥5 点或抬离提前 ≥5 步（<b>未过</b>：0.69 → 0.67，真值 z 也只 0.67 → 0.71）。两点保留：训练器按 epoch 整体重置把 K=5 的会话截到约 2 个 episode，干净证据是 Oracle 臂；z_yield 估计失效，要改定义。数字与图在 <a href="l20-stage1-3-results.html#v5">1.3 结果 v5</a>；计划稿在仓库 <code>hand_control/plan/stage14-operator-latent-design.md</code>。</p>
 <footer><a href="shared-control.html#stages">← 共享控制路线 · 小阶段</a> · <a href="l20-stage1-3-shared-grasp.html">1.3 控制协议</a> · <a href="index.html#plans">Machine Learning Handbook</a></footer>
 </main></body></html>
