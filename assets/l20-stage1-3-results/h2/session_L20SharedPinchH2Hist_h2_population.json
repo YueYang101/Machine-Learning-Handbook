@@ -1,0 +1,80 @@
+{
+ "env_name": "L20SharedPinchH2Hist",
+ "source": "h2_population",
+ "alpha_mode": "const",
+ "alpha_max": 1.0,
+ "impl": "warp",
+ "checkpoint": "/root/rl_logs/L20SharedPinchH2Hist-20260916-034357/checkpoints/000020643840",
+ "by_index": [
+  {
+   "episode": 1,
+   "n": 256,
+   "success": 0.69140625,
+   "lifted": 0.71484375,
+   "dropped": 0.0234375,
+   "lift_step": 59.52459016393443,
+   "human_clean": 0.34765625,
+   "human_yield": 0.33816605946049094,
+   "human_amp": 0.8681300776079297,
+   "z_yield": 0.0,
+   "session_left": 4.0
+  },
+  {
+   "episode": 2,
+   "n": 256,
+   "success": 0.6953125,
+   "lifted": 0.72265625,
+   "dropped": 0.02734375,
+   "lift_step": 55.513513513513516,
+   "human_clean": 0.34765625,
+   "human_yield": 0.33816605946049094,
+   "human_amp": 0.8681300776079297,
+   "z_yield": 0.030612064261049454,
+   "session_left": 3.0
+  },
+  {
+   "episode": 3,
+   "n": 256,
+   "success": 0.66796875,
+   "lifted": 0.703125,
+   "dropped": 0.03515625,
+   "lift_step": 58.17777777777778,
+   "human_clean": 0.34765625,
+   "human_yield": 0.33816605946049094,
+   "human_amp": 0.8681300776079297,
+   "z_yield": 0.030948855230484185,
+   "session_left": 2.0
+  },
+  {
+   "episode": 4,
+   "n": 256,
+   "success": 0.6640625,
+   "lifted": 0.68359375,
+   "dropped": 0.01953125,
+   "lift_step": 57.94285714285714,
+   "human_clean": 0.34765625,
+   "human_yield": 0.33816605946049094,
+   "human_amp": 0.8681300776079297,
+   "z_yield": 0.03180832923558796,
+   "session_left": 1.0
+  },
+  {
+   "episode": 5,
+   "n": 256,
+   "success": 0.66015625,
+   "lifted": 0.6953125,
+   "dropped": 0.03515625,
+   "lift_step": 59.97191011235955,
+   "human_clean": 0.34765625,
+   "human_yield": 0.33816605946049094,
+   "human_amp": 0.8681300776079297,
+   "z_yield": 0.03034209092055562,
+   "session_left": 0.0
+  }
+ ],
+ "n": 256,
+ "episodes": 5,
+ "seconds": 39.9,
+ "success_first": 0.69140625,
+ "success_rest": 0.671875
+}
