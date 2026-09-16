@@ -300,7 +300,16 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td>接触误差@抬离（人群，cm）</td><td>2.32</td><td>—</td><td>2.29</td><td>2.13</td><td>2.27</td><td>2.29</td></tr>
 </table></div>
 <p>接入新预测器与接触目标后与 H2 持平或高 2–4 点（噪声边缘）；换成部署版 je 列或数据集平均，成绩不变——策略仍不依赖目标槽内容（与 §A/§B 一致）；抬离时接触误差没有因接触奖励变小。<code>alpha_mode=conf</code> 按现在的阈值（σ 1–4 cm）几乎恒为 1：ens5 的 seed 离散度在 bank 上中位 0.61 cm、p90 1.47 cm，阈值要按这个分布重定才有门控作用（置信度相关的事按用户要求先放一放，这里只记录分布）。会话评测（人单飞，K=5，人群）按序号 0.54 / 0.54 / 0.61 / 0.57 / 0.56——无策略时序号之间无趋势，是 Stage 1.4 的零线。</p>
-<p><i>Stage 1.4 的 H2Hist 两臂、H2BC 策略在录像人上的交叉行：在跑。</i></p>
+<h3>I. Stage 1.4 首轮：按操作者的交互历史条件化残差</h3>
+<p>计划见 <code>hand_control/plan/stage14-operator-latent-design.md</code>。机制：同一仿真人持续 K=5 个 episode（会话状态通过训练封装的 <code>preserve_info</code> 跨 full reset 传递），策略观测追加 5 维 z（顺从估计、接触时开合、接触步数、合拢速率、上一结局），critic 另看真实参数（字典观测、非对称 critic）。两臂 Warp 各 20M 步；会话评测 256 槽 × 5 个 episode、α=1：</p>
+<div class="tw"><table>
+<tr><th>臂</th><th>人群：第 1 个 → 第 2–5 个平均</th><th>卸载：第 1 → 第 2–5</th></tr>
+<tr><td>人单飞（零线）</td><td>0.54 → 0.57</td><td>—</td></tr>
+<tr><td>H2Hist（z = 上一 episode 的特征）</td><td>0.69 → 0.67</td><td>0.92 → 0.90</td></tr>
+<tr><td>H2HistOracle（z = 真实参数）</td><td>0.67 → <b>0.71</b></td><td>0.93 → 0.94</td></tr>
+</table></div>
+<p>验收没有通过：历史 z 从第 2 个 episode 起没有提升，连真值 z 也只 +4 点。原因：单方块 pinch 上人的缺陷在 episode 内就从被辅助的手的状态里看得见（欠合拢、卸载在 q16 / u_h 里直接可见），策略不需要跨 episode 先验；H2 没有 z 也已到 0.68–0.73。z 会有用的地方是"观测里看不出来"的差异——操作者抓法、多物体多抓型偏好——不在现在的 95 条数据里。机制保留（会话持续、字典观测、按序号评测已验证可用），多操作者 / 多抓型数据到手前不再投训练。</p>
+<p><i>H2Hist / Oracle 的普通矩阵与 H2BC 策略在录像人上的交叉行：在跑。</i></p>
 <h2 id="compute">算力与运行方式</h2>
 <div class="tw"><table>
 <tr><th>盒子</th><th>状态</th><th>用法</th></tr>
