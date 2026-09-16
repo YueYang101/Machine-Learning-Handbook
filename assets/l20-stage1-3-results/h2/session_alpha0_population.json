@@ -1,0 +1,80 @@
+{
+ "env_name": "L20SharedPinchH2Hist",
+ "source": "h2_population",
+ "alpha_mode": "const",
+ "alpha_max": 0.0,
+ "impl": "warp",
+ "checkpoint": null,
+ "by_index": [
+  {
+   "episode": 1,
+   "n": 256,
+   "success": 0.54296875,
+   "lifted": 0.59765625,
+   "dropped": 0.0546875,
+   "lift_step": 70.02614379084967,
+   "human_clean": 0.34765625,
+   "human_yield": 0.33816605946049094,
+   "human_amp": 0.8681300776079297,
+   "z_yield": 0.0,
+   "session_left": 4.0
+  },
+  {
+   "episode": 2,
+   "n": 256,
+   "success": 0.53515625,
+   "lifted": 0.59375,
+   "dropped": 0.05859375,
+   "lift_step": 71.44736842105263,
+   "human_clean": 0.34765625,
+   "human_yield": 0.33816605946049094,
+   "human_amp": 0.8681300776079297,
+   "z_yield": 0.0,
+   "session_left": 3.0
+  },
+  {
+   "episode": 3,
+   "n": 256,
+   "success": 0.60546875,
+   "lifted": 0.63671875,
+   "dropped": 0.03125,
+   "lift_step": 72.93865030674847,
+   "human_clean": 0.34765625,
+   "human_yield": 0.33816605946049094,
+   "human_amp": 0.8681300776079297,
+   "z_yield": 0.0,
+   "session_left": 2.0
+  },
+  {
+   "episode": 4,
+   "n": 256,
+   "success": 0.5703125,
+   "lifted": 0.6328125,
+   "dropped": 0.0625,
+   "lift_step": 66.20370370370371,
+   "human_clean": 0.34765625,
+   "human_yield": 0.33816605946049094,
+   "human_amp": 0.8681300776079297,
+   "z_yield": 0.0,
+   "session_left": 1.0
+  },
+  {
+   "episode": 5,
+   "n": 256,
+   "success": 0.5625,
+   "lifted": 0.6015625,
+   "dropped": 0.0390625,
+   "lift_step": 66.48701298701299,
+   "human_clean": 0.34765625,
+   "human_yield": 0.33816605946049094,
+   "human_amp": 0.8681300776079297,
+   "z_yield": 0.0,
+   "session_left": 0.0
+  }
+ ],
+ "n": 256,
+ "episodes": 5,
+ "seconds": 30.1,
+ "success_first": 0.54296875,
+ "success_rest": 0.568359375
+}
