@@ -87,6 +87,13 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td><a href="#v5">v5</a></td><td>2026-09-16</td><td>Stage 1.4 首轮：会话持续 K=5、历史特征 z、字典观测非对称 critic，H2Hist／H2HistOracle 两臂</td><td>研究备忘 C3：跨 trial 推断「这次是谁」</td><td><a href="#v5">§I</a>，验收 #2 未过；计划页在 <a href="l20-stage1-4-review.html#v2">Stage 1.4 v2</a></td><td><a href="#v5-fig">按序号曲线</a></td></tr>
 </tbody></table></div>
 
+<nav class="tasknav" aria-label="本页目录"><div class="tcard"><div class="tname">本页目录</div>
+<div class="vchips"><a href="#v1">v1 环境首轮</a><a href="#setup">环境</a><a href="#baseline">零残差基线</a><a href="#gated">门控残差 20M</a><a href="#arms">对照臂</a>
+<a href="#v2">v2 α 扫描 + 接线</a><a href="#sweep">α 扫描</a><a href="#deploy">真机接线</a>
+<a href="#v3">v3 Long + Warp</a><a href="#pred">预测器接入 / jax≠Warp</a>
+<a href="#v4">v4 人群 v2</a><a href="#h2">人群 v2 A–H</a>
+<a href="#v5">v5 Stage 1.4 首轮</a><a href="#stage14">§I</a><a href="#compute">算力</a><a href="#notdone">没做的与下一步</a></div></div></nav>
+
 <section id="v1" aria-label="v1">
 <p class="small">版本 v1 · 2026-09-13 · berlin jax · 策略数字已被 v3／v4 取代，零线与环境事实仍有效</p>
 <h2 id="setup">环境：实现了什么，和设计初值差在哪</h2>
@@ -205,7 +212,7 @@ a { color:var(--blue); text-decoration:none; }
 <p><b>读法。</b>（1）收益在 α 0.3 到 0.5 就饱和：const 0.5 与 const 1.0 差 1 到 2 个百分点，施加的残差只有一半（19 对 40 mrad），掉落同为 2%。第一轮 α_max 0.3 没效果，是因为策略在 0.3 授权下<i>训练</i>，不是 0.3 授权本身不够——最后一行证明了这点：把首版门控策略硬给 α=1，成功率只到 0.68 / 0.69 / 0.42 / 0.55，掉落 10%–12% 与纯人手一样多，它在 45 mrad 授权下学到的东西本来就少。（2）同一策略同一上限，gate 比 const 低 6 到 8 个百分点：门控在闭合前只给 alpha_pre=0.15，而残差的价值集中在闭合与抬起那几百毫秒。部署时门控保留张手归零与时机即可，幅度不必再压。（3）<b>不需要预测器</b>：喂平均位姿，const 1.0 的成绩与 oracle 目标完全一致（0.83 / 0.84 / 0.50 / 0.62 对 0.83 / 0.85 / 0.50 / 0.63），策略基本不看目标槽，看的是当前接触与关节状态；gate + 平均位姿反而掉到 0.68，因为 d_goal 用平均位姿算，门开得更少。真机第一版因此用 <b>const α 0.5 + 部署包络</b>，不用几何门控，也不接 Stage 1.2 预测。</p>
 <figure class="fig" id="v2-fig"><img src="assets/l20-stage1-3-results/v2-alpha-sweep.png" alt="α 扫描：四个人手来源下 const 与 gate 两种仲裁的成功率随 α 变化" loading="lazy"><figcaption>v2 · 上表画成曲线：const 在 0.3–0.5 饱和，gate 全程低 5–8 点，两者在 α=0 交于同一零线。数据即上表（jax，berlin，256 条配对），后端读法见 v3。真人 session 20260914T113530Z 的头显截图：待补。</figcaption></figure>
 
-<h2 id="deploy">真机接线：代码已就绪，未上头显</h2>
+<h2 id="deploy">真机接线：影子仿真 + 部署包络，第一次真人 session（2026-09-14）</h2>
 <p>头显拥有物理，每 0.5 s 才回报一次状态，策略却要 50 Hz 的关节、掌-方块相对位姿与指尖接触。Mac 侧因此跑一个<b>影子仿真</b>：加载 APK 烘的同一份 MJCF，每条命令（u_h + 手腕 mocap 目标）先喂影子再发头显，按真实时间间隔步进；头显回报的方块位姿经固定的模型→头显世界映射（Unity 里 −90° 偏航加 workspace 平移，在一个 52 试次 session 上复现头显自己的 mocap 位置中位数 3 mm / p95 9 mm）映射回来锚定影子的方块。策略本身是 brax checkpoint 导出的 numpy MLP（512/256/128，与 brax 差 2e-7），观测构造逐槽复刻训练环境（对 48 步参考对误差 2e-7），推理 0.05 ms，影子 0.14 ms/命令。部署包络在任一条件下把 α 归零：无头显状态、追踪丢失、暂停、任务阶段不在 Ready/LiftCandidate/Transport/PlaceCandidate、掌到目标 > 6 cm、用户张手后直到再次闭合——策略从没见过松手，每个训练回合都在握稳 1 s 时结束，松手由包络管。</p>
 <p>用录好的 session 离线预演（命令流按真实 ack 时序过一遍控制器，和头显自己的 100 Hz 物理日志比）：关节 RMS 中位数 6 mrad；手掌 6–8 mm、1–2°；方块 4–7 mm 中位数但 p95 14 到 21 cm——影子里抓没抓住与头显不一致时方块分道扬镳，1 Hz 记录的 ack 才纠一次；五指接触标志逐位一致 86–89%。观测 z 分数：相对位姿与手腕误差各槽都在 1σ 内（坐标系与单位对了），但中指、无名指、小指屈曲在包络打开的 tick 上中位数 −1.7 到 −2.8σ：训练窗口只覆盖抬离前 1.5 s 的预塑形手，真人靠近方块 6 cm 内时其他手指还张着，策略没见过这种手。两份预演报告：<code>dryrun-20260913T191049Z-gate1.json</code>、<code>dryrun-20260913T171559Z-const0.5.json</code>。</p>
 <p>入口 <code>sh hand_control/demo/collect_stage13_shared.sh</code>（默认 const 0.5；<code>MJQUEST_ALPHA_MODE=gate</code> 门控对照；<code>off</code> 为同一记录格式的直接遥操作基线），<code>--purpose shared</code>，记录里 <code>ctrl</code> 是实际发出的混合命令，另存 <code>ctrl_human</code> 与每条命令的 α、包络原因、Δu、接触、z 分数。头显侧把回报周期 0.5 s → 0.02 s 并加上五指接触与掌部位姿的 C# 改动已写好，<b>未构建、未安装</b>。（09-14 下午已构建安装，第一次真人 session 在其上跑。09-16 头显场景两次换成多物体场景，最终为 <code>objects4-20260916</code>：方块、圆柱、球、长条每个 trial 都在桌上、目标按 trial 命名；启动脚本默认 XML 跟着换，控制器按遥测里的 <code>task_object</code> 切换影子物体并把非目标物体的位姿同步进影子，非方块目标一律 α=0，残差只在方块 trial 介入。没有 1.3 结果在多物体场景上跑过，所以不单立版本。）</p>
