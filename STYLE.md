@@ -118,6 +118,7 @@ footer 里再放一次回主页链接。两处都要，因为长页读到底不�
 - 每个 `<h2>` 都要有稳定的 `id`，一旦被别处链接就**不再改名**。
 - 站内链接一律相对路径，不写域名——本地 `python3 -m http.server` 预览要能跑通。
 - 外部链接（arXiv 等）直接写全 URL，不需要 `target="_blank"`。
+- 引用**其他仓库里的文档或代码**（HMI、grasping 等）：写 `<code>仓库名 · 相对路径</code>` 的纯文本（如 `<code>human_machine_interaction · hand_control/plan/stage11-trial-collection.md</code>`），不做超链接——那些仓库不公开发布，站上的链接会 404；只有公开仓库才写 GitHub 全 URL。
 
 ---
 
@@ -151,6 +152,31 @@ sed -n "1,$(($(grep -n '</style>' kl-divergence.html | head -1 | cut -d: -f1) - 
   <footer>… · <a href="index.html">← Machine Learning Handbook</a></footer>
 </div>
 ```
+
+### 阶段页的版本表（2026-09-16，按用户要求）
+
+Stage 1.x 的**计划页与对应记录页**都在顶部维护一张版本表，供每次查阅；规则：
+
+- **版本 = 真正跑过的协议／设计／数据变化**（改采集矩阵、换环境、换标签定义、换后端……），不是文档修订。
+  按页递增 `v1, v2, v3…`，只增不改号、不删旧行；被取代的版本在「结果」列写「被 vN 取代」。
+  同一 stage 的计划页与记录页**共用版本号**：计划页 v2 = 产生记录页 v2 结果的那套协议。
+- **位置**：紧跟状态 `.meta` 段之后、`<nav class="toc">` 之前：
+
+```html
+<div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
+<caption>版本索引 · 当前 v3</caption>
+<thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
+<tbody>
+<tr><td><a href="#v1">v1</a></td><td>2026-09-13</td><td>…一句话…</td><td>…为什么改…</td><td><a href="l20-stage1-x-results.html#v1">结果 §…</a></td><td><a href="#v1-fig">图</a></td></tr>
+</tbody></table></div>
+```
+
+- 每个版本在正文里有自己的锚点 `id="vN"`（计划页写协议本身，记录页写该版本的数字与失败解剖）；
+  锚点一旦发布不改名。
+- **截图／视频**放 `assets/<page-slug>/vN-<内容>.png|mp4`，用 `<figure id="vN-fig">` + `<img>` 或
+  `<video controls preload="metadata">`，`figcaption` 写这张图证明什么；能放就放，没有就留「待补」而不是空着。
+- `.kicker` 里的日期 = 最新版本的日期；状态行开头写「当前 vN」。
+- 各工作 session 负责把自己跑出的版本**加行、加锚点、加图**；知识向导 session 负责核对表与正文一致、补 TOC。
 
 ### 共享 CSS 变量（不要引入新的颜色字面量）
 
