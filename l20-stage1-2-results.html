@@ -67,7 +67,7 @@ a { color:var(--blue); text-decoration:none; }
 <body>
 <div class="wrap">
 <a class="bk" href="l20-stage1-2-training.html">← Stage 1.2：Training（计划）</a> · <a class="bk" href="l20-stage1-3-shared-grasp.html">Stage 1.3</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.2 · 2026-09-13 · 更新 2026-09-14（<a href="#live">实时演示</a>、<a href="#contacts">接触点消融</a>、<a href="#confidence">置信度</a>）</div>
+<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.2 · 2026-09-13 · 更新 2026-09-14（<a href="#live">实时演示</a>、<a href="#contacts">接触点消融</a>、<a href="#confidence">置信度</a>、<a href="#joint">联合模型</a>）</div>
 <h1>Stage 1.2 结果：意图预测／人类模型建模<br><span class="small" style="font-weight:400">pilot 6 个 session + 正式 session 1 · 95 条 pinch 示教 · 留一 session 交叉验证 · 手册 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a> 的首个 run</span></h1>
 
 <p class="lede">这是 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a>的第一次实际运行：用 <a href="l20-robust-grasp-stage1.html">Stage 1.1</a> 当天采集的 95 条 Quest→retarget→L20 示教，按计划的阶梯（B0／B1／M0／方案 A／方案 B）训练并在留出的 session 上比较，附影子手视频。<b>结论先行：</b>抬离前 1 s，学习模型比「保持当前姿态」好 3 cm、比最近示教和常数预测好 0.5 cm；残差形式的小模型在抬离时刻误差 0.9 cm；方案 B（Flow Matching）与确定性回归无差异且候选无多模态，方案 A（VQ-VAE＋AR）停在码本重建；一个只看当前 25 维状态的线性模型在 1 s 提前量上是最好的。数据侧的两个发现比模型更重要：抓取提示与方向提示都没有在标签里留下痕迹。</p>
@@ -309,6 +309,26 @@ mjpython -m training.stage12_intent live --source udp --port 5599 --ghost-udp 56
 <p><b>接进链路。</b>预测器每条日志与每条影子报文带 <code>confidence</code>、<code>err_hat_m</code>、<code>gated</code>；被门控的预测照样算、照样发，遥操作脚本把它从控制包里去掉（头显立即隐藏，面板不再显示 overlay ON）并以 <code>attached=false</code> 记成 <code>ghost</code> 行。按键：<code>f</code> 过滤开关，<code>[</code> <code>]</code> 门限 ∓1 cm（<code>--no-filter</code>、<code>--threshold-cm</code>）。置信度也随控制包进头显（<code>ghost.confidence</code>，头显端按它淡化影子并显示在面板——C# 已写好并加了检查，但今天 demo 一直在跑，未编译、未安装；现装 APK 会忽略这个字段，过滤完全在主机端生效）。</p>
 <p><b>仲裁系数。</b><code>quest_teleop.py --alpha-from-confidence</code>：最新预测的置信度（0.5 s 内无报文则不缩放）作为 trust 传给 Stage 1.3 控制器，它在部署包络之后再乘到 α 上——预测再自信也打不开关着的包络；每条命令记 <code>prediction_confidence</code>，<code>shared</code> 块记 <code>trust</code>。合并 demo 默认开（<code>MJQUEST_ALPHA_FROM_CONFIDENCE=0</code> 关）。</p>
 <p class="small">代码：<code>training/stage12_intent/services/level_3_experiment/live.py</code>（<code>Confidence</code>）、<code>hand_control/services/level_3_teleop_runtime/l20_sources.py</code>（逐指比特）、<code>hand_control/demo/quest_teleop.py</code>（<code>hold_low_confidence_fingers</code>、<code>--alpha-from-confidence</code>）；分析脚本在会话草稿区，数字见 README 的 Confidence gate 一节；测试 <code>test_stage12_intent.py::test_confidence_gate_expected_error_hysteresis_and_keys</code>、<code>test_quest_teleop_demo_keys.py</code>、<code>test_quest_workspace.py</code>。</p>
+
+<h2 id="joint">联合模型：手势 + 接触点一起预测，置信度由模型给（2026-09-16，4090）</h2>
+<p>四个问题：接触点和手势用一个网络还是两个；要不要强制两者一致；置信度让模型输出行不行；要不要贝叶斯网络。同一套 7 折留一 session、400 epochs、在 4090 上训练（MuJoCo 的 DLL 被 Windows 应用控制策略拦住，输入帧的指尖运动学在 Mac 上预算好随数据一起发过去，打分回 Mac 做）。手掌误差 / 接触点误差 / 与手势正向运动学的一致性差，cm：</p>
+<div class="tw"><table>
+<tr><th>模型</th><th>1.00 s</th><th>0.50 s</th><th>0.00 s</th></tr>
+<tr><td>sep：两个独立 M0（此前部署）</td><td>2.78 / 1.62 / 3.06</td><td>2.05 / 1.17 / 2.80</td><td>0.93 / 1.01 / 3.05</td></tr>
+<tr><td>derived：只预测手势，接触点 = 正向运动学指尖投到表面（强制一致）</td><td>2.78 / 3.32 / 0</td><td>2.05 / 2.88 / 0</td><td>0.93 / 3.19 / 0</td></tr>
+<tr><td>joint：共享编码器，一个头出 25 + 6</td><td>2.65 / 1.83 / 3.10</td><td>1.92 / 1.29 / 2.86</td><td>0.87 / 1.10 / 2.97</td></tr>
+<tr><td>nll：joint + 方差头（高斯负对数似然）</td><td>2.36 / 1.82 / 3.14</td><td>1.69 / 1.19 / 3.01</td><td>0.81 / 1.05 / 2.98</td></tr>
+<tr><td><b>je</b>：nll 的 5 种子集成取均值</td><td><b>2.31 / 1.64 / 3.01</b></td><td>1.70 / 1.12 / 2.86</td><td><b>0.79 / 1.00 / 3.05</b></td></tr>
+</table></div>
+<p>置信度（所有时距合并；只保留最有把握的 25 / 50 / 75 % 预测时手掌误差中位 / p90，cm）：</p>
+<div class="tw"><table>
+<tr><th>信号</th><th>Spearman</th><th>保留 25 %</th><th>保留 50 %</th><th>保留 75 %</th><th>全部</th></tr>
+<tr><td>nll 预测的 σ</td><td>0.17</td><td>1.11 / 2.58</td><td>1.14 / 2.69</td><td>1.19 / 2.83</td><td>1.27 / 3.01</td></tr>
+<tr><td>ens5 种子分歧</td><td>0.44</td><td>0.87 / 1.94</td><td>0.97 / 2.21</td><td>1.08 / 2.56</td><td>1.24 / 2.93</td></tr>
+<tr><td>线上启发式（剩余位移 + 0.3 s × 速度）</td><td>0.51</td><td>0.99 / 1.97</td><td>1.16 / 2.41</td><td>1.33 / 2.78</td><td>1.60 / 3.68</td></tr>
+</table></div>
+<p><b>结论。</b>（1）一个网络比两个好，它的 5 种子集成是目前最好的终点预测器（1 s 处少 0.5 cm，抬起时少 0.14 cm），已部署为 <code>je</code>（键 6：均值手势、自带接触点头、种子分歧记进日志）。（2）强制一致要付 2 cm 接触点误差：运动学指尖点和真实接触点系统性差 ~3 cm，所以 RL 的目标继续用直接预测的接触点，手势只作参考。（3）方差头在 95 条数据上严重过于自信（2σ 覆盖率 0.03），线上置信度仍用启发式，种子分歧可作第二信号；不需要贝叶斯网络——主要不确定性是"离抓取还远、意图未定"这种数据固有噪声，不是"没见过这种输入"。（4）接触点抬起时仍 ≈ 训练均值先验（1.0 cm）：95 条全是同一方向 pinch，只有采其他方向的数据能改变这一点。</p>
+<p class="small">代码：<code>training/stage12_intent/services/level_3_experiment/joint_confidence.py</code>、<code>run_joint_4090.ps1</code>；部署 checkpoint <code>results/final_qref.models.pt</code>（<code>joint</code> 项），上一版留作 <code>final_qref_pre_je.models.pt</code>。</p>
 
 <h2 id="next">缺口与下一步</h2>
 <ol>
