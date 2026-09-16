@@ -1,0 +1,38 @@
+{
+ "env_name": "L20SharedPinchH2",
+ "wrist": "weld",
+ "alpha_mode": "const",
+ "alpha_max": 0.0,
+ "goal_source": "arm default",
+ "impl": "warp",
+ "n": 256,
+ "checkpoint": "/root/rl_logs/L20SharedPinchH2-20260916-024330/checkpoints/000020643840",
+ "results": {
+  "h2_population_nowrist": {
+   "success": 0.76171875,
+   "success_strict": 0.421875,
+   "lifted": 0.82421875,
+   "contact_formed": 0.89453125,
+   "dropped": 0.0625,
+   "slip_cm": 0.40618711709976196,
+   "palm_goal_cm": 2.9487273693084717,
+   "contact_err_lift_cm": 3.1274569034576416,
+   "lift_step": 78.12322235107422,
+   "human_off_rad": 0.0,
+   "n": 256,
+   "steps": 300,
+   "done_frac": 0.82421875,
+   "seconds": 14.9,
+   "wrist_pos_err_mm_p50": 2.2379212379455566,
+   "wrist_pos_err_mm_p95": 10.537829399108887,
+   "wrist_ang_err_deg_p50": 0.15156503021717072,
+   "wrist_ang_err_deg_p95": 2.607917308807373,
+   "alpha_mean": 0.0,
+   "alpha_max_seen": 0.0,
+   "alpha_ge_0p3_frac": 0.0,
+   "du_applied_mean_rad": 0.0,
+   "action_saturated_frac": 3.1187623790174257e-06,
+   "q_goal_dev_lifted_rad": 0.7360485196113586
+  }
+ }
+}
