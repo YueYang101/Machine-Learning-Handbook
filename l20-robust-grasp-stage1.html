@@ -113,14 +113,22 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 <body>
 <main class="wrap">
 <a class="bk" href="shared-control.html#stages">← 共享控制路线 · 小阶段</a> · <a class="bk" href="l20-robust-grasp.html">← 长期路线</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">实验计划 · 当前第一步 · 2026-09-13 立项 · 2026-09-16 更新采集流程</div>
+<div class="kicker">实验计划 · 当前第一步 · 2026-09-16</div>
 <h1>Stage 1.1：数采</h1>
 <p class="lede" id="scope">同一个 cube，用户通过 Quest 与 retargeting 操作 L20；本阶段只把试跑、正式示教、时间同步、坐标、标签和回放验收做可信，不在这里训练模型。</p>
-<p class="meta">状态（2026-09-16）：V2 管线（Quest 本地物理 + Mac retarget、session writer、试次确认／取消、per-trial 重置）已验收并用于全部采集；单 cube 的 pinch 数据已有 95 条（43 pilot + 52 formal，见 <a href="l20-stage1-2-results.html">Stage 1.2 结果</a>），其结论是“提示词不改变手形、单物体单方向数据只够到 1 cm 级”。<b>正式采集已切换到 collection v2</b>：四个物体同时在桌上、按 trial 随机指定目标物体与匹配手势、任意朝向，campaign 标签 <code>v2-objects</code> 与旧数据隔离，环内没有任何模型（见 <a href="#v2-runbook">当前数采流程</a>）。训练与影子手预测验证在 <a href="l20-stage1-2-training.html">Stage 1.2：Training</a>。</p>
+<p class="meta">当前 v3（2026-09-16）。V2 管线（Quest 本地物理 + Mac retarget、session writer、试次确认／取消、per-trial 重置）已验收并用于全部采集；单 cube 的 pinch 数据已有 95 条（43 pilot + 52 formal，见 <a href="l20-stage1-2-results.html">Stage 1.2 结果</a>），其结论是“提示词不改变手形、单物体单方向数据只够到 1 cm 级”。<b>正式采集已切换到 v3</b>（HMI 仓库内称 collection v2）：四个物体同时在桌上、按 trial 随机指定目标物体与匹配手势、任意朝向，campaign 标签 <code>v2-objects</code> 与旧数据隔离，环内没有任何模型（见 <a href="#v3">当前数采流程</a>）；第一个 v3 正式 session 于 2026-09-16 傍晚开始采集。训练与影子手预测验证在 <a href="l20-stage1-2-training.html">Stage 1.2：Training</a>。</p>
 <div class="key good"><b>本阶段交付：</b>版本冻结、可回放、无 trial／session 泄漏的 Quest→retarget→L20 数据集。它必须保留模型训练所需的完整动作前缀和最终确认抓姿，但“数据已经采到”不等于“意图已经能被预测”。</div>
 <div class="key warn"><b>监督目标选择：</b>预测物体坐标系中的最终 L20 掌部 6D 位姿与 16 个主动关节目标；MuJoCo 接触位置、法向和接触 link 全部记录，但先作为派生验证量，不作为网络主标签。完整抓姿能经 FK／碰撞几何重建接触候选；只有接触点却不能唯一恢复掌姿、关节、接近路径或稳定力分配。</div>
 <p class="meta">路线复盘：<a href="l20-stage1-4-review.html">Stage 1.4 阶段性总结与待决问题</a> 汇总最新讨论；本页保留本阶段协议，不把讨论方案回填为已完成验收。</p>
-<nav class="toc" aria-label="本页目录"><a href="#preparation">采集前准备</a> · <a href="#runbook">当前三步</a> · <a href="#v2-runbook">当前数采流程 v2</a> · <a href="#dataset">采集矩阵</a> · <a href="#io">数据字段</a> · <a href="#model">训练交接</a> · <a href="#alternatives">方案索引</a> · <a href="#intent-updates">改意图记录</a> · <a href="#handoff">抓取接口</a> · <a href="#checklist">交付与判据</a> · <a href="#next">后续边界</a></nav>
+<div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
+<caption>版本索引 · 当前 v3（协议文档在 HMI 仓库：<code>hand_control/plan/stage11-trial-collection.md</code>、<code>hand_control/plan/2026-09-16-collection-v2-objects-orientation.md</code>）</caption>
+<thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
+<tbody>
+<tr><td><a href="#v1">v1</a></td><td>2026-09-13</td><td>单 cube，3 抓型 × 4 方向 × 2 位置 × 10 次 = 240 条的计划矩阵；pilot 43 条（6 个 session）按它采。</td><td>被 v2 取代：pilot 的 <code>grasp</code> 字段是提示不是实际抓型，整个 pilot 实际都是 pinch（36/43 两指抬离）；cube 位置只有 p1。</td><td><a href="l20-stage1-2-results.html#v1">Stage 1.2 结果 v1</a>（43 条首轮，随后并入 95 条）</td><td>待补</td></tr>
+<tr><td><a href="#v2">v2</a></td><td>2026-09-13 晚</td><td>pinch-only + 4 个接近方向提示，布局随机；正式 session 1 = 52 条（20260913T191049Z）。</td><td>被 v3 取代：四个方向提示产生的抬离抓姿统计上无差别，方向／手形多样性得靠布局与物体，不靠提示词。</td><td><a href="l20-stage1-2-results.html#v1">Stage 1.2 结果 v1</a>（95 条 7 折 LOSO）、<a href="l20-stage1-2-results.html#v2">v2</a>（q_ref 重跑）</td><td>待补</td></tr>
+<tr><td><a href="#v3">v3</a></td><td>2026-09-16</td><td>四个物体全在桌上，按 trial 随机目标（涂红）与匹配抓型，任意 yaw，campaign <code>v2-objects</code>，入口 <code>collect_v2_formal.sh</code>，<code>--purpose formal</code> 拒绝模型在环。</td><td>Stage 1.2 v2/v4 表明接触点预测 ≈ 先验、抬离误差 3 cm 来自训练分布外；要泛化必须换物体、换朝向；同时为“要抓哪个物体”识别记录全部物体位姿。</td><td>采集中（session 1 于 09-16 傍晚开始）；数据集 <code>build --campaign v2-objects</code></td><td><a href="#v3-fig">头显截图</a> · <a href="#v3-fig-grasps">抓型提示图</a> · 回放视频待补</td></tr>
+</tbody></table></div>
+<nav class="toc" aria-label="本页目录"><a href="#preparation">采集前准备</a> · <a href="#runbook">当前三步</a> · <a href="#v3">当前数采流程 v3</a> · <a href="#dataset">采集矩阵</a> · <a href="#io">数据字段</a> · <a href="#model">训练交接</a> · <a href="#alternatives">方案索引</a> · <a href="#intent-updates">改意图记录</a> · <a href="#handoff">抓取接口</a> · <a href="#checklist">交付与判据</a> · <a href="#next">后续边界</a></nav>
 
 <h2 id="preparation">Preparation：先让示教可用、记录可信</h2>
 <div class="key good"><b>正式采集前置条件：</b>先验收 Quest 中看到并操纵 MuJoCo 的 L20/cube，以及 retarget 对本轮目标抓姿的表达能力。<b>记录必须来自实际物理运行端</b>：V1 为电脑端 MuJoCo＋Quest 显示；截至 2026-09-12，V2 已是 Quest 本地物理＋Mac retarget 的混合原型，正式 session writer 与试次确认／取消仍待接入。不能再把 9 月 9 日的 V1 部署决定写成唯一现状，也不能把 V2 当作已验收的独立采集应用。</div>
@@ -139,7 +147,8 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 </ol>
 
 
-<h2 id="v2-runbook">当前数采流程（collection v2，2026-09-16）</h2>
+<span id="v2-runbook"></span>
+<h2 id="v3">v3 · 当前数采流程（collection v2，2026-09-16）</h2>
 <div class="key good"><b>一句话：</b>每个 trial 桌上同时有 4 个物体（cube、cylinder、ball、bar），位置和朝向由 seed 随机；主机按平衡矩阵随机指定这一 trial 的<b>目标物体</b>与<b>匹配手势</b>，目标在头显里涂红并悬浮标记、其余涂蓝，显示屏写明 <code>TARGET: CUBE (red)</code>；操作者接近、抓起、放到绿区，物理端判定成功后自动重置下一 trial。目标由协议随机给出、不由操作者自选，这样后续的“要抓哪个物体”识别模型学到的是接近轨迹与物体布局的关系，而不是操作者的偏好。</div>
 <ol>
 <li><b>启动（Mac 终端，头显开机、USB 连接）：</b><code>sh hand_control/demo/collect_v2_formal.sh --session-index N</code>。脚本固定 <code>--purpose formal --campaign v2-objects --objects cube,cylinder,sphere,bar --grasps pinch,tripod,power --directions front,left,right,top --cube-yaw 180 --trials 48 --repeats-per-cell 2</code>，seed 跟随 N；它会先结束还在跑的旧采集／demo 进程。<b>formal 模式拒绝 <code>--policy</code>、<code>--ghost-udp</code></b>：Stage 1.3 残差策略和 Stage 1.2 预测器都不允许在环内，脚本也不读 <code>MJQUEST_ALPHA_*</code>。</li>
@@ -156,9 +165,13 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 <tr><td>布局与朝向</td><td>四个物体位置在桌面可达区随机，目标离绿区 15–35 cm，物体间、物体与绿区、物体与手都有间隙；每个物体各自随机 yaw（±180°）。</td><td>trial 事件里 <code>objects[]</code> 记录每个物体的 name／target／qpos／spawn／yaw；telemetry 与头显 physics 行记录 <code>task_object</code> + 全部位姿。</td></tr>
 <tr><td>重复 · 2 / session</td><td>6 格 × 4 方向 × 2 = 48 条；跨 session 累积，LOSO 划分。</td><td>按 Stage 1.2 的经验，每个条件约 50 条才到 1 cm 级，所以物体×手势 6 个条件至少需要 6–7 个 session。</td></tr>
 </tbody></table></div>
+<figure id="v3-fig"><img src="assets/l20-robust-grasp-stage1/v3-headset-four-objects.png" alt="头显内的 v3 采集场景：红色目标球带悬浮标记，三个蓝色干扰物，左侧提示板写 TARGET: SPHERE (red) 并显示三指抓型示意图，右侧为控制面板" loading="lazy"><figcaption>v3 头显截图（2026-09-16，session 1 第 1 条，抓型 tripod、目标 ball）：目标涂红并有白色悬浮标记与红色光盘，其余三个物体涂蓝；提示板第三行 <code>TARGET: SPHERE (red)</code>，右上角为抓型示意图；右侧是场景内控制面板（shared ctrl OFF）。证明：操作者不需要读文字就能知道这条要抓哪个。</figcaption></figure>
+<figure id="v3-fig-grasps"><img src="assets/l20-robust-grasp-stage1/v3-grasp-pinch.png" alt="pinch 提示图" width="160" loading="lazy"> <img src="assets/l20-robust-grasp-stage1/v3-grasp-tripod.png" alt="tripod 提示图" width="160" loading="lazy"> <img src="assets/l20-robust-grasp-stage1/v3-grasp-power.png" alt="power 提示图" width="160" loading="lazy"><figcaption>v3 提示板上的三张抓型示意图（pinch / tripod / power，绿色为要用的手指）。v2 的结论是文字提示不改变手形，v3 用图示 + 与物体匹配的抓型来制造真正不同的终点手形；实际做出的抓型仍由仿真接触另记为 <code>performed_grasp</code>。</figcaption></figure>
 <div class="key warn"><b>记录但暂不建模：</b>“要抓哪个物体”的识别头要等这批数据采到再设计（输入为接近轨迹 + 全部物体位姿，输出目标类别）；已知偏差是主机提示晚于头显重置时，目标是在 Ready 阶段切换的，它的位置按干扰物规则排（离绿区 ≥ 10 cm 而非 15–35 cm），事件里有 <code>spawn_qpos</code> 可离线量化。</div>
 
-<h2 id="dataset">正式采集矩阵：240 条有效示教</h2>
+<h2 id="v1">v1 · 原计划采集矩阵：240 条有效示教（2026-09-13，被 v2 取代）</h2>
+<div class="key warn"><b>为什么被取代：</b>按这张矩阵采的 pilot（43 条、6 个 session、cube 只有 p1）里，<code>grasp</code> 字段只是提示，操作者实际全部用 pinch 完成（36/43 两指抬离），三抓型 × 两位置的格子从未真正填上；协议缺“实际抓型”字段，不是 retarget 失败，也没有记录丢失。本节保留原矩阵供对照，不再执行。</div>
+<span id="dataset"></span>
 <div class="key good"><b>计数单位是完整 trial，不是帧或滑动窗口。</b>240 条轨迹产生的窗口可以用于优化，但报告数据量、划分和统计显著性时仍按独立轨迹／session 计数。</div>
 <div class="tw" tabindex="0" role="region" aria-label="Stage 1.1 正式采集条件矩阵"><table>
 <caption>单用户、单一 cube 的初步 PoC；所有状态均待执行</caption>
@@ -171,6 +184,9 @@ summary:focus-visible { outline:3px solid var(--focus); outline-offset:3px; }
 </tbody></table></div>
 <p>每条正式示教从统一 home 区域开始，条件顺序随机；用户看到采集提示后自然接近 cube，L20 形成目标抓姿并稳定停住，再由用户确认或取消。cube 可以固定，不要求 lift。为免模型只记住绝对坐标，home 区域允许小范围自然变化，所有输入与标签统一变换到 cube 坐标系。</p>
 <p>另采 <b>24 条诊断轨迹</b>：12 条中途改变抓取提示，12 条明确取消。它们不进入首轮固定意图训练和主测试，只验证记录协议、目标撤销与未来变化检测。正式 240 条之外的追踪丢失、穿透、误确认和 retarget 饱和均保留原始记录与排除原因。</p>
+
+<h2 id="v2">v2 · pinch-only + 四方向提示（2026-09-13 晚，被 v3 取代）</h2>
+<p>把矩阵缩成 <b>pinch × front／left／right／top × 13 次 = 52 条／session</b>，布局随机（cube 出生点与绿区每条重采），入口 <code>collect_stage11_trials.sh --purpose formal --session-index N --trials 52 --repeats-per-cell 13 --seed N</code>，终点改为抬离时刻（Transport 相位）离线导出、不再按键确认。正式 session 1（20260913T191049Z）52 条、0 丢帧，与 pilot 合成 95 条进入 <a href="l20-stage1-2-results.html#v1">Stage 1.2 v1</a>。取代原因：四个方向提示得到的抬离抓姿在统计上无差别（方向提示不改变手形），接触点预测停在训练均值先验；多样性必须来自布局、朝向和物体本身 → v3。</p>
 
 <h2 id="io">数据字段：原始量、网络量和标签分开</h2>
 <div class="formula" role="math" aria-label="数采到训练的变量关系">raw trial → history(T<sub>OH</sub>, hand_shape, tracking_validity)<br>confirmed endpoint → (T<sub>OP,T</sub>, q<sub>T</sub>)</div>

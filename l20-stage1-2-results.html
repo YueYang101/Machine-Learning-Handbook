@@ -67,13 +67,24 @@ a { color:var(--blue); text-decoration:none; }
 <body>
 <div class="wrap">
 <a class="bk" href="l20-stage1-2-training.html">← Stage 1.2：Training（计划）</a> · <a class="bk" href="l20-stage1-3-shared-grasp.html">Stage 1.3</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.2 · 2026-09-13 · 更新 2026-09-14（<a href="#live">实时演示</a>、<a href="#contacts">接触点消融</a>、<a href="#confidence">置信度</a>、<a href="#joint">联合模型</a>）</div>
+<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.2 · 2026-09-13 · 更新 2026-09-16 · 当前 v4（<a href="#live">实时演示</a>、<a href="#contacts">接触点消融</a>、<a href="#confidence">置信度</a>、<a href="#joint">联合模型</a>）</div>
 <h1>Stage 1.2 结果：意图预测／人类模型建模<br><span class="small" style="font-weight:400">pilot 6 个 session + 正式 session 1 · 95 条 pinch 示教 · 留一 session 交叉验证 · 手册 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a> 的首个 run</span></h1>
 
 <p class="lede">这是 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a>的第一次实际运行：用 <a href="l20-robust-grasp-stage1.html">Stage 1.1</a> 当天采集的 95 条 Quest→retarget→L20 示教，按计划的阶梯（B0／B1／M0／方案 A／方案 B）训练并在留出的 session 上比较，附影子手视频。<b>结论先行：</b>抬离前 1 s，学习模型比「保持当前姿态」好 3 cm、比最近示教和常数预测好 0.5 cm；残差形式的小模型在抬离时刻误差 0.9 cm；方案 B（Flow Matching）与确定性回归无差异且候选无多模态，方案 A（VQ-VAE＋AR）停在码本重建；一个只看当前 25 维状态的线性模型在 1 s 提前量上是最好的。数据侧的两个发现比模型更重要：抓取提示与方向提示都没有在标签里留下痕迹。</p>
 
 <div class="callout"><b>本页不是 Stage 1.2 的正式结果。</b>计划要求的 240 条、144／48／48 按 session 划分不存在；所有 trial 都是 pinch，终点标签未经人工复核（每个 session 的 <code>stage11_training_ready=False</code>）。这里的数字是 PoC，用来决定协议和模型下一步怎么改。</div>
+<div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
+<caption>版本索引 · 当前 v4（与 <a href="l20-stage1-2-training.html">Stage 1.2 计划页</a>共用版本号；数据来自 <a href="l20-robust-grasp-stage1.html">Stage 1.1</a> v1（43 条 pilot）与 v2（52 条正式 session 1）；v3 数据的结果待采）</caption>
+<thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
+<tbody>
+<tr><td><a href="#v1">v1</a></td><td>2026-09-13</td><td>首轮阶梯 B0／B1／M0／方案 A／方案 B，43 条 pilot LOSO，当晚加入正式 session 1 成 95 条 7 折；序列生成器 FMS／DPS。</td><td>抬离前 1 s M0 比保持好 3 cm、比常数好 0.5 cm；残差 M0 抬离时 0.9 cm；FM = M0 + 0.7 cm 抖动，无多模；VQ-VAE 停在重建。标签是实现姿态。</td><td><a href="#ladder">阶梯</a> · <a href="#video">视频</a> · <a href="#sequence">序列</a></td><td><a href="#v1-fig">误差曲线</a> · <a href="#video">留出 session 视频</a></td></tr>
+<tr><td><a href="#v2">v2</a></td><td>2026-09-13 晚 – 09-14</td><td>标签关节改为 retarget 命令 q_ref（run qref-abs / qref-res）；输入消融（1 s 历史 vs 当前 25 维）；Stage 1.3 第二步物理预检（闭合回放）。</td><td>1 s 历史在此数据量无增益，腕相对 cube 通道携带几乎全部信号；闭合到实现姿态标签只有 47% 抓得住、录制命令 99% → 目标必须是 q_ref 空间；刚性焊接过穿透 → 有界 PD。</td><td><a href="#ablation">消融</a> · <a href="#qref">q_ref</a> · <a href="#verdict">裁决</a> · <a href="#closure">预检</a></td><td><a href="#v2-fig">闭合回放视频</a></td></tr>
+<tr><td><a href="#v3">v3</a></td><td>2026-09-14</td><td>实时预测器进头显（ghost hand，可切换 m0/ml/rl/fm/fms），接触点作为预测目标的两次消融，置信度门控 + 仲裁系数，Quest 逐指置信度。</td><td>实时抬离误差 3 cm（操作者抓姿在训练标签分布外 4–6σ）；接触点预测 ≈ 训练均值先验；误差 ≈ 剩余位移（Spearman 0.82），集成方差／FM 方差无法区分“自信但错”。</td><td><a href="#live">实时演示</a> · <a href="#contacts">接触点</a> · <a href="#confidence">置信度</a></td><td>头显 ghost hand 截图待补</td></tr>
+<tr><td><a href="#v4">v4</a></td><td>2026-09-16</td><td>联合模型：一个网络同时出手势 + 接触点 + 方差头，5 seed 集成 je 部署为实时模型 6；4090 训练。</td><td>掌部 2.31→0.79 cm 优于分头模型；强制“接触点 = 手势 FK”多付 2 cm；学到的 σ 过度自信（2σ 覆盖 0.03），启发式置信度保留。</td><td><a href="#joint">联合模型</a></td><td>待补</td></tr>
+</tbody></table></div>
 
+
+<span id="v1"></span>
 <h2 id="data">数据：采到了什么，发现了什么</h2>
 <div class="tw"><table>
 <tr><th>项</th><th>值</th></tr>
@@ -117,7 +128,7 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td>B Flow Matching 残差</td><td>2.42 · 1.86 · 1.55 · 1.26</td><td>3.13 · 2.40 · 1.37 · 1.16</td><td>2.74 · 2.11 · 1.47 · 1.21</td></tr>
 </table></div>
 <p class="small">关节 MAE 同序：M0 绝对在正式折 1 s 时 0.064 rad，残差版抬离时 0.019 rad。43 条 pilot 的首个 run 配对 bootstrap：M0 − B1 = −0.48 cm，95% CI [−0.93, −0.06]；M0 − 常数 −0.56 [−1.04, −0.07]；FM − M0 +0.03 [−0.29, +0.34]。多 52 条正式数据后 pilot 折 1 s 误差 2.96 → 2.73，残差版抬离时 1.42 → 0.91 cm。</p>
-<figure class="fig"><img src="assets/l20-stage1-2-results/error-vs-time.png" alt="误差随抬离前时间的曲线，七个模型，三 seed 带"><figcaption>误差随抬离前时间（7 折，95 条；虚线为残差形式；带为 seed 离散度）。B0 在 0.25 s 内最好，说明模型不知道 τ、一直在预测「最终」抓姿；残差版把这段的误差减半。</figcaption></figure>
+<figure class="fig" id="v1-fig"><img src="assets/l20-stage1-2-results/error-vs-time.png" alt="误差随抬离前时间的曲线，七个模型，三 seed 带"><figcaption>误差随抬离前时间（7 折，95 条；虚线为残差形式；带为 seed 离散度）。B0 在 0.25 s 内最好，说明模型不知道 τ、一直在预测「最终」抓姿；残差版把这段的误差减半。</figcaption></figure>
 
 <h2 id="video">视频：留出的正式 session，逐帧预测</h2>
 <div class="videos one">
@@ -138,6 +149,7 @@ a { color:var(--blue); text-decoration:none; }
 </table></div>
 <p>作为轨迹生成器 FMS 最好，且 flow matching 目标在这份数据上全面好于 DDPM 目标；作为终点预测器没有序列模型赢过残差 M0：500 维生成目标对两千个窗口太大，单条样本 6–9 cm，只有 8 条均值可看。A 的码本没有塌缩（64 码全用，perplexity 53–58）但重建误差 1.4–3.8 cm，已经和 M0 的总误差一样大。</p>
 
+<span id="v2"></span>
 <h2 id="ablation">输入消融：1 s 历史和 MLP 需要吗</h2>
 <p>PCA：520 维输入 21 个主成分占 90% 方差；16 个标签关节 5 个主成分占 90%，掌部位姿 3 个。线性岭回归的通道消融（抬离前 1 s）：只用手腕 9 维 2.32 cm，只用手指 16 维 5.23 cm。三个残差模型：</p>
 <div class="tw"><table>
@@ -187,7 +199,7 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td>goal · 闭合到标签关节角</td><td>80%</td><td>88%</td><td><b>47%</b>（45/95）</td><td>29%</td><td>2.1 cm</td><td>41/95</td><td>32/95</td></tr>
 </table></div>
 <div class="videos">
-<figure><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-2-results/closure-replay.mp4"></video>
+<figure id="v2-fig"><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-2-results/closure-replay.mp4"></video>
 <figcaption><b>replay</b>（）：录下的手指命令 + 录下的腕部轨迹，真物理，抬起并保持。 <a href="assets/l20-stage1-2-results/closure-replay.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
 <figure><video controls loop muted playsinline preload="metadata" src="assets/l20-stage1-2-results/closure-goal.mp4"></video>
 <figcaption><b>goal</b>（）：闭合到标签关节角后抬起——一条保持、一条滑落。 <a href="assets/l20-stage1-2-results/closure-goal.mp4" style="white-space:nowrap;font-size:0.85em;" title="直接打开视频文件">[mp4 ↗]</a></figcaption></figure>
@@ -213,6 +225,7 @@ a { color:var(--blue); text-decoration:none; }
 </ol>
 <p class="small">代码：<code>training/stage12_intent/services/level_3_experiment/closure_replay.py</code>；结果 <code>results/closure/closure_replay.json</code>、<code>closure_goal.json</code>。仿真接触不是人体接触真值，保持 1 s 不等于承重或抗扰。</p>
 
+<span id="v3"></span>
 <h2 id="live">实时演示：预测进头显，预测器可切换（2026-09-14）</h2>
 <p>把部署 checkpoint 接到正在进行的遥操作上，20 Hz 实时预测。链路：遥操作脚本 <code>--live-udp</code> 把每条 retarget 命令和最近一次头显遥测复制到本机 UDP；预测器（<code>training/stage12_intent live</code>）把手腕换到 cube 坐标系、拼 1 s 窗口、推理；预测再经 <code>--ghost-udp</code> 发回遥操作脚本，挂在本来就要发的控制包上（可选 <code>ghost</code> 字段，旧 APK 忽略）；头显端用私有 <code>mjData</code> 做前向运动学、<code>Graphics.RenderMesh</code> 画半透明绿手和接触点小球——不建 GameObject、不进物理、不进物理记录。预测器与遥操作是两个进程，预测器崩溃不影响控制环。</p>
 <div class="tw"><table>
@@ -310,6 +323,7 @@ mjpython -m training.stage12_intent live --source udp --port 5599 --ghost-udp 56
 <p><b>仲裁系数。</b><code>quest_teleop.py --alpha-from-confidence</code>：最新预测的置信度（0.5 s 内无报文则不缩放）作为 trust 传给 Stage 1.3 控制器，它在部署包络之后再乘到 α 上——预测再自信也打不开关着的包络；每条命令记 <code>prediction_confidence</code>，<code>shared</code> 块记 <code>trust</code>。合并 demo 默认开（<code>MJQUEST_ALPHA_FROM_CONFIDENCE=0</code> 关）。</p>
 <p class="small">代码：<code>training/stage12_intent/services/level_3_experiment/live.py</code>（<code>Confidence</code>）、<code>hand_control/services/level_3_teleop_runtime/l20_sources.py</code>（逐指比特）、<code>hand_control/demo/quest_teleop.py</code>（<code>hold_low_confidence_fingers</code>、<code>--alpha-from-confidence</code>）；分析脚本在会话草稿区，数字见 README 的 Confidence gate 一节；测试 <code>test_stage12_intent.py::test_confidence_gate_expected_error_hysteresis_and_keys</code>、<code>test_quest_teleop_demo_keys.py</code>、<code>test_quest_workspace.py</code>。</p>
 
+<span id="v4"></span>
 <h2 id="joint">联合模型：手势 + 接触点一起预测，置信度由模型给（2026-09-16，4090）</h2>
 <p>四个问题：接触点和手势用一个网络还是两个；要不要强制两者一致；置信度让模型输出行不行；要不要贝叶斯网络。同一套 7 折留一 session、400 epochs、在 4090 上训练（MuJoCo 的 DLL 被 Windows 应用控制策略拦住，输入帧的指尖运动学在 Mac 上预算好随数据一起发过去，打分回 Mac 做）。手掌误差 / 接触点误差 / 与手势正向运动学的一致性差，cm：</p>
 <div class="tw"><table>

@@ -68,15 +68,30 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <body>
 <main class="wrap">
 <a class="bk" href="shared-control.html#stages">← 共享控制路线 · 小阶段</a> · <a class="bk" href="l20-robust-grasp-stage1.html">← Stage 1.1：数采</a> · <a class="bk" href="l20-robust-grasp.html">长期路线</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">实验计划 · Stage 1.1 验收后执行 · 2026-09-13</div>
+<div class="kicker">实验计划 · Stage 1.1 验收后执行 · 2026-09-16</div>
 <h1>Stage 1.2：Training</h1>
 <p class="lede">使用 Stage 1.1 冻结的单一 cube Quest→retarget→L20 示教，并行尝试两个 Human Model：A 是删除 gaze／物体分支的 Gaze-Guided VQ-VAE＋自回归 Transformer；B 是条件 Flow Matching 生成预测。两者都只根据尚未完成的手部动作前缀预测未来，不直接输出机器人当前控制命令。</p>
-<p class="meta">状态：2026-09-13 在 pilot + 正式 session 1 的 95 条 pinch 示教上跑了首个 run，结果与视频见 <a href="l20-stage1-2-results.html">Stage 1.2 结果</a>（实验记录）。本页保留模型与比较协议；240 条正式数据的 144／48／48 划分尚未采齐，正式结果待补。</p>
+<p class="meta">当前 v4（2026-09-16）。2026-09-13 在 pilot + 正式 session 1 的 95 条 pinch 示教上跑了首个 run，此后三轮（q_ref 标签与消融、实时预测器与置信度、联合模型）的结果与视频见 <a href="l20-stage1-2-results.html">Stage 1.2 结果</a>（实验记录）。本页保留模型与比较协议；<b>计划中的 240 条 144／48／48 划分已被 Stage 1.1 v3（四物体、campaign v2-objects）取代</b>，见 <a href="l20-robust-grasp-stage1.html#v3">Stage 1.1 v3</a>，v3 数据上的结果待采。</p>
 <div class="key good"><b>明确是两个方案：</b>方案 A 学离散 motion token 的序列条件概率，目标是复现“动作前缀 → 到接触为止的未来序列”；方案 B 学连续未来手姿的条件分布，目标是避免不确定时只输出一只“平均手”。它们共享数据，但编码、loss 和推理过程都不同。</div>
 <div class="key warn"><b>小数据取舍：</b>240 条 trial 可能不足以同时稳定训练 codebook、Transformer 和高维轨迹生成器。因此 A 保留论文式完整序列任务；B 首轮只生成物体坐标系中的多个最终 L20 手姿候选。两者先在相同终点指标上比较，不把不同额外能力混成一个总分。</div>
 <p class="meta">路线复盘：<a href="l20-stage1-4-review.html">Stage 1.4 阶段性总结与待决问题</a> 汇总最新讨论；本页保留本阶段协议，不把讨论方案回填为已完成验收。</p>
 <p class="meta"><b>输出口径：</b>现有 M0／终点模型预测抬离时的最终抓姿；过去一秒是输入窗口，抬离前一秒是评测位置，FMS 的未来一秒才是固定输出时域。下一轮的实时最终目标与物体约束见 <a href="l20-stage1-4-review.html#terminal">1.4 输出讨论</a>。</p>
-<nav class="toc" aria-label="本页目录"><a href="#schemes">两个方案</a> · <a href="#boundary">与 IL 的关系</a> · <a href="#data">共同数据</a> · <a href="#scheme-a">方案 A</a> · <a href="#flow">方案 B</a> · <a href="#comparison">对照与判据</a> · <a href="#runbook">当前五步</a></nav>
+<div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
+<caption>版本索引 · 当前 v4（与 <a href="l20-stage1-2-results.html">结果页</a>共用版本号）</caption>
+<thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
+<tbody>
+<tr><td><a href="#v1">v1</a></td><td>2026-09-13</td><td>本页阶梯（B0／B1／M0／方案 A／方案 B）按 Stage 1.1 v1+v2 的 95 条 pinch 跑 LOSO，标签 = 抬离时实现的掌姿 + 关节。</td><td>240 条不存在，先用 PoC 决定协议与模型走向。</td><td><a href="l20-stage1-2-results.html#v1">结果 v1</a></td><td><a href="l20-stage1-2-results.html#v1-fig">误差曲线</a></td></tr>
+<tr><td><a href="#v2">v2</a></td><td>2026-09-13 晚 – 09-14</td><td>标签关节改为 retarget 命令 q_ref；当前 25 维状态即可、去掉 1 s 历史；Stage 1.3 物理预检。</td><td>实现姿态标签闭合后只 47% 抓得住，命令 99%；历史无增益。</td><td><a href="l20-stage1-2-results.html#v2">结果 v2</a></td><td><a href="l20-stage1-2-results.html#v2-fig">闭合回放</a></td></tr>
+<tr><td><a href="#v3">v3</a></td><td>2026-09-14</td><td>实时预测器（UDP 进头显 ghost hand）、接触点目标、启发式置信度门控与仲裁系数、Quest 逐指置信度。</td><td>实时误差 3 cm 揭示训练分布外；接触点 ≈ 先验。</td><td><a href="l20-stage1-2-results.html#v3">结果 v3</a></td><td>待补</td></tr>
+<tr><td><a href="#v4">v4</a></td><td>2026-09-16</td><td>联合 pose + contact + 方差头模型，5 seed 集成 je（实时模型 6），4090 训练。</td><td>一个网络优于两个；σ 头过度自信。</td><td><a href="l20-stage1-2-results.html#v4">结果 v4</a></td><td>待补</td></tr>
+</tbody></table></div>
+<nav class="toc" aria-label="本页目录"><a href="#versions">版本协议要点</a> · <a href="#schemes">两个方案</a> · <a href="#boundary">与 IL 的关系</a> · <a href="#data">共同数据</a> · <a href="#scheme-a">方案 A</a> · <a href="#flow">方案 B</a> · <a href="#comparison">对照与判据</a> · <a href="#runbook">当前五步</a></nav>
+
+<h2 id="versions">各版本的协议要点</h2>
+<p id="v1"><b>v1（2026-09-13）</b>：数据 = Stage 1.1 v1（43 条 pilot）+ v2（52 条正式 session 1），95 条 pinch，7 折留一 session；输入 = 抬离前 1 s 的 T<sub>OH</sub> 窗口 + 手形 + 追踪有效性，标签 = 抬离时刻（Quest Transport 相位首个样本）的 T<sub>OP,T</sub> 与 16 个实现关节；阶梯 B0 保持 / B1 最近示教 / M0 MLP（残差形式）/ 方案 A VQ-VAE+AR / 方案 B Flow Matching，另加序列生成器 FMS、DPS。</p>
+<p id="v2"><b>v2（2026-09-13 晚 – 09-14）</b>：标签关节改为抬离时的 retarget 命令 q<sub>ref</sub>（run <code>qref-abs</code>／<code>qref-res</code>），因为物理预检证明实现姿态是接触下的结果不是命令；输入消融后可部署预测器只用当前 25 维状态（腕相对 cube + q_ref）。</p>
+<p id="v3"><b>v3（2026-09-14）</b>：同一模型以 UDP 接入 <code>quest_teleop.py --live-udp</code> 实时预测并在头显画 ghost hand（仅显示，session 记为 demo，不入训练集）；接触点头 + 先验；置信度 = 剩余位移 + 0.3 s × 掌速的启发式门控（6 cm 阈值，滞回），仲裁系数 = 0.5<sup>err/6 cm</sup> 传给 Stage 1.3 的 α。</p>
+<p id="v4"><b>v4（2026-09-16）</b>：JointNet（编码器 → pose 25 + contacts 6 + logvar 9），变体 sep／joint／derived／nll／ens5，4090 上训练（tips cache，无 MuJoCo），Mac 上评分；部署 je（5 seed 均值，实时按键 6）。下一版将在 Stage 1.1 v3 的四物体数据上重训，并增加“要抓哪个物体”的目标识别头（输入加入全部物体位姿）。</p>
 
 <h2 id="schemes">两个方案，不是同一个方法</h2>
 <div class="tw" tabindex="0" role="region" aria-label="Stage 1.2 两个方案总览"><table>
