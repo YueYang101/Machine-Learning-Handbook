@@ -40,7 +40,7 @@
 |---|---|
 | [l20-robust-grasp.html](l20-robust-grasp.html) | L20 Robust Grasp：三条长期主线——L20 robust grasp、真人手预训练并经 retargeting 迁移到 L20、面向残障用户的 online learning；当前短期先数采，再做 L20 抓姿训练 |
 | [shared-control.html](shared-control.html#stages) | 共享控制路线：从 To the Noise and Back 到 EMG 灵巧手；下属 Stage 1.x 小阶段统一入口，历史架构与当前进度分开 |
-| ↳ [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | Stage 1.1 数采与标签：已有单 cube 的 95 条 pinch PoC；保留采集协议，正式数据验收另记 |
+| ↳ [l20-robust-grasp-stage1.html](l20-robust-grasp-stage1.html) | Stage 1.1 数采与标签：已有单 cube 的 95 条 pinch PoC；collection v2 协议（v3）与采集输入侧的门控／相机仲裁（v4）；正式数据验收另记 |
 | ↳ [l20-stage1-2-training.html](l20-stage1-2-training.html) | Stage 1.2 意图预测与模型比较：已有终点回归与序列生成对照，区分输入历史、预测提前量与输出目标 |
 | ↳ [l20-stage1-3-shared-grasp.html](l20-stage1-3-shared-grasp.html) | Stage 1.3 意图条件的共享抓取控制：已有残差 RL 与仲裁 PoC，物理后端差异限制收益结论，完整任务仍待验证 |
 | ↳ [l20-stage1-4-review.html](l20-stage1-4-review.html) | Stage 1.4 阶段性总结与待决问题（讨论中）：汇总十项问题，当前先讨论实时更新的最终抓姿＋物体约束＋置信度；已有证据与方案分开 |
@@ -59,6 +59,7 @@
 
 | 页面 | 内容 |
 |---|---|
+| [l20-stage1-1-results.html](l20-stage1-1-results.html) | Stage 1.1 结果：数采质量——Quest 遮挡手指翻转的测量（单帧 28–110 mm、每指 3–24 次/min、置信位无用、几何遮挡 4–5 倍）、速度门控（~40% 翻转不到机器人）、Mac 相机 + MediaPipe 配对分析（3-D 骨长不可信、只能用伸展比）与 Kalman 仲裁、09-20 在环失败（相机看手背投错票）与按视角选线索的修正、"伸直被弯"核查（人手 MCP 本就弯 50–70°）、工具（网页控制台、头显面板第三版）、session 台账与未解决问题 |
 | [l20-stage1-2-results.html](l20-stage1-2-results.html) | Stage 1.2 结果：意图预测／人类模型建模——95 条 pinch 示教留一 session 的阶梯结果、影子手逐帧预测视频、序列生成器与输入消融、数据侧发现、Stage 1.3 第二步物理回放预检；2026-09-14 追加：实时预测进头显（影子手／接触点、可切换预测器、与数采隔离）与「预测物体上的点」两次消融（接触头以平均先验落地） |
 | [l20-stage1-3-results.html](l20-stage1-3-results.html) | Stage 1.3 结果：共享抓取残差 RL 首轮——L20SharedPinch 环境实现与录像核对、零残差基线、门控残差 20M 步与 α=0 的配对比较（1–7 个百分点）、α≡1 对照臂 +8–16 个百分点（授权上限是主因）、按指门控／速度缩放臂、α 扫描（收益在 0.3–0.5 饱和、门控低 6–8 点、平均位姿目标 = oracle，不需预测器）、真机接线（影子仿真 + 部署包络）、预测器接入（对手指动作无影响、只影响门控时机）、接触点目标臂、jax 与 Warp 后端不等价（离群的是 jax；Warp 下纯人手回放已 98%–100%，手指残差无东西可补）、人群 v2（训练封装不重置 info 的 bug 与修法；有缺陷、会反应的仿真人把人单飞压到 0.56–0.78；在人群上训的残差补回手指侧缺陷 15–19 点、不伤干净的人、抬离早 0.1–0.3 s；干净回放训的旧策略面对缺陷几乎不帮；α 随机训练的 H2Rand 三档 α 都能用）、berlin 与 4090 运行方式、视频 |
 | [dexhand-rl.html](dexhand-rl.html) | 灵巧手 RL 实验记录：锤钉与抓取，每个 reward 版本的视频与失败解剖 |

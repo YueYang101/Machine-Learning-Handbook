@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage 1.1 结果：数采质量——手指翻转、速度门控与相机仲裁 · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap canvas { width:100%; display:block; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; }
+.ctl button { font:600 .85rem/1 inherit; color:var(--ink); background:var(--bg);
+  border:1px solid var(--line2); border-radius:7px; padding:7px 11px; cursor:pointer; }
+.ctl button:hover { border-color:var(--blue); color:var(--blue); }
+.ctl button.pri { background:var(--blue); border-color:var(--blue); color:#fff; }
+.ctl label { display:inline-flex; gap:5px; align-items:center; font-size:.85rem; color:var(--sub);
+  cursor:pointer; user-select:none; }
+.ctl input[type=range] { flex:1 1 140px; min-width:120px; accent-color:var(--blue); }
+.ctl .ro { font:.8rem/1.4 ui-monospace,Menlo,monospace; color:var(--sub); }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+.fig { margin:16px 0; } .fig img { width:100%; border-radius:10px; border:1px solid var(--line); display:block; } .fig figcaption { font-size:.85rem; color:var(--sub); margin-top:7px; line-height:1.5; }
+table.versions { display:table; min-width:760px; } table.versions caption { text-align:left; color:var(--sub); padding:0 0 8px; caption-side:top; font-size:.88rem; }
+.meta { color:var(--sub); font-size:.95rem; }
+.small { font-size:.85rem; color:var(--sub); }
+td.n { text-align:right; font-family:ui-monospace,Menlo,monospace; font-size:.9rem; }
+</style></head><body>
+<div class="wrap">
+<a class="bk" href="l20-robust-grasp-stage1.html">← Stage 1.1：数采与标签（计划）</a> · <a class="bk" href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
+<div class="kicker">MACHINE LEARNING HANDBOOK · 实验记录 · Stage 1.1 · 2026-09-16 → 2026-09-20</div>
+<h1>Stage 1.1 结果：数采质量<br><span style="font-size:.72em;color:var(--sub)">Quest 手指翻转的测量、速度门控、Mac 相机仲裁（比值 Kalman）、重定向偏差核查与未解决的问题</span></h1>
+<p class="lede">collection v2（<a href="l20-robust-grasp-stage1.html#v3">计划页 v3</a>）的正式采集在 2026-09-16 傍晚被同一个问题两次打断：做 tripod 时机器人手指来回跳。这一页记录接下来四天对采集<b>输入侧</b>的测量与修正——每个数字都来自 <code>human_machine_interaction · hand_control/data/quest_sessions/</code> 里的原始 session，协议改动记为计划页 <a href="l20-robust-grasp-stage1.html#v4">v4</a>。95 条 pinch 的训练结果仍在 <a href="l20-stage1-2-results.html">Stage 1.2 结果页</a>；本页不含任何模型数字。</p>
+<p class="meta">当前 v4（2026-09-20）。状态：速度门控自 09-16 傍晚起随 <code>collect_v2_formal.sh</code> 默认开启；Mac 相机仲裁 09-18 接入、09-20 第一次真人在环暴露了"相机看手背时投错票"，已改为按视角选线索；v2-objects 正式 session 1 至今<b>没有完成的 trial</b>（三次尝试都在 trial 1–3 停止）。持续 0.5–2 s 的 Quest 翻转与顶抓时"没有任何相机看得见掌心"仍未解决，下一步在 <a href="#next">§7</a>。</p>
+
+<div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
+<caption>版本索引 · 当前 v4 · 与 <a href="l20-robust-grasp-stage1.html#versions">计划页</a>共用版本号；v1–v3 的数据在 <a href="l20-stage1-2-results.html">Stage 1.2 结果页</a>，本页只记 v4（输入侧修正）</caption>
+<thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
+<tbody>
+<tr><td><a href="#v4">v4</a></td><td>2026-09-16 → 09-20</td><td>v3 协议不变，采集输入侧加两级：每指<b>速度门控</b>（<code>--finger-gate on</code>）；Mac 相机 + MediaPipe 的<b>仲裁</b>（<code>--cam-udp</code>，伸展比 Kalman，按视角选 3-D／2-D 线索）。网页控制台一键启动采集／相机／APK。<code>target_ctrl</code>（Stage 1.2 的模型输入）自此是门控后的命令，<code>source</code> 行保持原始。</td><td>Quest 在遮挡的卷曲手指上整块切换假设，每指 3–24 次/min，置信位全程为高（<a href="#flips">§1</a>）</td><td><a href="#gate">§2</a> 门控 ~40% 翻转不到机器人；<a href="#camera">§3</a> 相机仲裁；<a href="#live">§4</a> 09-20 在环 session 的失败与修正</td><td><a href="#v4-fig-flips">翻转图</a> · <a href="#v4-fig-paired">配对图</a> · <a href="#v4-fig-live">在环图</a></td></tr>
+</tbody></table></div>
+
+<div class="toc"><b>目录</b> · <a href="#flips">§1 问题的测量</a> · <a href="#gate">§2 速度门控</a> · <a href="#camera">§3 相机仲裁</a> · <a href="#live">§4 在环 session 与修正</a> · <a href="#retarget">§5 重定向"伸直"偏差核查</a> · <a href="#tools">§6 工具</a> · <a href="#next">§7 未解决与下一步</a> · <a href="#sessions">§8 session 台账</a></div>
+
+<section id="v4" aria-label="v4">
+<h2 id="flips"><span class="n">§ 1</span>问题的测量：Quest 在遮挡手指上切换假设</h2>
+<p>操作者感受是"tripod 时手势来回抽搐"。在 <code>source</code> 行（腕坐标 21 点，90 Hz）里它长这样：被手掌挡住的卷曲手指——中指、无名指、小指——在<b>一帧内</b>从完全卷曲（指尖离腕 ≈65 mm）跳到完全伸直（≈175 mm）再跳回，手腕几乎不动（&lt;0.1 m/s）。单帧指尖步长中位数 28 mm／11 ms（2.5 m/s），最大 110 mm；同批数据里真实指尖速度 p99.9 = 1.2 m/s、最大 1.8 m/s。三根手指<b>整块</b>一起翻——追踪器的先验把它们绑在一起，所以 tripod 需要的"中指半屈、无名/小指卷曲"这个状态它根本不输出。</p>
+<figure class="fig" id="v4-fig-flips"><img src="assets/l20-stage1-1-results/v4-quest-flips-tripod.png" alt="session 155937 trial 1 前 60 s：中/无名/小指指尖到腕距离在 65 mm 与 175 mm 之间方波式切换，手腕静止，底部每指置信位全程为 1" loading="lazy"><figcaption>session 20260916T155937Z trial 1（tripod／球／顶抓）前 60 s。顶图：各指尖到手腕距离，M/R/L（绿/红/紫）方波式切换；第 2 图：拇指-食指/拇指-中指间距；第 5 图：Quest 每指置信位（五条水平线全为 1）与手腕速度（黑）。证明：翻转发生在手腕静止时，且厂商置信位对它不敏感。</figcaption></figure>
+<div class="tw"><table>
+<tr><th>测量（2026-09-13 → 09-16，44 min 有效追踪）</th><th>数值</th><th>含义</th></tr>
+<tr><td>手指跳变率（&gt;1.5 m/s，每指）</td><td class="n">pinch 17–24／min，tripod 4–9／min，power ~17／min</td><td>pinch 更高（三指卷曲被挡）；tripod 感觉更糟是因为中指承重</td></tr>
+<tr><td>翻转后回到原状态的时间</td><td class="n">≤100 ms 33%，≤300 ms ~50%，其余 0.5–2 s 或不回</td><td>定时类滤波最多去掉一半</td></tr>
+<tr><td>Quest 每指置信位为高的帧</td><td class="n">99–100%，翻转期间不变</td><td>已有的 <code>--finger-confidence hold</code> 看不见它</td></tr>
+<tr><td>掌法向·(头→手) 与跳变率</td><td class="n">−1..−0.75 区 44/min → +0.25..+0.5 区 9/min</td><td>几何遮挡是主因；接近方向 front/left/right/top 无差别</td></tr>
+<tr><td>被猜的手指是否"冻结"</td><td class="n">否（0.3 s 窗内 &lt;0.5 mm 的帧 0%）</td><td>"静止=猜测"不能用作判据</td></tr>
+</table></div>
+<div class="key bad"><b>两条被排除的路。</b>Kalman／低通：干扰是双峰假设切换而不是高斯噪声，R 调小照过、调大变慢滑，持续状态在 R/Q 帧后被完全接受。Meta 文档（hand-tracking troubleshooting、Wide Motion Mode、Fast Motion Mode，09-16 核对）对自遮挡无设置——WMM 是视野外、FMM 是快速运动。</div>
+
+<h2 id="gate"><span class="n">§ 2</span>速度门控（finger jump gate）</h2>
+<p>代码 <code>human_machine_interaction · hand_control/services/level_2_landmark_filters/finger_jump_gate.py</code>，8 项单元检查。每指、在腕坐标 landmark 上：帧间位移 ≤ 1.5 m/s·dt（静止手指另加匀速预测偏差 ≤ 80 m/s²·dt²）→ 连续、零延迟直通；否则 hold 上一被接受姿态，跳变持续 150 ms 后接受，接受后以 1.5 m/s slew 而非瞬移；流中断 &gt;0.1 s 重置。</p>
+<div class="tw"><table>
+<tr><th>离线回放（10 个 session，44.8 min）</th><th>speed 1.5 + acc 80，confirm 150 ms（默认）</th><th>confirm 250 ms</th><th>speed 0.8</th></tr>
+<tr><td>跳变起点／min</td><td class="n">8.6</td><td class="n">8.5</td><td class="n">19.7</td></tr>
+<tr><td>在 hold 内自己弹回（完全不到机器人）</td><td class="n">39%</td><td class="n">52%</td><td class="n">28%</td></tr>
+<tr><td>被 hold 的帧</td><td class="n">2.0%</td><td class="n">2.8%</td><td class="n">4.2%</td></tr>
+<tr><td>hold 时长 p50／p95</td><td class="n">158／~300 ms</td><td class="n">256／~2400 ms</td><td class="n">170／~1700 ms</td></tr>
+</table></div>
+<p>它能做的：瞬移变成有界慢滑，约四成翻转消失。它不能做的：判定持续超过 confirm 的错误状态——流里没有信号。09-17 第一次开门控的 session（113607Z，tripod 31 次/min）证实：90% 的翻转是持续型，门控只 hold 了 1–2% 的帧。</p>
+
+<h2 id="camera"><span class="n">§ 3</span>Mac 相机仲裁：第二视角 + 伸展比 Kalman</h2>
+<p>头显摄像头抓取时永远看手背；第二台从前下方看的相机（MacBook 自带，1280×720 30 fps，MediaPipe 0.10.21，独立 conda 环境 <code>mp_cam</code>——mediapipe 要求 numpy&lt;2，不允许进采集环境）能看到卷曲。相机服务 <code>hand_control/demo/cam_hand_stream.py</code>：标签只用来首次锁定右手（MediaPipe 的左右标签有 17% 的帧翻转），之后按手腕位置逐帧跟踪；UDP 发给采集端，记为 <code>cam_source</code> 原始行。</p>
+<figure class="fig" id="v4-fig-paired"><img src="assets/l20-stage1-1-results/v4-paired-quest-camera-115223.png" alt="配对 session 115223：五根手指的伸展比，Quest 蓝、相机橙；底部相机看到的手掌朝向" loading="lazy"><figcaption>配对 session 20260918T115223Z（68 s，6 个 trial）：每指伸展比（指尖到掌指关节距离／指链长，0.4–0.5 = 卷曲，0.9–1.0 = 伸直），Quest 蓝、相机橙、黑点为门控标记；底图为相机坐标下的掌法向 z。宏观结构一致（两边同时卷、同时伸），相机偏卷 0.05–0.1、抖动 0.06、24% 帧丢手；26–29 s 与 34 s 的 Quest 方波是相机没有跟随的翻转。</figcaption></figure>
+<div class="tw"><table>
+<tr><th>配对分析（115223Z）</th><th>数值</th><th>结论</th></tr>
+<tr><td>相机拍摄→采集端延迟；两路时钟偏差</td><td class="n">25 ms（p95 34）；≈ −10 ms</td><td>同一台 Mac 的单调时钟，不需要跨设备对时</td></tr>
+<tr><td>手性（Umeyama 全 21 点残差，原样 vs x 取反）</td><td class="n">26 mm vs 63 mm</td><td>不镜像</td></tr>
+<tr><td>MediaPipe 近节指骨长度 vs Quest</td><td class="n">22 mm vs 38 mm，且同 session 内在 10–30 mm 漂</td><td><b>landmark 级融合不成立</b>：它的 3-D 手不是刚体骨架</td></tr>
+<tr><td>伸展比一致性（卷 &lt;0.65／伸 &gt;0.8 同侧判定，M/R/L）</td><td class="n">掌心朝相机：3-D 71–78%、2-D 34–75%；手背/侧面：2-D 85–92%、3-D 49–85%</td><td>线索要按视角选（§4）</td></tr>
+</table></div>
+<p><b>仲裁器</b> <code>level_2_landmark_filters/camera_arbiter.py</code>（13 项检查）：每指一个常速度 Kalman 滤相机的伸展比（野值门 4σ、连续 3 帧野值即真实阶跃重启、对 Quest 的偏差取滑动中位数校正）。相机<b>只在 Quest 发生跳变时投票</b>（门控的 jump，或 150 ms 内伸展比变化 ≥0.2）：相机站在跳变前一侧 → 新状态被否决、hold 旧姿态，直到 Quest 回来／相机转而同意／0.6 s 上限；相机站在跳变一侧 → 门控正在 hold 的跳变立刻放行；相机不新鲜（&gt;0.25 s）或看不见 → 只剩门控。离线回放 115223Z：9 次否决，两次明确的 Quest 翻转（中指 26–29 s、34–35 s）被压住；一次真实卷曲（20.0 s）因相机恰好丢手被延迟 0.9 s——上限由此设定。</p>
+
+<h2 id="live"><span class="n">§ 4</span>第一次在环 session（09-20）：相机看手背时投错票，及修正</h2>
+<figure class="fig" id="v4-fig-live"><img src="assets/l20-stage1-1-results/v4-live-arbiter-115437.png" alt="session 115437：五指伸展比，Quest 蓝，相机 KF 橙，仲裁输出黑，红点为相机否决" loading="lazy"><figcaption>session 20260920T115437Z（tripod/top、pinch/left、power/front）按修正后的仲裁器回放：蓝 = Quest 原始，橙 = 相机 KF（手背视角用 2-D 图像比值），黑 = 输出，红点 = 相机否决了 Quest。41–49 s 相机跟到了卷曲；28.8 s 与 42–44 s 的 Quest 跳变被压住 0.6 s。</figcaption></figure>
+<p>在环时的现象：比之前更抽、更不跟手。原始记录：相机 99% 帧新鲜、右手 98%、延迟 24 ms，但仲裁对 M/R/L 各否决了 ~315 帧（四段、每段最长 1 s）——否决的是操作者<b>真实的卷曲</b>。原因：整段顶抓里 Mac 相机看到的是手背/侧面（MediaPipe 掌法向 z 在 0..+0.5），此时 MediaPipe 的 3-D 提升和 Quest 一样在猜"伸直"。量化：手背朝相机时 M/R/L 分歧 0.37，掌心朝相机 0.05。</p>
+<div class="key good"><b>修正（已上线，下次 session 生效）：</b>按视角选线索——掌心朝相机（palm_z ≤ −0.25）用 3-D 比值；手背/侧面用<b>2-D 图像比值</b>（对直手指的均匀透视缩短不变，手指折叠时下降；该视角下与 Quest 一致 85–92%，3-D 只有 49–77%）；没有 2-D 点则弃权。单次否决上限 1.0 → 0.6 s。回放 115437Z：仍压住 4 段 Quest 跳变（28.8、36.5、42.3、44.0 s），41–49 s 的真实卷曲跟随；115223Z 保留真实翻转的否决。</div>
+<p class="small">未定：28.8–32.5 s 那段 Quest 报"卷曲"3.5 s、相机 2-D 报"伸直"（图像中指长 2.4 个掌宽）——两路只能二选一，本页按图像证据视为 Quest 翻转；0.6 s 后它仍会通过。</p>
+
+<h2 id="retarget"><span class="n">§ 5</span>重定向"伸直手指被弯"核查：不是偏差</h2>
+<p>操作者反馈"手指绷直，L20 仍弯"。115223Z 里人手指完全伸直（伸展比 &gt;0.97）时的命令：食指 <code>mcp_pitch</code> 44°、中指 43°、无名 26°+pip 23°、小指 22°+pip 16°。实现并回放了 <code>--target-mode skeleton_all</code>（四指都用机器人骨长、沿人手骨方向）：MCP 41°→41°（食）、42°→40°（中）、23°→30°（无名）、19°→20°（小）；无名 PIP 23°→17°；捏合间隙 16.8→15.5 mm（拇-食）、17.3→15.3（拇-中）。几乎不变，因为<b>人手指 PIP/DIP 绷直时 MCP 本身相对手掌轴弯着 50–70°</b>（抓取准备的拱手），命令 41–45° 比人还少；真正平放（hold-flat 校准，1st percentile）读 6–13°、命令 5–27°。L20 是忠实复制掌指关节。默认保持 <code>skeleton_abd</code>；要更直只能做有意的保真取舍。</p>
+
+<h2 id="tools"><span class="n">§ 6</span>随之落地的工具</h2>
+<ul>
+<li><b>网页控制台</b>（<code>hand_control/demo/demo_console.py</code>，<code>console_service.sh start</code> 常驻本次登录、不开机自启）：启动/停止采集（与终端同一 sh 脚本，Ctrl+C 语义）、门控与相机勾选、`z` 重置、构建+安装 APK、状态栏"头显（USB）→ 遥操作"、相机在线/右手率/延迟/仲裁计数。发现并修了 launchd PATH 缺 <code>/usr/sbin</code>（mujoco 导入调 sysctl）与一处持锁记日志的死锁。</li>
+<li><b>头显面板第三版</b>：十指在板上的投影点（远/武装带/按压深度 + dwell 环），板面任意位置武装（旧版需正对按钮、从侧面来要先退开），Fingers 行加门控开关；Unity 编辑器检查 255 项通过，APK 于 09-17 构建安装。</li>
+<li><b>离线报告</b> <code>hand_control/demo/finger_flip_report.py</code>：任一 session 的跳变统计与 raw/gated 叠图。</li>
+<li>研究备忘：<code>hand_control/plan/2026-09-16-finger-flip-gate.md</code>（本页数据来源）；<code>hand_control/plan/2026-09-20-adaptive-retargeting-research.md</code>（角度映射 vs 向量 IK、学习型/在线自适应重定向文献、因果手指先验设计与两周排序）。</li>
+</ul>
+
+<h2 id="next"><span class="n">§ 7</span>未解决的与下一步</h2>
+<div class="key warn"><b>对 Stage 1.2 本身的一个结论。</b>区分 pinch 与 tripod 的那根手指（中指）在 Quest 单目里不可观测——它在这些姿态下没有独立状态，只随无名/小指整块翻。靠 Quest 数据训练"意图预测 tripod vs pinch"这件事需要第二视角（相机/EMG）或先验，而不是更多 session。</div>
+<ol>
+<li><b>持续型翻转</b>（0.5–2 s）仍会在 confirm/上限后通过；顶抓时手掌朝下，没有任何相机看得见掌心，相机必须弃权。剩下的路是研究备忘里排第一的<b>因果手指状态先验</b>（用过去 0.5 s 的门控 landmark、手腕运动、相机给每指一个卷曲后验，作为第三投票者），先做离线 hindsight 标注与可行性（2–3 天，不占头显）。</li>
+<li><b>数据集标记</b>：起举窗口内含跳变的 trial 需在 verifier／build 里打标（<code>command.finger_gate</code> 已有逐帧记录）；09-16 傍晚前的数据未门控，<code>task_config.finger_gate</code> 说明每个 session 是哪一种，不得混用。</li>
+<li><b>正式 session 1 重采</b>：三次尝试均无完成 trial；下次采集前把 Mac 放低、镜头朝上看掌心（前/左/右抓取时相机才有票）。</li>
+<li>相机配对数据只有 ~3.4 min（2 个 session）；先验的标签只能来自相机或 EMG。</li>
+</ol>
+
+<h2 id="sessions"><span class="n">§ 8</span>session 台账（全部在 <code>hand_control/data/quest_sessions/</code>）</h2>
+<div class="tw"><table>
+<tr><th>session</th><th>协议／输入</th><th>用途与结果</th></tr>
+<tr><td>20260916T154841Z、155937Z</td><td>v3，未门控</td><td>正式 session 1 两次尝试，均在 trial 1（tripod/top）停止；155937Z 前 60 s 是 §1 的翻转图</td></tr>
+<tr><td>20260917T113607Z</td><td>v4 门控 on</td><td>tripod 31 跳变/min，90% 持续型；门控 hold 1–2% 帧</td></tr>
+<tr><td>20260918T114841Z、115223Z</td><td>v4 门控 + 相机记录（无仲裁）</td><td>配对分析 §3；115223Z 为仲裁器离线设计集</td></tr>
+<tr><td>20260920T115437Z</td><td>v4 门控 + 相机仲裁 v1</td><td>§4：相机看手背时否决真实卷曲；修正后回放 0 误否决</td></tr>
+</table></div>
+</section>
+
+<footer>数据与代码：<code>human_machine_interaction</code>（私有仓库）。本页数字均可由 <code>finger_flip_report.py</code> 与备忘中的脚本从原始 session 复算。 · <a href="l20-robust-grasp-stage1.html">← Stage 1.1 计划</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
+</div>
+</body></html>
