@@ -67,20 +67,23 @@ a { color:var(--blue); text-decoration:none; }
 <body>
 <div class="wrap">
 <a class="bk" href="l20-stage1-2-training.html">← Stage 1.2：Training（计划）</a> · <a class="bk" href="l20-stage1-3-shared-grasp.html">Stage 1.3</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.2 · 2026-09-13 · 更新 2026-09-16 · 当前 v4（<a href="#live">实时演示</a>、<a href="#contacts">接触点消融</a>、<a href="#confidence">置信度</a>、<a href="#joint">联合模型</a>）</div>
+<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.2 · 2026-09-13 · 更新 2026-09-30 · 当前 v7（<a href="#joint">联合模型</a>、<a href="#v5">合成管线</a>、<a href="#v6">合成数据评估</a>、<a href="#v7">移植式合成与五臂</a>）</div>
 <h1>Stage 1.2 结果：意图预测／人类模型建模<br><span class="small" style="font-weight:400">pilot 6 个 session + 正式 session 1 · 95 条 pinch 示教 · 留一 session 交叉验证 · 手册 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a> 的首个 run</span></h1>
 
 <p class="lede">这是 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a>的第一次实际运行：用 <a href="l20-robust-grasp-stage1.html">Stage 1.1</a> 当天采集的 95 条 Quest→retarget→L20 示教，按计划的阶梯（B0／B1／M0／方案 A／方案 B）训练并在留出的 session 上比较，附影子手视频。<b>结论先行：</b>抬离前 1 s，学习模型比「保持当前姿态」好 3 cm、比最近示教和常数预测好 0.5 cm；残差形式的小模型在抬离时刻误差 0.9 cm；方案 B（Flow Matching）与确定性回归无差异且候选无多模态，方案 A（VQ-VAE＋AR）停在码本重建；一个只看当前 25 维状态的线性模型在 1 s 提前量上是最好的。数据侧的两个发现比模型更重要：抓取提示与方向提示都没有在标签里留下痕迹。</p>
 
 <div class="callout"><b>本页不是 Stage 1.2 的正式结果。</b>计划要求的 240 条、144／48／48 按 session 划分不存在；所有 trial 都是 pinch，终点标签未经人工复核（每个 session 的 <code>stage11_training_ready=False</code>）。这里的数字是 PoC，用来决定协议和模型下一步怎么改。</div>
 <div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
-<caption>版本索引 · 当前 v4（与 <a href="l20-stage1-2-training.html">Stage 1.2 计划页</a>共用版本号；数据来自 <a href="l20-robust-grasp-stage1.html">Stage 1.1</a> v1（43 条 pilot）与 v2（52 条正式 session 1）；v3 数据的结果待采）</caption>
+<caption>版本索引 · 当前 v7（与 <a href="l20-stage1-2-training.html">Stage 1.2 计划页</a>共用版本号；数据来自 <a href="l20-robust-grasp-stage1.html">Stage 1.1</a> v1（43 条 pilot）与 v2（52 条正式 session 1）；v3 数据的结果待采）</caption>
 <thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
 <tbody>
 <tr><td><a href="#v1">v1</a></td><td>2026-09-13</td><td>首轮阶梯 B0／B1／M0／方案 A／方案 B，43 条 pilot LOSO，当晚加入正式 session 1 成 95 条 7 折；序列生成器 FMS／DPS。</td><td>抬离前 1 s M0 比保持好 3 cm、比常数好 0.5 cm；残差 M0 抬离时 0.9 cm；FM = M0 + 0.7 cm 抖动，无多模；VQ-VAE 停在重建。标签是实现姿态。</td><td><a href="#ladder">阶梯</a> · <a href="#video">视频</a> · <a href="#sequence">序列</a></td><td><a href="#v1-fig">误差曲线</a> · <a href="#video">留出 session 视频</a></td></tr>
 <tr><td><a href="#v2">v2</a></td><td>2026-09-13 晚 – 09-14</td><td>标签关节改为 retarget 命令 q_ref（run qref-abs / qref-res）；输入消融（1 s 历史 vs 当前 25 维）；Stage 1.3 第二步物理预检（闭合回放）。</td><td>1 s 历史在此数据量无增益，腕相对 cube 通道携带几乎全部信号；闭合到实现姿态标签只有 47% 抓得住、录制命令 99% → 目标必须是 q_ref 空间；刚性焊接过穿透 → 有界 PD。</td><td><a href="#ablation">消融</a> · <a href="#qref">q_ref</a> · <a href="#verdict">裁决</a> · <a href="#closure">预检</a></td><td><a href="#v2-fig">闭合回放视频</a></td></tr>
 <tr><td><a href="#v3">v3</a></td><td>2026-09-14</td><td>实时预测器进头显（ghost hand，可切换 m0/ml/rl/fm/fms），接触点作为预测目标的两次消融，置信度门控 + 仲裁系数，Quest 逐指置信度。</td><td>实时抬离误差 3 cm（操作者抓姿在训练标签分布外 4–6σ）；接触点预测 ≈ 训练均值先验；误差 ≈ 剩余位移（Spearman 0.82），集成方差／FM 方差无法区分“自信但错”。</td><td><a href="#live">实时演示</a> · <a href="#contacts">接触点</a> · <a href="#confidence">置信度</a></td><td>头显 ghost hand 截图待补</td></tr>
 <tr><td><a href="#v4">v4</a></td><td>2026-09-16</td><td>联合模型：一个网络同时出手势 + 接触点 + 方差头，5 seed 集成 je 部署为实时模型 6；4090 训练。</td><td>掌部 2.31→0.79 cm 优于分头模型；强制“接触点 = 手势 FK”多付 2 cm；学到的 σ 过度自信（2σ 覆盖 0.03），启发式置信度保留。</td><td><a href="#joint">联合模型</a></td><td>待补</td></tr>
+<tr><td><a href="#v5">v5</a></td><td>2026-09-23</td><td>合成抓取／接近轨迹生成管线：v2 基元上的 L20 抓姿库（真人掌姿种子、cage／grasp／squeeze 三段、MuJoCo 物理验证，373 个）、按真人曲线校准的参数化接近轨迹（2238 条）、Dexonomy L20 资产（Mac 冒烟 9/9，4090 上 20 个 DGN 物体 329 个抓姿）；现有 M0／je 在合成数据上训练与评测。</td><td>真人数据只有一个 cube 的一个面；问「能不能生成、能不能训练」。</td><td><a href="#v5">§合成管线</a>：合成域内可泛化（held-out 偏航 1 s 前 1.19 cm），零样本到真人 3.89 cm 只略好于保持 4.56；合成预训练与同配方随机初始化无差别。<b>被 v6 解读、被 v7 的移植式生成器取代</b></td><td><a href="#v5-fig">抓姿对比 + 误差曲线</a></td></tr>
+<tr><td><a href="#v6">v6</a></td><td>2026-09-30</td><td>v5 合成数据的独立评估：数据量缩放曲线（210→6724 条）、真人学习曲线（10／20／40 条）、标签与接近轨迹的逐项质量检查、物理复验、注入末段转动的反事实。</td><td>回答「纯靠随机化够不够」。</td><td><a href="#v6">§评估</a>：数量不是瓶颈（32 倍合成只到保持基线，10 条真人更好）；九个标签关节恒定、真人末段绕指尖转动而合成直线下降；补一个边缘分布不带来迁移。给出验收线。</td><td><a href="#v6-fig">缩放曲线、末段运动、逐关节标签</a></td></tr>
+<tr><td><a href="#v7">v7</a></td><td>2026-09-30 晚</td><td>移植式生成器 v3（把真人 trial 相对自己终点的运动移植到库里任意物体／面的终点，真人标签原样再落座）、三道筛（物理、运动学、真实性）、五臂协议（只真人／只合成／预训练→微调／同配方对照／混合），3 组留一 × 5 种子；10 条多物体真人 trial 的首个测试。</td><td>用户决定走预训练路线；v6 说明要先把随机化改成围绕真人轨迹。</td><td><a href="#v7">§五臂</a>：只合成 v3f 2.40／1.90／0.92 cm ≈ 只真人 2.43／1.85／0.86；预训练比同配方对照好 0.2 cm；无臂显著优于只真人 → 在线预测器仍用只真人模型；多物体覆盖有、精度未验证。<b>当前有效</b></td><td><a href="#v7-fig">五臂柱图</a></td></tr>
 </tbody></table></div>
 
 
@@ -88,7 +91,8 @@ a { color:var(--blue); text-decoration:none; }
 <div class="vchips"><a href="#v1">v1 首轮阶梯</a><a href="#data">数据</a><a href="#protocol">协议</a><a href="#ladder">阶梯</a><a href="#video">视频</a><a href="#sequence">序列生成器</a>
 <a href="#v2">v2 q_ref 重跑</a><a href="#ablation">消融</a><a href="#qref">q_ref</a><a href="#verdict">裁决</a><a href="#failures">失败解剖</a><a href="#closure">1.3 预检</a>
 <a href="#v3">v3 实时预测器</a><a href="#live">实时演示</a><a href="#contacts">接触点</a><a href="#confidence">置信度</a>
-<a href="#v4">v4 联合模型</a><a href="#joint">联合模型</a><a href="#next">缺口与下一步</a></div></div></nav>
+<a href="#v4">v4 联合模型</a><a href="#joint">联合模型</a>
+<a href="#v5">v5 合成管线</a><a href="#v6">v6 合成数据评估</a><a href="#v7">v7 移植式合成与五臂</a><a href="#next">缺口与下一步</a></div></div></nav>
 
 <span id="v1"></span>
 <h2 id="data">数据：采到了什么，发现了什么</h2>
@@ -349,6 +353,68 @@ mjpython -m training.stage12_intent live --source udp --port 5599 --ghost-udp 56
 </table></div>
 <p><b>结论。</b>（1）一个网络比两个好，它的 5 种子集成是目前最好的终点预测器（1 s 处少 0.5 cm，抬起时少 0.14 cm），已部署为 <code>je</code>（键 6：均值手势、自带接触点头、种子分歧记进日志）。（2）强制一致要付 2 cm 接触点误差：运动学指尖点和真实接触点系统性差 ~3 cm，所以 RL 的目标继续用直接预测的接触点，手势只作参考。（3）方差头在 95 条数据上严重过于自信（2σ 覆盖率 0.03），线上置信度仍用启发式，种子分歧可作第二信号；不需要贝叶斯网络——主要不确定性是"离抓取还远、意图未定"这种数据固有噪声，不是"没见过这种输入"。（4）接触点抬起时仍 ≈ 训练均值先验（1.0 cm）：95 条全是同一方向 pinch，只有采其他方向的数据能改变这一点。</p>
 <p class="small">代码：<code>training/stage12_intent/services/level_3_experiment/joint_confidence.py</code>、<code>run_joint_4090.ps1</code>；部署 checkpoint <code>results/final_qref.models.pt</code>（<code>joint</code> 项），上一版留作 <code>final_qref_pre_je.models.pt</code>。</p>
+
+<section id="v5" aria-label="v5">
+<p class="small">版本 v5 · 2026-09-23 · 合成抓取／接近轨迹生成管线（备忘 <code>hand_control/plan/2026-09-23-grasp-synthesis-intent-feasibility.md</code>）</p>
+<h2 id="synthetic">合成管线：能生成、能训练，但迁移到真人差一截</h2>
+<div class="key good"><b>一句话。</b>用 BODex／Dexonomy 类思路给 L20 建了抓姿库和接近轨迹生成器，合成域内多物体、多朝向、多尺寸都能学；但零样本到 95 条真人 pinch 只比「保持当前姿态」略好，单 cube 上合成预训练与同配方随机初始化无差别。</div>
+<p>链路：<b>抓姿库</b>（<code>grasp_bank.py</code>）在 6 种基元（4／5.4／7 cm cube、圆柱、球、长条）上解析采样接触点，掌姿从真人 95 条的「捏合坐标系」分布做种子，阻尼最小二乘 IK 解掌姿 + 16 关节，得 cage（指尖离面 2.5 cm）／grasp（落面）／squeeze（指令开度 1.0 ± 0.3 cm）三段，全部过 objects4 物理验证（合拢 → 加力 → 抬 8 cm → 保持 → ±4 cm 晃动）：373 个通过，Mac CPU 144 s；圆柱／球的 tripod IK 全失败。<b>接近生成器</b>（<code>synthetic_approach.py</code>）：随机偏航 + Boltzmann 选面、最小 jerk 运输 + 0.6–1.1 s 慢速逼近、笼在运输 40–70 % 处到达、抬离前 0.7–1.05 s 开始合拢，犹豫／迟滞／噪声等缺陷随机化；2238 条，曲线级别对上真人（掌心距离 1 s 前 4.7 对 6.0 cm，0.5 s 前 3.2 对 3.1）。<b>Dexonomy</b>：写了 L20 资产与 pinch／tripod 模板，Mac CPU cube 9/9，4090 GPU 上 20 个 DGN 真实网格 127 s 出 329 个通过其自带 eval 的 pinch（floating 场景腕部朝向任意，不像人）。</p>
+<div class="tw"><table>
+<caption>掌心误差中位 cm，抬离前 1.0 / 0.5 / 0 s；je = 5 种子联合集成</caption>
+<tr><th>实验</th><th>1.0 s</th><th>0.5 s</th><th>0 s</th><th>读法</th></tr>
+<tr><td>合成 held-out 偏航（+ held-out 抓姿行）</td><td>1.19</td><td>0.67</td><td>0.53</td><td>物体 one-hot + 尺寸 + 物体坐标系的接口足以让一个网络覆盖多物体</td></tr>
+<tr><td>合成 held-out 尺寸（未见过的 7 cm cube）</td><td>0.95</td><td>0.64</td><td>0.64</td><td>同上</td></tr>
+<tr><td>零样本 → 95 条真人（保持基线 4.56 / 3.48 / 0.97）</td><td>3.89</td><td>3.26</td><td>1.26</td><td>旋转 10–15°、关节 0.15 rad 的差距在姿态分布，不在接近曲线</td></tr>
+<tr><td>真人 LOSO：只真人 / 合成预训练+微调 / 同配方随机初始化</td><td>2.35 / 2.64 / 2.63</td><td>1.76 / 1.85 / 1.84</td><td>0.78 / 1.02 / 1.17</td><td>预训练 − 对照 ≈ 0（CI 全含 0）；差的那 0.1–0.5 cm 是微调配方的代价</td></tr>
+</table></div>
+<figure class="fig" id="v5-fig"><img src="assets/l20-stage1-2-results/v5-grasp-methods.png" alt="同一场景同两视角：真人录制抬离姿态、抓姿库、Dexonomy floating、Dexonomy tabletop 各四例" loading="lazy"><figcaption>v5 · 真人抬离姿态与抓姿库几乎一个样（种子继承了腕部倾角），Dexonomy floating 的腕部朝向任意，tabletop 加了桌面后仍散。</figcaption></figure>
+<figure class="fig"><img src="assets/l20-stage1-2-results/v5-error-vs-horizon.png" alt="三个面板：合成域内误差随时间、真人 LOSO 四臂、置信度随接近塌缩" loading="lazy"><figcaption>v5 · 左：合成域内 1 s 前约 1 cm，零样本到真人 3.9 cm 只在 ≥ 0.5 s 略好于保持（黑色虚线）；中：真人 LOSO 四臂，预训练与同配方对照重合；右：5 种子散布从 2 s 前 0.9 cm 塌到抬离 0.1 cm。</figcaption></figure>
+<p class="small">代码：<code>training/stage12_intent/services/level_1_dataset/{grasp_bank,synthetic_approach}.py</code>、<code>level_3_experiment/synthetic_train.py</code>（CLI <code>synth-bank / synth-approach / synth-train</code>）；产物 <code>training/artifacts/stage12_intent/synthetic/</code>；Dexonomy 资产 <code>Dex_Hand/grasping/assets/dexonomy_l20/</code>。</p>
+</section>
+
+<section id="v6" aria-label="v6">
+<p class="small">版本 v6 · 2026-09-30 · v5 合成数据的独立评估（备忘 <code>hand_control/plan/2026-09-30-synthetic-data-sufficiency-quality.md</code>；脚本与图 <code>training/artifacts/stage12_intent/synthetic/eval_20260930/</code>）</p>
+<h2 id="synthetic-eval">合成数据评估：数量不是瓶颈，质量是</h2>
+<div class="key good"><b>一句话。</b>合成训练 trial 从 210 加到 6724（32 倍），合成自己的测试误差一路下降（1 s 前 2.34 → 1.24 cm），真人零样本只从 4.96 降到 4.25 cm，停在保持基线附近；10 条真人 trial 训的模型（3.15 cm）就比 6724 条合成好。同一份数据换种子在真人上差约 2 cm，而合成测试上几乎一样——合成验证集选不出能迁移的模型。</div>
+<div class="tw"><table>
+<caption>掌心误差中位 cm（1.0 / 0.5 / 0 s），残差 M0；合成臂为 5 种子均值，训练集不含留出的抓姿行</caption>
+<tr><th>训练数据</th><th>真人零样本</th><th>合成留出行</th></tr>
+<tr><td>合成 210 条</td><td>4.96 / 4.43 / 2.64</td><td>2.34 / 1.43 / 0.96</td></tr>
+<tr><td>合成 1678 条（09-23 数据集扣除留出行）</td><td>4.52 / 3.99 / 1.78</td><td>1.67 / 1.11 / 0.93</td></tr>
+<tr><td>合成 6724 条（每抓姿 24 条）</td><td>4.25 / 3.35 / 1.90</td><td>1.24 / 0.92 / 0.86</td></tr>
+<tr><td>保持当前姿态</td><td>4.56 / 3.48 / 0.97</td><td>5.96 / 3.08 / 1.14</td></tr>
+<tr><td>真人 10 / 40 / 全部（留一会话）</td><td>3.15 / 2.31 / 1.51 · 2.38 / 1.87 / 0.93 · 2.31 / 1.65 / 0.86</td><td>—</td></tr>
+</table></div>
+<p><b>标签为什么不像真人。</b>16 个关节里 9 个（中指、无名指、小指）在所有 pinch 标签中是同一个常数（IK 只驱动任务指尖，其余关节被先验拉回均值）；任务关节相对真人偏 0.7–2.2 个标准差；匹配条件的 40 个合成标签没有一个落在真人标签的 95 % 范围内（拇指 4 + 食指 2 关节的马氏椭球）；真人指令有 33 % 的标签项贴在关节限位上（retarget 截断），合成 8 %；真人拇指有两种构型（81 / 14 条），合成一种。掌心位置本身在范围内（偏 1 cm）。物理上库是好的：373 个抓姿复验 373 个通过，5.4 cm cube 的 pinch 加掌姿扰动后与真人标签同样稳健（3 mm/3° 下 87 % 对 86 %）。</p>
+<p><b>接近轨迹为什么不像真人。</b>掌心距离曲线对上了，背后的运动不一样：把「绕拇指–食指接触中点的刚体转动」从真人轨迹里扣掉，抬离前 0.5 s 的掌心距离从 3.15 cm 变成 0.87 cm——真人在抬离前约 0.5 s 指尖已到位，之后手掌绕指尖转约 11°、先比最终高度低 1.9 cm 再抬上来，同时合指；合成是姿态早已转完（0.5 s 前还差 0.0° 对真人 10.9°）、掌心从上方直线下降。<b>反事实</b>：按 pilot 会话的统计量把这段转动注入合成轨迹，轮廓对上了，formal 52 条零样本没有改善（3.78 对原 3.93 cm，基线 4.08，43 条 pilot 真人 2.19）——把一个边缘分布调对，不等于把「窗口 → 终点」的条件关系调对。</p>
+<figure class="fig" id="v6-fig"><img src="assets/l20-stage1-2-results/v6-scaling.png" alt="合成训练 trial 数对真人零样本误差与合成留出误差的曲线，附保持基线与真人学习曲线的水平线" loading="lazy"><figcaption>v6 · 32 倍合成数据让合成测试持续下降，真人测试只到保持基线；10 条真人的水平线在所有合成点之下。</figcaption></figure>
+<figure class="fig"><img src="assets/l20-stage1-2-results/v6-endgame.png" alt="抬离前最后 1.5 s 的三条曲线：还差的腕部旋转、掌心相对抬离高度、掌心距离，真人对合成" loading="lazy"><figcaption>v6 · 距离对上、机制不同：真人末段还在转腕并从下方抬上来，合成姿态早已定死、从上方直线下降。</figcaption></figure>
+<figure class="fig"><img src="assets/l20-stage1-2-results/v6-labels.png" alt="16 个关节逐个：真人标签与合成标签的散点，附关节范围" loading="lazy"><figcaption>v6 · 合成标签更窄、有偏，九个关节完全不变；真人贴着限位的关节合成放在均值上。</figcaption></figure>
+<p><b>验收线（给任何后续合成方案）。</b>在没参与校准的真人会话上，零样本掌心误差每个时刻低于保持基线，且不高于 10 条真人的水平（3.15 / 2.31 / 1.51 cm）；≥ 5 个种子；预训练比较带同配方随机初始化对照；不能用合成验证集代替。</p>
+</section>
+
+<section id="v7" aria-label="v7">
+<p class="small">版本 v7 · 2026-09-30 晚 · 移植式生成器 v3 + 筛选 + 预测器五臂（计划与执行记录 <code>hand_control/plan/2026-09-30-synthetic-pretrain-rl-plan.md</code> §6.2–6.4；结果 <code>training/artifacts/stage12_intent/synthetic/v3/results/results.md</code>）</p>
+<h2 id="transplant">移植式合成：只用合成数据训的预测器追平只用真人</h2>
+<div class="key good"><b>一句话。</b>把随机化从参数化曲线改成「围绕真人轨迹」：每条合成 trial 是一条真人 trial 相对自己终点的运动，移植到库里任意物体／面／尺寸的终点上（pinch 的标签就是真人抬离指令原样落座到新的接触对上）。筛后加权的合成数据单独训练，在留出的真人会话上 2.40 / 1.90 / 0.92 cm，与只真人的 2.43 / 1.85 / 0.86 配对差 CI 全含 0——验收线过了；但没有任何臂显著好于只真人，在线预测器继续用只真人模型。</div>
+<p><b>生成器 v3</b>（<code>synthetic_transplant.py</code>）：4476 次尝试 → 3489 条通过 IK + 名义物理（78 %；pinch 直接落座 2428 条，tripod 与落座失败者走 IK 1061 条）。真人抬离指令原样移植到别的物体上大多能持住：cube040 97 %、cube054 98 %、cube070 90 %、圆柱 90 %、球 87 %、长条 99 %。每条 trial 记来源会话，折内不用来自留出会话的合成。检查：抬离前还差的腕部旋转（1 / 0.5 / 0.25 s）p10/50/90 = 7.0/14.2/25.5、5.4/9.8/15.9、2.4/6.8/11.3° 对真人 8.6/13.3/22.6、4.9/11.1/19.8、2.9/8.8/16.0°；cube054 pinch 标签落在真人 95 % 椭球内 0.89（v5 是 0.00）；同一批会话内真人 vs 移植版的分类 AUC 0.49（几乎不可分），跨会话 0.93 主要是会话差异。<b>筛选</b>（<code>synthetic_filter.py</code>）：物理（加扰动仍持住 ≥ 1/2 且滑移 ≤ 1.5 cm）0.83、运动学（合拢前路径不穿物 &gt; 5 mm、不穿桌 &gt; 3 mm）0.73、两者 0.61；真实性分类器只作训练权重（p/(1−p) 裁到 0.2–5），折内 AUC 0.50–0.68。</p>
+<div class="tw"><table>
+<caption>五臂协议（<code>synthetic_pipeline.py</code>）：3 组留一（formal / pilot A / pilot B）× 5 种子，残差 M0；掌心误差中位 cm，1.0 / 0.5 / 0 s；配对差 = 与只真人逐 trial 的差（负 = 更好）</caption>
+<tr><th>臂</th><th>1.0 s</th><th>0.5 s</th><th>0 s</th><th>配对差 1.0 / 0.5 / 0 s [95 % CI]</th></tr>
+<tr><td>保持当前姿态</td><td>4.56</td><td>3.48</td><td>0.97</td><td></td></tr>
+<tr><td>只真人</td><td>2.43</td><td>1.85</td><td>0.86</td><td>—</td></tr>
+<tr><td>只合成，v2 参数化（v5 的数据）</td><td>4.35</td><td>3.52</td><td>1.89</td><td>+2.70 [+2.14, +3.36] / +2.23 / +1.68</td></tr>
+<tr><td>只合成，v3 移植</td><td>2.60</td><td>1.92</td><td>0.97</td><td>+0.28 [+0.11, +0.47] / +0.16 / +0.16</td></tr>
+<tr><td><b>只合成，v3 筛后加权（v3f）</b></td><td><b>2.40</b></td><td><b>1.90</b></td><td><b>0.92</b></td><td>+0.10 [−0.11, +0.30] / +0.05 [−0.09, +0.19] / +0.07 [−0.01, +0.16]</td></tr>
+<tr><td>预训练 v3f → 微调</td><td>2.47</td><td>1.75</td><td>0.87</td><td>+0.14 [+0.01, +0.29] / −0.00 / −0.01</td></tr>
+<tr><td>同配方随机初始化（对照）</td><td>2.61</td><td>1.77</td><td>0.97</td><td>+0.35 [+0.18, +0.53] / −0.04 / +0.11</td></tr>
+<tr><td>混合训练，真人 + v3</td><td>2.37</td><td>1.79</td><td>0.90</td><td>+0.12 [−0.03, +0.27] / −0.07 [−0.16, +0.02] / +0.06</td></tr>
+<tr><td>混合训练，真人 + v3f</td><td>2.44</td><td>1.72</td><td>0.87</td><td>+0.13 [−0.02, +0.27] / −0.02 / +0.01</td></tr>
+</table></div>
+<p>预训练 − 同配方随机初始化：v3f −0.21 [−0.38, −0.04] cm（1 s）、−0.12 [−0.19, −0.06]（抬离）——预训练第一次有可测的贡献；但相对只真人没有增益（最好的臂 ±0.1 cm，CI 含 0）。<b>多物体真人测试</b>（10 条 v2-objects 采集的 trial，离线推导、未复核，物体系改为 yaw-only／世界对齐）：只真人模型在别的物体上崩到 7.8 / 6.3 / 4.3 cm（保持基线 4.6 / 3.5 / 0.6），含合成的臂回到基线附近（预训练 v3f 4.6 / 3.7 / 2.0），但没有一个在 1 s 前明显好于基线，抬离时刻都差 1.5–2 cm，球上系统偏 2–4 cm——覆盖有、精度未验证，要等正式多物体采集。</p>
+<figure class="fig" id="v7-fig"><img src="assets/l20-stage1-2-results/v7-arms.png" alt="八个臂在三个时刻的掌心误差柱图，带种子范围" loading="lazy"><figcaption>v7 · 移植式合成（v3／v3f）的只合成臂与只真人齐平，参数化合成（v2）差 2 cm；预训练与混合臂都在只真人 ±0.15 cm 内。</figcaption></figure>
+<p class="small">部署物：在线单 cube 预测器仍是 <code>results/final_qref.models.pt</code>；真人 95 + 筛后合成 2126 条一起训的 33 通道残差 M0（3 种子）存为 <code>synthetic/v3/results/final_joint_v3f.models.pt</code>，等 <code>live.py</code> 吃 33 通道后接入。RL 一侧用同一批合成轨迹的结果见 <a href="l20-stage1-3-results.html#v6">Stage 1.3 结果 v6</a>。</p>
+</section>
 
 <h2 id="next">缺口与下一步</h2>
 <ol>
