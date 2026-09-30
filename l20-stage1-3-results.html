@@ -367,6 +367,7 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td>S2R（1.0）合成预训→真人续训</td><td>1.00</td><td>0.97</td><td>0.82</td><td>0.93</td><td>0.96</td><td>0.70</td><td>0.920</td></tr>
 </tbody></table></div>
 <figure class="fig" id="v6-fig"><img src="assets/l20-stage1-3-results/v6-synthetic-vs-real.png" alt="四条臂（真人库、只合成、混合、合成预训续训）与 α=0 在留出真人上的成功率对照" loading="lazy"><figcaption>v6 · 四条臂在留出真人上的成绩彼此差 1–2 点，都在 256 条的二项噪声（±2.5 点）以内；与 α=0 的差距 14–16 点。α=0.5 的同一张表在 JSON 里，结论相同。</figcaption></figure>
+<p><b>口径先对齐。</b>这一版换了机器（berlin 单卡）也换了 venv（mujoco 3.13 + warp 1.17）。训练前先在新环境上重跑了零残差校准：干净回放 1.00、欠合拢 0.78、晚合拢 0.79、卸载 0.78、无腕扰动人群 0.76、人群 0.56，与 4090 Warp 的校准表逐项一致，所以 v6 的数字可以和 v4 直接比。JSON <code>v6/d0_alpha0_warp.json</code>。</p>
 <p><b>读法。</b>（1）<b>只用合成轨迹训出来的残差策略，在真人录像上和只用真人训的一样好</b>（缺陷行均值 0.940 对 0.933）——合成库对这个任务是可用的替代品。（2）但<b>没有增益</b>：预设的关口是「混合或预训比纯真人高 ≥3 点」，实测 SR +1、S2R −1，都在噪声里。这与预测器一侧的结论一致：瓶颈不是数据量。（3）晚合拢行仍是所有臂最低的一行（0.82–0.84），与 v4 一样——手指到得晚，0.15 rad 的残差补不完，换库不改变这一点。</p>
 <p><b>部署物。</b>按 SR 配方在「7 个会话来源的筛后合成 402 条 + 95 条真人 ×4」上训的最终臂 <code>SRall</code> 已导出为 <code>hand_control/data/policies/stage13/l20_shared_pinch_h2rand_srall20M.npz</code>（自检 4.5e-7）。在真人 session 20260914T132128Z 上的离线预演与 09-16 的 <code>h2rand20M</code> 包逐段比较：施加残差量级相同（11–16 对 11–15 mrad），但 α 打开的 tick 比例更高、被 <code>ood</code> 包络关掉的 tick 更少——混合库让归一化器见过更宽的姿态，操作者离 8σ 包络更远。<b>真人在环对比尚未做</b>（需要操作者启动录制）：两个包各跑一个 session，仿真预期是无差别，真人上看的是有没有变差、<code>ood</code> 计数与 α 打开比例。</p>
 </section>
