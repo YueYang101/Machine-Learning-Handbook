@@ -69,7 +69,7 @@ a { color:var(--blue); text-decoration:none; }
 <body>
 <div class="wrap">
 <a class="bk" href="l20-stage1-3-shared-grasp.html">← Stage 1.3：共享抓取（计划）</a> · <a class="bk" href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.3 · 2026-09-13 → 2026-09-16</div>
+<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.3 · 2026-09-13 → 2026-09-30</div>
 <h1>Stage 1.3 结果：共享抓取残差 RL 首轮<br><span class="small" style="font-weight:400">L20SharedPinch 环境 · 腕部外生回放 · 手指有界残差 · α 门控 · berlin H200 单卡 + 4090 WSL2 · 20M 步</span></h1>
 
 <p class="lede">这是 <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a>第 4 步（RL 残差策略）的第一次实际运行，接在第 2 步物理回放预检之后（预检结果记在 <a href="l20-stage1-2-results.html#closure">Stage 1.2 结果页</a>）。同一晚还做了三件配套的事：按录像核对并修订了腕部模拟方案、做了 Stage 1.3 相关工作的批判性综述、并按综述里的收益加训了两条对照臂。设计文档：<code>Dex_Hand/human_machine_interaction/hand_control/plan/stage13-shared-grasp-design.md</code>（§1.1 录像核对、§2.1 动态参与、§6c 环境实现、§8 学习曲线）；综述：<code>hand_control/plan/2026-09-13-stage13-related-work.md</code>。</p>
@@ -77,7 +77,7 @@ a { color:var(--blue); text-decoration:none; }
 <div class="callout"><b>本页不是 Stage 1.3 的正式结果。</b>全部在仿真里、只有一名操作者的 95 条 pinch 示教作人手来源、腕部用软 weld 而不是部署的有界 PD、每条臂只跑了 20M 步一个 seed。它回答的只是「这套环境能不能训、零残差的人自己能抓多少、第一版门控残差有没有动静」。结论先写在前面：<b>门控残差策略（α_max 0.3）两个 seed 在 20M 步后与 α=0 的配对差别在 1 到 7 个百分点内，施加的残差只有 2 到 5 mrad；把授权放开到 α≡1 训练的对照臂，在部署门控（α_max=1）下高 8 到 16 个百分点，完全不设门控再高 8 个百分点，掉落从 10% 降到 1%–4%，且不改变用户的抓法。</b>第一版没动静的主因是授权上限（45 mrad），不是没有学习信号。<b>2026-09-14 上午的 α 扫描</b>（<a href="#sweep">同一策略换 arbitration</a>）：收益在 α 0.3–0.5 饱和；几何门控比常数 α 低 6–8 个百分点；喂数据集平均抓取位姿与 oracle 目标成绩相同，真机不需要预测器。真机接线代码已就绪（<a href="#deploy">影子仿真 + 部署包络</a>），第一次真机试跑暴露并修掉了包络的判据问题。<b>2026-09-14 下午的发现改变本页全部仿真数字的读法：</b>jax 与 Warp 后端不等价，离群的是 jax；在 Warp（与 MuJoCo C 一致）下纯人手回放已 98%–100% 成功，手指残差没有东西可补（<a href="#pred">§C</a>）。<b>2026-09-16：</b>修掉训练封装不重置 <code>info</code> 的 bug（此前每个环境槽只有第一个 episode 是真的），把训练里的人换成<a href="#h2">有缺陷、会反应的人群 v2</a>：人单飞被压到 0.56–0.78，在人群上训的残差把手指侧缺陷补回 15–19 点、不伤干净的人、抬离早 0.1–0.3 s；而干净回放训的旧策略面对同样的缺陷几乎不帮——辅助的价值只能来自训练时见过的人的缺陷。</div>
 
 <div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
-<caption>版本索引 · 当前 v5 · 与 <a href="l20-stage1-3-shared-grasp.html#versions">计划页</a>共用版本号；「被取代」指该版策略数字不再作为结论依据，零线与接线事实仍有效</caption>
+<caption>版本索引 · 当前 v6 · 与 <a href="l20-stage1-3-shared-grasp.html#versions">计划页</a>共用版本号；「被取代」指该版策略数字不再作为结论依据，零线与接线事实仍有效</caption>
 <thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
 <tbody>
 <tr><td><a href="#v1">v1</a></td><td>2026-09-13</td><td>L20SharedPinch 环境首轮：α=0 零线，门控残差（α_max 0.3，两个 seed）、Const α≡1、Finger、Speed 四条臂，20M 步，berlin jax</td><td>Stage 1.3 计划第 4 步的第一次实跑；先看环境能不能训、零残差的人自己能抓多少</td><td><a href="#v1">§环境 → §对照臂</a>。策略数字<b>被 v3 取代</b>（jax 后端离群）、<b>被 v4 取代</b>（训练器 full_reset bug）</td><td><a href="#v1-fig">六段 rollout</a></td></tr>
@@ -85,6 +85,7 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td><a href="#v3">v3</a></td><td>2026-09-14 下午</td><td>Long／LongPred／LongPredNoContact 三臂（窗口 3 s、预测器作目标、接触点目标）；4090 换 Warp 后端，发现 jax ≠ Warp 且离群的是 jax</td><td>预测器接入（T3 的仿真版）；Warp 快 8 倍，但同一策略两后端成功率差 20 点</td><td><a href="#v3">§预测器接入</a>。此后 jax 数字降为参考；策略数字<b>被 v4 取代</b>（full_reset bug）</td><td><a href="#v3-fig">jax 对 Warp</a></td></tr>
 <tr><td><a href="#v4">v4</a></td><td>2026-09-16</td><td>修训练器 full_reset bug；人群 v2（有缺陷、会反应的仿真人）重训 H2／H2Rand，加 C0 规则、C5 行为克隆人、H2Pred（ens5 目标）、conf α</td><td>研究备忘 C1：回放的人是开环的，策略没见过缺陷；bug 使每槽每 epoch 只有一个真 episode</td><td><a href="#v4">§人群 v2 A–H</a>。<b>当前有效</b>的策略数字与部署导出（H2Rand 包）</td><td><a href="#v4-fig">跨代理矩阵图 + H2Rand rollout</a></td></tr>
 <tr><td><a href="#v5">v5</a></td><td>2026-09-16</td><td>Stage 1.4 首轮：会话持续 K=5、历史特征 z、字典观测非对称 critic，H2Hist／H2HistOracle 两臂</td><td>研究备忘 C3：跨 trial 推断「这次是谁」</td><td><a href="#v5">§I</a>，验收 #2 未过；计划页在 <a href="l20-stage1-4-review.html#v2">Stage 1.4 v2</a></td><td><a href="#v5-fig">按序号曲线</a></td></tr>
+<tr><td><a href="#v6">v6</a></td><td>2026-09-30</td><td>换训练库：把合成抓取轨迹（物理筛后）当人手来源，四条同配方臂 R／S／SR／S2R，berlin Warp 单卡</td><td>真人只有 95 条；问「合成轨迹能不能替代或超过真人数据」</td><td><a href="#v6">§v6</a>：留出真人上只用合成 ≈ 只用真人，混合无增益；部署包 <code>…h2rand_srall20M.npz</code></td><td><a href="#v6-fig">四臂对照图</a></td></tr>
 </tbody></table></div>
 
 <nav class="tasknav" aria-label="本页目录"><div class="tcard"><div class="tname">本页目录</div>
@@ -92,7 +93,7 @@ a { color:var(--blue); text-decoration:none; }
 <a href="#v2">v2 α 扫描 + 接线</a><a href="#sweep">α 扫描</a><a href="#deploy">真机接线</a>
 <a href="#v3">v3 Long + Warp</a><a href="#pred">预测器接入 / jax≠Warp</a>
 <a href="#v4">v4 人群 v2</a><a href="#h2">人群 v2 A–H</a>
-<a href="#v5">v5 Stage 1.4 首轮</a><a href="#stage14">§I</a><a href="#compute">算力</a><a href="#notdone">没做的与下一步</a></div></div></nav>
+<a href="#v5">v5 Stage 1.4 首轮</a><a href="#stage14">§I</a><a href="#v6">v6 合成轨迹库</a><a href="#compute">算力</a><a href="#notdone">没做的与下一步</a></div></div></nav>
 
 <section id="v1" aria-label="v1">
 <p class="small">版本 v1 · 2026-09-13 · berlin jax · 策略数字已被 v3／v4 取代，零线与环境事实仍有效</p>
@@ -351,6 +352,25 @@ a { color:var(--blue); text-decoration:none; }
 <p>验收没有通过：历史 z 从第 2 个 episode 起没有提升，连真值 z 也只 +4 点。两点保留：训练器每个 epoch 末整体重置环境（约 1M 步 / 2048 环境 ≈ 500 步，episode 300 步），一个 K=5 的会话在训练里实际只走到第 2 个 episode 左右，H2Hist 几乎没见过第 3–5 个；z_yield 估计本身也失效（见下）。所以"历史 z 无用"的干净证据是 Oracle 臂——它的 z 从第 1 个 episode 起就是真值，也只 +4 点。原因：单方块 pinch 上人的缺陷在 episode 内就从被辅助的手的状态里看得见（欠合拢、卸载在 q16 / u_h 里直接可见），策略不需要跨 episode 先验；H2 没有 z 也已到 0.68–0.73。z 会有用的地方是"观测里看不出来"的差异——操作者抓法、多物体多抓型偏好——不在现在的 95 条数据里。机制保留（会话持续、字典观测、按序号评测已验证可用），多操作者 / 多抓型数据到手前不再投训练。普通跨代理矩阵（α=1）：H2Hist 人群 0.67、欠合拢 0.95、晚合拢 0.88、卸载 0.93；Oracle 0.68 / 0.95 / 0.85 / 0.94，与 H2 持平——加 z 无害也无益。实现层面的发现：历史特征里的顺从估计（人的命令变化投影到上一步施加的残差）在会话里只有 0.03（真值 0.87），因为顺从偏移有界且慢，投影值极小；重启时要改成直接估计偏移本身。</p>
 </section>
 
+
+<section id="v6" aria-label="v6">
+<p class="small">版本 v6 · 2026-09-30 · 合成轨迹库（由「数学方式生产」会话在 berlin 上训练与评测，计划稿 <code>hand_control/plan/2026-09-30-synthetic-pretrain-rl-plan.md</code> §6.5–6.6）</p>
+<h2 id="syn">合成轨迹当人手来源：能替代真人数据，但不带来增益</h2>
+<p>动机：这条线上的真人示教只有 95 条，所有臂都在同一批录像上训。问题因此是「合成抓取轨迹能不能替代、甚至超过真人数据」。做法是不动环境、不加新臂——四条臂全是同一个 <code>L20SharedPinchH2Rand</code> 配方，只把轨迹库换掉：<b>R</b> = 真人 pilot 43 条；<b>S</b> = 只用合成（v3 移植、物理与运动学筛后的 pinch／tripod，209 条）；<b>SR</b> = 合成加真人混合；<b>S2R</b> = S 的 checkpoint 在真人库上续训 10M 步。评测一律在<b>留出的真人 formal 52 条</b>上，走 v4 的缺陷矩阵，256 条配对。</p>
+<div class="tw"><table>
+<caption>留出真人 formal 52 条，Warp，256 条配对；JSON 在 <code>assets/l20-stage1-3-results/v6/</code></caption>
+<thead><tr><th scope="col">臂（α）</th><th scope="col">干净</th><th scope="col">欠合拢</th><th scope="col">晚合拢</th><th scope="col">卸载</th><th scope="col">人群，无腕扰动</th><th scope="col">人群</th><th scope="col">四个缺陷行均值</th></tr></thead><tbody>
+<tr><td>α=0（人自己）</td><td>1.00</td><td>0.79</td><td>0.78</td><td>0.79</td><td>0.78</td><td>0.56</td><td>0.783</td></tr>
+<tr><td>R（1.0）真人 pilot</td><td>1.00</td><td>0.98</td><td>0.84</td><td>0.95</td><td>0.96</td><td>0.70</td><td>0.933</td></tr>
+<tr><td>S（1.0）只用合成</td><td>1.00</td><td>0.97</td><td>0.82</td><td>1.00</td><td>0.97</td><td>0.70</td><td><b>0.940</b></td></tr>
+<tr><td>SR（1.0）合成+真人</td><td>1.00</td><td>1.00</td><td>0.82</td><td>0.97</td><td>0.98</td><td>0.70</td><td>0.942</td></tr>
+<tr><td>S2R（1.0）合成预训→真人续训</td><td>1.00</td><td>0.97</td><td>0.82</td><td>0.93</td><td>0.96</td><td>0.70</td><td>0.920</td></tr>
+</tbody></table></div>
+<figure class="fig" id="v6-fig"><img src="assets/l20-stage1-3-results/v6-synthetic-vs-real.png" alt="四条臂（真人库、只合成、混合、合成预训续训）与 α=0 在留出真人上的成功率对照" loading="lazy"><figcaption>v6 · 四条臂在留出真人上的成绩彼此差 1–2 点，都在 256 条的二项噪声（±2.5 点）以内；与 α=0 的差距 14–16 点。α=0.5 的同一张表在 JSON 里，结论相同。</figcaption></figure>
+<p><b>读法。</b>（1）<b>只用合成轨迹训出来的残差策略，在真人录像上和只用真人训的一样好</b>（缺陷行均值 0.940 对 0.933）——合成库对这个任务是可用的替代品。（2）但<b>没有增益</b>：预设的关口是「混合或预训比纯真人高 ≥3 点」，实测 SR +1、S2R −1，都在噪声里。这与预测器一侧的结论一致：瓶颈不是数据量。（3）晚合拢行仍是所有臂最低的一行（0.82–0.84），与 v4 一样——手指到得晚，0.15 rad 的残差补不完，换库不改变这一点。</p>
+<p><b>部署物。</b>按 SR 配方在「7 个会话来源的筛后合成 402 条 + 95 条真人 ×4」上训的最终臂 <code>SRall</code> 已导出为 <code>hand_control/data/policies/stage13/l20_shared_pinch_h2rand_srall20M.npz</code>（自检 4.5e-7）。在真人 session 20260914T132128Z 上的离线预演与 09-16 的 <code>h2rand20M</code> 包逐段比较：施加残差量级相同（11–16 对 11–15 mrad），但 α 打开的 tick 比例更高、被 <code>ood</code> 包络关掉的 tick 更少——混合库让归一化器见过更宽的姿态，操作者离 8σ 包络更远。<b>真人在环对比尚未做</b>（需要操作者启动录制）：两个包各跑一个 session，仿真预期是无差别，真人上看的是有没有变差、<code>ood</code> 计数与 α 打开比例。</p>
+</section>
+
 <h2 id="compute">算力与运行方式</h2>
 <div class="tw"><table>
 <tr><th>盒子</th><th>状态</th><th>用法</th></tr>
@@ -365,11 +385,11 @@ a { color:var(--blue); text-decoration:none; }
 <li><b>可信度调 α（conf 模式）</b>：机制已接，阈值 1／4 cm 与 ens5 的种子分散（中位数 0.6 cm）不匹配，α 一直 0.99，等于没调；要改到约 0.5／2 cm 再跑。另一 session 报告学到的方差偏自信（秩相关 0.44，不如实机几何启发式 0.51）。</li>
 <li><b>人群 v2 没覆盖的人类行为</b>：动作中途的犹豫停顿；手腕在抓稳前提前抬走（评测来源 <code>replay_early_lift</code> 存在，full_reset 修复后没重跑）；人群参数全部取自文献，等真人 α 随机化会话来校准。</li>
 <li><b>Stage 1.4</b>：z 槽未导出到实机控制器；z_yield 估计要改定义；训练器按 epoch 整体重置把 K=5 会话截到约 2 个 episode，重启前要改训练器或取 K=2。</li>
-<li><b>多物体</b>：圆柱、球、长条的 bank 与残差臂要等 collection v2 的录像；现在这些 trial 只采数据。</li>
+<li><b>多物体</b>：圆柱、球、长条的 bank 与残差臂要等 collection v2 的录像；现在这些 trial 只采数据。合成轨迹（v6）目前只有 cube。</li>
 <li>多 seed（H2／H2Rand／Long 各一个 seed）；PD 腕部的前馈；质量／摩擦随机化与接触力惩罚；数据集 builder 保留 Transport 段。</li>
 </ul>
 
-<footer>Yue Yang · 2026-09-13 → 09-16 · <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a> · <a href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a href="index.html">Machine Learning Handbook</a> · <a href="l20-stage1-4-review.html">阶段性总结与待决问题</a></footer>
+<footer>Yue Yang · 2026-09-13 → 09-30 · <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a> · <a href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a href="index.html">Machine Learning Handbook</a> · <a href="l20-stage1-4-review.html">阶段性总结与待决问题</a></footer>
 </div>
 </body>
 </html>
