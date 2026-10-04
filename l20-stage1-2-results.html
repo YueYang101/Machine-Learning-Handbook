@@ -83,7 +83,7 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td><a href="#v4">v4</a></td><td>2026-09-16</td><td>联合模型：一个网络同时出手势 + 接触点 + 方差头，5 seed 集成 je 部署为实时模型 6；4090 训练。</td><td>掌部 2.31→0.79 cm 优于分头模型；强制“接触点 = 手势 FK”多付 2 cm；学到的 σ 过度自信（2σ 覆盖 0.03），启发式置信度保留。</td><td><a href="#joint">联合模型</a></td><td>待补</td></tr>
 <tr><td><a href="#v5">v5</a></td><td>2026-09-23</td><td>合成抓取／接近轨迹生成管线：v2 基元上的 L20 抓姿库（真人掌姿种子、cage／grasp／squeeze 三段、MuJoCo 物理验证，373 个）、按真人曲线校准的参数化接近轨迹（2238 条）、Dexonomy L20 资产（Mac 冒烟 9/9，4090 上 20 个 DGN 物体 329 个抓姿）；现有 M0／je 在合成数据上训练与评测。</td><td>真人数据只有一个 cube 的一个面；问「能不能生成、能不能训练」。</td><td><a href="#v5">§合成管线</a>：合成域内可泛化（held-out 偏航 1 s 前 1.19 cm），零样本到真人 3.89 cm 只略好于保持 4.56；合成预训练与同配方随机初始化无差别。<b>被 v6 解读、被 v7 的移植式生成器取代</b></td><td><a href="#v5-fig">抓姿对比 + 误差曲线</a></td></tr>
 <tr><td><a href="#v6">v6</a></td><td>2026-09-30</td><td>v5 合成数据的独立评估：数据量缩放曲线（210→6724 条）、真人学习曲线（10／20／40 条）、标签与接近轨迹的逐项质量检查、物理复验、注入末段转动的反事实。</td><td>回答「纯靠随机化够不够」。</td><td><a href="#v6">§评估</a>：数量不是瓶颈（32 倍合成只到保持基线，10 条真人更好）；九个标签关节恒定、真人末段绕指尖转动而合成直线下降；补一个边缘分布不带来迁移。给出验收线。</td><td><a href="#v6-fig">缩放曲线、末段运动、逐关节标签</a></td></tr>
-<tr><td><a href="#v7">v7</a></td><td>2026-09-30 晚</td><td>移植式生成器 v3（把真人 trial 相对自己终点的运动移植到库里任意物体／面的终点，真人标签原样再落座）、三道筛（物理、运动学、真实性）、五臂协议（只真人／只合成／预训练→微调／同配方对照／混合），3 组留一 × 5 种子；10 条多物体真人 trial 的首个测试。</td><td>用户决定走预训练路线；v6 说明要先把随机化改成围绕真人轨迹。</td><td><a href="#v7">§五臂</a>：只合成 v3f 2.40／1.90／0.92 cm ≈ 只真人 2.43／1.85／0.86；预训练比同配方对照好 0.2 cm；无臂显著优于只真人 → 在线预测器仍用只真人模型；多物体覆盖有、精度未验证。<b>当前有效</b></td><td><a href="#v7-fig">五臂柱图</a></td></tr>
+<tr><td><a href="#v7">v7</a></td><td>2026-09-30 晚</td><td>移植式生成器 v3（把真人 trial 相对自己终点的运动移植到库里任意物体／面的终点，真人标签原样再落座）、三道筛（物理、运动学、真实性）、五臂协议（只真人／只合成／预训练→微调／同配方对照／混合），3 组留一 × 5 种子；10 条多物体真人 trial 的首个测试。</td><td>用户决定走预训练路线；v6 说明要先把随机化改成围绕真人轨迹。</td><td><a href="#v7">§五臂</a>：只合成 v3f 2.40／1.90／0.92 cm ≈ 只真人 2.43／1.85／0.86；预训练比同配方对照好 0.2 cm；无臂显著优于只真人 → 在线预测器仍用只真人模型；多物体覆盖有、精度未验证。10-04 <a href="#v7-deploy">部署</a>：33 通道混合模型接进在线预测器（环境变量切换，默认未换），在环 2 条偏航 cube——只真人模型偏 13–20 cm（同场回放），新模型 3–6 cm，但不优于保持；非 cube 零数据。<b>当前有效</b></td><td><a href="#v7-fig">五臂柱图</a></td></tr>
 </tbody></table></div>
 
 
@@ -92,7 +92,7 @@ a { color:var(--blue); text-decoration:none; }
 <a href="#v2">v2 q_ref 重跑</a><a href="#ablation">消融</a><a href="#qref">q_ref</a><a href="#verdict">裁决</a><a href="#failures">失败解剖</a><a href="#closure">1.3 预检</a>
 <a href="#v3">v3 实时预测器</a><a href="#live">实时演示</a><a href="#contacts">接触点</a><a href="#confidence">置信度</a>
 <a href="#v4">v4 联合模型</a><a href="#joint">联合模型</a>
-<a href="#v5">v5 合成管线</a><a href="#v6">v6 合成数据评估</a><a href="#v7">v7 移植式合成与五臂</a><a href="#next">缺口与下一步</a></div></div></nav>
+<a href="#v5">v5 合成管线</a><a href="#v6">v6 合成数据评估</a><a href="#v7">v7 移植式合成与五臂</a><a href="#v7-deploy">在线接入</a><a href="#next">缺口与下一步</a></div></div></nav>
 
 <span id="v1"></span>
 <h2 id="data">数据：采到了什么，发现了什么</h2>
@@ -357,7 +357,7 @@ mjpython -m training.stage12_intent live --source udp --port 5599 --ghost-udp 56
 <section id="v5" aria-label="v5">
 <p class="small">版本 v5 · 2026-09-23 · 合成抓取／接近轨迹生成管线（备忘 <code>hand_control/plan/2026-09-23-grasp-synthesis-intent-feasibility.md</code>）</p>
 <h2 id="synthetic">合成管线：能生成、能训练，但迁移到真人差一截</h2>
-<div class="key good"><b>一句话。</b>用 BODex／Dexonomy 类思路给 L20 建了抓姿库和接近轨迹生成器，合成域内多物体、多朝向、多尺寸都能学；但零样本到 95 条真人 pinch 只比「保持当前姿态」略好，单 cube 上合成预训练与同配方随机初始化无差别。</div>
+<div class="key good"><b>一句话。</b>借 BODex／Dexonomy 的思路自己给 L20 建了抓姿库和接近轨迹生成器（解析采样接触点 + IK + MuJoCo 验证，<b>不是这两个生成器的输出</b>；Dexonomy 只在 L20 上冒烟跑通，它的抓姿没有进任何训练集，BODex 没有在 L20 上跑过），合成域内多物体、多朝向、多尺寸都能学；但零样本到 95 条真人 pinch 只比「保持当前姿态」略好，单 cube 上合成预训练与同配方随机初始化无差别。</div>
 <p>链路：<b>抓姿库</b>（<code>grasp_bank.py</code>）在 6 种基元（4／5.4／7 cm cube、圆柱、球、长条）上解析采样接触点，掌姿从真人 95 条的「捏合坐标系」分布做种子，阻尼最小二乘 IK 解掌姿 + 16 关节，得 cage（指尖离面 2.5 cm）／grasp（落面）／squeeze（指令开度 1.0 ± 0.3 cm）三段，全部过 objects4 物理验证（合拢 → 加力 → 抬 8 cm → 保持 → ±4 cm 晃动）：373 个通过，Mac CPU 144 s；圆柱／球的 tripod IK 全失败。<b>接近生成器</b>（<code>synthetic_approach.py</code>）：随机偏航 + Boltzmann 选面、最小 jerk 运输 + 0.6–1.1 s 慢速逼近、笼在运输 40–70 % 处到达、抬离前 0.7–1.05 s 开始合拢，犹豫／迟滞／噪声等缺陷随机化；2238 条，曲线级别对上真人（掌心距离 1 s 前 4.7 对 6.0 cm，0.5 s 前 3.2 对 3.1）。<b>Dexonomy</b>：写了 L20 资产与 pinch／tripod 模板，Mac CPU cube 9/9，4090 GPU 上 20 个 DGN 真实网格 127 s 出 329 个通过其自带 eval 的 pinch（floating 场景腕部朝向任意，不像人）。</p>
 <div class="tw"><table>
 <caption>掌心误差中位 cm，抬离前 1.0 / 0.5 / 0 s；je = 5 种子联合集成</caption>
@@ -413,7 +413,23 @@ mjpython -m training.stage12_intent live --source udp --port 5599 --ghost-udp 56
 </table></div>
 <p>预训练 − 同配方随机初始化：v3f −0.21 [−0.38, −0.04] cm（1 s）、−0.12 [−0.19, −0.06]（抬离）——预训练第一次有可测的贡献；但相对只真人没有增益（最好的臂 ±0.1 cm，CI 含 0）。<b>多物体真人测试</b>（10 条 v2-objects 采集的 trial，离线推导、未复核，物体系改为 yaw-only／世界对齐）：只真人模型在别的物体上崩到 7.8 / 6.3 / 4.3 cm（保持基线 4.6 / 3.5 / 0.6），含合成的臂回到基线附近（预训练 v3f 4.6 / 3.7 / 2.0），但没有一个在 1 s 前明显好于基线，抬离时刻都差 1.5–2 cm，球上系统偏 2–4 cm——覆盖有、精度未验证，要等正式多物体采集。</p>
 <figure class="fig" id="v7-fig"><img src="assets/l20-stage1-2-results/v7-arms.png" alt="八个臂在三个时刻的掌心误差柱图，带种子范围" loading="lazy"><figcaption>v7 · 移植式合成（v3／v3f）的只合成臂与只真人齐平，参数化合成（v2）差 2 cm；预训练与混合臂都在只真人 ±0.15 cm 内。</figcaption></figure>
-<p class="small">部署物：在线单 cube 预测器仍是 <code>results/final_qref.models.pt</code>；真人 95 + 筛后合成 2126 条一起训的 33 通道残差 M0（3 种子）存为 <code>synthetic/v3/results/final_joint_v3f.models.pt</code>，等 <code>live.py</code> 吃 33 通道后接入。RL 一侧用同一批合成轨迹的结果见 <a href="l20-stage1-3-results.html#v6">Stage 1.3 结果 v6</a>。</p>
+<p class="small">RL 一侧用同一批合成轨迹的结果见 <a href="l20-stage1-3-results.html#v6">Stage 1.3 结果 v6</a>。</p>
+
+<h3 id="v7-deploy">部署：33 通道模型接进在线预测器，在环试了一次（2026-10-04）</h3>
+<p><b>部署物。</b><code>training/artifacts/stage12_intent/results/final_syn_v3f.models.pt</code>（<code>synthetic_final.py</code>，Mac CPU 约 5.5 min）：上表「混合训练，真人 + v3f」的配方，在全部 95 条真人 + 筛后加权的移植合成 2126 条上训；33 通道 = 原 26 + 物体 one-hot 4 + 尺寸 ×10 3（后 7 个不归一化）；格式与 <code>fit-final</code> 相同（m0／ml／rl／接触点头／je 5 种子，无 fm、fms）。<b>默认在线模型没有换</b>，仍是只真人的 <code>results/final_qref.models.pt</code>；新模型靠环境变量切：<code>MJQUEST_CHECKPOINT=…/final_syn_v3f.models.pt MJQUEST_MODEL=je sh hand_control/demo/demo_shared_prediction.sh --objects cube,cylinder,sphere,bar --cube-yaw 180</code>（<code>MJQUEST_ALPHA_MODE=off</code> = 只显示影子手、不介入）。</p>
+<p><b>接线。</b><code>heldout.load_final</code> 按归一化器的通道数建网（26 或 33）；<code>live.py</code> 在 33 通道时从头显回执的 <code>task_object</code>／<code>task_object_size</code> 拼 7 个物体通道（回执没给时按 5.4 cm cube），物体系改为 yaw-only（cube、长条）或世界对齐（球、圆柱），接触点只在 cube 上做表面吸附；26 通道 checkpoint 行为不变。测试 56 通过 2 跳过。</p>
+<p><b>离线回放自测（无头显）。</b>4 个 v2-objects 录像 + 3 个 09-14 cube 演示录像都能出预测（m0 3 ms、je 4 ms／次）。cube 直立、手在 30 cm 内的接近段，新 je 与现用 je 的预测掌心差中位 3.6 cm（p90 8.7）；参照：现用 m0 与现用 je 之间是 3.2 cm（p90 5.9）；新 m0 与现用 m0 差 7.0 cm，所以在线用 je。方块被碰倒时两者差 25–30 cm：现用模型的物体系跟着方块翻，新路径保持 z 向上——是坐标系约定的差别，不是预测误差。录像里头显回执只有约 1–2 Hz，相位标志滞后，用「进入 Transport 的第一帧」当真值不可靠，所以<b>不给回放精度</b>。</p>
+<p><b>真人在环一次</b>（session <code>20261004T173900Z</code>，新 je，四种物体带偏航，α 关 = 只显示）。只完成 2 条 cube pinch；第 3 条（圆柱）手停在离物体 39 cm 处约 6 min 没有接近，会话结束——<b>非 cube 物体零数据</b>。两条的 cube 都转了约 180°：抬离掌位在物体系里离最近的真人标签 20–22 cm／约 150°，离最近的筛后合成标签 2.5–3.4 cm／6–9°，也就是手落在真人数据从没见过、只有合成数据覆盖的那一侧。真值 = 在线日志里进入 Transport 第一行的掌位（在线相位 20 Hz 更新，可用）；现用模型没有在环跑，是把同一场录像离线回放过它、对同一个真值打分（物体静止时两条路径的物体系一致，差 ≤ 0.9 cm；最后 0.25 s 物体已动、回放的物体位姿滞后，不比）。</p>
+<div class="tw" tabindex="0" role="region" aria-label="2026-10-04 在环两条 trial 的掌心误差"><table>
+<caption>掌心位置误差中位 cm，按抬离前时间分段；每格 = trial 1（提示：上方）／trial 2（提示：正面）</caption>
+<thead><tr><th scope="col"></th><th scope="col">1–2 s</th><th scope="col">0.5–1 s</th><th scope="col">0.25–0.5 s</th><th scope="col">&lt; 0.25 s</th></tr></thead><tbody>
+<tr><td>保持当前姿态</td><td>3.2／3.0</td><td>3.6／2.8</td><td>3.3／2.3</td><td>1.1／0.9</td></tr>
+<tr><td><b>新 je</b>（真人 + 合成，33 通道，在环）</td><td>6.0／4.5</td><td>5.1／4.1</td><td>3.6／3.3</td><td>1.8／1.7</td></tr>
+<tr><td>现用 je（只真人，26 通道，同场回放）</td><td>20.4／17.5</td><td>19.6／17.1</td><td>17.6／16.4</td><td>—</td></tr>
+<tr><td>现用 m0（只真人，26 通道，同场回放）</td><td>14.8／16.1</td><td>13.8／13.9</td><td>12.9／13.1</td><td>—</td></tr>
+</tbody></table></div>
+<p>读法：在 cube 转过去的那一面上，只真人模型的预测偏 13–20 cm（它没见过这一侧），加了合成数据的模型降到 3–6 cm——这是合成数据买到的<b>覆盖</b>；但新模型在这两条上每一段都<b>没有好于保持当前姿态</b>（多 0.3–2.8 cm），与上面多物体离线测试「回到基线附近、不优于基线」是同一个结论。n = 2、单操作者、只有 cube，这不是精度测量；原因（操作者在抬离前已经悬停在 3 cm 内、还是这一侧的合成标签有偏）没有查。未偏航 cube 上新旧模型的在环对比、圆柱／球／长条上的任何在环数据，都还没有。</p>
+<p class="small">记录：<code>human_machine_interaction · hand_control/plan/2026-09-30-synthetic-pretrain-rl-plan.md</code> §6.7；在线日志与打分脚本 <code>training/artifacts/stage12_intent/synthetic/v3/live_20261004/</code>。</p>
 </section>
 
 <h2 id="next">缺口与下一步</h2>
