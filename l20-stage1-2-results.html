@@ -444,7 +444,7 @@ mjpython -m training.stage12_intent live --source udp --port 5599 --ghost-udp 56
 <thead><tr><th scope="col">臂</th><th scope="col">训练数据里的真人成分</th><th scope="col">全输入</th><th scope="col">只用掌姿（诊断）</th></tr></thead><tbody>
 <tr><td>保持当前姿态</td><td>—</td><td>4.56 / 3.48 / 0.97</td><td>同左</td></tr>
 <tr><td>只真人（3 组留一）</td><td>真人 trial</td><td>2.41 / 1.85 / 0.91</td><td>2.55 / 1.92 / 0.97</td></tr>
-<tr><td>现在 demo 用的模型的配方：真人 + v3f 混合（<a href="#v7">v7</a>，同协议）</td><td>真人 trial + 真人运动</td><td>2.44 / 1.72 / 0.87</td><td>—</td></tr>
+<tr><td>现在 demo 用的模型的配方：真人 + v3f 混合（<a href="#v7">v7</a> 09-30 同协议的混合臂；部署的 checkpoint 是同配方在全部 95 条上重训，本身没有留出数字）</td><td>真人 trial + 真人运动</td><td>2.44 / 1.72 / 0.87</td><td>—</td></tr>
 <tr><td>只合成 v3f（移植真人运动）</td><td>其它会话的真人运动</td><td>2.39 / 1.89 / 0.91</td><td>2.51 / 1.93 / 0.90</td></tr>
 <tr><td>IK 抓姿库 + 真人标定接近（v5 的数据）</td><td>终点种子、接近统计</td><td>4.75 / 3.74 / 1.88</td><td>3.15 / 2.95 / 1.26</td></tr>
 <tr><td>IK 抓姿库 + 无真人先验接近</td><td>终点种子</td><td>5.44 / 4.20 / 1.40</td><td>3.28 / 3.03 / 1.14</td></tr>
