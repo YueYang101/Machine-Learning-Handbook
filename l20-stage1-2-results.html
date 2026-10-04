@@ -67,14 +67,14 @@ a { color:var(--blue); text-decoration:none; }
 <body>
 <div class="wrap">
 <a class="bk" href="l20-stage1-2-training.html">← Stage 1.2：Training（计划）</a> · <a class="bk" href="l20-stage1-3-shared-grasp.html">Stage 1.3</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.2 · 2026-09-13 · 更新 2026-09-30 · 当前 v7（<a href="#joint">联合模型</a>、<a href="#v5">合成管线</a>、<a href="#v6">合成数据评估</a>、<a href="#v7">移植式合成与五臂</a>）</div>
+<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.2 · 2026-09-13 · 更新 2026-10-04 · 当前 v8（<a href="#joint">联合模型</a>、<a href="#v5">合成管线</a>、<a href="#v6">合成数据评估</a>、<a href="#v7">移植式合成与五臂</a>、<a href="#v8">生成式抓取替代真人</a>）</div>
 <h1>Stage 1.2 结果：意图预测／人类模型建模<br><span class="small" style="font-weight:400">pilot 6 个 session + 正式 session 1 · 95 条 pinch 示教 · 留一 session 交叉验证 · 手册 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a> 的首个 run</span></h1>
 
 <p class="lede">这是 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a>的第一次实际运行：用 <a href="l20-robust-grasp-stage1.html">Stage 1.1</a> 当天采集的 95 条 Quest→retarget→L20 示教，按计划的阶梯（B0／B1／M0／方案 A／方案 B）训练并在留出的 session 上比较，附影子手视频。<b>结论先行：</b>抬离前 1 s，学习模型比「保持当前姿态」好 3 cm、比最近示教和常数预测好 0.5 cm；残差形式的小模型在抬离时刻误差 0.9 cm；方案 B（Flow Matching）与确定性回归无差异且候选无多模态，方案 A（VQ-VAE＋AR）停在码本重建；一个只看当前 25 维状态的线性模型在 1 s 提前量上是最好的。数据侧的两个发现比模型更重要：抓取提示与方向提示都没有在标签里留下痕迹。</p>
 
 <div class="callout"><b>本页不是 Stage 1.2 的正式结果。</b>计划要求的 240 条、144／48／48 按 session 划分不存在；所有 trial 都是 pinch，终点标签未经人工复核（每个 session 的 <code>stage11_training_ready=False</code>）。这里的数字是 PoC，用来决定协议和模型下一步怎么改。</div>
 <div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
-<caption>版本索引 · 当前 v7（与 <a href="l20-stage1-2-training.html">Stage 1.2 计划页</a>共用版本号；数据来自 <a href="l20-robust-grasp-stage1.html">Stage 1.1</a> v1（43 条 pilot）与 v2（52 条正式 session 1）；v3 数据的结果待采）</caption>
+<caption>版本索引 · 当前 v8（与 <a href="l20-stage1-2-training.html">Stage 1.2 计划页</a>共用版本号；数据来自 <a href="l20-robust-grasp-stage1.html">Stage 1.1</a> v1（43 条 pilot）与 v2（52 条正式 session 1）；v3 数据的结果待采）</caption>
 <thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
 <tbody>
 <tr><td><a href="#v1">v1</a></td><td>2026-09-13</td><td>首轮阶梯 B0／B1／M0／方案 A／方案 B，43 条 pilot LOSO，当晚加入正式 session 1 成 95 条 7 折；序列生成器 FMS／DPS。</td><td>抬离前 1 s M0 比保持好 3 cm、比常数好 0.5 cm；残差 M0 抬离时 0.9 cm；FM = M0 + 0.7 cm 抖动，无多模；VQ-VAE 停在重建。标签是实现姿态。</td><td><a href="#ladder">阶梯</a> · <a href="#video">视频</a> · <a href="#sequence">序列</a></td><td><a href="#v1-fig">误差曲线</a> · <a href="#video">留出 session 视频</a></td></tr>
@@ -84,6 +84,7 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td><a href="#v5">v5</a></td><td>2026-09-23</td><td>合成抓取／接近轨迹生成管线：v2 基元上的 L20 抓姿库（真人掌姿种子、cage／grasp／squeeze 三段、MuJoCo 物理验证，373 个）、按真人曲线校准的参数化接近轨迹（2238 条）、Dexonomy L20 资产（Mac 冒烟 9/9，4090 上 20 个 DGN 物体 329 个抓姿）；现有 M0／je 在合成数据上训练与评测。</td><td>真人数据只有一个 cube 的一个面；问「能不能生成、能不能训练」。</td><td><a href="#v5">§合成管线</a>：合成域内可泛化（held-out 偏航 1 s 前 1.19 cm），零样本到真人 3.89 cm 只略好于保持 4.56；合成预训练与同配方随机初始化无差别。<b>被 v6 解读、被 v7 的移植式生成器取代</b></td><td><a href="#v5-fig">抓姿对比 + 误差曲线</a></td></tr>
 <tr><td><a href="#v6">v6</a></td><td>2026-09-30</td><td>v5 合成数据的独立评估：数据量缩放曲线（210→6724 条）、真人学习曲线（10／20／40 条）、标签与接近轨迹的逐项质量检查、物理复验、注入末段转动的反事实。</td><td>回答「纯靠随机化够不够」。</td><td><a href="#v6">§评估</a>：数量不是瓶颈（32 倍合成只到保持基线，10 条真人更好）；九个标签关节恒定、真人末段绕指尖转动而合成直线下降；补一个边缘分布不带来迁移。给出验收线。</td><td><a href="#v6-fig">缩放曲线、末段运动、逐关节标签</a></td></tr>
 <tr><td><a href="#v7">v7</a></td><td>2026-09-30 晚</td><td>移植式生成器 v3（把真人 trial 相对自己终点的运动移植到库里任意物体／面的终点，真人标签原样再落座）、三道筛（物理、运动学、真实性）、五臂协议（只真人／只合成／预训练→微调／同配方对照／混合），3 组留一 × 5 种子；10 条多物体真人 trial 的首个测试。</td><td>用户决定走预训练路线；v6 说明要先把随机化改成围绕真人轨迹。</td><td><a href="#v7">§五臂</a>：只合成 v3f 2.40／1.90／0.92 cm ≈ 只真人 2.43／1.85／0.86；预训练比同配方对照好 0.2 cm；无臂显著优于只真人 → 在线预测器仍用只真人模型；多物体覆盖有、精度未验证。10-04 <a href="#v7-deploy">部署</a>：33 通道混合模型接进在线预测器（环境变量切换，默认未换），在环 2 条偏航 cube——只真人模型偏 13–20 cm（同场回放），新模型 3–6 cm，但不优于保持；非 cube 零数据。<b>当前有效</b></td><td><a href="#v7-fig">五臂柱图</a></td></tr>
+<tr><td><a href="#v8">v8</a></td><td>2026-10-04</td><td>生成式抓取模型产数据、完全替代真人：Dexonomy 在 L20 上合成（模板按抓取分类在运动学上求解）+ DexLearn 条件归一化流训练与采样，objects4 复验，接近轨迹用 v5 生成器或无真人先验生成器；预测器在全部真人上零样本测；诊断 = 只用掌姿输入、覆盖式模板。berlin 单卡。</td><td>用户：现有合成终点基于 IK（掌姿种子、关节先验取自真人），要测生成式模型能否完全替代真人数据。</td><td><a href="#generative">§生成式</a>：零真人臂 12.1 / 10.9 / 9.0 cm（DexLearn）、12.6 / 10.6 / 10.2（Dexonomy），差于保持；掌姿对、关节构型不在真人分布里；只用掌姿 1 s 前比保持好 0.8–1.0 cm；覆盖式模板全输入 5.7 / 4.1 / 2.9；无臂过验收线，混合／预训练无增益。<b>部署不变</b></td><td><a href="#v8-fig">误差图</a> · <a href="#v8-thumb">拇指构型</a> · <a href="#v8-templates-fig">模板</a></td></tr>
 </tbody></table></div>
 
 
@@ -92,7 +93,7 @@ a { color:var(--blue); text-decoration:none; }
 <a href="#v2">v2 q_ref 重跑</a><a href="#ablation">消融</a><a href="#qref">q_ref</a><a href="#verdict">裁决</a><a href="#failures">失败解剖</a><a href="#closure">1.3 预检</a>
 <a href="#v3">v3 实时预测器</a><a href="#live">实时演示</a><a href="#contacts">接触点</a><a href="#confidence">置信度</a>
 <a href="#v4">v4 联合模型</a><a href="#joint">联合模型</a>
-<a href="#v5">v5 合成管线</a><a href="#v6">v6 合成数据评估</a><a href="#v7">v7 移植式合成与五臂</a><a href="#v7-deploy">在线接入</a><a href="#next">缺口与下一步</a></div></div></nav>
+<a href="#v5">v5 合成管线</a><a href="#v6">v6 合成数据评估</a><a href="#v7">v7 移植式合成与五臂</a><a href="#v7-deploy">在线接入</a><a href="#v8">v8 生成式抓取替代真人</a><a href="#next">缺口与下一步</a></div></div></nav>
 
 <span id="v1"></span>
 <h2 id="data">数据：采到了什么，发现了什么</h2>
@@ -430,6 +431,40 @@ mjpython -m training.stage12_intent live --source udp --port 5599 --ghost-udp 56
 </tbody></table></div>
 <p>读法：在 cube 转过去的那一面上，只真人模型的预测偏 13–20 cm（它没见过这一侧），加了合成数据的模型降到 3–6 cm——这是合成数据买到的<b>覆盖</b>；但新模型在这两条上每一段都<b>没有好于保持当前姿态</b>（多 0.3–2.8 cm），与上面多物体离线测试「回到基线附近、不优于基线」是同一个结论。n = 2、单操作者、只有 cube，这不是精度测量；原因（操作者在抬离前已经悬停在 3 cm 内、还是这一侧的合成标签有偏）没有查。未偏航 cube 上新旧模型的在环对比、圆柱／球／长条上的任何在环数据，都还没有。</p>
 <p class="small">记录：<code>human_machine_interaction · hand_control/plan/2026-09-30-synthetic-pretrain-rl-plan.md</code> §6.7；在线日志与打分脚本 <code>training/artifacts/stage12_intent/synthetic/v3/live_20261004/</code>。</p>
+</section>
+
+<section id="v8" aria-label="v8">
+<p class="small">版本 v8 · 2026-10-04 · 生成式抓取模型产数据、完全替代真人数据（计划与执行记录 <code>human_machine_interaction · hand_control/plan/2026-10-04-generative-grasp-human-free.md</code> §6；结果在 HMI 仓库 <code>training/artifacts/stage12_intent/</code> 下的 <code>synthetic/gen/results/</code> 与 <code>results_poseonly/</code>）</p>
+<h2 id="generative">生成式抓取模型：一条真人数据都不用的预测器</h2>
+<div class="key bad"><b>一句话。</b>用生成式抓取模型（Dexonomy 在 L20 上做物理抓取合成 + DexLearn 条件归一化流）产的数据、不碰任何真人数据训练的预测器，在 95 条真人上失败：抬离前 1.0 / 0.5 / 0 s 掌心误差 12.1 / 10.9 / 9.0 cm（DexLearn）、12.6 / 10.6 / 10.2 cm（Dexonomy 直出），比「保持当前姿态」（4.56 / 3.48 / 0.97）还差。原因不在掌姿——生成数据的掌姿分布与真人一致——而在<b>关节构型</b>：真人抓取时的拇指与非任务手指姿态不在生成数据的支撑里，输入窗口里的 16 个关节指令通道把模型推出了训练分布。把关节通道去掉，掌姿部分能迁移（1 s 前比保持好 0.8–1.0 cm）；换成覆盖式模板，全输入回到 5.7 / 4.1 / 2.9 cm。但<b>没有一个零真人的臂过验收线</b>（≤ 3.15 / 2.31 / 1.51 cm），抬离时刻全部差于保持；与真人混合或预训练也没有增益。在线部署不变（仍是 v7 的混合模型）。</div>
+<p><b>管线</b>（berlin 一张 H200，tmux 内固定 <code>CUDA_VISIBLE_DEVICES</code>）：① <b>模板</b>：L20 上的 <code>24_Tip_Pinch</code>／<code>14_Tripod</code> 按 GRASP 分类定义在手的运动学上最小二乘求解（拇指指垫对食指指垫，非任务手指取 Dexonomy Shadow 同名标注按关节量程比例映射），不读任何录制；Dexonomy 先把模板刚性贴到物体表面再闭合，所以每类按开口各出一个（pinch 3／4.5／6／7.5 cm，tripod 3／4.5／6 cm）。② <b>生产</b>：Dexonomy 在 136 个桌面原型（130 个随机尺寸训练物体 + collection-v2 的 6 个留出物体）上 57,120 个候选 → 19,764 个抓取 → 19,568 个通过它自己的 MuJoCo 评测，约 20 min。③ <b>生成模型</b>：DexLearn 条件归一化流（Möbius 流出旋转与平移，MLP 出 pregrasp／grasp 两段位姿与三段关节；PointNet 主干——MinkowskiEngine 在没有 nvcc 的 berlin 上编不了），在 130 个训练物体上 6000 步 × batch 1024，约 27 min；对 6 个留出物体的局部点云采样 49,152 个。④ <b>复验</b>：每个生成样本回到 objects4 场景（kp 8、摩擦 1.2）合拢、加力、抬 8 cm、±4 cm 摇晃，3 mm／3° 扰动 2 次至少 1 次持住、滑移 ≤ 1.5 cm，外加两条显式的操作者侧规则（前臂不低于水平 10°、手腕高出桌面 3 cm）。DexLearn 样本通过率 34 %（每格随机 1500 个：方块 pinch 48–58 %、球 77 %、长条 12 %，主要淘汰原因是手指穿入物体 &gt; 4 mm），抓姿库每格 60 个封顶。⑤ <b>接近</b>：v5 的参数化生成器（起点、舒适腕姿、手指初态、时序是真人统计）或<b>无真人先验</b>生成器（操作者在 −x 侧、右肩位置取坐姿人体测量常识；最小 jerk 运输 + 减速逼近；最大张口在 60–80 % 运动时间；选面 = 前臂指向肩 + 前臂旋转窗口）。⑥ <b>预测器</b>：v7 协议，残差 M0，5 种子；不见真人的臂训练一次、在全部真人上零样本测，GPU 上每个模型约 15 s。</p>
+<div class="tw" tabindex="0" role="region" aria-label="v8 各臂在 95 条真人上的掌心误差"><table>
+<caption>95 条单 cube 真人，掌心误差中位 cm（1.0 / 0.5 / 0 s，5 种子均值）。「只用掌姿」是诊断：模型输入里的 16 个关节通道置零，残差基准与标签不变，不是协议臂。粗体 = 训练数据里没有任何真人数据或真人统计。</caption>
+<thead><tr><th scope="col">臂</th><th scope="col">训练数据里的真人成分</th><th scope="col">全输入</th><th scope="col">只用掌姿（诊断）</th></tr></thead><tbody>
+<tr><td>保持当前姿态</td><td>—</td><td>4.56 / 3.48 / 0.97</td><td>同左</td></tr>
+<tr><td>只真人（3 组留一）</td><td>真人 trial</td><td>2.41 / 1.85 / 0.91</td><td>2.55 / 1.92 / 0.97</td></tr>
+<tr><td>现在 demo 用的模型的配方：真人 + v3f 混合（<a href="#v7">v7</a>，同协议）</td><td>真人 trial + 真人运动</td><td>2.44 / 1.72 / 0.87</td><td>—</td></tr>
+<tr><td>只合成 v3f（移植真人运动）</td><td>其它会话的真人运动</td><td>2.39 / 1.89 / 0.91</td><td>2.51 / 1.93 / 0.90</td></tr>
+<tr><td>IK 抓姿库 + 真人标定接近（v5 的数据）</td><td>终点种子、接近统计</td><td>4.75 / 3.74 / 1.88</td><td>3.15 / 2.95 / 1.26</td></tr>
+<tr><td>IK 抓姿库 + 无真人先验接近</td><td>终点种子</td><td>5.44 / 4.20 / 1.40</td><td>3.28 / 3.03 / 1.14</td></tr>
+<tr><td>Dexonomy + 真人标定接近</td><td>接近统计</td><td>12.77 / 10.98 / 10.70</td><td>3.67 / 3.09 / 1.50</td></tr>
+<tr><td><b>Dexonomy + 无真人先验接近</b></td><td><b>无</b></td><td><b>12.63 / 10.55 / 10.24</b></td><td><b>4.06 / 3.14 / 1.77</b></td></tr>
+<tr><td>DexLearn + 真人标定接近</td><td>接近统计</td><td>16.71 / 14.66 / 13.05</td><td>3.97 / 3.32 / 1.90</td></tr>
+<tr><td><b>DexLearn + 无真人先验接近</b></td><td><b>无</b></td><td><b>12.08 / 10.89 / 8.95</b></td><td><b>4.27 / 3.25 / 1.26</b></td></tr>
+<tr><td>Dexonomy 覆盖式模板 + 真人标定接近</td><td>接近统计</td><td>12.86 / 11.10 / 10.76</td><td>6.15 / 5.10 / 3.03</td></tr>
+<tr><td><b>Dexonomy 覆盖式模板 + 无真人先验接近</b></td><td><b>无</b></td><td><b>5.73 / 4.14 / 2.85</b></td><td><b>5.03 / 3.97 / 2.20</b></td></tr>
+<tr><td>真人 + DexLearn 零真人数据，混合训练</td><td>真人 trial</td><td>2.58 / 1.88 / 1.00</td><td>—</td></tr>
+<tr><td>DexLearn 零真人数据预训练 → 真人微调（同配方随机初始化 2.60 / 1.74 / 1.07）</td><td>真人 trial</td><td>2.65 / 2.11 / 1.17</td><td>—</td></tr>
+</tbody></table></div>
+<p><b>为什么失败：掌姿对、关节构型不对。</b>生成库的掌姿与真人一致（cube054 pinch：掌心到物体 19.8 cm 对真人 19.7、前臂朝上分量 0.47 对 0.50、前臂旋转中位 −88° 对 −93°），但抬离时拇指 cmc_yaw 偏 −12.6σ、cmc_roll +6.7σ，无名指／小指 roll 偏 −11…−15σ（模板定下的非任务手指几乎没有方差——与 <a href="#v6">v6</a> 在 IK 合成数据上发现的「九个标签关节恒定」是同一个缺陷）。真人的拇指构型（roll ≈ 1.2、yaw ≈ 0.36）在 L20 上是指垫对向角约 49° 的可行对捏，而「严格指垫对向」的模板求解只有一个解（0.64、1.05），Dexonomy 从这一个模板长出来的全部抓取、以及 DexLearn 学到的分布（比 Dexonomy 自己还窄）都落在那一点。去掉关节通道后（只用掌姿），零真人的两臂在 1 s 前比保持好 0.96 [−1.31, −0.64] 和 0.80 [−1.08, −0.54] cm，0.5 s 打平或略好，抬离差 0.3–0.8 cm——掌姿与接近部分能迁移，但精度不够。</p>
+<p><b>归因。</b>① 终点来源（同一接近生成器、只用掌姿）：人类种子的 IK 终点比 Dexonomy 终点好 0.61 [+0.29, +0.96]（真人标定接近）／0.69 [+0.42, +0.94] cm（无真人先验接近），1 s。② <b>DexLearn 对 Dexonomy 直出没有增益</b>：全输入 +0.24 [−0.45, +0.93] cm，只用掌姿 +0.16 cm（1 s）——学到的生成模型复现了训练数据的单一姿态模式，并多出 51 % 的穿入样本要筛。③ <b>覆盖式模板</b>（零真人的修正，见计划页 v8）：在 L20 可行姿态空间里用最远点采样取 4 种拇指构型 × 2 组随机非任务手指，挑选只看可行性；它的 141 个 pinch 里 47 个落进真人拇指主簇（规范模板 0 个）。全输入比规范模板好 5.56 [−6.51, −4.58] cm，与「IK 真人种子库 + 同一零真人接近」打平（−0.14 [−0.62, +0.33]）；但库小（176 个，方块上少）、只用掌姿时反而差 0.96 [+0.76, +1.18] cm。④ 真人标定的接近先验在 IK 库上值 0.5–0.8 cm；与生成库组合时反而更差（v5 生成器按真人舒适腕姿选面、手指初态取真人均值，在生成库里挑出的组合落在关节分布外）。⑤ 与真人混合／预训练：混合 +0.22 [+0.09, +0.36] cm，预训练比同配方对照差 0.24 [+0.03, +0.45] cm——没有增益。</p>
+<figure class="fig" id="v8-fig"><img src="assets/l20-stage1-2-results/v8-arms.png" alt="各臂在 95 条真人上 1.0、0.5、0 秒的掌心误差，左为全输入、右为只用掌姿输入，点为 5 种子均值、横线为种子范围" loading="lazy"><figcaption>v8 · 左：全输入时，规范模板的零真人臂（Dexonomy、DexLearn）在 9–13 cm 且种子间相差十几厘米——模型在关节通道上外推；覆盖式模板回到 3–6 cm。右：同一批数据只用掌姿输入，零真人臂（★）全部回到保持基线附近——1 s 前好 0.8–1.0 cm、抬离时差 0.3–0.8 cm；只有用了真人数据或真人运动的两臂（只真人、v3f）在 1 s 前到 2.5 cm。</figcaption></figure>
+<figure class="fig" id="v8-thumb"><img src="assets/l20-stage1-2-results/v8-thumb-gap.png" alt="四个抓取来源的拇指 cmc_roll 对 cmc_yaw 散点，与 95 条真人抬离标签对照" loading="lazy"><figcaption>v8 · 拇指构型（抬离时的加力指令）：灰 = 95 条真人，蓝 = 各来源的 pinch。IK 抓姿库用真人种子，落在真人主簇；Dexonomy 规范模板与 DexLearn 采样都挤在一个点（0.65、1.05），两个真人簇都不碰；覆盖式模板分散到多个模式，一簇进入真人主簇。</figcaption></figure>
+<figure class="fig" id="v8-templates-fig"><img src="assets/l20-stage1-2-results/v8-templates.png" alt="L20 抓取模板渲染：上排三个规范模板，下排四个覆盖式模板" loading="lazy"><figcaption>v8 · 上排：按分类定义解出的规范模板（pinch 4.5 cm、6 cm，tripod 4.5 cm），黄色为拇指远节。下排：覆盖式模板（同一开口下不同拇指构型 + 随机非任务手指）。</figcaption></figure>
+<p><b>多物体与 demo 录像。</b>10 条多物体真人（未复核）上，全输入的零真人臂 1 s 前 6.6–10.4 cm（保持 4.62，v3f 5.45），抬离 3.3–10.2 cm（保持 0.64）；只用掌姿时 Dexonomy 零真人臂 4.62 / 4.38 / 1.57（对称最小 3.13 / 2.65 / 1.05），与保持相当。10-04 demo 录像 <code>20261004T173900Z</code> 的 2 条 cube pinch（数据集标签）：保持 2.11 / 1.09 / 0.61，v3f 2.28 / 1.76 / 1.34，零真人全输入 6.0–11.6 cm，只用掌姿 1.9–2.0 / 1.2–1.3 / 0.9–1.1。n = 2，只作示意。<b>真值口径</b>：本节 demo 两条的真值 = 数据集标签（第一帧物理实际抬离的 L20 掌位，物体系取物理行里方块的实时位姿，与 95 条同一定义）；上面 <a href="#v7-deploy">v7 部署小节</a>用的是在线日志进入 Transport 第一行的 <code>cur</code>（在线物体系）。那一帧方块已被提起 5.8 / 4.5 cm，在线物体位姿没跟上，两种真值相差 5.6 / 3.9 cm，<b>两节的数字不可混比</b>。</p>
+<p><b>可以直接在 demo 里试的 checkpoint</b>（<code>generative_final.py</code>，只用一份合成数据，归一化器与接触点先验都来自合成，<code>fit-final</code> 格式 33 通道）：<code>results/<wbr>final_gen_gd_mm_free.models.pt</code>（覆盖式模板、全输入）与 <code>results/<wbr>final_gen_gd_free_<wbr>poseonly.models.pt</code>（规范模板、关节通道经归一化器置零，<code>live.py</code> 不用改）。把 demo 命令里的 <code>MJQUEST_CHECKPOINT</code> 换成它们即可；离线回放这场录像两者都能加载、帧映射精确，手离物体 30 cm 内时与现部署模型的预测差中位 3.8 / 3.9 cm（只真人模型差 15 cm）。</p>
+<p class="small">失败解剖：第一次冒烟时 Dexonomy 的 init 碰撞筛把 8192 个候选全部拒掉，查出 09-23 的 L20 Dexonomy 资产两处缺陷——远节骨架线沿指腹表面画（指腹一接触物体骨架就"穿模"），拇指指腹关键点吸附到端盖、法向指向自身掌侧（物体被放进拇指里）；改为远节碰撞网格中轴 + 由屈曲方向和凸包外法向重定指腹后，对捏模板的指垫对向误差 40–50° → 0.1°。berlin：Dexonomy 钉的 warp 1.8.0 在 CUDA 13 驱动上初始化失败（换 1.10.1）；全机严格 overcommit，已初始化 CUDA 的进程并发 fork 数据加载子进程报 ENOMEM（DexLearn 改常驻 worker，Dexonomy init 减到 4 个 worker）；NFS 家目录负载下 glob 偶尔返回空（加重试）。全程只用 GPU 0。</p>
+<p class="small">待补：DexLearn 在覆盖式模板数据上重训（130 个训练物体上的覆盖式 Dexonomy 已开跑，grasp 阶段 15 万个候选太慢，本轮停掉）。本轮 DexLearn 与 Dexonomy 直出无差别，所以预期上限是覆盖式 Dexonomy 直出的 5.73 / 4.14 / 2.85 cm——仍不过验收线。</p>
 </section>
 
 <h2 id="next">缺口与下一步</h2>
