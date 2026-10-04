@@ -430,6 +430,7 @@ mjpython -m training.stage12_intent live --source udp --port 5599 --ghost-udp 56
 <tr><td>现用 m0（只真人，26 通道，同场回放）</td><td>14.8／16.1</td><td>13.8／13.9</td><td>12.9／13.1</td><td>—</td></tr>
 </tbody></table></div>
 <p>读法：在 cube 转过去的那一面上，只真人模型的预测偏 13–20 cm（它没见过这一侧），加了合成数据的模型降到 3–6 cm——这是合成数据买到的<b>覆盖</b>；但新模型在这两条上每一段都<b>没有好于保持当前姿态</b>（多 0.3–2.8 cm），与上面多物体离线测试「回到基线附近、不优于基线」是同一个结论。n = 2、单操作者、只有 cube，这不是精度测量；原因（操作者在抬离前已经悬停在 3 cm 内、还是这一侧的合成标签有偏）没有查。未偏航 cube 上新旧模型的在环对比、圆柱／球／长条上的任何在环数据，都还没有。</p>
+<p class="small"><b>这张表的数字不能和 <a href="#v8">v8</a> 的并排读。</b>本节的真值是<b>在线日志里进入 Transport 的第一行掌位</b>；v8 用的是<b>数据集标签</b>（与 95 条真人同一定义）。在这两条 trial 上两者差 5.6／3.9 cm——数据集的「抬离」那一帧方块已经被提起 5.8／4.5 cm（<code>cube_world</code> z 154.4 → 160.2／158.7 cm），而在线路径的物体位姿没跟上（同一时刻数据集里 H 与 P 只差 0.4／0.8 cm）。两套口径各自自洽，混比会凭空多出几厘米。</p>
 <p class="small">记录：<code>human_machine_interaction · hand_control/plan/2026-09-30-synthetic-pretrain-rl-plan.md</code> §6.7；在线日志与打分脚本 <code>training/artifacts/stage12_intent/synthetic/v3/live_20261004/</code>。</p>
 </section>
 
