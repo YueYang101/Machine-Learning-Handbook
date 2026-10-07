@@ -90,7 +90,7 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td><a href="#v5">v5</a></td><td>2026-09-16</td><td>Stage 1.4 首轮：会话持续 K=5、历史特征 z、字典观测非对称 critic，H2Hist／H2HistOracle 两臂</td><td>研究备忘 C3：跨 trial 推断「这次是谁」</td><td><a href="#v5">§I</a>，验收 #2 未过；计划页在 <a href="l20-stage1-4-review.html#v2">Stage 1.4 v2</a></td><td><a href="#v5-fig">按序号曲线</a></td></tr>
 <tr><td><a href="#v6">v6</a></td><td>2026-09-30</td><td>换训练库：把合成抓取轨迹（物理筛后）当人手来源，四条同配方臂 R／S／SR／S2R，berlin Warp 单卡</td><td>真人只有 95 条；问「合成轨迹能不能替代或超过真人数据」</td><td><a href="#v6">§v6</a>：留出真人上只用合成 ≈ 只用真人，混合无增益；部署包 <code>…h2rand_srall20M.npz</code></td><td><a href="#v6-fig">四臂对照图</a></td></tr>
 <tr><td><a href="#v7">v7</a></td><td>2026-10-07</td><td>抓取残差改用两指终点模型的单帧预测列作目标</td><td>预测器换了（两指协议、单帧终点）；问新目标列能不能让残差更好</td><td><a href="#v7">§v7</a>：<b>判为等价</b>，验收未过（关口行 +3／−3，噪声内；该行已接近饱和）</td><td><a href="#v7-fig">对照图</a></td></tr>
-<tr><td><a href="#v8">v8</a></td><td>2026-10-07</td><td>新任务与新环境：把方块搬到底座上并<b>决定何时松手</b>；新库（从原始头显日志切放手窗口）、新臂、松手动作接口</td><td>10-07 用户指令：除抓取外还要学放手时机。这推翻了设计文档 §2「不自动张手」——变更以带日期的形式写在 HMI 的 <code>hand_control/plan/stage13-shared-grasp-design.md</code> §2 与 §6h，仅限仿真</td><td><a href="#v8">§v8</a>：规则赢 RL（0.71 对 0.62），人自己 0.27</td><td><a href="#v8-fig">缺陷矩阵</a> · <a href="#v8-timing">松手时刻</a></td></tr>
+<tr><td><a href="#v8">v8</a></td><td>2026-10-07</td><td>新任务与新环境：把方块搬到底座上并<b>决定何时松手</b>；新库（从原始头显日志切放手窗口）、新臂、松手动作接口</td><td>10-07 用户指令：除抓取外还要学放手时机。这推翻了设计文档 §2「不自动张手」——变更以带日期的形式写在 HMI 的 <code>hand_control/plan/stage13-shared-grasp-design.md</code> §2 与 §6h，仅限仿真</td><td><a href="#v8">§v8</a>：<b>定稿，负结论</b>——规则 0.71，RL 形状奖励 100M×3 seed 0.63 ± 0.02，锚在规则上的 RL 正好复现规则；人自己 0.27</td><td><a href="#v8-fig">缺陷矩阵</a> · <a href="#v8-timing">松手时刻</a></td></tr>
 </tbody></table></div>
 
 <nav class="tasknav" aria-label="本页目录"><div class="tcard"><div class="tname">本页目录</div>
@@ -415,19 +415,26 @@ a { color:var(--blue); text-decoration:none; }
 <p>录像的命令自带这名操作者真实的张手过程。但逐帧回放整条命令在物理里握不住方块（实测 0/6 放成，3–91 步就掉），那会把基线压成 0、让后面每个数字都好看。所以搬运段用<b>冻结的起始握姿</b>，张手用<b>录像的真实开手增量</b>叠在上面。缺陷：提前 0–0.5 s、延后 0–0.8 s、张得慢 1–3 倍、张不全 0.6–1.0，30% 的 episode 干净。</p>
 
 <h3>结果（berlin，Warp，256 条配对）</h3>
+<p class="small"><b>一个口径，全节通用。</b>「最佳时刻」= 方块与底座接触且速度 &lt;2 cm/s 的第一帧（「已经放上去且停住了」）。先前用的几何定义（底面距顶面 ≤3 mm 且横向在容差内）被弃用：落点偏几厘米的搬运永远过不了横向闸，约 1/3 的 episode 根本没有定义，时间类口径只能在剩下的 2/3 上算。下表所有行都在新定义下重算过（旧 checkpoint 也重跑了一遍），所以彼此可比。</p>
 <div class="tw"><table>
-<caption>混合缺陷来源。「松手 − 最佳」= 松手时刻相对最佳时刻（方块底面距顶面 ≤3 mm 且速度 ≤2 cm/s 的第一帧），负值为提前；「多握」= 人本来松得对时机器额外延长握持的步数，越小越无害</caption>
+<caption>混合缺陷来源，256 条配对。「松手 − 最佳」负值为提前；「多握」= 人本来松得对时机器额外延长握持的步数，越小越无害</caption>
 <thead><tr><th scope="col">条件</th><th scope="col">放成</th><th scope="col">早放率</th><th scope="col">终点误差</th><th scope="col">松手 − 最佳</th><th scope="col">多握</th></tr></thead><tbody>
-<tr><td>人自己（α=0）</td><td>0.27</td><td>0.50</td><td>13.5 cm</td><td>+45 步</td><td>31 步</td></tr>
-<tr><td><b>规则「放稳了再松」α=1</b></td><td><b>0.71</b></td><td>0.26</td><td>7.1 cm</td><td>−5 步</td><td><b>0.3 步</b></td></tr>
-<tr><td>RL 60M 步 α=1</td><td>0.62</td><td>0.29</td><td>9.1 cm</td><td>+2 步</td><td>10 步</td></tr>
-<tr><td>规则 α=0.5</td><td>0.68</td><td>0.27</td><td>7.3 cm</td><td>+3 步</td><td>2.7 步</td></tr>
-<tr><td>RL 60M 步 α=0.5</td><td>0.63</td><td>0.32</td><td>8.8 cm</td><td>+1 步</td><td>9.5 步</td></tr>
+<tr><td>人自己（α=0）</td><td>0.27</td><td>0.50</td><td>13.5 cm</td><td>+45 步</td><td>39 步</td></tr>
 <tr><td>一直不松手 α=1</td><td>0.06</td><td>0.22</td><td>18.4 cm</td><td colspan="2">73% 从不松手</td></tr>
+<tr><td><b>规则「放稳了再松」α=1</b></td><td><b>0.71</b></td><td>0.27</td><td>7.2 cm</td><td>−3 步</td><td>7 步</td></tr>
+<tr><td>规则 α=0.5</td><td>0.68</td><td>0.27</td><td>7.5 cm</td><td>+6 步</td><td>9 步</td></tr>
+<tr><td>RL 60M 步（一次性奖励）α=1</td><td>0.62</td><td>0.29</td><td>8.8 cm</td><td>+3 步</td><td>17 步</td></tr>
+<tr><td>RL 60M 步 α=0.5</td><td>0.63</td><td>0.32</td><td>8.7 cm</td><td>+2 步</td><td>13 步</td></tr>
+<tr><td>RL 100M×3 seed（形状奖励）α=1</td><td>0.63 ± 0.02</td><td>0.32</td><td>7.9 cm</td><td>+1 步</td><td>11 步</td></tr>
+<tr><td>RL 100M×3 seed α=0.5</td><td>0.68 ± 0.02</td><td>0.30</td><td>7.2 cm</td><td>±1 步</td><td>8 步</td></tr>
+<tr><td>RL 锚在规则上 α=1</td><td><b>0.71</b></td><td>0.28</td><td>6.4 cm</td><td>+1 步</td><td>6 步</td></tr>
+<tr><td>RL 锚在规则上 α=0.5</td><td>0.68</td><td>0.29</td><td>6.7 cm</td><td>+1 步</td><td>8 步</td></tr>
 </tbody></table></div>
 <figure class="fig" id="v8-fig"><img src="assets/l20-stage1-3-results/v8-release-matrix.png" alt="六种操作者缺陷下，人自己、规则与 RL 的放成率对照" loading="lazy"><figcaption>v8 · 按缺陷分列：<b>提前松手几乎不花钱</b>（0.54，与干净持平），真正杀伤的是延后 0.09、变慢 0.19、张不全 0.25——辅助的价值在「把没做完的松手做完」，不在拦住急躁的人。规则在每一行都是 0.71（α=1 时辅助完全掌握这两根手指，人的缺陷不再起作用）；RL 在延后行最吃力（0.55）。</figcaption></figure>
-<figure class="fig" id="v8-timing"><img src="assets/l20-stage1-3-results/v8-release-timing.png" alt="四种条件下松手时刻相对最佳时刻的差，以及机器额外延长握持的时间" loading="lazy"><figcaption>v8 · 同一组 episode 的时间轴：人自己比最佳时刻晚 0.9 s 松手、在本该松手后还多握 0.6 s；规则早 0.1 s 松、多握 0.006 s（无害）；RL 时刻准（+0.04 s）但仍会多握 0.2 s。</figcaption></figure>
-<p><b>读法。</b>一条不学习的规则赢了 RL：0.71 对 0.62（α=1）、0.68 对 0.63（α=0.5）。第一轮 20M 步时 RL 只有 0.48，失败模式是<b>太早松手</b>（第 11 步就松，规则第 28 步，人第 82 步）——早放罚 −8 而放成奖 +25，早扔仍有三成落得上去，期望为正；罚改成 −25 后升到 0.48，步数加到 60M 后 0.62。所以「步数不够」这个替代解释被排掉了一半：加步数确实有效，但没有翻盘。按 <a href="#v4">v4</a> 的同一判法，<b>现在不能说 RL 对放手时机有价值</b>。</p>
+<figure class="fig" id="v8-timing"><img src="assets/l20-stage1-3-results/v8-release-timing.png" alt="四种条件下松手时刻相对最佳时刻的差，以及机器额外延长握持的时间" loading="lazy"><figcaption>v8 · 同一组 episode 的时间轴（新定义）：人自己比最佳时刻晚 0.9 s 松手、在本该松手后还多握 0.8 s；规则早 0.06 s 松、多握 0.14 s；两条 RL 臂时刻都准（±0.02 s），多握 0.12–0.22 s。时刻不是 RL 输的地方——它输在放成率。</figcaption></figure>
+<figure class="fig" id="v8-final"><img src="assets/l20-stage1-3-results/v8-final-round.png" alt="最后一轮：人自己、规则、形状奖励 RL（3 seed，误差棒）、锚在规则上的 RL，按缺陷分列" loading="lazy"><figcaption>v8 最后一轮 · 规则（绿）在每一行都是 0.71；形状奖励的 RL（橙，3 seed 的均值与标准差）始终低 6–10 点；<b>锚在规则上的 RL（紫）正好复现规则</b>，一分不多。误差棒说明 seed 间差异只有 ±0.02，输给规则不是运气问题。</figcaption></figure>
+<p><b>读法：这条线到此定稿，结论是负的。</b>四轮递进地排除了每一个替代解释——(1) 20M 步、一次性奖励：0.48，失败模式是<b>太早松手</b>（第 11 步就松，规则第 28 步，人第 82 步），因为早放罚 −8 小于放成奖 +25 而早扔仍有三成落得上去；(2) 罚改 −25：0.48 → 0.62 的路上修掉了这个漏洞；(3) 步数加到 60M：0.62；(4) <b>形状奖励（每步「静止在底座上且手已离开」+ 松手正中最佳时刻的一次性奖励）＋ 100M 步 ×3 seed</b>：α=1 0.63 ± 0.02、α=0.5 0.68 ± 0.02。<b>规则仍是 0.71 / 0.68。</b>α=0.5 下打平，α=1 下仍输 8 点，而且 seed 间只差 ±0.02——不是运气。</p>
+<p>最后一条臂把保持权重<b>锚在规则上</b>（每步 −0.1·(g − g_rule)²），问的是「白送规则的行为，RL 还能不能在它之上找到东西」：结果 0.71 / 0.68，<b>与规则一模一样</b>，终点误差略好（6.4 对 7.2 cm），多握略少（6 对 7 步）。也就是说 RL 能学会这条规则，但在它之上找不到任何额外的东西。按 <a href="#v4">v4</a> 的同一判法，<b>放手时机这个任务上 RL 没有价值；步数、奖励形状、seed 都不是原因</b>。</p>
 <div class="callout"><b>口径。</b>全部为仿真数字。部署包 <code>SRall</code> 与 <code>h2rand20M</code> 至今一次都没上过实机，真人在环 A/B 未做；这一节的「人」是回放加合成缺陷，不是真人。另外 <code>--policy zero</code> 配 α&gt;0 不是「人自己」（动作为零时 g=0.5，辅助会命令一个半开的手），人自己的行只能用 α=0。</div>
 <p class="small">JSON 在 <code>assets/l20-stage1-3-results/v8/</code>（r4 = 两种停放约定的对照，r5 = 最终一轮）。代码在 HMI 仓库：库 <code>shared_release_bank.py</code>、环境 <code>shared_release.py</code> + <code>xmls/scene_mjx_shared_release.xml</code>、评测 <code>level_3_evaluation/shared_release_eval.py</code>，臂 <code>L20SharedRelease</code> / <code>…Rand</code> / <code>…Clean</code>。berlin 上 tmux <code>syn13</code>、显式单卡 GPU 1，脚本 <code>~/Projects/shc_warp/r1_release.sh</code> 到 <code>r5_final.sh</code>。</p>
 </section>
@@ -447,7 +454,7 @@ a { color:var(--blue); text-decoration:none; }
 <li><b>人群 v2 没覆盖的人类行为</b>：动作中途的犹豫停顿；手腕在抓稳前提前抬走（评测来源 <code>replay_early_lift</code> 存在，full_reset 修复后没重跑）；人群参数全部取自文献，等真人 α 随机化会话来校准。</li>
 <li><b>Stage 1.4</b>：z 槽未导出到实机控制器；z_yield 估计要改定义；训练器按 epoch 整体重置把 K=5 会话截到约 2 个 episode，重启前要改训练器或取 K=2。</li>
 <li><b>多物体</b>：圆柱、球、长条的 bank 与残差臂要等 collection v2 的录像；现在这些 trial 只采数据。合成轨迹（v6）目前只有 cube。</li>
-<li><b>放手（v8）接下来</b>：RL 仍输给规则，没试的杠杆是多 seed 与带形状的奖励（现在只有终局奖励 + 晚放每步罚）；底座在仿真里是静止体、推不动，所以「把底座推走」这条失败模式只能在实机上测；几何门控（底面高度／横向偏差／竖直速度）留给部署层。</li>
+<li><b>放手（v8）已定稿</b>：多 seed 与形状奖励都试过了，RL 仍不赢规则，这条线在仿真里到此为止。留给实机的两件：底座在仿真里是静止体、推不动，所以「把底座推走」这条失败模式只能在实机上测；几何门控（底面高度／横向偏差／竖直速度）留给部署层与实机包络一起定。</li>
 <li>多 seed（H2／H2Rand／Long 各一个 seed）；PD 腕部的前馈；质量／摩擦随机化与接触力惩罚；数据集 builder 保留 Transport 段。</li>
 </ul>
 
