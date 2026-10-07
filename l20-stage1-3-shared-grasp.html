@@ -69,14 +69,14 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <body>
 <main class="wrap">
 <a class="bk" href="shared-control.html#stages">← 共享控制路线 · 小阶段</a> · <a class="bk" href="l20-stage1-2-training.html">← Stage 1.2：Training</a> · <a class="bk" href="l20-robust-grasp.html">长期路线</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">实验计划 · Stage 1.2 验收后接入 · 2026-09-13 → 2026-09-30</div>
+<div class="kicker">实验计划 · Stage 1.2 验收后接入 · 2026-09-13 → 2026-10-07</div>
 <h1>Stage 1.3：意图条件的共享抓取控制</h1>
 <p class="lede">复用 Stage 1.2 的 A／B 预测作为用户意图，接入候选选择、几何修正和闭环执行。先比较直接跟踪与目标条件辅助，再根据接触失败决定是否训练 goal-conditioned RL／residual policy。DexGen 是动作先验与人类引导分工的主要参考。</p>
-<p class="meta">状态：<b>当前 v6</b>（2026-09-30）。09-13 在仿真里跑了第 2 步物理回放预检和第 4 步残差 RL 的首轮（v1：环境 L20SharedPinch、20M 步、四条臂，berlin jax）；09-14 上午不重训只换仲裁做了 α 扫描，把控制器接到头显并跑了第一次真人在环 session 20260914T113530Z、修了包络判据（v2）；09-14 下午加了三条长窗口／预测器臂并换到 Warp 后端，发现 jax ≠ Warp 且离群的是 jax，此后全部仿真数字按 Warp 读（v3）；09-16 修了训练器 full_reset bug，用「有缺陷、会反应」的人群 v2 重训并加了规则、行为克隆人、新预测器与 conf α（v4）；同日跑了 Stage 1.4 的首轮（v5）；09-30 把物理筛过的合成抓取轨迹当人手来源换库重训，四条同配方臂对照（v6，由「数学方式生产」会话执行）。全部数字与视频见 <a href="l20-stage1-3-results.html">Stage 1.3 结果</a>；本页保留方案，每个版本的协议在 <a href="#versions">§ 7</a>。当前范围为单一 cube、Quest→retarget→L20；真人在环只有一次调试性 session，<b>没有 const 对 off 的实机对比</b>。已运行的残差、仲裁和物理后端核验不等于完整接口与正式实验已通过。</p>
+<p class="meta">状态：<b>当前 v8</b>（2026-10-07）。09-13 在仿真里跑了第 2 步物理回放预检和第 4 步残差 RL 的首轮（v1：环境 L20SharedPinch、20M 步、四条臂，berlin jax）；09-14 上午不重训只换仲裁做了 α 扫描，把控制器接到头显并跑了第一次真人在环 session 20260914T113530Z、修了包络判据（v2）；09-14 下午加了三条长窗口／预测器臂并换到 Warp 后端，发现 jax ≠ Warp 且离群的是 jax，此后全部仿真数字按 Warp 读（v3）；09-16 修了训练器 full_reset bug，用「有缺陷、会反应」的人群 v2 重训并加了规则、行为克隆人、新预测器与 conf α（v4）；同日跑了 Stage 1.4 的首轮（v5）；09-30 把物理筛过的合成抓取轨迹当人手来源换库重训，四条同配方臂对照（v6，由「数学方式生产」会话执行）；10-07 按用户指令开了<b>放手时机</b>这条新任务（v8：把方块搬到底座上并决定何时松手，新库、新环境、新臂），并为「抓取残差改用两指终点模型的列」写了预注册（v7，未启动）。全部数字与视频见 <a href="l20-stage1-3-results.html">Stage 1.3 结果</a>；本页保留方案，每个版本的协议在 <a href="#versions">§ 7</a>。当前范围为单一 cube、Quest→retarget→L20；真人在环只有一次调试性 session，<b>没有 const 对 off 的实机对比</b>。已运行的残差、仲裁和物理后端核验不等于完整接口与正式实验已通过。</p>
 <div class="key good"><b>选型：</b>1.2 负责“用户想怎样抓”，1.3 负责“如何辅助完成这个抓法”。保留直接跟踪预测的对照组；第一版执行模块可以不训练，出现明确的接触／动力学缺口后再引入学习型控制器。</div>
 <p class="meta">路线复盘：<a href="l20-stage1-4-review.html">Stage 1.4 阶段性总结与待决问题</a> 汇总最新讨论；本页保留本阶段协议，不把讨论方案回填为已完成验收。</p>
 <div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
-<caption>版本索引 · 当前 v6 · 与 <a href="l20-stage1-3-results.html">结果页</a>共用版本号；协议本身在 <a href="#versions">§ 7</a></caption>
+<caption>版本索引 · 当前 v8 · 与 <a href="l20-stage1-3-results.html">结果页</a>共用版本号；协议本身在 <a href="#versions">§ 7</a></caption>
 <thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
 <tbody>
 <tr><td><a href="#v1">v1</a></td><td>2026-09-13</td><td>L20SharedPinch：腕部外生回放、手指 ±0.15 rad 有界残差、α 门控；四条臂 20M 步，berlin jax</td><td>计划第 4 步首跑；先验证环境可训与零线</td><td><a href="l20-stage1-3-results.html#v1">结果 v1</a>，策略数字被 v3／v4 取代</td><td><a href="l20-stage1-3-results.html#v1-fig">rollout</a></td></tr>
@@ -85,6 +85,8 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <tr><td><a href="#v4">v4</a></td><td>2026-09-16</td><td>full_reset 修复；人群 v2 重训 H2／H2Rand；C0 规则、C5 行为克隆人、H2Pred、conf α</td><td>回放的人开环、策略没见过缺陷</td><td><a href="l20-stage1-3-results.html#v4">结果 v4</a>，当前有效</td><td><a href="l20-stage1-3-results.html#v4-fig">图 + rollout</a></td></tr>
 <tr><td><a href="#v5">v5</a></td><td>2026-09-16</td><td>Stage 1.4 首轮：会话持续 K=5、历史 z、非对称 critic</td><td>跨 trial 推断操作者</td><td><a href="l20-stage1-3-results.html#v5">结果 v5</a>，验收未过；计划在 <a href="l20-stage1-4-review.html#v2">1.4 页 v2</a></td><td><a href="l20-stage1-3-results.html#v5-fig">曲线</a></td></tr>
 <tr><td><a href="#v6">v6</a></td><td>2026-09-30</td><td>训练库换成物理筛后的合成抓取轨迹；四条同配方臂 R／S／SR／S2R，berlin Warp 单卡</td><td>真人示教只有 95 条，问合成能否替代或超过</td><td><a href="l20-stage1-3-results.html#v6">结果 v6</a>：能替代，无增益；部署包 SRall</td><td><a href="l20-stage1-3-results.html#v6-fig">四臂对照图</a></td></tr>
+<tr><td><a href="#v7">v7</a></td><td>2026-10-07</td><td>抓取残差的目标槽换成两指终点模型的单帧预测列</td><td>预测器换了；问新目标列能否让残差更好</td><td><a href="l20-stage1-3-results.html#v7">结果 v7</a>：预注册，未启动</td><td>—</td></tr>
+<tr><td><a href="#v8">v8</a></td><td>2026-10-07</td><td>新任务：放手时机（搬到底座上再松手）；新库从原始头显日志切放手窗口，新环境加静止底座与保持权重动作</td><td>10-07 用户指令；推翻设计文档 §2「不自动张手」（带日期的设计变更，仅限仿真）</td><td><a href="l20-stage1-3-results.html#v8">结果 v8</a>：规则 0.71 赢 RL 0.62，人自己 0.27</td><td><a href="l20-stage1-3-results.html#v8-fig">缺陷矩阵</a></td></tr>
 </tbody></table></div>
 <nav class="toc" aria-label="本页目录"><a href="#boundary">能力边界</a> · <a href="#architecture">接入架构</a> · <a href="#execution">执行选型</a> · <a href="#dexgen">DexGen 参考</a> · <a href="#evaluation">对照与判据</a> · <a href="#runbook">当前五步</a> · <a href="#versions">版本协议</a></nav>
 
@@ -182,6 +184,10 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <p>在 v4 环境上：同一仿真人持续 K=5 个 episode（会话状态经训练封装的 preserve_info 跨 full reset 传递）；策略观测追加 5 维 z（顺从估计、接触时开合、接触步数、合拢速率、上一结局），critic 另看真实人参数（字典观测、非对称 critic）。臂：H2Hist（z 从历史算）、H2HistOracle（z = 真值）。评测：按会话内 episode 序号的成功率。协议与验收在 <a href="l20-stage1-4-review.html#v2">Stage 1.4 页 v2</a>，数字在 <a href="l20-stage1-3-results.html#v5">结果 v5</a>。</p>
 <h3 id="v6">v6 · 2026-09-30 · 合成轨迹当人手来源（换库，不动环境）</h3>
 <p>不改环境、不注册新臂：四条臂都是 v4 的 <code>L20SharedPinchH2Rand</code> 配方，只把轨迹库换掉（<code>L20_SHARED_PINCH_BANK</code>）。R = 真人 pilot 43 条；S = 只用合成（v3 移植、cube054 的 pinch／tripod，物理与运动学筛后 209 条，标签关节取加力后实际达到的关节，与真人库同义）；SR = 合成 + 真人混合；S2R = S 的 checkpoint 在真人库上续训 10M 步。训练在 berlin 单卡、Warp 后端，每臂 20M 步约 5 分钟，仍走同一个训练器入口（full_reset 补丁生效）。评测在留出的真人 formal 52 条上，用 v4 的缺陷矩阵。关口：混合或预训要比纯真人高 ≥3 点——未达成。<a href="l20-stage1-3-results.html#v6">结果 v6</a>；计划稿 <code>hand_control/plan/2026-09-30-synthetic-pretrain-rl-plan.md</code>。</p>
+<h3 id="v7">v7 · 2026-10-07 · 抓取残差改用两指终点模型的列（预注册，未启动）</h3>
+<p>配方 = v6 的 SRall 混合库，目标槽从 ens5 列换成 Stage 1.2 两指终点模型的单帧预测列（种子均值 + 掌心种子散布；该模型没有接触头，接触列仍用原来的）。基线 = SRall 本身；验收 = 留出真人上「人群，无腕扰动」行 ≥ +3 点，否则记为等价。预判无变化（策略一直不看目标槽，见 v2 与 v4 的 H）。排在 v8 之后用同一张卡。判据与范围写在 <code>hand_control/plan/stage13-shared-grasp-design.md</code> §6i。</p>
+<h3 id="v8">v8 · 2026-10-07 · 放手时机（新任务）</h3>
+<p>任务：把一块方块搬到静止底座（顶面 9×9 cm、高 5.4 cm，与头显场景同名 <code>stack_base</code>）顶面并松手。人 = 录像回放的手腕 + 冻结的搬运握姿 + 录像真实的张手增量，缺陷为提前／延后／变慢／张不全。策略在拇指+食指上输出保持权重 g 与有界残差 Δu，<code>u = (1−α)·u_h + α·(g·u_hold + (1−g)·u_open) + α·Δu</code>，α=0 退化为纯遥操作；中、无名、小指按两指协议固定在握拳模板。α 在本环境里是每 episode 的常数，<b>不设几何门，也不继承「用户张手就关辅助」</b>——那条会让提前张手的人把辅助关掉。库 = 从原始头显日志切出的 144 个放手窗口（19 个 session）。零模型基线 = 规则「放稳了再松」，RL 要赢它且干净行不变差；另加「无害行」（人本来松得对时机器多握的时间）。结果在 <a href="l20-stage1-3-results.html#v8">结果 v8</a>，设计变更与全部细节在 <code>stage13-shared-grasp-design.md</code> §2 与 §6h。</p>
 <footer><a href="shared-control.html#stages">共享控制路线 · 小阶段</a> · <a href="l20-stage1-2-training.html">← Stage 1.2：Training</a> · <a href="l20-robust-grasp.html">长期路线</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
 </main>
 </body>

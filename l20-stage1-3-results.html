@@ -69,7 +69,7 @@ a { color:var(--blue); text-decoration:none; }
 <body>
 <div class="wrap">
 <a class="bk" href="l20-stage1-3-shared-grasp.html">← Stage 1.3：共享抓取（计划）</a> · <a class="bk" href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.3 · 2026-09-13 → 2026-09-30</div>
+<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.3 · 2026-09-13 → 2026-10-07</div>
 <h1>Stage 1.3 结果：共享抓取残差 RL 首轮<br><span class="small" style="font-weight:400">L20SharedPinch 环境 · 腕部外生回放 · 手指有界残差 · α 门控 · berlin H200 单卡 + 4090 WSL2 · 20M 步</span></h1>
 
 <p class="lede">这是 <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a>第 4 步（RL 残差策略）的第一次实际运行，接在第 2 步物理回放预检之后（预检结果记在 <a href="l20-stage1-2-results.html#closure">Stage 1.2 结果页</a>）。同一晚还做了三件配套的事：按录像核对并修订了腕部模拟方案、做了 Stage 1.3 相关工作的批判性综述、并按综述里的收益加训了两条对照臂。设计文档：<code>Dex_Hand/human_machine_interaction/hand_control/plan/stage13-shared-grasp-design.md</code>（§1.1 录像核对、§2.1 动态参与、§6c 环境实现、§8 学习曲线）；综述：<code>hand_control/plan/2026-09-13-stage13-related-work.md</code>。</p>
@@ -77,7 +77,7 @@ a { color:var(--blue); text-decoration:none; }
 <div class="callout"><b>本页不是 Stage 1.3 的正式结果。</b>全部在仿真里、只有一名操作者的 95 条 pinch 示教作人手来源、腕部用软 weld 而不是部署的有界 PD、每条臂只跑了 20M 步一个 seed。它回答的只是「这套环境能不能训、零残差的人自己能抓多少、第一版门控残差有没有动静」。结论先写在前面：<b>门控残差策略（α_max 0.3）两个 seed 在 20M 步后与 α=0 的配对差别在 1 到 7 个百分点内，施加的残差只有 2 到 5 mrad；把授权放开到 α≡1 训练的对照臂，在部署门控（α_max=1）下高 8 到 16 个百分点，完全不设门控再高 8 个百分点，掉落从 10% 降到 1%–4%，且不改变用户的抓法。</b>第一版没动静的主因是授权上限（45 mrad），不是没有学习信号。<b>2026-09-14 上午的 α 扫描</b>（<a href="#sweep">同一策略换 arbitration</a>）：收益在 α 0.3–0.5 饱和；几何门控比常数 α 低 6–8 个百分点；喂数据集平均抓取位姿与 oracle 目标成绩相同，真机不需要预测器。真机接线代码已就绪（<a href="#deploy">影子仿真 + 部署包络</a>），第一次真机试跑暴露并修掉了包络的判据问题。<b>2026-09-14 下午的发现改变本页全部仿真数字的读法：</b>jax 与 Warp 后端不等价，离群的是 jax；在 Warp（与 MuJoCo C 一致）下纯人手回放已 98%–100% 成功，手指残差没有东西可补（<a href="#pred">§C</a>）。<b>2026-09-16：</b>修掉训练封装不重置 <code>info</code> 的 bug（此前每个环境槽只有第一个 episode 是真的），把训练里的人换成<a href="#h2">有缺陷、会反应的人群 v2</a>：人单飞被压到 0.56–0.78，在人群上训的残差把手指侧缺陷补回 15–19 点、不伤干净的人、抬离早 0.1–0.3 s；而干净回放训的旧策略面对同样的缺陷几乎不帮——辅助的价值只能来自训练时见过的人的缺陷。</div>
 
 <div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
-<caption>版本索引 · 当前 v6 · 与 <a href="l20-stage1-3-shared-grasp.html#versions">计划页</a>共用版本号；「被取代」指该版策略数字不再作为结论依据，零线与接线事实仍有效</caption>
+<caption>版本索引 · 当前 v8 · 与 <a href="l20-stage1-3-shared-grasp.html#versions">计划页</a>共用版本号；「被取代」指该版策略数字不再作为结论依据，零线与接线事实仍有效</caption>
 <thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
 <tbody>
 <tr><td><a href="#v1">v1</a></td><td>2026-09-13</td><td>L20SharedPinch 环境首轮：α=0 零线，门控残差（α_max 0.3，两个 seed）、Const α≡1、Finger、Speed 四条臂，20M 步，berlin jax</td><td>Stage 1.3 计划第 4 步的第一次实跑；先看环境能不能训、零残差的人自己能抓多少</td><td><a href="#v1">§环境 → §对照臂</a>。策略数字<b>被 v3 取代</b>（jax 后端离群）、<b>被 v4 取代</b>（训练器 full_reset bug）</td><td><a href="#v1-fig">六段 rollout</a></td></tr>
@@ -86,6 +86,8 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td><a href="#v4">v4</a></td><td>2026-09-16</td><td>修训练器 full_reset bug；人群 v2（有缺陷、会反应的仿真人）重训 H2／H2Rand，加 C0 规则、C5 行为克隆人、H2Pred（ens5 目标）、conf α</td><td>研究备忘 C1：回放的人是开环的，策略没见过缺陷；bug 使每槽每 epoch 只有一个真 episode</td><td><a href="#v4">§人群 v2 A–H</a>。<b>当前有效</b>的策略数字与部署导出（H2Rand 包）</td><td><a href="#v4-fig">跨代理矩阵图 + H2Rand rollout</a></td></tr>
 <tr><td><a href="#v5">v5</a></td><td>2026-09-16</td><td>Stage 1.4 首轮：会话持续 K=5、历史特征 z、字典观测非对称 critic，H2Hist／H2HistOracle 两臂</td><td>研究备忘 C3：跨 trial 推断「这次是谁」</td><td><a href="#v5">§I</a>，验收 #2 未过；计划页在 <a href="l20-stage1-4-review.html#v2">Stage 1.4 v2</a></td><td><a href="#v5-fig">按序号曲线</a></td></tr>
 <tr><td><a href="#v6">v6</a></td><td>2026-09-30</td><td>换训练库：把合成抓取轨迹（物理筛后）当人手来源，四条同配方臂 R／S／SR／S2R，berlin Warp 单卡</td><td>真人只有 95 条；问「合成轨迹能不能替代或超过真人数据」</td><td><a href="#v6">§v6</a>：留出真人上只用合成 ≈ 只用真人，混合无增益；部署包 <code>…h2rand_srall20M.npz</code></td><td><a href="#v6-fig">四臂对照图</a></td></tr>
+<tr><td><a href="#v7">v7</a></td><td>2026-10-07</td><td>抓取残差改用两指终点模型的单帧预测列作目标</td><td>预测器换了（两指协议、单帧终点）；问新目标列能不能让残差更好</td><td><a href="#v7">§v7</a>：<b>已预注册，未启动</b>——等上游列齐与同一张卡空出</td><td>—</td></tr>
+<tr><td><a href="#v8">v8</a></td><td>2026-10-07</td><td>新任务与新环境：把方块搬到底座上并<b>决定何时松手</b>；新库（从原始头显日志切放手窗口）、新臂、松手动作接口</td><td>10-07 用户指令：除抓取外还要学放手时机。这推翻了设计文档 §2「不自动张手」——变更以带日期的形式写在 HMI 的 <code>hand_control/plan/stage13-shared-grasp-design.md</code> §2 与 §6h，仅限仿真</td><td><a href="#v8">§v8</a>：规则赢 RL（0.71 对 0.62），人自己 0.27</td><td><a href="#v8-fig">缺陷矩阵</a> · <a href="#v8-timing">松手时刻</a></td></tr>
 </tbody></table></div>
 
 <nav class="tasknav" aria-label="本页目录"><div class="tcard"><div class="tname">本页目录</div>
@@ -93,7 +95,7 @@ a { color:var(--blue); text-decoration:none; }
 <a href="#v2">v2 α 扫描 + 接线</a><a href="#sweep">α 扫描</a><a href="#deploy">真机接线</a>
 <a href="#v3">v3 Long + Warp</a><a href="#pred">预测器接入 / jax≠Warp</a>
 <a href="#v4">v4 人群 v2</a><a href="#h2">人群 v2 A–H</a>
-<a href="#v5">v5 Stage 1.4 首轮</a><a href="#stage14">§I</a><a href="#v6">v6 合成轨迹库</a><a href="#compute">算力</a><a href="#notdone">没做的与下一步</a></div></div></nav>
+<a href="#v5">v5 Stage 1.4 首轮</a><a href="#stage14">§I</a><a href="#v6">v6 合成轨迹库</a><a href="#v7">v7 新预测器列</a><a href="#v8">v8 放手时机</a><a href="#compute">算力</a><a href="#notdone">没做的与下一步</a></div></div></nav>
 
 <section id="v1" aria-label="v1">
 <p class="small">版本 v1 · 2026-09-13 · berlin jax · 策略数字已被 v3／v4 取代，零线与环境事实仍有效</p>
@@ -372,6 +374,50 @@ a { color:var(--blue); text-decoration:none; }
 <p><b>部署物。</b>按 SR 配方在「7 个会话来源的筛后合成 402 条 + 95 条真人 ×4」上训的最终臂 <code>SRall</code> 已导出为 <code>hand_control/data/policies/stage13/l20_shared_pinch_h2rand_srall20M.npz</code>（自检 4.5e-7）。在真人 session 20260914T132128Z 上的离线预演与 09-16 的 <code>h2rand20M</code> 包逐段比较：施加残差量级相同（11–16 对 11–15 mrad），但 α 打开的 tick 比例更高、被 <code>ood</code> 包络关掉的 tick 更少——混合库让归一化器见过更宽的姿态，操作者离 8σ 包络更远。<b>真人在环对比尚未做</b>（需要操作者启动录制）：两个包各跑一个 session，仿真预期是无差别，真人上看的是有没有变差、<code>ood</code> 计数与 α 打开比例。</p>
 </section>
 
+<section id="v7" aria-label="v7">
+<p class="small">版本 v7 · 2026-10-07 · 抓取残差改用两指终点模型的列（<b>预注册，未启动</b>）</p>
+<h2 id="pred-endpoint">v7：新预测器的目标列（预注册）</h2>
+<p>Stage 1.2 交付了两指协议下的单帧终点模型，以及方块库对应的预测列（种子均值、逐种子、掌心种子散布）。v7 要回答的是：把残差策略的目标槽从 v4 用的 ens5 列换成这套列，成绩会不会变好。</p>
+<p><b>判据在跑之前就定死</b>，写在 HMI 仓库的 <code>hand_control/plan/stage13-shared-grasp-design.md</code> §6i：配方 = v6 的 SRall 混合库 + 新列；基线 = SRall 本身；验收 = 留出真人上「人群，无腕扰动」行 ≥ 基线 +3 点，低于此记为<b>等价</b>而不是提升。<b>预判是无变化</b>，有两条既有证据：α 扫描里把目标换成数据集平均与用 oracle 目标成绩相同（<a href="#v2">v2</a>），H2Pred 把目标列换成 ens5 或部署版 je 都不变（<a href="#v4">v4</a> 的 H）——这条线上的策略一直不看目标槽。新预测器对 RL 的价值更可能在多物体上，但那需要 MJX 的网格场景与对应手腕库，两样都不存在，这次范围外。</p>
+<p>没有启动的原因是排队：同一张卡上 v8 先跑完。列已就位，配方与验收已冻结，跑完直接填这一节。</p>
+</section>
+
+<section id="v8" aria-label="v8">
+<p class="small">版本 v8 · 2026-10-07 · 放手时机：新任务、新库、新环境</p>
+<h2 id="release">v8：把方块放到底座上，学「什么时候松手」</h2>
+<p>此前整条线都在辅助<b>合拢</b>。10-07 的指令要的是另一半：搬一块方块到另一块上，<b>在正确的时刻松手</b>。早松是从高处掉下来，晚松是放稳了还攥着。这推翻了设计文档 §2 原本的「不自动张手、释放是用户的独立明确输入」——该条已在 HMI 仓库里写成带日期的设计变更（原规则、为什么推翻、仅限仿真、实机控制器的释放行为不动），本节只记实验。</p>
+
+<h3>数据：原来就有，只是不在任何数据集里</h3>
+<p>派生数据集到抬离就停（实测：每条 trial 抬离后只剩 1 个样本），所以放手段不在现有两个库里。但原始头显日志是完整的 100 Hz 记录：物理行带 16 维命令、手腕 mocap、物体位姿、手掌位姿、接触数，事件行带阶段与成功标记。扫全部 66 个 session：22 个有放置事件、<b>151 次成功放手</b>。新 builder 切「搬运 → 放下 → 松手 → 静止」窗口，得到 <b>144 个窗口 / 19 个 session</b>，50 Hz，松手固定在同一索引。</p>
+<div class="callout bad"><b>两个坑，会咬任何读设备日志的人。</b>（1）trial 结束后头显会<b>重置</b>，物体瞬移回出生点——窗口必须在重置事件前截断，否则「放置点」会取到下一次的出生点，实测最大偏 30 cm。（2）设备日志里 <code>qpos</code> 的排布<b>随场景变</b>（单方块场景 35 维、手部关节在偏移 14；四物体场景更长），所以关节切片按 trial 对着命令自动定位：对的时候跟踪误差 0.025 rad，错位时 0.5 rad，builder 里留了守卫。</div>
+
+<h3>环境与动作接口</h3>
+<p>手腕仍是外生回放，场景加一块<b>静止底座</b>（顶面 9×9 cm、高 5.4 cm，与头显侧同名 <code>stack_base</code>），方块的出生点按「录像的放置点落在底座顶面」反推，整条回放因此抬高一个积木高度——手与物体的相对运动与录像逐帧一致，「人在瞄一个更高的目标」这部分是分布外的。底座做成 9 cm 而不是积木大小，是因为录像放进桌面目标圈时散布 ±2.5 cm，而<b>手腕是外生的、策略改不了横向偏差</b>；同尺寸底座会把这个环境变成测放置精度而不是测时机。</p>
+<p>动作不是单纯的残差。±0.15 rad 既按不住提前张开 0.5 rad 的手，也放不开还攥着的手，只输出残差的话「时机」在构造上就不可影响。所以策略多输出一个保持权重 g，在拇指+食指上用</p>
+<div class="math">u = (1 − α)·u_h + α·(g·u_hold + (1 − g)·u_open) + α·Δu</div>
+<p class="small">u_hold 是这次搬运开始时的握姿，u_open 是张开姿。g=1 按住提前张手的人，g=0 替还攥着的人松开；α=0 时整式退化为 u ≡ u_h，所以 α=0 的基线是干净的纯遥操作。中、无名、小指按两指协议固定在握拳模板（与 Stage 1.2 的终点模型同一套姿态约定；实测这比用录像自己的起始姿低 3–5 点，作为协议一致性的代价记在此）。这个环境里 α 是每个 episode 的常数，<b>没有几何门，也没有「用户张手就关辅助」的门</b>——后者会让提前张手的人恰好把辅助关掉。</p>
+
+<h3>仿真人</h3>
+<p>录像的命令自带这名操作者真实的张手过程。但逐帧回放整条命令在物理里握不住方块（实测 0/6 放成，3–91 步就掉），那会把基线压成 0、让后面每个数字都好看。所以搬运段用<b>冻结的起始握姿</b>，张手用<b>录像的真实开手增量</b>叠在上面。缺陷：提前 0–0.5 s、延后 0–0.8 s、张得慢 1–3 倍、张不全 0.6–1.0，30% 的 episode 干净。</p>
+
+<h3>结果（berlin，Warp，256 条配对）</h3>
+<div class="tw"><table>
+<caption>混合缺陷来源。「松手 − 最佳」= 松手时刻相对最佳时刻（方块底面距顶面 ≤3 mm 且速度 ≤2 cm/s 的第一帧），负值为提前；「多握」= 人本来松得对时机器额外延长握持的步数，越小越无害</caption>
+<thead><tr><th scope="col">条件</th><th scope="col">放成</th><th scope="col">早放率</th><th scope="col">终点误差</th><th scope="col">松手 − 最佳</th><th scope="col">多握</th></tr></thead><tbody>
+<tr><td>人自己（α=0）</td><td>0.27</td><td>0.50</td><td>13.5 cm</td><td>+45 步</td><td>31 步</td></tr>
+<tr><td><b>规则「放稳了再松」α=1</b></td><td><b>0.71</b></td><td>0.26</td><td>7.1 cm</td><td>−5 步</td><td><b>0.3 步</b></td></tr>
+<tr><td>RL 60M 步 α=1</td><td>0.62</td><td>0.29</td><td>9.1 cm</td><td>+2 步</td><td>10 步</td></tr>
+<tr><td>规则 α=0.5</td><td>0.68</td><td>0.27</td><td>7.3 cm</td><td>+3 步</td><td>2.7 步</td></tr>
+<tr><td>RL 60M 步 α=0.5</td><td>0.63</td><td>0.32</td><td>8.8 cm</td><td>+1 步</td><td>9.5 步</td></tr>
+<tr><td>一直不松手 α=1</td><td>0.06</td><td>0.22</td><td>18.4 cm</td><td colspan="2">73% 从不松手</td></tr>
+</tbody></table></div>
+<figure class="fig" id="v8-fig"><img src="assets/l20-stage1-3-results/v8-release-matrix.png" alt="六种操作者缺陷下，人自己、规则与 RL 的放成率对照" loading="lazy"><figcaption>v8 · 按缺陷分列：<b>提前松手几乎不花钱</b>（0.54，与干净持平），真正杀伤的是延后 0.09、变慢 0.19、张不全 0.25——辅助的价值在「把没做完的松手做完」，不在拦住急躁的人。规则在每一行都是 0.71（α=1 时辅助完全掌握这两根手指，人的缺陷不再起作用）；RL 在延后行最吃力（0.55）。</figcaption></figure>
+<figure class="fig" id="v8-timing"><img src="assets/l20-stage1-3-results/v8-release-timing.png" alt="四种条件下松手时刻相对最佳时刻的差，以及机器额外延长握持的时间" loading="lazy"><figcaption>v8 · 同一组 episode 的时间轴：人自己比最佳时刻晚 0.9 s 松手、在本该松手后还多握 0.6 s；规则早 0.1 s 松、多握 0.006 s（无害）；RL 时刻准（+0.04 s）但仍会多握 0.2 s。</figcaption></figure>
+<p><b>读法。</b>一条不学习的规则赢了 RL：0.71 对 0.62（α=1）、0.68 对 0.63（α=0.5）。第一轮 20M 步时 RL 只有 0.48，失败模式是<b>太早松手</b>（第 11 步就松，规则第 28 步，人第 82 步）——早放罚 −8 而放成奖 +25，早扔仍有三成落得上去，期望为正；罚改成 −25 后升到 0.48，步数加到 60M 后 0.62。所以「步数不够」这个替代解释被排掉了一半：加步数确实有效，但没有翻盘。按 <a href="#v4">v4</a> 的同一判法，<b>现在不能说 RL 对放手时机有价值</b>。</p>
+<div class="callout"><b>口径。</b>全部为仿真数字。部署包 <code>SRall</code> 与 <code>h2rand20M</code> 至今一次都没上过实机，真人在环 A/B 未做；这一节的「人」是回放加合成缺陷，不是真人。另外 <code>--policy zero</code> 配 α&gt;0 不是「人自己」（动作为零时 g=0.5，辅助会命令一个半开的手），人自己的行只能用 α=0。</div>
+<p class="small">JSON 在 <code>assets/l20-stage1-3-results/v8/</code>（r4 = 两种停放约定的对照，r5 = 最终一轮）。代码在 HMI 仓库：库 <code>shared_release_bank.py</code>、环境 <code>shared_release.py</code> + <code>xmls/scene_mjx_shared_release.xml</code>、评测 <code>level_3_evaluation/shared_release_eval.py</code>，臂 <code>L20SharedRelease</code> / <code>…Rand</code> / <code>…Clean</code>。berlin 上 tmux <code>syn13</code>、显式单卡 GPU 1，脚本 <code>~/Projects/shc_warp/r1_release.sh</code> 到 <code>r5_final.sh</code>。</p>
+</section>
+
 <h2 id="compute">算力与运行方式</h2>
 <div class="tw"><table>
 <tr><th>盒子</th><th>状态</th><th>用法</th></tr>
@@ -387,10 +433,11 @@ a { color:var(--blue); text-decoration:none; }
 <li><b>人群 v2 没覆盖的人类行为</b>：动作中途的犹豫停顿；手腕在抓稳前提前抬走（评测来源 <code>replay_early_lift</code> 存在，full_reset 修复后没重跑）；人群参数全部取自文献，等真人 α 随机化会话来校准。</li>
 <li><b>Stage 1.4</b>：z 槽未导出到实机控制器；z_yield 估计要改定义；训练器按 epoch 整体重置把 K=5 会话截到约 2 个 episode，重启前要改训练器或取 K=2。</li>
 <li><b>多物体</b>：圆柱、球、长条的 bank 与残差臂要等 collection v2 的录像；现在这些 trial 只采数据。合成轨迹（v6）目前只有 cube。</li>
+<li><b>放手（v8）接下来</b>：RL 仍输给规则，没试的杠杆是多 seed 与带形状的奖励（现在只有终局奖励 + 晚放每步罚）；底座在仿真里是静止体、推不动，所以「把底座推走」这条失败模式只能在实机上测；几何门控（底面高度／横向偏差／竖直速度）留给部署层。</li>
 <li>多 seed（H2／H2Rand／Long 各一个 seed）；PD 腕部的前馈；质量／摩擦随机化与接触力惩罚；数据集 builder 保留 Transport 段。</li>
 </ul>
 
-<footer>Yue Yang · 2026-09-13 → 09-30 · <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a> · <a href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a href="index.html">Machine Learning Handbook</a> · <a href="l20-stage1-4-review.html">阶段性总结与待决问题</a></footer>
+<footer>Yue Yang · 2026-09-13 → 10-07 · <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a> · <a href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a href="index.html">Machine Learning Handbook</a> · <a href="l20-stage1-4-review.html">阶段性总结与待决问题</a></footer>
 </div>
 </body>
 </html>
