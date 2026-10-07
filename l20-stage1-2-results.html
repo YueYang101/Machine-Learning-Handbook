@@ -72,7 +72,7 @@ a { color:var(--blue); text-decoration:none; }
 <body>
 <div class="wrap">
 <a class="bk" href="l20-stage1-2-training.html">← Stage 1.2：Training（计划）</a> · <a class="bk" href="l20-stage1-3-shared-grasp.html">Stage 1.3</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.2 · 2026-09-13 · 更新 2026-10-07 · 当前 v12（<a href="#joint">联合模型</a>、<a href="#v5">合成管线</a>、<a href="#v6">合成数据评估</a>、<a href="#v7">移植式合成与五臂</a>、<a href="#v8">生成式抓取替代真人</a>、<a href="#v9">在线学习</a>、<a href="#v10">DexYCB 真人运动</a>、<a href="#v11">在线学习改进</a>、<a href="#v12">现场在线学习</a>）</div>
+<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.2 · 2026-09-13 · 更新 2026-10-07 · 当前 v13（<a href="#joint">联合模型</a>、<a href="#v5">合成管线</a>、<a href="#v6">合成数据评估</a>、<a href="#v7">移植式合成与五臂</a>、<a href="#v8">生成式抓取替代真人</a>、<a href="#v9">在线学习</a>、<a href="#v10">DexYCB 真人运动</a>、<a href="#v11">在线学习改进</a>、<a href="#v12">现场在线学习</a>、<a href="#v13">数据生成审视</a>）</div>
 <h1>Stage 1.2 结果：意图预测／人类模型建模<br><span class="small" style="font-weight:400">pilot 6 个 session + 正式 session 1 · 95 条 pinch 示教 · 留一 session 交叉验证 · 手册 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a> 的首个 run</span></h1>
 
 <p class="lede">这是 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a>的第一次实际运行：用 <a href="l20-robust-grasp-stage1.html">Stage 1.1</a> 当天采集的 95 条 Quest→retarget→L20 示教，按计划的阶梯（B0／B1／M0／方案 A／方案 B）训练并在留出的 session 上比较，附影子手视频。<b>结论先行：</b>抬离前 1 s，学习模型比「保持当前姿态」好 3 cm、比最近示教和常数预测好 0.5 cm；残差形式的小模型在抬离时刻误差 0.9 cm；方案 B（Flow Matching）与确定性回归无差异且候选无多模态，方案 A（VQ-VAE＋AR）停在码本重建；一个只看当前 25 维状态的线性模型在 1 s 提前量上是最好的。数据侧的两个发现比模型更重要：抓取提示与方向提示都没有在标签里留下痕迹。</p>
@@ -94,6 +94,7 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td><a href="#v10">v10</a></td><td>2026-10-07</td><td>终点仍由生成式抓取库给（Dexonomy 规范库），抬离前那段连续运动从公式换成公开数据集 DexYCB 里的真人伸手抓取（subject 01，50 条右手，按头显规则重定抬离，相对自己终点移植、放慢 1–3 倍，筛掉扫过物体／桌面的路径）；同 v8 协议，全输入与只用掌姿。</td><td>用户：现阶段问题：生成式数据库产生的轨迹不连续，不符合模型的输入；先用 DexYCB 试「真人运动 + 生成式终点」。</td><td><a href="#dexycb">§DexYCB</a>：只用掌姿 3.85 / 2.81 / 1.43 cm（公式 4.06 / 3.14 / 1.77），只在抬离时刻真的变好（−0.34 cm），1 s 前无差别；全输入 6.64 / 6.27 / 7.11（手指出分布）。旋转节奏对上了，来向没对上；仍过不了验收线</td><td><a href="#v10-fig">剩余运动曲线</a></td></tr>
 <tr><td><a href="#v11">v11</a></td><td>2026-10-07</td><td>在线学习的两个改进，都在 v9 的逐次模拟里测：① 多任务输出——基座和在线学习除了终点，再学未来 1 s 的掌姿轨迹和拇指／食指接触点；② 线性修正与全网络微调按剩余距离加权混合。调参目标改为三个时刻各除以验收线；新增「formal 52 条单独从基座开始」这条流。</td><td>用户：在线学习还有没有提升空间；输入历史 1 s、输出未来 1 s 加接触点，抓取策略是不是学得更快；试一试。</td><td><a href="#online-v11">§在线学习改进</a>：加权混合留出段 1.0 / 0.5 / 0 s 为 1.38 / 1.49 / 0.88 cm（全网络微调 1.89 / 1.55 / 0.89），换 4 个基座仍成立；多任务只让基座好 0.1–0.4 cm，在线学习没有更快；现场版见 v12</td><td><a href="#v11-fig">学习曲线</a></td></tr>
 <tr><td><a href="#v12">v12</a></td><td>2026-10-07 晚</td><td>现场在线学习 <code>--online ft_fut</code>：m0 换成 v11 的「终点 + 未来 1 s」基座；成功抓取学终点 + 未来 1 s，其余运动（掉落、没有结果、从没抬起、有标签 3 s 之前的接近）只学未来 1 s；无标签窗口按运动量、距离、跳变过滤；每段运动存盘，续学跨 session 累积；操纵台一键启动。</td><td>用户：输出加未来 1 s，数据量足够大时数据效率更高，不只靠最后接触；试一试，用操纵台启动。</td><td><a href="#online-v12">§现场在线学习</a>：回放冒烟通过（10-04 demo：两次抓取 + 540 个无标签窗口）；待实测</td><td>—</td></tr>
+<tr><td><a href="#v13">v13</a></td><td>2026-10-07 午</td><td>数据生成方式审视（用户三问：接近与手势同步解决了吗、能否换成不同模型分别覆盖；真人数据能否用、能否处理、berlin 上跑更多种类、落点必须符合物理；数采场景要不要换成有 digital twin 的 benchmark）：判别实验——DexYCB subject-01 按抬离接触指分精细／整手，比较接近方向；补跑 v10 漏掉的两格（DexYCB 运动 + 手指脱钩；只用精细抓取的运动）。</td><td>用户：审视目前的数据生成方式；最终目的是不同物体的泛化，生成手势不能穿透。</td><td><a href="#datagen-review">§数据生成审视</a>：同步已解、连续接近未解；DexYCB 精细抓取的来向仍与操作者差 96°–114°（不是抓取类型的效应，没下载更多 subject）；「DexYCB 运动 + 脱钩」全输入 3.59 / 3.37 / 2.02 cm，到只用掌姿的上限、不过线；场景建议换 YCB 子集</td><td><a href="#v13-fig">接近方向</a></td></tr>
 </tbody></table></div>
 
 
@@ -102,7 +103,7 @@ a { color:var(--blue); text-decoration:none; }
 <a href="#v2">v2 q_ref 重跑</a><a href="#ablation">消融</a><a href="#qref">q_ref</a><a href="#verdict">裁决</a><a href="#failures">失败解剖</a><a href="#closure">1.3 预检</a>
 <a href="#v3">v3 实时预测器</a><a href="#live">实时演示</a><a href="#contacts">接触点</a><a href="#confidence">置信度</a>
 <a href="#v4">v4 联合模型</a><a href="#joint">联合模型</a>
-<a href="#v5">v5 合成管线</a><a href="#v6">v6 合成数据评估</a><a href="#v7">v7 移植式合成与五臂</a><a href="#v7-deploy">在线接入</a><a href="#v8">v8 生成式抓取替代真人</a><a href="#v9">v9 在线学习</a><a href="#v10">v10 DexYCB 真人运动</a><a href="#v11">v11 在线学习改进</a><a href="#v12">v12 现场在线学习</a><a href="#next">缺口与下一步</a></div></div></nav>
+<a href="#v5">v5 合成管线</a><a href="#v6">v6 合成数据评估</a><a href="#v7">v7 移植式合成与五臂</a><a href="#v7-deploy">在线接入</a><a href="#v8">v8 生成式抓取替代真人</a><a href="#v9">v9 在线学习</a><a href="#v10">v10 DexYCB 真人运动</a><a href="#v11">v11 在线学习改进</a><a href="#v12">v12 现场在线学习</a><a href="#v13">v13 数据生成审视</a><a href="#next">缺口与下一步</a></div></div></nav>
 
 <span id="v1"></span>
 <h2 id="data">数据：采到了什么，发现了什么</h2>
@@ -568,8 +569,40 @@ mjpython -m training.stage12_intent live --source udp --port 5599 --ghost-udp 56
 <p class="small">待补：用户的头显实测（现场逐次误差：展示模型、基座、保持，各在学之前打分）；在存下来的运动上离线对比「只学终点／加未来（只用有标签的）／再加无标签运动」，回答无标签运动多了以后是否学得更快。</p>
 </section>
 
+<section id="v13" aria-label="v13">
+<p class="small">版本 v13 · 2026-10-07 午 · 数据生成方式审视：轨迹连续性、真人数据、数采场景（审视备忘与执行记录 <code>human_machine_interaction · hand_control/plan/2026-10-07-data-generation-review.md</code>；判别实验、两格补跑与配对 <code>training/artifacts/stage12_intent/synthetic/gen/diag_20261007b/</code>；数据 <code>gd_dexycb_dec.npz</code>、<code>gd_dexycb_prec.npz</code>、<code>gd_dexycb_prec_dec.npz</code>，结果在同目录 <code>results/</code> 与 <code>results_poseonly/</code>）</p>
+<h2 id="datagen-review">数据生成审视：同步问题已解、来向问题未解、真人数据只能供终点与节奏</h2>
+<div class="key warn"><b>一句话。</b>① 「接近与手势同步」已经解决——它是公式接近生成器的性质，<a href="#v9">v9</a> 的手指脱钩把全输入从 12.6 修到 4.0 cm；「没有连续的人类接近」没有解决——所有公式接近仍与真人完全可分，上限就是只用掌姿（≈ 3.9 / 3.1 / 1.7）。生成器本来就是「终点 × 接近运动 × 手指指令」三个模型拼的，缺的只有一个能给出正确<b>来向</b>的接近模型，而有证据的来源只有这位操作者自己（v3f、在线学习）。② 真人数据能用、链条也在（导入 → 接触感知重解 → 加力 + MuJoCo 闭合 → 移植 → 筛选），但判别实验说明 DexYCB 的来向差异<b>不是抓取类型造成的</b>：同一个人的精细抓取也从小指侧 + 掌法向贴上去，与操作者相差 96°–114°，几乎没有一条在 45° 以内——所以没有下载其余 9 个 subject。补跑的「DexYCB 运动 + 手指脱钩」把 v10 的全输入 6.64 / 6.27 / 7.11 修到 3.59 / 3.37 / 2.02 cm，是目前最好的零本项目录像全输入基座，仍在只用掌姿的上限、三个时刻都不过线；只用精细抓取的运动池反而更差。真人数据的价值在物理闭合后的终点（更多物体）与末段节奏，不在接近。③ 场景换成 YCB 子集（有网格、有实物、有 benchmark、有同物体的真人数据）是可行的建议，由用户决定；前提是物体编码与多物体测试集。</div>
+<p><b>判别实验：来向是任务效应还是界面效应。</b><a href="#v10">v10</a> 的运动池 64 % 是四五指的整手握，当时把「来向不对」归为任务不同。这次把 subject-01 的 50 条右手运动按 09-30 接触探针的抬离接触指分成精细（拇指 + ≤ 2 指：pinch 7、tripod 9）与整手（34），和操作者的 95 条算同一个统计量：手腕相对自己抬离位姿的偏移方向，在抬离时的手系里（x 小指→食指、y 掌法向、z 腕→指）；按剩余距离取样以消掉遥操作慢 1–3 倍的影响。远处（8 cm）双方都沿手指方向（−z）进来；最后 5 cm 操作者的手腕从食指侧（+x）绕进来，DexYCB 的手——精细与整手一样——从小指侧 + 掌法向（−x, +y）贴上去。</p>
+<figure class="fig" id="v13-fig"><img src="assets/l20-stage1-2-results/v13-approach-direction.png" alt="四个子图：前三个是手腕偏移方向在终点手系里 x、y、z 三个分量随剩余距离的中位与四分位带，三条线为本项目操作者、DexYCB 精细抓取、DexYCB 整手握；第四个是剩余 4.6 厘米处每条运动与操作者均值方向夹角的分布" loading="lazy"><figcaption>v13 · 接近方向随剩余距离的变化（中位，带 = 四分位）。x 分量：操作者在最后 5 cm 翻到 +0.8（从食指侧绕进来），DexYCB 两组都停在 −0.5；z 分量：操作者一直沿手指方向（−0.9）到 5 cm 才转，DexYCB 从 −0.5 很早就收到 0。右图：剩余 4.6 cm 处与操作者均值方向的夹角，操作者自己的 95 条集中在 20°–45°，DexYCB 精细与整手都在 60°–120°。</figcaption></figure>
+<div class="tw" tabindex="0" role="region" aria-label="v13 接近方向：操作者与 DexYCB 精细／整手"><table>
+<caption>手腕偏移的均值方向（单位向量，终点手系）与集中度 R（1 = 全部一致）；DexYCB 各组给与操作者均值方向的夹角和 45° 以内的比例。</caption>
+<thead><tr><th scope="col">取样点</th><th scope="col">操作者 95</th><th scope="col">DexYCB 精细 16</th><th scope="col">只 pinch 7</th><th scope="col">DexYCB 整手 34</th></tr></thead><tbody>
+<tr><td>剩余 8.0 cm</td><td>(−0.10, +0.11, −0.99) R 0.70</td><td>52°，12 %</td><td>44°，0 %</td><td>56°，24 %</td></tr>
+<tr><td>剩余 4.6 cm（≈ 操作者 1 s）</td><td>(+0.51, +0.33, −0.79) R 0.62</td><td><b>96°，6 %</b></td><td>102°，14 %</td><td>92°，3 %</td></tr>
+<tr><td>剩余 3.5 cm（≈ 操作者 0.5 s）</td><td>(+0.86, +0.43, −0.28) R 0.70</td><td><b>114°，0 %</b></td><td>122°，0 %</td><td>104°，3 %</td></tr>
+<tr><td>剩余 2.0 cm</td><td>(+0.80, +0.49, +0.36) R 0.67</td><td>110°，0 %</td><td>108°，0 %</td><td>101°，6 %</td></tr>
+</tbody></table></div>
+<div class="tw" tabindex="0" role="region" aria-label="v13 两格补跑在 95 条真人上的掌心误差"><table>
+<caption>95 条单 cube 真人，掌心误差中位 cm（1.0 / 0.5 / 0 s，5 种子均值）。粗体 = 不含本项目任何录像的训练集。</caption>
+<thead><tr><th scope="col">训练数据（终点均为 Dexonomy 库）＋ 运动 ＋ 手指</th><th scope="col">全输入</th><th scope="col">只用掌姿</th></tr></thead><tbody>
+<tr><td><b>DexYCB 运动 ＋ 人的手指（v10）</b></td><td>6.64 / 6.27 / 7.11</td><td>3.85 / 2.81 / 1.43</td></tr>
+<tr><td><b>DexYCB 运动 ＋ 手指脱钩（v13）</b></td><td><b>3.59 / 3.37 / 2.02</b></td><td>3.35 / 2.84 / 1.48</td></tr>
+<tr><td><b>只用 16 条精细抓取的运动 ＋ 人的手指（v13）</b></td><td>10.39 / 10.57 / 12.72</td><td>4.30 / 3.60 / 1.29</td></tr>
+<tr><td><b>只用精细抓取的运动 ＋ 手指脱钩（v13）</b></td><td>3.63 / 3.40 / 2.16</td><td>3.73 / 3.02 / 1.95</td></tr>
+<tr><td><b>公式运动 ＋ 手指脱钩（v9）</b></td><td>4.02 / 3.68 / 2.19</td><td>—</td></tr>
+<tr><td>IK 抓姿库 ＋ 本项目操作者运动的移植（v3f）</td><td>2.39 / 1.89 / 0.91</td><td>2.51 / 1.93 / 0.90</td></tr>
+<tr><td>只用真人 / 保持当前姿态</td><td>2.41 / 1.85 / 0.91 · 4.56 / 3.48 / 0.97</td><td>2.55 / 1.92 / 0.97</td></tr>
+</tbody></table></div>
+<p><b>怎么读。</b>配对（逐 trial、种子平均后的差，均值 + bootstrap 95 %，1.0 / 0.5 / 0 s）：脱钩 − v10 全输入 −3.13 [−3.51, −2.74] / −3.26 / −5.55——崩溃是手指通道的，不是手腕的；DexYCB 手腕 − 公式手腕（同为脱钩）−0.52 [−0.80, −0.23] / −0.33 / −0.17，而同一种数据两次构建（只用掌姿、手指被屏蔽）就差 −0.31 [−0.59, −0.02]，所以 1 s 处 0.5 cm 以内的差别不要当真，稳的只有末段节奏；精细池 − 全池（只用掌姿）+0.53 [+0.27, +0.79] / +0.70 / −0.14，与上面的方向统计一致。对保持：脱钩版 1 s 好 1.42 cm，0.5 s 持平，抬离差 1.09 cm。多物体 10 条（未复核，对称最小）：保持 3.01 / 1.73 / 0.62，脱钩版 2.97 / 2.59 / 1.94，只用真人 5.98 / 5.57 / 3.74——仍是「覆盖而非精度」。</p>
+<p><b>真人数据怎么用、「不穿透」怎么定义。</b>链条的每一步都已存在（导入 <code>dexycb.py</code>；接触感知重解与加力 + MuJoCo 闭合是 09-30 的探针脚本，在仓库外），但真人终点进训练集的物理门没有产线化。「落点符合物理」只能定义成机械手<b>实际停住的构型</b>过抓姿库的 <code>validate</code>（接触在表面、无指节侵入、合拢→加力→抬 8 cm→晃动不掉），不能定义成「指令不穿过表面」——VR 无触觉的指令本来就穿（抬离指令指垫间距 2.2 cm），而不穿过表面的指令回放只握住 0–6 %，加力后才 67–88 %、重解 + 加力 70–96 %。非凸物体要先做凸分解。公开数据今天核实：SHOW3D（HF 不设门槛，Quest 3 几何，hand pose v3）带物体位姿的 pick-up 场景只有 22 个（4 人、6 个物体，坐标系随人移动）；DexYCB 其余 9 人公开可下（每人 12 GB，标签 250 MB）；HOT3D 要点许可、GRAB／MANO／OakInk2／ARCTIC 要用户本人注册。berlin 5 张 H200 空闲，代码与 DexYCB 导入已同步，没有启动下载。</p>
+<p><b>数采场景与 digital twin。</b>现在的四物体是按 YCB 类比物（番茄汤罐、网球、饼干盒比例）用基元代替的，头显只画几何类型 + 尺寸；「圆柱／球太多」是当时为了不 vendor 网格的设计。真正有 digital twin 的是 <b>YCB</b>：21 个扫描网格已在本机，实物套件可购买，DexYCB／HO-3D／GraspNet／BOP 都用它，而且和已导入的真人数据同物体。建议换成 6–8 个 YCB 子集（马克笔、泡沫砖、金枪鱼罐、明胶盒、布丁盒；番茄汤罐、糖盒；马克杯或香蕉），保留 5.4 cm 方块作锚。要改：Mac 场景加 mesh 类型 + CoACD、头显走 L20 网格同一条导出路并重建 APK、抓姿库在网格上采样（Dexonomy 本来吃网格）、预测器物体编码（现在是 one-hot 4 + 尺寸，无法表示 YCB）、<code>live.py</code> 的物体系约定；等于一轮新的采集。两个与数据来源无关的前提：物体编码换成几何描述；复核 21 条 v2-objects trial（自 09-30 起一直没做）。</p>
+<p class="small">没做 / 待办：「界面 vs 场景」只有一个 DexYCB subject 分不开（可用 SHOW3D 的 pick-up 或一个非操作者的 VR session 分）；精细／整手分类来自胶囊代理接触探针，不是人工标注；接近运动继续走操作者自己的路（录像移植 + 在线学习）；真人终点要先把 <code>human_bank.py</code>（重解 + 加力 + 闭合验证，不 import hand_control）做出来，再谈 10 人的终点覆盖与 berlin。</p>
+</section>
+
 <h2 id="next">缺口与下一步</h2>
 <ol>
+<li>（2026-10-07 追加）数据生成审视 <a href="#v13">v13</a>：多物体工作的两个前提——预测器物体编码从 one-hot 4 换成几何描述、复核 21 条 v2-objects trial；真人终点进训练集要先把物理门（接触重解 + 加力 + 闭合验证）产线化；场景是否换 YCB 子集待用户决定；接近运动继续走操作者自己的路，不再为来向下载公开数据。</li>
 <li>（2026-10-07 追加）在线学习：头显实测 <a href="#v12">v12</a> 的现场版（终点 + 未来 1 s + 无标签运动；操纵台一键启动，可多次「接着上次学」）；<a href="#v11">v11</a> 的按剩余距离加权混合之后再接进现场对比。</li>
 <li>（2026-10-07 追加）<b>现阶段问题：生成式数据库产生的轨迹不连续，不符合模型的输入</b>：生成式抓取库只给离散的抓取姿态，模型要的是连续的 1 s 运动；公式补的运动与真人完全可分，公开数据集的真人运动（DexYCB）只补上了旋转节奏，见 <a href="#v10">v10</a>。</li>
 <li>正式 session 2–5（各 52 条 pinch），凑齐 144／48／48；采集脚本已是 pinch-only。</li>
