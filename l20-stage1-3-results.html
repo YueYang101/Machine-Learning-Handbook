@@ -89,7 +89,7 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td><a href="#v4">v4</a></td><td>2026-09-16</td><td>修训练器 full_reset bug；人群 v2（有缺陷、会反应的仿真人）重训 H2／H2Rand，加 C0 规则、C5 行为克隆人、H2Pred（ens5 目标）、conf α</td><td>研究备忘 C1：回放的人是开环的，策略没见过缺陷；bug 使每槽每 epoch 只有一个真 episode</td><td><a href="#v4">§人群 v2 A–H</a>。<b>当前有效</b>的策略数字与部署导出（H2Rand 包）</td><td><a href="#v4-fig">跨代理矩阵图 + H2Rand rollout</a></td></tr>
 <tr><td><a href="#v5">v5</a></td><td>2026-09-16</td><td>Stage 1.4 首轮：会话持续 K=5、历史特征 z、字典观测非对称 critic，H2Hist／H2HistOracle 两臂</td><td>研究备忘 C3：跨 trial 推断「这次是谁」</td><td><a href="#v5">§I</a>，验收 #2 未过；计划页在 <a href="l20-stage1-4-review.html#v2">Stage 1.4 v2</a></td><td><a href="#v5-fig">按序号曲线</a></td></tr>
 <tr><td><a href="#v6">v6</a></td><td>2026-09-30</td><td>换训练库：把合成抓取轨迹（物理筛后）当人手来源，四条同配方臂 R／S／SR／S2R，berlin Warp 单卡</td><td>真人只有 95 条；问「合成轨迹能不能替代或超过真人数据」</td><td><a href="#v6">§v6</a>：留出真人上只用合成 ≈ 只用真人，混合无增益；部署包 <code>…h2rand_srall20M.npz</code></td><td><a href="#v6-fig">四臂对照图</a></td></tr>
-<tr><td><a href="#v7">v7</a></td><td>2026-10-07</td><td>抓取残差改用两指终点模型的单帧预测列作目标</td><td>预测器换了（两指协议、单帧终点）；问新目标列能不能让残差更好</td><td><a href="#v7">§v7</a>：<b>已预注册，未启动</b>——等上游列齐与同一张卡空出</td><td>—</td></tr>
+<tr><td><a href="#v7">v7</a></td><td>2026-10-07</td><td>抓取残差改用两指终点模型的单帧预测列作目标</td><td>预测器换了（两指协议、单帧终点）；问新目标列能不能让残差更好</td><td><a href="#v7">§v7</a>：<b>判为等价</b>，验收未过（关口行 +3／−3，噪声内；该行已接近饱和）</td><td><a href="#v7-fig">对照图</a></td></tr>
 <tr><td><a href="#v8">v8</a></td><td>2026-10-07</td><td>新任务与新环境：把方块搬到底座上并<b>决定何时松手</b>；新库（从原始头显日志切放手窗口）、新臂、松手动作接口</td><td>10-07 用户指令：除抓取外还要学放手时机。这推翻了设计文档 §2「不自动张手」——变更以带日期的形式写在 HMI 的 <code>hand_control/plan/stage13-shared-grasp-design.md</code> §2 与 §6h，仅限仿真</td><td><a href="#v8">§v8</a>：规则赢 RL（0.71 对 0.62），人自己 0.27</td><td><a href="#v8-fig">缺陷矩阵</a> · <a href="#v8-timing">松手时刻</a></td></tr>
 </tbody></table></div>
 
@@ -378,11 +378,22 @@ a { color:var(--blue); text-decoration:none; }
 </section>
 
 <section id="v7" aria-label="v7">
-<p class="small">版本 v7 · 2026-10-07 · 抓取残差改用两指终点模型的列（<b>预注册，未启动</b>）</p>
-<h2 id="pred-endpoint">v7：新预测器的目标列（预注册）</h2>
+<p class="small">版本 v7 · 2026-10-07 · 抓取残差改用两指终点模型的列（预注册 → 已跑，判为等价）</p>
+<h2 id="pred-endpoint">v7：新预测器的目标列</h2>
 <p>Stage 1.2 交付了两指协议下的单帧终点模型，以及方块库对应的预测列（种子均值、逐种子、掌心种子散布）。v7 要回答的是：把残差策略的目标槽从 v4 用的 ens5 列换成这套列，成绩会不会变好。</p>
 <p><b>判据在跑之前就定死</b>，写在 HMI 仓库的 <code>hand_control/plan/stage13-shared-grasp-design.md</code> §6i：配方 = v6 的 SRall 混合库 + 新列；基线 = SRall 本身；验收 = 留出真人上「人群，无腕扰动」行 ≥ 基线 +3 点，低于此记为<b>等价</b>而不是提升。<b>预判是无变化</b>，有两条既有证据：α 扫描里把目标换成数据集平均与用 oracle 目标成绩相同（<a href="#v2">v2</a>），H2Pred 把目标列换成 ens5 或部署版 je 都不变（<a href="#v4">v4</a> 的 H）——这条线上的策略一直不看目标槽。新预测器对 RL 的价值更可能在多物体上，但那需要 MJX 的网格场景与对应手腕库，两样都不存在，这次范围外。</p>
-<p>没有启动的原因是排队：同一张卡上 v8 先跑完。列已就位，配方与验收已冻结，跑完直接填这一节。</p>
+<h3>结果</h3>
+<p>新臂 = SRall 配方（混合库：402 条筛后合成 + 95 条真人 ×4），只把 goal 槽换成终点模型的单帧预测列；基线 = 既有的 SRall 检查点（goal = 本条轨迹自己的抬离位姿，oracle）。两者在同一条链里、同样的来源、<b>同一批留出的真人 formal 52 条</b>上评测，各 256 条配对。两个库各生成一份预测列，列的路径与库配对（避免库与列对不上）。</p>
+<div class="tw"><table>
+<caption>留出真人 formal 52 条，Warp，256 条配对。粗体是预注册的关口行</caption>
+<thead><tr><th scope="col">臂（α）</th><th scope="col">干净</th><th scope="col">欠合拢</th><th scope="col">晚合拢</th><th scope="col">卸载</th><th scope="col">人群，无腕扰动</th><th scope="col">人群</th></tr></thead><tbody>
+<tr><td>SRall 基线（α=1）</td><td>1.00</td><td>1.00</td><td>0.88</td><td>0.95</td><td><b>0.94</b></td><td>0.71</td></tr>
+<tr><td>v7 终点列（α=1）</td><td>1.00</td><td>1.00</td><td>0.82</td><td>1.00</td><td><b>0.97</b></td><td>0.74</td></tr>
+<tr><td>SRall 基线（α=0.5）</td><td>1.00</td><td>0.99</td><td>0.82</td><td>1.00</td><td><b>0.98</b></td><td>0.71</td></tr>
+<tr><td>v7 终点列（α=0.5）</td><td>1.00</td><td>0.99</td><td>0.83</td><td>0.99</td><td><b>0.95</b></td><td>0.71</td></tr>
+</tbody></table></div>
+<figure class="fig" id="v7-fig"><img src="assets/l20-stage1-3-results/v7-endpoint-goal.png" alt="SRall 基线与 v7 终点列在六个缺陷来源上的成功率对照，α=1 与 α=0.5" loading="lazy"><figcaption>v7 · 两条臂几乎重合：关口行 α=1 时 +3 点、α=0.5 时 −3 点，方向相反；其余行差 ≤1 点，只有晚合拢在 α=1 下 −6。换目标列没有改变这条线的成绩，与预注册的预判一致。</figcaption></figure>
+<p><b>判为等价，验收未通过</b>（预注册要求关口行 ≥ +3 点）：α=1 恰好 +3、α=0.5 是 −3，方向相反且都在 256 条的二项噪声（±2.5 点）内。还有一条比胜负更重要的观察：<b>关口行本身已经接近饱和</b>（基线 0.94 / 0.98），留给任何目标列的空间只有几个点——这条关口在 SRall 之后不再有鉴别力，下次该换一条没饱和的行（晚合拢，或带腕扰动的人群 0.71）。预判成立的理由与当初一样：策略不看目标槽。JSON 在 <code>assets/l20-stage1-3-results/v7/</code>。</p>
 </section>
 
 <section id="v8" aria-label="v8">
