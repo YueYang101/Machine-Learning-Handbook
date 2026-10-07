@@ -84,13 +84,15 @@ td.n { text-align:right; font-family:ui-monospace,Menlo,monospace; font-size:.9r
 <div class="kicker">MACHINE LEARNING HANDBOOK · 实验记录 · Stage 1.1 · 2026-09-16 → 2026-09-20</div>
 <h1>Stage 1.1 结果：数采质量<br><span style="font-size:.72em;color:var(--sub)">Quest 手指翻转的测量、速度门控、Mac 相机仲裁（比值 Kalman）、重定向偏差核查与未解决的问题</span></h1>
 <p class="lede">collection v2（<a href="l20-robust-grasp-stage1.html#v3">计划页 v3</a>）的正式采集在 2026-09-16 傍晚被同一个问题两次打断：做 tripod 时机器人手指来回跳。这一页记录接下来四天对采集<b>输入侧</b>的测量与修正——每个数字都来自 <code>human_machine_interaction · hand_control/data/quest_sessions/</code> 里的原始 session，协议改动记为计划页 <a href="l20-robust-grasp-stage1.html#v4">v4</a>。95 条 pinch 的训练结果仍在 <a href="l20-stage1-2-results.html">Stage 1.2 结果页</a>；本页不含任何模型数字。</p>
-<p class="meta">当前 v4（2026-09-20）。状态：速度门控自 09-16 傍晚起随 <code>collect_v2_formal.sh</code> 默认开启；Mac 相机仲裁 09-18 接入、09-20 第一次真人在环暴露了"相机看手背时投错票"，已改为按视角选线索；v2-objects 正式 session 1 至今<b>没有完成的 trial</b>（三次尝试都在 trial 1–3 停止）。持续 0.5–2 s 的 Quest 翻转与顶抓时"没有任何相机看得见掌心"仍未解决，下一步在 <a href="#next">§7</a>。</p>
+<p class="meta">当前 v5（2026-09-23，离线回放已验证、<b>未上机</b>）。状态：速度门控自 09-16 傍晚起随 <code>collect_v2_formal.sh</code> 默认开启；Mac 相机仲裁 09-18 接入、09-20 第一次真人在环暴露了"相机看手背时投错票"，已改为按视角选线索；09-23 仲裁器的 Kalman 噪声模型按录制数据重设（白噪声做 R、映射离散度进投票边界、Q 取实测手指加速度中位数，<a href="#v5">§3 末</a>）；v2-objects 正式 session 1 至今<b>没有完成的 trial</b>（三次尝试都在 trial 1–3 停止）。持续 0.5–2 s 的 Quest 翻转与顶抓时"没有任何相机看得见掌心"仍未解决——因果规则的可行性已测为否定（<a href="#next">§7</a>）。</p>
 
 <div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
-<caption>版本索引 · 当前 v4 · 与 <a href="l20-robust-grasp-stage1.html#versions">计划页</a>共用版本号；v1–v3 的数据在 <a href="l20-stage1-2-results.html">Stage 1.2 结果页</a>，本页只记 v4（输入侧修正）</caption>
+<caption>版本索引 · 当前 v6 · 与 <a href="l20-robust-grasp-stage1.html#versions">计划页</a>共用版本号；v1–v3 的数据在 <a href="l20-stage1-2-results.html">Stage 1.2 结果页</a>，本页只记 v4–v6（输入侧修正）</caption>
 <thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
 <tbody>
 <tr><td><a href="#v4">v4</a></td><td>2026-09-16 → 09-20</td><td>v3 协议不变，采集输入侧加两级：每指<b>速度门控</b>（<code>--finger-gate on</code>）；Mac 相机 + MediaPipe 的<b>仲裁</b>（<code>--cam-udp</code>，伸展比 Kalman，按视角选 3-D／2-D 线索）。网页控制台一键启动采集／相机／APK。<code>target_ctrl</code>（Stage 1.2 的模型输入）自此是门控后的命令，<code>source</code> 行保持原始。</td><td>Quest 在遮挡的卷曲手指上整块切换假设，每指 3–24 次/min，置信位全程为高（<a href="#flips">§1</a>）</td><td><a href="#gate">§2</a> 门控 ~40% 翻转不到机器人；<a href="#camera">§3</a> 相机仲裁；<a href="#live">§4</a> 09-20 在环 session 的失败与修正</td><td><a href="#v4-fig-flips">翻转图</a> · <a href="#v4-fig-paired">配对图</a> · <a href="#v4-fig-live">在环图</a></td></tr>
+<tr><td><a href="#v5">v5</a></td><td>2026-09-23（离线）</td><td>抓取协议不变；视角标定改为<b>定时模式</b>（每手势 5 s 准备 + 10 s 自由转手保持，4 手势 60 s，去掉角度格显示），头显 APK 新增 <b>passthrough 相机视频通道</b>（1280×960、20 fps、每帧带相机位姿与内参），Mac 上第二路 MediaPipe 记为 <code>cam_source camera="quest"</code>；实测 20 fps 时头显渲染仍 90 fps、物理步长 +20 µs。相机仲裁的 Kalman 噪声模型按录制数据重设：标定产物 v2 分开存<b>白噪声 σ</b>（做 R）与<b>映射离散度 σ</b>（进投票边界），Q 由 3 改为实测手指加速度中位数 5 ratio/s²，legacy 模式 R 0.06→0.025；<code>latest.json</code> 由 225005Z 重建。共享的 hindsight 标注器；因果翻转特征可行性脚本。</td><td>v1 产物把 bin 内离散度（白噪声的 2–8 倍、系统性的视角依赖）当 R 喂给滤波器，滤波器变慢而偏差不减；Q=3 跟不上 p99 卷曲、只靠"3 帧野值重启"（<a href="#v5">§3 末</a>）</td><td>八个相机 session 回放：标定模式误 hold 17.7→11.5 s、拦下的翻转 3→6/89，legacy 12→12/89、18.8→17.1 s；拦下无一行减少，误 hold 16 行里 4 行增 0.1–0.6 s；<b>尚未上机</b>。因果规则可行性：AUC 0.34–0.53，否定（<a href="#next">§7</a>）</td><td>—</td></tr>
+<tr><td><a href="#v6">v6</a></td><td>2026-09-23 晚（离线）</td><td>抓取协议不变；头显相机改用<b>右目 1280×1280</b>（手在画面中下部，投影手腕落在画面内 92%）；标定产物 <b>v3</b> 存操作者的张开/握拳模板；仲裁器加了一条"<b>稳态纠正</b>"路径（相机与 Quest 持续分歧即纠正、不等跳变；相机证据在时 hold 不按时钟放手；无 hold 可守时按模板把手指合成到相机估计）——<b>回放否定，默认关闭</b>（<code>CameraArbiterConfig.steady_correction</code>）；视角标定新增<b>持物手势集</b>（open + 圆柱满握 + 小物 tripod + 卡片 pinch + 球握，5 × 15 s = 75 s，控制台「视角校准·持物」）；回放脚本 <code>--camera=quest</code>。</td><td>163428Z：tripod 的无名指/小指被 Quest 从 hold 第一帧起二值化成伸直（0.82 vs 双相机 0.65），错段 1.2–1.7 s、只在手背朝头显时；现有仲裁两路相机几乎无动作（每指 ≤1.0 s）。像素投票：对完全翻转逐帧 98–100% 可辨，对半弯无判断；小指底噪 p95 92–109 px 不过"1/3 间距"判据。</td><td>稳态纠正回放：八个抓取 session 每 session 纠正 1.7–28.6 指·秒（占空比 5–15%，指尖位移 3–10 cm），其中 25–95% 是把 Quest 读作卷曲的手指"掰开"（MediaPipe 在物体后盲区的先验），仅 0–10% 落在标注翻转内；203316Z 真实过渡滞后 p90 471→785 ms；真值 session 里握拳被误张开 0.5–0.9 s/指、tripod 无名指纹丝不动。判据不过，关闭；hold 上限是对相机系统误差代价的封顶，不是占位符（<a href="#v6">§3 v6</a>）</td><td>—</td></tr>
 </tbody></table></div>
 
 <div class="toc"><b>目录</b> · <a href="#flips">§1 问题的测量</a> · <a href="#gate">§2 速度门控</a> · <a href="#camera">§3 相机仲裁</a> · <a href="#live">§4 在环 session 与修正</a> · <a href="#retarget">§5 重定向"伸直"偏差核查</a> · <a href="#tools">§6 工具</a> · <a href="#next">§7 未解决与下一步</a> · <a href="#sessions">§8 session 台账</a></div>
@@ -132,6 +134,48 @@ td.n { text-align:right; font-family:ui-monospace,Menlo,monospace; font-size:.9r
 </table></div>
 <p><b>仲裁器</b> <code>level_2_landmark_filters/camera_arbiter.py</code>（13 项检查）：每指一个常速度 Kalman 滤相机的伸展比（野值门 4σ、连续 3 帧野值即真实阶跃重启、对 Quest 的偏差取滑动中位数校正）。相机<b>只在 Quest 发生跳变时投票</b>（门控的 jump，或 150 ms 内伸展比变化 ≥0.2）：相机站在跳变前一侧 → 新状态被否决、hold 旧姿态，直到 Quest 回来／相机转而同意／0.6 s 上限；相机站在跳变一侧 → 门控正在 hold 的跳变立刻放行；相机不新鲜（&gt;0.25 s）或看不见 → 只剩门控。离线回放 115223Z：9 次否决，两次明确的 Quest 翻转（中指 26–29 s、34–35 s）被压住；一次真实卷曲（20.0 s）因相机恰好丢手被延迟 0.9 s——上限由此设定。</p>
 
+<h3 id="v5">v5（2026-09-23，离线）：Kalman 的 R、Q 与投票边界按录制数据重设</h3>
+<p>问题：滤波器要不要按 Quest 的误差和 MediaPipe 的误差调，数据里有没有这些误差？答案分三层。<b>Quest 不进 Kalman</b>——它是被投票的对象。持握手势里 Quest 伸展比的逐帧噪声 ≤ 0.0012、持握内离散 0.001–0.003（张开）／0.02–0.05（握拳，是人手自身漂移），|Δ|&gt;0.1 的帧 0.00%，两次标定 60 s 的张开+握拳里速度门控 0 次跳变：它的误差不是方差而是 §1 的双峰切换，数据里唯一能描述它的是按视角格的翻转风险图（36 格里 13 格有 ≥20 s 卷曲数据，18 min 有效，覆盖格上 4.8 次/卷曲分钟，最差格 12.9）。<b>MediaPipe 的误差有两部分</b>，v1 标定产物把它们混成一个 σ 当 R：</p>
+<div class="tw"><table>
+<tr><th>每线索 × palm_z bin × 手指（M/R/L），225005Z 工作空间标定</th><th>3-D 世界比值</th><th>2-D 图像比值</th></tr>
+<tr><td><b>白噪声</b>：相邻帧差的 MAD／√2（滤波器的 R）</td><td class="n">0.010–0.022</td><td class="n">0.014–0.037</td></tr>
+<tr><td><b>bin 内离散</b>：持握帧的 MAD（v1 当作 R 的量）</td><td class="n">0.042–0.084</td><td class="n">0.068–0.277</td></tr>
+<tr><td><b>映射离散</b>：（线索 − 同时刻 Quest）在 bin 与持握内的 MAD（系统性）</td><td class="n">0.040–0.088</td><td class="n">0.072–0.259</td></tr>
+<tr><td>野值：|相邻帧差| &gt; 0.2</td><td class="n">0.2–0.3% 帧对</td><td class="n">1.2–3.7%</td></tr>
+<tr><td>张开 − 握拳 分离度</td><td class="n">0.23–0.56（向手背视角递减）</td><td class="n">−0.22..0.50（斜掌心盲）</td></tr>
+</table></div>
+<p>bin 内离散是白噪声的 2–8 倍（214938Z：2–15 倍），多出来的不是噪声，是 0.25 宽的 palm_z bin 里残留的视角依赖加 MediaPipe 非刚体的手——系统性偏移，Kalman 平均不掉；把它当 R 只让滤波器变慢（09-20 §10 的诊断）。相机时序：dt 中位 33.3 ms、p95 38–39 ms、每 session 9–17 次 &gt;100 ms 空档，94–96% 帧能在 40 ms 内配上一帧 Quest。</p>
+<p><b>改动</b>（<code>cue_calibration.py</code> 产物 v2，v1 文件仍可加载）：<code>sigma_white</code>、<code>sigma_map</code> 与原 <code>sigma</code> 并存；R 取白噪声，投票边界 = max(0.35, 2σ<sub>est</sub>, 2σ<sub>map</sub>)——某视角下曲线不确定的线索只在明显分歧时投票；legacy 模式 R 0.06→0.025；<b>Q 由 3 改为 5 ratio/s²</b>（标定模式按 Quest 每指张开−握拳分离度换成分数单位）。Q 的依据：三个抓取 session 73 499 对门控判定连续的 M/R/L 帧上，|d比值/dt| p50 0.07／p90 0.50／p99 2.73 每秒，|d²比值/dt²| p50 5／p90 29／p99 181 每秒²。合成核验（R 0.02、30 Hz、0.5 的卷曲）：Q=3 跟 p99 卷曲（0.2 s）峭差 0.198 且 3 帧野值→重启；Q=5 峭差 0.058、0 野值；Q=30 跟得更紧（0.019）但估计自身 σ 在 100 ms 相机空档后升到 0.178、250 ms 后 0.963——边界含 2σ<sub>est</sub>，相机就不再投票（回放 115437Z：Q=3/5/10/30 拦下 3/2/2/1 of 8）。5 是真实手指加速度的中位数：由动力学设定、由回放核验、不是对八个标签拟合。</p>
+<div class="tw"><table>
+<tr><th>八个相机 session 回放（拦下的 hindsight 翻转／误 hold 秒；瞬移 0/min、真实过渡延迟不变）</th><th>仅门控</th><th>legacy 旧→新</th><th>标定模式 旧→新</th></tr>
+<tr><td>0918-114841</td><td class="n">0/1 · 0.0</td><td class="n">0/1 · 3.1 → 0/1 · 2.9</td><td class="n">0/1 · 2.9 → 0/1 · 2.2</td></tr>
+<tr><td>0918-115223</td><td class="n">0/2 · 0.0</td><td class="n">0/2 · 3.5 → 0/2 · 3.8</td><td class="n">0/2 · 4.1 → 0/2 · 1.5</td></tr>
+<tr><td>0920-115437（上午机位，标定不可迁移）</td><td class="n">0/8 · 0.0</td><td class="n">6/8 · 2.1 → 6/8 · 2.1</td><td class="n">1/8 · 3.6 → 2/8 · 2.1</td></tr>
+<tr><td>0920-202847</td><td class="n">0/24 · 0.0</td><td class="n">2/24 · 2.7 → 2/24 · 2.7</td><td class="n">1/24 · 1.2 → 1/24 · 1.3</td></tr>
+<tr><td>0920-203316</td><td class="n">2/19 · 0.0</td><td class="n">3/19 · 1.3 → 3/19 · 1.0</td><td class="n">1/19 · 0.1 → 2/19 · 0.7</td></tr>
+<tr><td>0920-211414</td><td class="n">0/14 · 0.0</td><td class="n">0/14 · 1.0 → 0/14 · 0.5</td><td class="n">0/14 · 0.4 → 0/14 · 0.2</td></tr>
+<tr><td>0920-212520</td><td class="n">0/0 · 0.0</td><td class="n">0/0 · 0.6 → 0/0 · 0.6</td><td class="n">0/0 · 0.2 → 0/0 · 0.3</td></tr>
+<tr><td>0920-223549（与标定同机位的 pilot）</td><td class="n">3/21 · 0.0</td><td class="n">1/21 · 4.5 → 1/21 · 3.5</td><td class="n">0/21 · 5.2 → 1/21 · 3.2</td></tr>
+<tr><td><b>合计</b></td><td class="n">5/89 · 0.0</td><td class="n">12/89 · 18.8 → 12/89 · 17.1 s</td><td class="n">3/89 · 17.7 → <b>6/89 · 11.5 s</b></td></tr>
+</table></div>
+<p>起作用的是白噪声 R（单独它就把 115437Z 从 1/8 提到 4/8）；映射项与 Q=5 保住大部分收益并让边界如实反映视角。对照预定判据（拦下不减、误 hold 不增、延迟不变、瞬移 0）逐行看：拦下的翻转没有一行减少，标定模式三行增加（115437Z 1→2、203316Z 1→2、223549Z 0→1）；误 hold 在 16 行里 9 行减少 0.2–2.6 s、3 行不变、<b>4 行增加 0.1–0.6 s</b>（legacy 115223Z 3.5→3.8；标定 202847Z 1.2→1.3、212520Z 0.2→0.3、203316Z 0.1→0.7——后者同时多拦一个翻转）；≥200 ms 迟放的翻转 4 行减少、2 行增加（legacy 223549Z 2→3、标定 115437Z 0→1）。标签集很小（每 session 8–24 个翻转），这是净收益而非一致收益。上限仍是 09-20 复盘说的：同机位 pilot 里相机只有 22% 的帧看到手，所有仲裁变体拦下 0–1/21 而仅门控拦下 3/21——差额是相机<b>确认</b>了它看错的跳变，这条路径仍未核验。改动未上机；下次 session 的 <code>--cam-calibration auto</code> 会加载新产物（task_config 记新 sha）。复算：<code>calib_kf_design.py</code>、<code>arbiter_replay_variants.py --ab --group=all</code>；备忘 §14。</p>
+
+<h3 id="v6">v6（2026-09-23 晚，离线）：第二次双相机 session、像素投票核查、稳态纠正试验（否定）</h3>
+<p><b>录制。</b>163428Z（定时协议 60 s，Mac + 头显右目 1280×1280 + Quest）：头显 1242 帧有手（81%，20 fps，帧间隔 p50 49 ms、p95 78 ms），100% 与 20 ms 内的 Quest 帧配对（p50 2.4 ms）；投影手腕落在画面内 92%（上一场在右下缘）。Mac 1936 帧（82%）。tripod 段 hold 开始时手势就没匹配上：Quest 读无名指/小指 0.81/0.82，头显 3-D 0.57/0.64、Mac 0.69/0.70——操作者只弯了一半，Quest 从第一帧起把它们二值化成伸直，错段 1.2–1.7 s，只在手背朝头显（视角 +0.9）时出现；hindsight 标注器把正确的 0.54 段标成"翻转"，因为错误状态是多数。与 161500Z 的 36/34% 不可比；下次标定 tripod 必须把两指弯到底。</p>
+<p><b>像素投票核查</b>（hold 段、手掌在画面内）：(a) 坐标路径对——掌心五点的共同偏移中位 18 px、p95 43 px，手腕的 +28/+38 px 是关键点定义差异（MCP −15…−7 / −1…+9，指尖 −19…+6 / +2…+13），MRUK 的相机位姿取自帧捕获时刻，配对延迟扫描最优在 +40…+60 ms、值 2 px；(b) Quest 正确的 (hold, 手指) 对上的底噪按视角 bin：指尖 p50 18–51 px、p95 50–112 px，小指每个 bin 都 92–109 px，侧视 bin 最差；(c) 用操作者自己的张开/握拳模板投影得到的假设间距 102–232 px（全幅）、55–128 px（张开 vs 弯 40%）；p95 底噪／全幅间距：食指 0.31–0.52、中指 0.32–0.57、无名指 0.25–0.64、小指 0.55–1.02——预定判据（&lt;1/3）只在正对/背对 bin 对食/中/无名指成立，小指、侧视从不成立；(d) 直接模拟投票（Quest 当前手指 vs 另一状态的模板，看 MediaPipe 离谁近）：Quest 正确的 hold 逐帧一致 94–100%（边距 0），边距 30 px 时误判 0%（4–25% 弃权）；完全翻转可辨 98–100%（握拳段反事实，含背视）；半弯的 tripod 无名指/小指：指尖 53/26% 判弯、链 23/8%，边距 30 时基本弃权。<b>二值检验看不见半弯</b>，这是它该给的答案，也说明它帮不上这一场的忙。</p>
+<p><b>现有仲裁器在这一场</b>：Mac（同场产物）每指拒绝 0.6/1.0/0.6 s，头显 0.4/0.3/0.5 s；tripod 的错段一动不动——边距内没有可投票的跳变，0.6 s 上限也短于错段。缺口在触发条件，于是做了"稳态纠正"：相机与 Quest 的持续分歧（连续 3 次相机更新超出边界）本身就触发；有 hold 可守则 hold 靠证据而非时钟持续；相机与两边都不同意时，用标定产物 v3 里操作者的张开/握拳模板把这根手指的骨段旋转到相机估计对应的伸展比（<code>finger_chain_at_ratio</code>），hold 到位交接。4 项新测试；回放变体 <code>arb v3 hold / steady</code>。</p>
+<div class="tw"><table>
+<tr><th>163428Z 真值对照（协议真值；tripod 无名指/小指 = 双相机 0.65）</th><th>门控</th><th>v5 仲裁</th><th>v6 稳态纠正</th></tr>
+<tr><td>tripod 无名指 输出中位 / 错 &gt;0.2 的秒数</td><td class="n">0.81 / 3.4</td><td class="n">0.81 / 3.3</td><td class="n">0.82 / 3.5（纠正 0.3 s：误差 0.15 低于诚实边距 0.35–0.62）</td></tr>
+<tr><td>tripod 小指</td><td class="n">0.82 / 4.5</td><td class="n">0.82 / 4.5</td><td class="n">0.67 / 4.2（纠正 0.6 s）</td></tr>
+<tr><td>握拳 食/中/无名指 误张开秒数</td><td class="n">0 / 0 / 0</td><td class="n">0 / 0 / 0</td><td class="n"><b>0.8 / 0.7 / 0.5</b></td></tr>
+<tr><td>八个抓取 session：每 session 纠正指·秒 · 次数 · 指尖位移 p50/max</td><td class="n">—</td><td class="n">—</td><td class="n">1.7–28.6 · 14–93 · 27–98 / 99–125 mm</td></tr>
+<tr><td>纠正方向：相机比 Quest"更张开"且 Quest 读数 &lt;0.6 的占比 · 落在标注翻转内</td><td class="n">—</td><td class="n">—</td><td class="n"><b>25–95%</b> · 0–10%</td></tr>
+<tr><td>拦下翻转 / 真实过渡滞后 p90</td><td class="n">—</td><td class="n">203316Z 2/19 · 471 ms；223549Z 1/21</td><td class="n">3/19 · <b>785 ms</b>；0/21</td></tr>
+</table></div>
+<p><b>结论：判据不过，默认关闭。</b>单目比值线索在 Quest 出错的视角（侧视、背视）映射离散度太大，纠不了半弯；在物体后面它自己也在编——把抓着东西的手指掰开。hold 上限因此不是"等证据"的占位，而是对相机系统误差代价的封顶：滤波器平不掉系统误差。头显重投影通道保留，作为跳变时的第二证据待测。重定向器对合成手指链：主屈曲关节单调，次级关节在半弯处抖 0.05–0.43 rad（小指外展 0.43）——若要启用需改成关节空间插值。</p>
+<p><b>下一次录制：遮挡下的真值。</b>持物保持：物体固定手势（恒定性仍是真值，连被物体挡到半弯的手指也是），并像真实抓取一样遮住手指。控制台「视角校准·持物」= <code>--calib-gestures open,power,tripod_object,pinch_card,sphere</code>，5 × 15 s；两路相机同录；按 hold × 手指对照真值评分。</p>
+
 <h2 id="live"><span class="n">§ 4</span>第一次在环 session（09-20）：相机看手背时投错票，及修正</h2>
 <figure class="fig" id="v4-fig-live"><img src="assets/l20-stage1-1-results/v4-live-arbiter-115437.png" alt="session 115437：五指伸展比，Quest 蓝，相机 KF 橙，仲裁输出黑，红点为相机否决" loading="lazy"><figcaption>session 20260920T115437Z（tripod/top、pinch/left、power/front）按修正后的仲裁器回放：蓝 = Quest 原始，橙 = 相机 KF（手背视角用 2-D 图像比值），黑 = 输出，红点 = 相机否决了 Quest。41–49 s 相机跟到了卷曲；28.8 s 与 42–44 s 的 Quest 跳变被压住 0.6 s。</figcaption></figure>
 <p>在环时的现象：比之前更抽、更不跟手。原始记录：相机 99% 帧新鲜、右手 98%、延迟 24 ms，但仲裁对 M/R/L 各否决了 ~315 帧（四段、每段最长 1 s）——否决的是操作者<b>真实的卷曲</b>。原因：整段顶抓里 Mac 相机看到的是手背/侧面（MediaPipe 掌法向 z 在 0..+0.5），此时 MediaPipe 的 3-D 提升和 Quest 一样在猜"伸直"。量化：手背朝相机时 M/R/L 分歧 0.37，掌心朝相机 0.05。</p>
@@ -152,10 +196,12 @@ td.n { text-align:right; font-family:ui-monospace,Menlo,monospace; font-size:.9r
 <h2 id="next"><span class="n">§ 7</span>未解决的与下一步</h2>
 <div class="key warn"><b>对 Stage 1.2 本身的一个结论。</b>区分 pinch 与 tripod 的那根手指（中指）在 Quest 单目里不可观测——它在这些姿态下没有独立状态，只随无名/小指整块翻。靠 Quest 数据训练"意图预测 tripod vs pinch"这件事需要第二视角（相机/EMG）或先验，而不是更多 session。</div>
 <ol>
-<li><b>持续型翻转</b>（0.5–2 s）仍会在 confirm/上限后通过；顶抓时手掌朝下，没有任何相机看得见掌心，相机必须弃权。剩下的路是研究备忘里排第一的<b>因果手指状态先验</b>（用过去 0.5 s 的门控 landmark、手腕运动、相机给每指一个卷曲后验，作为第三投票者），先做离线 hindsight 标注与可行性（2–3 天，不占头显）。</li>
+<li><b>持物视角标定</b>（09-23 晚新增，未录）：free-hand 标定给不出遮挡下的真值，稳态纠正的回放因此无法验证而被关闭；下一次录 75 s 的持物集，两路相机同录，先回放再上机。</li>
+<li><b>持续型翻转</b>（0.5–2 s）仍会在 confirm/上限后通过；顶抓时手掌朝下，没有任何相机看得见掌心，相机必须弃权。<b>因果先验的可行性已测（09-23，<code>flip_feature_feasibility.py</code>）：否定。</b>17 个 session、18 min、195 个 hindsight 翻转 vs 151 次真实过渡（M/R/L；翻转时长 p50 0.66 s、p90 1.54 s，15% 在 150 ms 内弹回，62% 超过 0.5 s）。起点时刻可得的特征——方向与幅度、50 ms 前／150 ms 后的同伴手指、腕速、掌法向·视线、前 0.3 s 自身运动、距上次事件时间、落点到本 session 伸直／卷曲模板姿态的距离——rank AUC 全在 0.34–0.53；复盘倚重的"整组同翻"在真实抓取里同样成立（AUC 0.45–0.47）；最好的单行规则精度 0.65–0.67、召回 0.29–0.34。用五个晚间相机 session 的标定相机做标签核验：133 个事件里 34 个有相机裁决，与 hindsight 一致 85%（4 个 hindsight 翻转是相机看到的快速真实动作）；相机标签下（17 vs 17）没有特征超过 0.53，最强的两个反向（腕速 0.33、自身预运动 0.30：真实动作伴随手腕在动、手指已在动）。结论：这些输入上学不出先验，剩余问题是信号问题——顶抓需要第二个看得见掌心的视角（相机或 EMG）。</li>
+<li><b>相机确认路径未核验</b>：同机位 pilot 223549Z 里仅门控拦下 3/21，所有仲裁变体 0–1/21，差额是相机确认了它看错的跳变；下次 session 用 §7.1 的相机标签给确认打分。</li>
 <li><b>数据集标记</b>：起举窗口内含跳变的 trial 需在 verifier／build 里打标（<code>command.finger_gate</code> 已有逐帧记录）；09-16 傍晚前的数据未门控，<code>task_config.finger_gate</code> 说明每个 session 是哪一种，不得混用。</li>
-<li><b>正式 session 1 重采</b>：三次尝试均无完成 trial；下次采集前把 Mac 放低、镜头朝上看掌心（前/左/右抓取时相机才有票）。</li>
-<li>相机配对数据只有 ~3.4 min（2 个 session）；先验的标签只能来自相机或 EMG。</li>
+<li><b>正式 session 1 重采</b>：三次尝试均无完成 trial。录制规格（09-23）：Mac 放低、镜头朝上看抓取区上方的掌心（pilot 里手腕在图像 88–90% 高度、22% 帧看到手）；先在工作空间里做一次视角标定，扫到 palm_z bin 0/6/7（225005Z 无数据），pinch／tripod 时 M/R/L <b>真正卷曲</b>（两次标定都伸直了）；风险图 36 格里 23 格为空，需要更多卷曲分钟；然后一个在环 session 用新产物。</li>
+<li>相机配对数据 ~7 min 有手（8 个 session）；先验的标签只能来自相机或 EMG。</li>
 </ol>
 
 <h2 id="sessions"><span class="n">§ 8</span>session 台账（全部在 <code>hand_control/data/quest_sessions/</code>）</h2>
@@ -165,9 +211,14 @@ td.n { text-align:right; font-family:ui-monospace,Menlo,monospace; font-size:.9r
 <tr><td>20260917T113607Z</td><td>v4 门控 on</td><td>tripod 31 跳变/min，90% 持续型；门控 hold 1–2% 帧</td></tr>
 <tr><td>20260918T114841Z、115223Z</td><td>v4 门控 + 相机记录（无仲裁）</td><td>配对分析 §3；115223Z 为仲裁器离线设计集</td></tr>
 <tr><td>20260920T115437Z</td><td>v4 门控 + 相机仲裁 v1</td><td>§4：相机看手背时否决真实卷曲；修正后回放 0 误否决</td></tr>
+<tr><td>20260920T202847Z、203316Z、211414Z、212520Z</td><td>v4 门控 + 按视角选线索的仲裁（legacy），晚间机位</td><td>202847Z 相机盲视仍投票→复盘 §7；四个 session 是 v5 回放集的一半（§3 末表）</td></tr>
+<tr><td>20260920T214938Z、225005Z</td><td>视角标定（coverage 模式，相机只记录）</td><td>214938Z 手举在镜头前，产物不可迁移；225005Z 在工作空间内，<code>latest.json</code> 由它重建（09-23，产物 v2）。pinch/tripod 都把 M/R/L 伸直了</td></tr>
+<tr><td>20260920T223549Z</td><td>v4 门控 + 标定模式仲裁（pilot，与 225005Z 同机位）</td><td>相机 22% 帧看到手；v5 回放的对照 session（仅门控 3/21、仲裁 0–1/21）</td></tr>
+<tr><td>20260923T161500Z</td><td>定时视角标定 60 s；Mac + 头显（左目 1280×960）相机只记录</td><td>首个双相机 session：Quest tripod 无名指/小指错 36/34%（慢斜坡）；头显画面手在右下缘；重投影残差 p50 22–36 px、假设间距 117–180 px（<a href="#v6">v6</a>）</td></tr>
+<tr><td>20260923T163428Z</td><td>定时视角标定 60 s；Mac + 头显（右目 1280×1280）</td><td>v6 的真值 session：tripod 半弯被二值化（0.82 vs 0.65）；像素投票核查 (a)–(d)；稳态纠正回放的真值对照（握拳误张开 0.5–0.9 s/指）；同场产物 <code>cue_calibration_163428Z_{mac,quest}.json</code></td></tr>
 </table></div>
 </section>
 
-<footer>数据与代码：<code>human_machine_interaction</code>（私有仓库）。本页数字均可由 <code>finger_flip_report.py</code> 与备忘中的脚本从原始 session 复算。 · <a href="l20-robust-grasp-stage1.html">← Stage 1.1 计划</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
+<footer>数据与代码：<code>human_machine_interaction</code>（私有仓库）。本页数字均可由 <code>finger_flip_report.py</code>、<code>calib_kf_design.py</code>、<code>arbiter_replay_variants.py</code>、<code>flip_feature_feasibility.py</code>、<code>quest_cam_reprojection.py</code>、<code>pixel_vote_checks.py</code>、<code>calib_truth_eval.py</code> 与备忘中的脚本从原始 session 复算。 · <a href="l20-robust-grasp-stage1.html">← Stage 1.1 计划</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
 </div>
 </body></html>
