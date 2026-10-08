@@ -101,7 +101,7 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <tr><td><a href="#v19">v19</a></td><td>2026-10-08</td><td>侧捏补库：抓姿库第二个掌姿先验家族「侧捏」（方块先验绕拇指—食指轴旋转 60–90°，基座在操作者一侧），与上方家族混抽、物理验证，库 v2 = 五件 YCB + 方块；当前状态采样沿各抓取自己的来向；臂 A = 单帧残差 M0（5 种子），臂 B = 同输入条件 flow matching（3 种子、16 样本，接口 = 最近模式）；评测 = 库内留出按家族、方块 formal 52（预登记：对 v16 配对 ≤ +0.2 cm）、10-08 现场 run 离线回放（10 次，午餐肉罐单列）。</td><td>v18 现场 → v17 补记：午餐肉罐 22 cm 是覆盖缺口；用户：「确实需要侧捏」「两个分布回归器能学会吗？同时试 ddpm」。</td><td><a href="l20-stage1-2-results.html#v19">结果 v19</a>：午餐肉罐 22.1 → 1.9 cm（一致，n=1）；formal 抬离 +0.24 [+0.13, +0.34] 没过线，不交付；B 与 A 等价</td><td><a href="l20-stage1-2-results.html#v19-fig">回放与 formal</a></td></tr>
 <tr><td><a href="#v20">v20</a></td><td>2026-10-08</td><td>接触头 + 防穿模显示手型 + 物体几何 BPS：A 同输入独立小头预测拇指 / 食指接触点（标签 = 库 v2 实测接触点）；B 抓取段指令 <code>q_grasp</code> 头 + 张开拇指食指 / 推掌心的纯函数修正，只改显示手型；C 64 基点 BPS 替换 / 补充半边长，同一批对三种编码，留一物体 + 真未见物体回放；掌心模型不变；线：A 对库先验不差 0.2，B 穿透 p90 ≤ 2 mm、掌心不差 0.2、≤ 5 ms，C 方块 ≤ +0.2 且香蕉留一改善 ≥ 0.5 cm。</td><td>用户 10-08：「接触点加接触头……我需要看到接触点；目前的推测存在穿模……让物体模型也作为输入」。</td><td><a href="l20-stage1-2-results.html#v20">结果 v20</a>：A、B 过线交付（B 在未见物体的 10-07 场掌心 +0.4–0.6 需推出）；C 香蕉留一 +0.84 更差、不交付</td><td><a href="l20-stage1-2-results.html#v20-fig">穿透 / 接触 / 留一</a></td></tr>
 </tbody></table></div>
-<nav class="toc" aria-label="本页目录"><a href="#versions">版本协议要点</a> · <a href="#schemes">两个方案</a> · <a href="#boundary">与 IL 的关系</a> · <a href="#data">共同数据</a> · <a href="#scheme-a">方案 A</a> · <a href="#flow">方案 B</a> · <a href="#comparison">对照与判据</a> · <a href="#runbook">当前五步</a></nav>
+<nav class="toc" aria-label="本页目录"><a href="#versions">版本协议要点</a> · <a href="#next-steps">下一步：七个问题</a> · <a href="#schemes">两个方案</a> · <a href="#boundary">与 IL 的关系</a> · <a href="#data">共同数据</a> · <a href="#scheme-a">方案 A</a> · <a href="#flow">方案 B</a> · <a href="#comparison">对照与判据</a> · <a href="#runbook">当前五步</a></nav>
 
 <h2 id="versions">各版本的协议要点</h2>
 <p id="v1"><b>v1（2026-09-13）</b>：数据 = Stage 1.1 v1（43 条 pilot）+ v2（52 条正式 session 1），95 条 pinch，7 折留一 session；输入 = 抬离前 1 s 的 T<sub>OH</sub> 窗口 + 手形 + 追踪有效性，标签 = 抬离时刻（Quest Transport 相位首个样本）的 T<sub>OP,T</sub> 与 16 个实现关节；阶梯 B0 保持 / B1 最近示教 / M0 MLP（残差形式）/ 方案 A VQ-VAE+AR / 方案 B Flow Matching，另加序列生成器 FMS、DPS。</p>
@@ -124,6 +124,44 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <p id="v18"><b>v18（2026-10-08）</b>：<b>YCB 场景上的两指模型现场测试</b>。用户指令（经协调 session 转达）：「头显资产更换……同时更新两指模型，我要尝试两指模型在 YCB 场景的表现。完成我测试验收通过后同步 push 和更新我们的实验记录」。不改模型、不改在线学习方法，只把已交付的东西接到头显上由用户本人测：预测器 = <a href="#v16">v16</a> 的两指终点 checkpoint（单帧、38 通道、5 种子均值，sha256 前 16 位 a64c41a9cf942f12），在线学习 = <a href="#v17">v17</a> 交现场的默认 hold_ridge（岭回归 λ 1、近端 = 当前姿态、r0 4 cm；每次头显报告成功的抓取学一次，续学跨 session 累积）；控制台 v2 入口 <code>human_machine_interaction · hand_control/demo/demo_ycb_twofinger.sh</code>（校验 checkpoint 的 sha；三指保持姿势可「沿用上次」或「每次重新设置」）；影子手显示，置信度过滤开（6 cm），α 关。场景 = <a href="l20-robust-grasp-stage1.html#v9">Stage 1.1 v9</a> 的 YCB 头显场景（5 件 YCB + 方块，每次目标 + 2 件上桌、其余停在桌外，yaw 随机），30 次计划、两指捏取。机器人三指跟随操作者锁定的保持姿势；预测器的每个输入和在线学习的标签里，这 9 个通道一律换成 checkpoint 的 <code>fixed_mrl</code>（字节相等测试），影子手三指显示 <code>fixed_mrl</code>。读法预先说定：在环误差 = 学习器对每次抓取「学它之前」的打分（<code>updates.jsonl</code>），与基座、保持逐次并列；不排名（一位操作者、一场），不与 v15–v17 的方块数字直接比较。口径红线：第三次真人在环；YCB 物体没有真人训练数据；v17 的「抬离持平」是已录数据上的离线结论。</p>
 <p id="v19"><b>v19（2026-10-08）</b>：<b>侧捏补库 + 确定性 vs 生成式终点模型</b>。起因：v18 现场的午餐肉罐 22 cm，v17 补记定位为覆盖缺口（库里 31 个午餐肉罐捏取全在上方，操作者从侧面抓）。协议：① 抓姿库 <code>seed_palm(family="side")</code>——方块 trial 标定的掌姿先验绕拇指—食指轴旋转 60–90°（均匀），取基座落在操作者一侧（−x）的方向，其余 IK / 笼罩 / 加力 / 物理验证不变，每格每家族要 60 个，行带 <code>family</code>；库 v2 = 五件 YCB + 5.4 cm 方块，两指先验，真实质量。② 终点模型的当前状态仍按相对终点掌姿系的来向剖面采（侧捏终点自然得到从侧面靠近的状态），加桌面约束（基座 ≥ 桌面上 2 cm），对带家族标签，留出按 (物体, 家族) 每 5 行取 1。③ 臂 A = 单帧残差 M0（v16 配方）5 种子集成；臂 B = 同 38 维输入上的条件 flow matching（v1 / v11 实现，120 epoch）3 种子，每输入 16 样本——读法：样本均值（对照）、离当前掌心最近的模式（部署接口）、离真值最近的模式（上界）、模式间距。④ 评测同表：库内留出按家族；95 条方块真人（52 条 formal 为准）；10-08 现场 run 的 10 次对现场标签，抬离前 3 / 2 / 1 / 0.5 / 0 s，午餐肉罐单列；「远处侧捏状态预测落在两家族之间」的比例；已交付的 v16 checkpoint 在同一批输入上作对照。<b>预登记验收线（跑前写死）</b>：A 对 v16 在 formal 52 逐 trial 配对 1 / 0.5 / 0 s 均值 ≤ +0.2 cm 且区间不排除 0；午餐肉罐那次只写一致 / 不一致（n = 1）；B 对 A 区间不排除 0 即等价；全部满足才交付。记录 <code>human_machine_interaction · hand_control/plan/2026-10-08-side-pinch-generative-endpoint.md</code>。</p>
 <p id="v20"><b>v20（2026-10-08）</b>：<b>接触头 + 防穿模显示手型 + 物体几何 BPS 输入</b>。起因：用户要在头显里看到接触点、影子手穿模、并把物体几何作为输入提高泛化。协议（预登记线写在 <code>human_machine_interaction · hand_control/plan/2026-10-08-contact-head-penetration-bps.md</code> §2–§4，跑之前写死）：① A 接触头——同 38 通道输入上独立的小 M0（5 种子）预测拇指 / 食指接触点（物体系），标签 = 库 v2 物理验证时实测的接触点，训练对与 v19 的 pairs 同种子逐位相同；评 = 库内留出按家族 + formal 52 的 1 / 0.5 / 0 s，对库的常数先验与操作者自己的常数；线 = formal 1 s 不比库先验差 0.2 cm。② B 防穿模——先量预测手（掌姿 + 挤压指令）与标签自己的 MuJoCo 穿透，再做纯函数修正：抓取段 <code>q_grasp</code> 头给出接触时手型，残余穿透沿库的 <code>squeeze_direction</code> 张开拇指食指，再不行才沿接触法线推掌心；线 = 修正后穿透 p90 ≤ 2 mm 且 &gt; 2 mm ≤ 5 %、掌心不比修正前差 0.2 cm、单次 ≤ 5 ms；只改显示手型，25 维目标 / Stage 1.3 列 / 在线学习输入不变。③ C BPS——固定 64 基点到表面点云的距离（表面从场景 XML 采，YCB 凸块 + objects4 基本体）替换或补充半边长，同一批 21,160 对三种编码，全数据臂对 formal 52 / 两场回放、留一物体 3 种子按家族分层；线 = 方块 formal ≤ +0.2 且香蕉留一 BPS − 包围盒区间排除 0、近场改善 ≥ 0.5 cm。结果：A、B 过线交付（<code>final_endpoint_twofinger_geom_contacts_grasp.pt</code>，掌心 = v19），C 不过、不交付，数字见结果页 <a href="l20-stage1-2-results.html#v20">v20</a>。</p>
+
+<h2 id="next-steps">下一步：用户 2026-10-08 提出的七个问题</h2>
+<p class="meta">这是一张<b>推进清单</b>，不是新的实验版本，<b>不占版本号</b>；每一项的结果落在它自己的版本里（新实验仍按规矩向知识向导要号）。「现状」里的数字全部来自 2026-10-08 当天各 session 的实测与备忘，<b>没有一条是本页新产生的</b>；凡标「待定」的即尚未执行。</p>
+<div class="tw" tabindex="0" role="region" aria-label="七个问题与下一步"><table>
+<caption>Q1–Q7 · 现状（2026-10-08）／下一步／负责</caption>
+<thead><tr><th scope="col">#</th><th scope="col">问题</th><th scope="col">现状（带数据）</th><th scope="col">下一步</th><th scope="col">负责与记录</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>如何提高在线学习（OL）的效率</td><td>现场 OL 只是掌心的 3 个数平移（手坐标系偏置 v3／只修高度 v2），默认影子模式；登记检验 1 样本不足、检验 2 未通过；v2.2 叠塔第一块 5.0 cm 方块上先验多修约 1.9 cm（库里只有 5.4 cm 方块）。</td><td>统一对比 A–E 共 18 种方法（偏置族、ridge／kNN／贝叶斯最后一层／GP、head／ft／LoRA 式／v11、ft_fut／多任务），6 场真人数据，场内与留一先验两种协议，报学习曲线；选 1–2 个<b>先登记再用新数据确认</b>；先验按任务／物体类别分开。</td><td>在线学习线 · <a href="l20-stage1-2-results.html#v17-live">v17 补记</a>、<a href="l20-stage1-2-results.html#v14">v14</a></td></tr>
+<tr><td>Q2</td><td>OL 与基座是否支持多分布</td><td>基座是确定性 MLP（一个输入一个答案）；真实数据早期<b>不</b>平均（从上抓 97–100 % 模式判对，平均指数 0.11–0.16），因为单帧输入含手的朝向；侧捏仅 2 次；flow matching（臂 B）在真实数据上无多模态、≈ MLP；物体系全局偏置会平均（侧捏 0.5 s 1.64 → 2.65 cm），手系偏置可跨模式。</td><td>统一对比里<b>分模式报告</b>；侧捏攒到 ≥ 5 次再评按模式修正；若出现早期平均再考虑生成式基座。</td><td>在线学习线 · <a href="l20-stage1-2-results.html#v19">v19</a></td></tr>
+<tr><td>Q3</td><td>多分布指手势还是交互目标</td><td>手势多分布（从上／侧捏）由输入朝向解决；交互目标（拿哪块、放哪里）模型<b>不</b>预测，目标由任务给定（白箭头建议，手停 0.15 s 换块）。</td><td>是否立项「目标意图」预测（多选一，分类或生成式）；先用叠塔换块记录评估需求。<b>待用户定。</b></td><td>协调／用户 · <a href="l20-stage1-4-review.html">1.4 待决问题</a></td></tr>
+<tr><td>Q4</td><td>基座模型架构是什么</td><td>三个独立 MLP 共用同一单帧 38 维输入（掌心位姿 9、手指 16、尺寸 3、其他 10）：终点模型 38→256→128→128→25（相对当前的残差）、手势头（接触时 <code>q_grasp</code> 16，只用于显示）、接触点头（拇指／食指 6）；各 5 个种子取平均；防穿模拟合（张开两指、掌心最多推 2 cm，否则不显示）；置信度门 10 cm；物体只用包围盒尺寸，BPS 形状编码因训练物体太少未上线。</td><td>架构图见下；同类物体增多后重测形状编码。</td><td>本页 · <a href="l20-stage1-2-results.html#v20">v20</a></td></tr>
+<tr><td>Q5</td><td>OL 改了基座的哪一部分</td><td><b>不改任何权重</b>（约 22 万个），只在终点输出的掌心位置上加 R·h（3 个数，收缩平均）；「开」档接触点随掌心同步平移（10-08 已修，测试锁住）；手势头、接触点头不变；影子档只记录。</td><td>见下图；若统一对比选出改权重的方法（head／LoRA 式），更新此图。</td><td>本页 · <a href="l20-stage1-2-results.html#v17-live">v17 补记</a></td></tr>
+<tr><td>Q6</td><td>生成的手势与接触点如何保证在物体上、彼此契合</td><td>影子手不穿模（<code>q_grasp</code> + ContactFitter，三场 ok=False 0 %）；接触点在表面（中位 1.5–2.4 mm）但<b>离拟合指腹 10–15 mm</b>（抬离前 1 s 内）。</td><td>显示改为：接触点投影到表面；近端（预测掌心离当前 &lt; 5 cm）切到拟合手的指腹，带迟滞；之后评估只动手指的 IK。</td><td>数据生成线 · <a href="l20-stage1-2-results.html#v20">v20</a></td></tr>
+<tr><td>Q7</td><td>能否输出置信度</td><td>能：每帧 confidence = 0.5^(err_hat / 6 cm)，err_hat = 剩余距离 + 0.3 s × 手速；抬离前 2 s 内与实际误差 Spearman 0.82；显示门限 10 cm；<b>5 种子分歧、flow matching 采样分歧都分不出对错</b>；接触点分歧只记录。</td><td>统一对比中评估<b>贝叶斯最后一层</b>的不确定度能否改进置信度。</td><td>在线学习线 · <a href="l20-stage1-2-results.html#v14">v14</a></td></tr>
+</tbody></table></div>
+
+<p class="meta">下面两张是 Q4 与 Q5 的答案，画的是<b>当前已部署的</b>结构（2026-10-08 现场），不是计划。</p>
+<div class="chain" aria-label="Q4 基座架构：单帧 38 维输入经三个独立 MLP，终点与手势进防穿模拟合，再经置信度门进头显">
+<div class="cr"><span class="cb">单帧输入 38 维</span><span class="cn">掌心位姿 9 · 手指 16 · 包围盒尺寸 3 · 其他 10</span></div>
+<div class="ar">↓ 同一输入分别进三个独立 MLP，各 5 个种子取平均</div>
+<div class="cr"><span class="cb">终点模型 38→256→128→128→25</span><span class="cn">相对当前状态的残差：掌心 p、朝向 R、手指 16</span></div>
+<div class="cr"><span class="cb">手势头 → q_grasp 16</span><span class="cn">接触时的手指，只用于显示</span></div>
+<div class="cr"><span class="cb">接触点头 → 6</span><span class="cn">拇指／食指接触点，物体系</span></div>
+<div class="ar">↓ 终点与手势进防穿模拟合（张开两指、掌心最多推 2 cm，否则不显示）；接触点不经拟合</div>
+<div class="cr"><span class="cb">置信度门 10 cm</span><span class="cn">confidence = 0.5^(err_hat / 6 cm)</span></div>
+<div class="ar">↓</div>
+<div class="cr"><span class="cb">头显：影子手 + 接触点</span></div>
+</div>
+<p class="meta">物体只通过<b>包围盒尺寸</b>进入模型；BPS 形状编码在 <a href="l20-stage1-2-results.html#v20">v20</a> 的留一物体检验里同家族分不开、跨家族更差，未上线。</p>
+<div class="chain" aria-label="Q5 在线学习改动的位置：终点 MLP 权重冻结，只在掌心输出上加一个三维修正">
+<div class="cr"><span class="cb">终点 MLP（约 22 万权重）</span><span class="cn"><b>冻结，一个也不改</b></span></div>
+<div class="ar">↓ 输出基座掌心 p 与朝向 R</div>
+<div class="cr"><span class="cb">OL：从每次抬离的真实掌心与基座预测中学 h（3 个数，收缩平均）</span></div>
+<div class="ar">↓ 修正后掌心 = p + R·h（手坐标系偏置，可跨抓取模式）</div>
+<div class="cr"><span class="cb">「开」档：显示修正后的掌心，接触点随之同步平移</span><span class="cn">「影子」档：只记录、不显示</span></div>
+<div class="cr"><span class="cb">手势头、接触点头：不改</span></div>
+</div>
+<div class="key warn"><b>现场默认仍是不学习（<code>--ol none</code>）。</b>10-08 的 YCB 现场里 hold_ridge 把 1 s 误差放大约一倍（9.1 对基座 5.3 cm）后已撤回，换 v19 基座重跑后掌心收益约 0，<b>本轮不上线</b>——见 <a href="l20-stage1-2-results.html#v17-live">v17 补记</a>。上图画的是 OL 开启时改动的位置，不代表它现在在跑。</div>
 
 <h2 id="schemes">两个方案，不是同一个方法</h2>
 <div class="tw" tabindex="0" role="region" aria-label="Stage 1.2 两个方案总览"><table>
