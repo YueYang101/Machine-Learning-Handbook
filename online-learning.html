@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>在线学习：基座之上学这一位用户 · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap canvas { width:100%; display:block; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; }
+.ctl button { font:600 .85rem/1 inherit; color:var(--ink); background:var(--bg);
+  border:1px solid var(--line2); border-radius:7px; padding:7px 11px; cursor:pointer; }
+.ctl button:hover { border-color:var(--blue); color:var(--blue); }
+.ctl button.pri { background:var(--blue); border-color:var(--blue); color:#fff; }
+.ctl label { display:inline-flex; gap:5px; align-items:center; font-size:.85rem; color:var(--sub);
+  cursor:pointer; user-select:none; }
+.ctl input[type=range] { flex:1 1 140px; min-width:120px; accent-color:var(--blue); }
+.ctl .ro { font:.8rem/1.4 ui-monospace,Menlo,monospace; color:var(--sub); }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+.chain { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:1.4em 0; }
+.chain .cr { margin:2px 0; }
+.chain .cb { display:inline-block; border:1px solid var(--line2); border-radius:8px; padding:2px 12px;
+  background:var(--bg); }
+.chain .cn { color:var(--muted); font-size:.85rem; margin-left:8px; }
+.chain .ar { color:var(--sub); font-size:.85rem; margin:4px 0 4px 16px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+/* ---- online-learning.html 专用 ---- */
+.tw { overflow-x:auto; }
+table caption { caption-side:top; text-align:left; color:var(--sub); font-size:.88rem; padding:0 0 6px; }
+figure.sv { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; margin:1.4em 0; }
+figure.sv .scroll { overflow-x:auto; }
+figure.sv svg { display:block; width:100%; min-width:520px; max-width:660px; height:auto; margin:0 auto; color:var(--ink); }
+figure.sv figcaption { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.sv .bx { fill:var(--bg); stroke:var(--line2); stroke-width:1.2; }
+.sv .bx-k { fill:var(--bg); stroke:var(--ink); stroke-width:1.6; }
+.sv .bx-a { fill:var(--bg); stroke:var(--blue); stroke-width:1.6; }
+.sv .bx-b { fill:var(--bg); stroke:var(--green); stroke-width:1.6; }
+.sv .bx-c { fill:var(--bg); stroke:var(--orange); stroke-width:1.6; }
+.sv .bx-d { fill:var(--bg); stroke:var(--magenta); stroke-width:1.6; stroke-dasharray:6 4; }
+.sv .seg { fill:var(--panel); stroke:var(--line2); stroke-width:1; }
+.sv .seg-off { fill:var(--line); stroke:var(--line2); stroke-width:1; }
+.sv .hatch { fill:url(#hz); stroke:var(--line2); stroke-width:1; }
+.sv .ln { stroke:var(--sub); stroke-width:1.4; fill:none; }
+.sv .ln-d { stroke:var(--sub); stroke-width:1.2; fill:none; stroke-dasharray:4 4; }
+.sv .t { fill:var(--ink); font-size:13px; }
+.sv .tb { fill:var(--ink); font-size:13.5px; font-weight:700; }
+.sv .ts { fill:var(--sub); font-size:11.5px; }
+.sv .ta { fill:var(--blue); font-size:13.5px; font-weight:700; }
+.sv .tg { fill:var(--green); font-size:13.5px; font-weight:700; }
+.sv .to { fill:var(--orange); font-size:13.5px; font-weight:700; }
+.sv .tm { fill:var(--magenta); font-size:13.5px; font-weight:700; }
+.sv .mk { fill:var(--sub); }
+.sv .hzl { stroke:var(--muted); stroke-width:1; }
+.ctl input[type=range] { min-height:44px; }
+.ctl input:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+.ctl .lab { min-width:5.5em; }
+.legend { display:flex; flex-wrap:wrap; gap:14px; font-size:.85rem; color:var(--sub); margin:6px 0 0; }
+.legend i { display:inline-block; width:18px; height:0; border-top:3px solid; vertical-align:middle; margin-right:5px; }
+.legend i.dash { border-top-style:dashed; }
+code { overflow-wrap:anywhere; }
+td.num, th.num { font-family:ui-monospace,Menlo,monospace; font-size:.9rem; white-space:nowrap; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior:auto !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<a class="bk" href="index.html">← Machine Learning Handbook</a>
+<div class="kicker">MACHINE LEARNING HANDBOOK · 主流理论 · 2026-10-08</div>
+<h1>在线学习（Online Learning）<br><span style="font-size:.72em;color:var(--sub)">在一个冻结的基座上，用这一位用户自己不断产生的数据继续变准</span></h1>
+<p class="lede">一个在大量生成数据上训练好的预测器（<b>基座</b>）交到一位具体的人手里以后，怎样边用边学这个人？这一页讲：问题设定和它与几个同名概念的区别；按「改基座的哪一层」分出的四族方法、各自的数学和失败方式；怎么评才不自欺（先评后学、配对、事先登记）。最后两节用本项目 Stage 1.2 的抓取终点预测器做实例，给出<b>基座</b>与<b>在线学习</b>的结构图。实验数字只在<a href="l20-stage1-2-results.html#online">Stage 1.2 结果页</a>维护，这里只链接，不重复。</p>
+
+<nav class="toc" aria-label="目录"><b>目录</b> · <a href="#s1">§1 是什么</a> · <a href="#s2">§2 问题设定</a> · <a href="#s3">§3 种类地图</a> · <a href="#s4">§4 A 输出空间校正</a> · <a href="#s5">§5 B 读出层</a> · <a href="#s6">§6 C 改权重</a> · <a href="#s7">§7 D 组合与安全阀</a> · <a href="#s8">§8 怎么评</a> · <a href="#s9">§9 实例：基座结构</a> · <a href="#s10">§10 实例：在线学习结构</a> · <a href="#s11">§11 参考</a></nav>
+
+<h2 id="s1"><span class="n">§ 1</span>是什么：基座学「抓取」，在线学习学「这个人」</h2>
+
+<div class="key good"><b>一句话。</b>基座在离线数据上学通用规律（「这样接近一个物体，最后大概会这样抓」）；在线学习（OL）在用的时候学个体偏差（「这个人最后总比基座以为的深 2 cm」）。能边用边学的前提是<b>每次使用都会自己产生标签</b>：抓取完成、物体被抬起的那一刻，「最后抓在哪」就是现成的答案，不需要人标注。</div>
+
+<p>「在线学习」这个词在文献里至少有四种用法，读论文时要先分清是哪一种：</p>
+<div class="tw" tabindex="0" role="region" aria-label="在线学习与几个相近概念的区别"><table>
+<caption>本页的用法 = 第一行：预训练模型 + 带（延迟）标签的数据流 + 只对一个用户。</caption>
+<thead><tr><th scope="col">名字</th><th scope="col">数据流</th><th scope="col">要解决什么</th><th scope="col">和本页的关系</th></tr></thead>
+<tbody>
+<tr><td><b>在线个性化／自适应</b>（本页）</td><td>一位用户的样本一个接一个来，标签稍后到</td><td>从一个好基座出发，几次之内适应这个人</td><td>本页主题</td></tr>
+<tr><td>在线学习（学习理论）</td><td>对手任意给出样本，逐个预测、逐个吃亏</td><td>累计损失（regret）与事后最好的固定模型比</td><td>本页的评估方式「先评后学」就是它的累计损失；收缩、RLS 等算法也来自那里（<a href="#ref-oco">[OCO]</a>）</td></tr>
+<tr><td>持续学习（continual learning）</td><td>任务一个接一个</td><td>学新任务不忘旧任务（catastrophic forgetting）</td><td>本页的基座永远冻结一份，随时可退回，「遗忘」由构造避免；L2-SP／EWC 这类正则在 §6 借用（<a href="#ref-ewc">[EWC]</a>）</td></tr>
+<tr><td>测试时适应（test-time adaptation）</td><td>测试样本，<b>没有</b>标签</td><td>用熵、一致性等自监督信号调模型</td><td>我们有标签（只是晚到），不需要猜（<a href="#ref-tent">[TENT]</a>）</td></tr>
+<tr><td>元学习（meta-learning）</td><td>许多「用户／任务」</td><td>把基座训练成「几步就能适应」的样子</td><td>是改进基座的一条路（<a href="#ref-maml">[MAML]</a>、<a href="#ref-alpaca">[ALPaCA]</a>），要多位用户的数据，本项目还没做</td></tr>
+</tbody></table></div>
+
+<p>一次使用就是一圈闭环：</p>
+<div class="chain" role="group" aria-label="在线学习的闭环">
+<div class="cr"><span class="cb">基座 + 当前修正 → 预测</span><span class="cn">每一帧都预测「最后会抓在哪」，显示成影子手</span></div>
+<div class="ar">↓&nbsp; 用户看到预测，继续接近（<b>他的行为可能被预测改变</b>：共适应）</div>
+<div class="cr"><span class="cb">抓取完成 → 标签</span><span class="cn">物体被抬起，这次「最后抓在哪」确定</span></div>
+<div class="ar">↓&nbsp; <b>提交门</b>：标签可信吗？（抓稳了、和用户的手对得上）</div>
+<div class="cr"><span class="cb">更新修正</span><span class="cn">只动一小部分东西（§3），基座本身不变</span></div>
+<div class="ar">↓&nbsp; 下一次抓取用更新后的修正</div>
+</div>
+
+<div class="key warn"><b>和普通的监督学习相比，难在四件事。</b>
+① <b>标签少而且晚</b>：一次抓取只有一个答案；切成几十个训练窗只是同一个答案的几十份拷贝，有效样本量≈抓取次数。
+② <b>分布偏移</b>：基座在生成数据上训练，真人的接近方式和最后的手位与生成数据有系统差。
+③ <b>不平稳</b>：换物体、换任务、换一天、疲劳，偏差都可能变。
+④ <b>共适应</b>：用户看得见预测，会跟着它改动作；离线回放录好的数据测不到这一条。</div>
+
+<h2 id="s2"><span class="n">§ 2</span>问题设定与记号</h2>
+
+<p>基座是一个<b>残差</b>预测器：输入当前状态 $x$（掌姿、手指指令、物体几何），输出最终抓姿 $\hat y$；网络只预测「从现在到最后还要变多少」：</p>
+<div class="math">
+$$\hat y \;=\; f_\theta(x) \;=\; x_{1:25} \;+\; g_\phi\big(h_\psi(x)\big)$$
+<div class="why">为什么写成残差：最终抓姿的大部分就是当前姿态本身（离抬离越近越是），网络只学剩下的差，离终点近时天然退化成「保持当前姿态」。$h_\psi$ 是编码器（输出嵌入 $z$），$g_\phi$ 是输出头，$\theta=(\psi,\phi)$ 冻结。</div>
+</div>
+
+<p>第 $k$ 次抓取给出一串窗口 $\{x_{k,j}\}_{j=1}^{m_k}$（抬离前几秒，每 50 ms 一个）和一个标签 $y_k$。在线学习器的状态 $\mathcal A_k$ 是看过前 $k$ 次之后的「修正」，预测写成 $\hat y^{(k)}(x)=\mathcal A_k\big(f_\theta, x\big)$，$\mathcal A_0$ 就是不修正的基座。</p>
+<div class="math">
+$$\mathcal L_K \;=\; \sum_{k=1}^{K}\;\frac{1}{|J|}\sum_{j\in J}\ \ell\Big(\hat y^{(k-1)}(x_{k,j}),\; y_k\Big)$$
+<div class="why">这是<b>先评后学（prequential）</b>的累计损失：第 $k$ 次抓取用<b>没见过它</b>的 $\mathcal A_{k-1}$ 打分，打完分再学它。它恰好就是用户在现场第 $k$ 次看到的误差，而且不需要另切训练／测试集（<a href="#ref-dawid">[Dawid]</a>）。$J$ 是要报告的时刻（如抬离前 1 s、0.5 s、0 s），$\ell$ 是掌心位置误差（cm）。</div>
+</div>
+
+<h2 id="s3"><span class="n">§ 3</span>种类地图：按「改基座的哪一层」分四族</h2>
+
+<div class="key good"><b>先看图。</b>同一个基座，在线学习可以挂在四个位置：<b>A</b> 不碰网络、只在输出上加修正；<b>B</b> 在冻结的嵌入 $z$ 上拟合一个线性读出；<b>C</b> 直接改网络权重；<b>D</b> 不是新的学习器，而是把前三类组合起来、决定什么时候用谁、出了错怎么退回。越往网络里面改，能表达的偏差越复杂，但每次抓取只给一个答案，越复杂越容易被几次抓取带偏。</div>
+
+<figure class="sv" id="fig-map">
+<div class="scroll">
+<svg viewBox="0 0 640 560" role="img" aria-label="在线学习四族方法挂在基座的哪一层：A 输出空间，B 嵌入上的读出层，C 改权重，D 组合与安全阀">
+  <defs><marker id="oa1" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path class="mk" d="M0,0 L8,3 L0,6 z"/></marker></defs>
+  <!-- left: the frozen base -->
+  <rect class="bx" x="16" y="16" width="284" height="40" rx="7"/>
+  <text class="t" x="158" y="41" text-anchor="middle">输入 x：当前一帧的掌姿 + 手指 + 物体</text>
+  <path class="ln" d="M158 56 V80" marker-end="url(#oa1)"/>
+  <rect class="bx" x="16" y="82" width="284" height="58" rx="7"/>
+  <text class="tb" x="158" y="105" text-anchor="middle">编码器 h_ψ（冻结）</text>
+  <text class="ts" x="158" y="127" text-anchor="middle">Linear 38→256 · SiLU · Dropout → Linear →128</text>
+  <path class="ln" d="M158 140 V164" marker-end="url(#oa1)"/>
+  <rect class="bx" x="16" y="166" width="284" height="40" rx="7"/>
+  <text class="t" x="158" y="191" text-anchor="middle">嵌入 z（128 维）</text>
+  <path class="ln" d="M158 206 V230" marker-end="url(#oa1)"/>
+  <rect class="bx" x="16" y="232" width="284" height="58" rx="7"/>
+  <text class="tb" x="158" y="255" text-anchor="middle">输出头 g_φ（冻结）</text>
+  <text class="ts" x="158" y="277" text-anchor="middle">Linear 128→128 · SiLU → Linear →25</text>
+  <path class="ln" d="M158 290 V314" marker-end="url(#oa1)"/>
+  <rect class="bx" x="16" y="316" width="284" height="40" rx="7"/>
+  <text class="t" x="158" y="341" text-anchor="middle">⊕ 加回当前状态 x₁‥₂₅（残差）</text>
+  <path class="ln" d="M16 36 H8 V336 H14" marker-end="url(#oa1)"/>
+  <path class="ln" d="M158 356 V380" marker-end="url(#oa1)"/>
+  <rect class="bx-k" x="16" y="382" width="284" height="40" rx="7"/>
+  <text class="t" x="158" y="407" text-anchor="middle">基座预测 ŷ（25 维）</text>
+  <path class="ln" d="M158 422 V446" marker-end="url(#oa1)"/>
+  <rect class="bx-k" x="16" y="448" width="284" height="40" rx="7"/>
+  <text class="t" x="158" y="473" text-anchor="middle">显示 / 使用的预测</text>
+  <!-- right: where each family attaches -->
+  <path class="ln-d" d="M300 111 H330"/>
+  <rect class="bx-c" x="330" y="82" width="294" height="58" rx="7"/>
+  <text class="to" x="344" y="105">C 改权重（编码器）</text>
+  <text class="t" x="344" y="127">LoRA 只改第一层 · 全网络微调 + L2-SP</text>
+  <path class="ln-d" d="M300 186 H330"/>
+  <rect class="bx-b" x="330" y="158" width="294" height="58" rx="7"/>
+  <text class="tg" x="344" y="181">B 读出层（在冻结的 z 上）</text>
+  <text class="t" x="344" y="203">贝叶斯末层（带方差）· RLS（带遗忘）</text>
+  <path class="ln-d" d="M300 261 H330"/>
+  <rect class="bx-c" x="330" y="232" width="294" height="58" rx="7"/>
+  <text class="to" x="344" y="255">C 改权重（输出头）</text>
+  <text class="t" x="344" y="277">只微调最后一层（128×25 + 25 个数）</text>
+  <path class="ln-d" d="M300 402 H330"/>
+  <rect class="bx-a" x="330" y="366" width="294" height="72" rx="7"/>
+  <text class="ta" x="344" y="389">A 输出空间（不碰网络）</text>
+  <text class="t" x="344" y="410">常数偏置 · 手系偏置 · 距离门控</text>
+  <text class="t" x="344" y="430">岭回归修正 · kNN · GP 残差</text>
+  <rect class="bx-d" x="16" y="506" width="608" height="44" rx="7"/>
+  <text class="tm" x="30" y="533">D 组合与安全阀</text>
+  <text class="t" x="150" y="533">远近混合 · 不伤害门 · 前 N 次不学 · 按物体分开 · 影子模式</text>
+  <path class="ln-d" d="M470 506 V468 H300"/>
+</svg>
+</div>
+<figcaption>示意（结构图，不是数据）。左列是冻结的基座，层的尺寸取本项目的基座（§9）；右列每个框标出一族在线学习改的是哪一层。A／B 的修正都加在输出上，区别是修正的输入：A 只看输出本身（或几个手工特征），B 看 128 维嵌入。D 包在最后一步：决定显示哪一个预测。</figcaption>
+</figure>
+
+<div class="tw" tabindex="0" role="region" aria-label="四族在线学习方法对照"><table>
+<caption>可学的数的个数按本项目的基座估（25 维输出；位置修正只取 3 维时更少）。「先验」= 样本少时把修正拉回不修正的那股力。</caption>
+<thead><tr><th scope="col">族</th><th scope="col">方法</th><th scope="col">可学的数</th><th scope="col">每次更新</th><th scope="col">先验 / 收缩</th><th scope="col">典型失败</th></tr></thead>
+<tbody>
+<tr><td>A</td><td>常数偏置（物体系 / 手系）</td><td class="num">1–25</td><td>求均值</td><td>$n/(n+n_0)$</td><td>表达不了随状态、随物体变化的偏差</td></tr>
+<tr><td>A</td><td>岭回归修正</td><td class="num">35×25</td><td>闭式解</td><td>$\lambda$</td><td>多物体、少抓取时记住某一个物体的偏移，再套到下一个物体上</td></tr>
+<tr><td>A</td><td>kNN / GP 残差</td><td>不拟合（存全部样本）</td><td>核平均 / 解小线性方程</td><td>先验伪权重 $\kappa$ / 核超参</td><td>样本覆盖不到当前状态时等于没学</td></tr>
+<tr><td>B</td><td>贝叶斯末层 / RLS</td><td class="num">138×25</td><td>闭式 / 递推</td><td>先验精度 $\alpha$，遗忘 $\lambda$</td><td>嵌入是为基座的任务学的，不一定线性地含着「这个人的偏差」</td></tr>
+<tr><td>C</td><td>输出头微调</td><td class="num">3,225</td><td>几十步 Adam</td><td>步数、学习率</td><td>几次抓取就过拟合</td></tr>
+<tr><td>C</td><td>全网络微调 + L2-SP</td><td class="num">62,617</td><td>几十步 Adam</td><td>$\mu\lVert\theta-\theta_0\rVert^2$</td><td>同上，而且改坏了看不出来改在哪</td></tr>
+<tr><td>C</td><td>LoRA（第一层，秩 2）</td><td class="num">588</td><td>几十步 Adam</td><td>低秩 + L2</td><td>只能改输入怎么被读，改不了输出端的常数偏差</td></tr>
+</tbody></table></div>
+
+<h2 id="s4"><span class="n">§ 4</span>A 输出空间校正：不碰网络</h2>
+
+<h3 id="s4-bias">4.1 常数偏置与收缩：为什么是 $n/(n+n_0)$</h3>
+<p>最简单的假设：这个人每次抓取的终点都比基座预测偏一个常数 $c$，加上逐次的随机散布 $\varepsilon_k$：</p>
+<div class="math">
+$$y_k \;=\; \hat y_k + c + \varepsilon_k,\qquad \varepsilon_k\sim\mathcal N(0,\sigma^2),\qquad e_k \equiv y_k-\hat y_k$$
+<div class="why">$e_k$ 是第 $k$ 次抓取里基座的误差（同一次抓取的几十个窗先平均成一个数——它们共享同一个答案，不是独立样本）。$\sigma$ 是逐次散布：同一个人抓同一个东西，每次也不完全一样。</div>
+</div>
+<p>看过 $n$ 次以后，直接用样本均值 $\bar e$ 当修正，第一次抓取之后修正就完全等于那一次的误差——包括它的随机部分。给 $c$ 一个以 0 为中心的高斯先验 $c\sim\mathcal N(0,\tau^2)$（「基座大体是对的」），后验均值是（推导就是两个高斯相乘再配方，见<a href="basic-theorems.html#t1">贝叶斯变换</a>与<a href="basic-theorems.html#t5">高斯的 ∝exp 形式</a>）：</p>
+<div class="math">
+$$\mathbb E[c\mid e_{1:n}] \;=\; \frac{n/\sigma^2}{n/\sigma^2+1/\tau^2}\,\bar e \;=\; \frac{n}{n+n_0}\,\bar e,\qquad n_0=\frac{\sigma^2}{\tau^2}$$
+<div class="why">分子分母是两个精度：数据的精度 $n/\sigma^2$ 随抓取次数增长，先验的精度 $1/\tau^2$ 不变。所以 $n_0$ 的意思是「基座的话值多少次抓取」：$n=n_0$ 时修正正好用到一半。</div>
+</div>
+<p>不用贝叶斯也能得到同一个形状。对一个固定的真偏差 $c$，用 $s\,\bar e$ 当修正，误差的期望平方是方差加偏差：</p>
+<div class="math">
+$$\mathbb E\big[(s\bar e-c)^2\big] \;=\; s^2\frac{\sigma^2}{n} \;+\; (1-s)^2c^2 \quad\Longrightarrow\quad s^\ast=\frac{c^2}{c^2+\sigma^2/n}=\frac{n}{n+\sigma^2/c^2}$$
+<div class="why">$s$ 越大，修正越跟着样本走（方差项）；$s$ 越小，越留在基座（偏差项）。对 $s$ 求导置零就得到最优收缩，形状与后验均值一样，$n_0^\ast=\sigma^2/c^2$：偏差 $c$ 相对散布 $\sigma$ 越大，越不该收缩。</div>
+</div>
+<p>下图按上面的公式解析计算（不是模拟）：下一次抓取的期望掌心误差 $\sqrt{\mathbb E[(s\bar e-c)^2]+\sigma^2}$ 随已提交抓取数 $n$ 的变化；$\sigma^2$ 那一项是逐次散布，任何学习器都去不掉（纵轴从下限 $\sigma$ 附近起，不从 0 起）。</p>
+<div class="figwrap">
+<div class="ctl">
+  <label for="sh-c" class="lab">偏差 c</label><input type="range" id="sh-c" min="0" max="4" step="0.1" value="2"><span class="ro" id="sh-c-v">2.0 cm</span>
+</div>
+<div class="ctl">
+  <label for="sh-s" class="lab">散布 σ</label><input type="range" id="sh-s" min="0.3" max="4" step="0.1" value="1.5"><span class="ro" id="sh-s-v">1.5 cm</span>
+</div>
+<div class="ctl">
+  <label for="sh-n0" class="lab">收缩 n₀</label><input type="range" id="sh-n0" min="0" max="10" step="0.05" value="2"><span class="ro" id="sh-n0-v">2.00</span>
+</div>
+<canvas id="cv-shrink" height="260" role="img" aria-label="常数偏置在不同收缩系数下，下一次抓取的期望误差随抓取次数的变化曲线；数值见图下读数">本页的交互图需要 Canvas 2D；读数仍在下方文字里更新。</canvas>
+<div class="legend" aria-hidden="true"><span><i style="border-color:var(--muted)" class="dash"></i>不学习</span><span><i style="border-color:var(--orange)"></i>不收缩（n₀ = 0）</span><span><i style="border-color:var(--blue)"></i>你选的 n₀</span><span><i style="border-color:var(--green)" class="dash"></i>最优 n₀* = σ²/c²</span><span><i style="border-color:var(--line2)" class="dash"></i>下限 σ</span></div>
+<div class="cap" id="sh-read" aria-live="polite"></div>
+<div class="cap">读法：<b>不收缩</b>在第 1 次之后把那一次的随机散布整个学进去，偏差小、散布大时比不学习还差；<b>收缩</b>先信基座，再随次数放开。把 c 拖到 0（这个人没有偏差）：任何学习都只会添乱，收缩越强越好——这是「不伤害」的底线。本项目的量级（逐次散布约 1.5 cm、稳定偏差约 2 cm，见 §10）对应 $n_0^\ast\approx0.56$：第一次抓取之后就该用上大部分修正。</div>
+</div>
+
+<h3 id="s4-frame">4.2 偏置加在哪个坐标系里</h3>
+<p>常数偏置只有在「它真的是常数」的坐标系里才是常数。三个候选：</p>
+<ul>
+<li><b>物体系</b>：$\hat y_{\text{pos}} + c$。若偏差是「掌心总比预测低 2 cm」，在物体系里是常数；若偏差是「沿手的接近方向多走 2 cm」，从上面抓和从侧面抓时它指向不同的物体系方向，平均起来互相抵消。</li>
+<li><b>预测手系</b>：$h_k=\frac{1}{m_k}\sum_j R_{\text{pred},j}^{\top}\big(y_{k,\text{pos}}-\hat y_{k,j,\text{pos}}\big)$，用的时候 $\hat y_{\text{pos}}+R_{\text{pred}}\,\bar h$。$R_{\text{pred}}$ 是基座预测的掌心朝向；偏差跟着「这次打算怎么抓」一起转。</li>
+<li><b>只取一维</b>（如只修高度）：最保守，可学的数最少。</li>
+</ul>
+<p>哪一个对，是数据问题，不是算法问题：先把基座的残差在几个坐标系里分解，看在哪个系里方差最小、各物体之间最一致。</p>
+
+<h3 id="s4-gate">4.3 距离门控：离终点近时让手自己说话</h3>
+<div class="math">
+$$\hat y^{\text{OL}}_{\text{pos}} \;=\; \hat y_{\text{pos}} \;+\; w\,R_{\text{pred}}\,\bar h,\qquad w=\min\!\Big(1,\ \frac{r}{r_0}\Big),\quad r=\big\lVert \hat y_{\text{pos}}-x_{\text{pos}}\big\rVert$$
+<div class="why">$r$ 是基座自己预测的剩余掌心距离。远处，手的状态里关于终点的信息少，系统偏差占主导，修正全加；快到时，手的当前位置本身就是最好的终点估计（残差基座在这里已经退化成「保持」），这时再整块平移只会把正确的终点推走。$r_0$ 是从「全修正」过渡到「不修正」的距离。</div>
+</div>
+
+<h3 id="s4-ridge">4.4 线性修正、岭回归与 RLS</h3>
+<p>让修正随状态线性变化：特征 $\phi(x)=[\hat y,\ x_{\text{palm}},\ 1]$，修正 $=\phi(x)^{\top}\Theta$。把所有已提交的窗堆成 $F$、目标堆成 $T$（基座的误差）：</p>
+<div class="math">
+$$\Theta \;=\; \big(F^{\top}WF+\lambda I\big)^{-1}F^{\top}W\,T,\qquad W=\operatorname{diag}\big(\rho^{\,\text{age}}\big)$$
+<div class="why">$\lambda$ 把修正拉向 0（截距项通常不收缩）；$W$ 是可选的「遗忘」：越老的抓取权重越小（$\rho<1$），用来应对换物体、换一天之后偏差变了。$\rho=1$ 就是普通岭回归。</div>
+</div>
+<p>同一个解可以不存缓冲区、每来一个样本就递推更新——这就是带遗忘因子 $\lambda_f$ 的递推最小二乘（RLS）：</p>
+<div class="math">
+$$g=\frac{P\phi}{\lambda_f+\phi^{\top}P\phi},\qquad \Theta\leftarrow\Theta+g\big(e-\phi^{\top}\Theta\big)^{\top},\qquad P\leftarrow\frac{P-g\,\phi^{\top}P}{\lambda_f}$$
+<div class="why">$P$ 是参数的不确定性（初值 $p_0I$ 相当于岭回归的 $\lambda=1/p_0$）；增益 $g$ 在不确定时大、确定后小，所以早期学得快、后期稳。$\lambda_f<1$ 让 $P$ 不会收缩到 0，模型一直保留学新东西的能力。每步代价 $O(d^2)$，与样本数无关。</div>
+</div>
+<div class="key bad"><b>线性修正的已知失败（本项目真实发生过）：</b>在单一物体上调好的岭回归，换到多物体、每物体只抓一两次的现场，几次抓取就记住了某个物体的偏移，再原样套到下一个物体上，影子手误差放大约一倍——见<a href="l20-stage1-2-results.html#v17-live">Stage 1.2 结果 v17 补记</a>。特征多（35 个）而抓取少时，$\lambda$ 必须在「多物体、少次数」的条件下选。</div>
+
+<h3 id="s4-np">4.5 非参数：kNN 与 GP 残差</h3>
+<div class="math">
+$$c(x)=\frac{\sum_i K(x,x_i)\,e_i}{\kappa+\sum_i K(x,x_i)}\qquad\text{（核平均）};\qquad c(x)=k_\ast^{\top}\big(K+\sigma_n^2I\big)^{-1}e\qquad\text{（GP 后验均值）}$$
+<div class="why">两者都不假设修正的形状：当前状态附近抓过的几次是怎么错的，现在就照着修。$\kappa$ 是放在「修正 = 0」上的伪权重：附近没有样本时自动退回基座。GP 还给出后验方差（<a href="#ref-gpml">[GPML]</a>）。代价是要覆盖：每次抓取只在状态空间里留下一条细线，几次抓取覆盖不了新物体、新方向。</div>
+</div>
+
+<h2 id="s5"><span class="n">§ 5</span>B 读出层：在冻结的嵌入上拟合线性模型</h2>
+<p>把 §4.4 的特征换成基座自己的 128 维嵌入：$\phi(x)=[z(x),\ x_{\text{palm}},\ 1]$，$z=h_\psi(x)$。给线性权重高斯先验 $\Theta\sim\mathcal N(0,\alpha^{-1}I)$、噪声精度 $\beta$，后验是闭式的（贝叶斯线性回归，Bayesian last layer）：</p>
+<div class="math">
+$$\Sigma=\big(\alpha I+\beta\,\Phi^{\top}\Phi\big)^{-1},\qquad \mu=\beta\,\Sigma\,\Phi^{\top}E,\qquad \operatorname{Var}\big[c(x)\big]=\beta^{-1}+\phi(x)^{\top}\Sigma\,\phi(x)$$
+<div class="why">好处是「免费的不确定度」：当前状态的嵌入如果离已学过的方向远，$\phi^{\top}\Sigma\phi$ 就大——这正是显示门想要的信号（「这次预测靠不靠得住」）。RLS 是它的递推版本加上遗忘。用神经网络的末层特征做贝叶斯线性回归见 <a href="#ref-dngo">[DNGO]</a>；把先验 $\alpha$ 用多个任务元学习出来、专门为在线适应设计的见 <a href="#ref-alpaca">[ALPaCA]</a>。</div>
+</div>
+<p>局限：嵌入是为基座的任务（从状态猜终点）学出来的，「这个人的偏差」不一定线性地藏在里面。若偏差只是个常数，138 维的读出层比 3 个数的偏置多出的全是方差。</p>
+
+<h2 id="s6"><span class="n">§ 6</span>C 改权重：微调、L2-SP 与 LoRA</h2>
+<p>直接对网络参数做梯度下降，目标是已提交窗口上的损失加一个「别离基座太远」的正则：</p>
+<div class="math">
+$$\min_{\theta}\ \sum_{k\le n}\sum_{j}\ell\big(f_\theta(x_{k,j}),y_k\big)\;+\;\frac{\mu}{2}\,\big\lVert\theta-\theta_0\big\rVert^2$$
+<div class="why">$\theta_0$ 是基座权重。普通的权重衰减把参数拉向 0，对一个预训练好的模型毫无道理；拉向 $\theta_0$（L2-SP，<a href="#ref-l2sp">[L2-SP]</a>）才是「先验 = 基座」。EWC 再进一步，用 Fisher 信息给每个参数不同的拉力（<a href="#ref-ewc">[EWC]</a>）。实践中还有两个旋钮：每次更新只走几十步、学习率很小（暖启动于上一次的结果）；以及<b>回放</b>一部分基座的训练数据，防止网络只记住这几次抓取。</div>
+</div>
+<p>用户直觉里的「在线学习 = 对新数据用大学习率」是这一族的一个极端：只在最新一次抓取上做大步 SGD。它对最新一次拟合得最快，也最容易被一次异常的抓取带偏；本项目的比较里它是最差的一种（<a href="l20-stage1-2-results.html#online-v14">Stage 1.2 结果 v14</a>）。</p>
+<div class="math">
+$$W x \;\to\; W x+\frac{\alpha}{r}\,B A\,x,\qquad A\in\mathbb R^{r\times d_{\text{in}}},\ B\in\mathbb R^{d_{\text{out}}\times r},\ B_{\text{init}}=0$$
+<div class="why">LoRA（<a href="#ref-lora">[LoRA]</a>）只训练一个低秩增量，$B=0$ 起步保证一开始就是基座。可学的数从 $d_{\text{in}}d_{\text{out}}$ 降到 $r(d_{\text{in}}+d_{\text{out}})$：本项目第一层 $38\times256$，秩 2 时是 $2\times(38+256)=588$ 个数。它改的是「输入怎么被读」，对输出端一个稳定的常数偏差，反而不如 A 族一个 3 维偏置直接。</div>
+</div>
+
+<h2 id="s7"><span class="n">§ 7</span>D 组合与安全阀：决定什么时候用谁</h2>
+<p>这一族不学新的东西，只决定显示哪个预测。对一个有真人在环的系统，它们往往比学习器本身更重要。</p>
+<div class="duo">
+<div class="algo"><div class="t">远近混合</div>远处用一个校正器（A／B 族），近处用微调或直接「保持当前姿态」，按 $w=\min(1,r/r_0)$ 加权。注意 $r$ 要用<b>未经修正</b>的剩余距离：用修正后预测自己的 $r$，修正一偏，门就一直停在远端（<a href="l20-stage1-2-results.html#live-v18">v18 现场</a>）。</div>
+<div class="algo"><div class="t">不伤害门</div>只有在最近 $k$ 次已提交的抓取上（每次都按先评后学打分），修正后的预测确实比基座好，才显示修正版；否则退回基座。只用现场已有的信息。</div>
+<div class="algo"><div class="t">提交门</div>只学可信的标签：抓取成功，且标签手位和用户抬离时的手对得上（本项目：相距 ≤ 8 cm）。一次被物理引擎弄歪的抓取，学进去比不学更糟。</div>
+<div class="algo"><div class="t">先验与分组</div>不从零开始：把以前各场累积的记录当先验（跨场先验）；按物体分开的修正用层次收缩拉向共享的那一个，没见过的物体只用共享部分。</div>
+<div class="algo"><div class="t">前 N 次不学</div>学，但前 $N$ 次仍显示基座，等记录够了再放开。是收缩的一个硬阈值版本。</div>
+<div class="algo"><div class="t">影子模式</div>学习器照常学、把修正后的预测写进日志，但用户看到的仍是基座（逐字节相同）。上线一个新方法前，先拿到「它本来会怎样」的真人数据，又不让用户承担它的风险。</div>
+</div>
+
+<h2 id="s8"><span class="n">§ 8</span>怎么评：先评后学、配对、事先登记</h2>
+<div class="key good"><b>一句话。</b>每次抓取先用还没见过它的模型打分，再学它；每个方法都和「不学习」在同一批抓取上配对比；方法和验收标准在看到检验数据之前写死，只评一次。</div>
+<ul>
+<li><b>两种协议。</b>(i) 场内从零：每一场都从基座开始学——测「几次之内能学会」。(ii) 跨场先验：用其他场的记录当先验，再在本场里继续学——测「累积起来有没有用」。两者回答不同的问题，都要报。</li>
+<li><b>参照。</b>「不学习」（基座本身）和「保持当前姿态」。后者在离抬离很近时极难打败，是残差基座的天然对手；报告要分时刻（如抬离前 3 / 2 / 1.5 / 1 / 0.5 / 0 s），还可以报<b>提前量</b>：误差从哪一刻起一直低于某个阈值直到抬离。</li>
+<li><b>配对与区间。</b>逐次配对差（方法 − 不学习）的均值和 bootstrap 区间；单看两个均值会被「这一场恰好好抓」骗。样本是抓取，不是窗口。</li>
+<li><b>调参场与检验场分开。</b>超参只在指定的调参场上选；检验场上每个方法只评一次。挑的方法越多，越要警惕在同一份数据上「挑中了运气」。</li>
+<li><b>事先登记。</b>把评测脚本冻结（记 sha）、写定验收条件和最少样本数，再等新数据；样本不够就判「不足」，不提前看。</li>
+</ul>
+<div class="key bad"><b>本项目踩过的坑（都在实验记录里有原始数字）。</b>
+① 只在单一物体上调参 → 多物体现场误差放大一倍（<a href="l20-stage1-2-results.html#v17-live">v17 补记</a>）。
+② 标签定义错：存的是抬离后物体被带歪时的完整姿态，而输入只取物体的水平朝向，两者能差 11–23 cm；修正标签后结论才可信（<a href="l20-stage1-2-results.html#v17-label-frame">v17 口径说明</a>）。
+③ 离线回放测不到共适应：仿真的操作者向影子手靠拢时，日志里的误差会比真实意图低一半（<a href="l20-stage1-2-results.html#online-v14">v14</a>）。
+④ 窗口不是独立样本：一场 10 次抓取切出几百个窗，区间要按抓取算。</div>
+
+<h2 id="s9"><span class="n">§ 9</span>实例：本项目的基座（Stage 1.2 两指终点模型）</h2>
+<p>任务：VR 遥操作灵巧手（L20）时，从用户<b>当前</b>的手与物体，预测这次抓取<b>最后</b>会抓成什么样，显示成影子手（以后给共享控制当目标）。现场用的基座是单帧残差 MLP，5 个种子取均值；同结构的另外两个独立网络分别预测接触点和手型。</p>
+
+<figure class="sv" id="fig-base">
+<div class="scroll">
+<svg viewBox="0 0 640 610" role="img" aria-label="本项目基座结构：38 通道输入，编码器两层到 128 维嵌入，输出头两层到 25 维，加回当前状态的残差，5 个种子取均值；另有同结构的接触头和手型头">
+  <defs>
+    <marker id="oa2" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path class="mk" d="M0,0 L8,3 L0,6 z"/></marker>
+    <pattern id="hz" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line class="hzl" x1="0" y1="0" x2="0" y2="6"/></pattern>
+  </defs>
+  <!-- input bar: 38 channels, 600 px wide = 15.79 px / channel, x0 = 20 -->
+  <text class="ts" x="91" y="22" text-anchor="middle">掌姿 9（物体系）</text>
+  <text class="ts" x="288" y="22" text-anchor="middle">手指指令 q_ref 16</text>
+  <text class="ts" x="525" y="22" text-anchor="middle">物体 12</text>
+  <rect class="seg" x="20" y="30" width="47.4" height="34"/>
+  <rect class="seg" x="67.4" y="30" width="94.7" height="34"/>
+  <rect class="seg" x="162.1" y="30" width="110.5" height="34"/>
+  <rect class="hatch" x="272.6" y="30" width="142.1" height="34"/>
+  <rect class="seg" x="414.7" y="30" width="15.8" height="34"/>
+  <rect class="seg-off" x="430.5" y="30" width="142.1" height="34"/>
+  <rect class="seg" x="572.6" y="30" width="47.4" height="34"/>
+  <text class="ts" x="43.7" y="80" text-anchor="middle">位置 3</text>
+  <text class="ts" x="114.7" y="80" text-anchor="middle">朝向 6D 6</text>
+  <text class="ts" x="217.4" y="80" text-anchor="middle">拇指+食指 7</text>
+  <text class="ts" x="343.6" y="80" text-anchor="middle">另三指 9（固定）</text>
+  <text class="ts" x="501.5" y="80" text-anchor="middle">类别 one-hot 9（恒 0）</text>
+  <text class="ts" x="422.6" y="96" text-anchor="middle">有效位 1</text>
+  <text class="ts" x="620" y="96" text-anchor="end">半尺寸×10 3</text>
+  <!-- encoder -->
+  <path class="ln" d="M320 102 V128" marker-end="url(#oa2)"/>
+  <text class="ts" x="330" y="120">标准化</text>
+  <rect class="bx" x="170" y="130" width="300" height="36" rx="7"/>
+  <text class="t" x="320" y="153" text-anchor="middle">Linear 38→256 · SiLU · Dropout 0.1</text>
+  <path class="ln" d="M320 166 V184" marker-end="url(#oa2)"/>
+  <rect class="bx" x="170" y="186" width="300" height="36" rx="7"/>
+  <text class="t" x="320" y="209" text-anchor="middle">Linear 256→128</text>
+  <path class="ln" d="M160 132 H152 V220 H160"/>
+  <text class="tb" x="146" y="180" text-anchor="end">编码器 h_ψ</text>
+  <path class="ln" d="M320 222 V240" marker-end="url(#oa2)"/>
+  <rect class="bx-b" x="220" y="242" width="200" height="32" rx="7"/>
+  <text class="t" x="320" y="263" text-anchor="middle">嵌入 z ∈ ℝ¹²⁸</text>
+  <!-- head -->
+  <path class="ln" d="M320 274 V292" marker-end="url(#oa2)"/>
+  <rect class="bx" x="170" y="294" width="300" height="36" rx="7"/>
+  <text class="t" x="320" y="317" text-anchor="middle">Linear 128→128 · SiLU</text>
+  <path class="ln" d="M320 330 V348" marker-end="url(#oa2)"/>
+  <rect class="bx" x="170" y="350" width="300" height="36" rx="7"/>
+  <text class="t" x="320" y="373" text-anchor="middle">Linear 128→25</text>
+  <path class="ln" d="M160 296 H152 V384 H160"/>
+  <text class="tb" x="146" y="344" text-anchor="end">输出头 g_φ</text>
+  <!-- ensemble note -->
+  <text class="tb" x="490" y="250">× 5 个种子</text>
+  <text class="ts" x="490" y="270">各自训练，输出取均值</text>
+  <text class="ts" x="490" y="288">每个 62,617 个参数</text>
+  <!-- residual -->
+  <path class="ln" d="M320 386 V404" marker-end="url(#oa2)"/>
+  <text class="ts" x="330" y="400">反标准化</text>
+  <circle class="bx-k" cx="320" cy="422" r="15"/>
+  <text class="tb" x="320" y="427" text-anchor="middle">+</text>
+  <path class="ln" d="M20 47 H10 V422 H303" marker-end="url(#oa2)"/>
+  <text class="ts" x="20" y="414">残差：加回当前掌姿与手指 x₁‥₂₅</text>
+  <path class="ln" d="M320 437 V454" marker-end="url(#oa2)"/>
+  <!-- output bar: 25 channels, 24 px each -->
+  <rect class="seg" x="20" y="456" width="72" height="34"/>
+  <rect class="seg" x="92" y="456" width="144" height="34"/>
+  <rect class="seg" x="236" y="456" width="168" height="34"/>
+  <rect class="hatch" x="404" y="456" width="216" height="34"/>
+  <text class="ts" x="56" y="506" text-anchor="middle">掌心位置 3</text>
+  <text class="ts" x="164" y="506" text-anchor="middle">掌心朝向 6D 6</text>
+  <text class="ts" x="320" y="506" text-anchor="middle">拇指+食指 7</text>
+  <text class="ts" x="512" y="506" text-anchor="middle">另三指 9（固定为握拳模板）</text>
+  <text class="tb" x="320" y="530" text-anchor="middle">最终抓姿 ŷ（物体系）</text>
+  <!-- sibling networks -->
+  <rect class="bx" x="20" y="550" width="292" height="50" rx="7"/>
+  <text class="t" x="166" y="571" text-anchor="middle">接触头：同结构、独立训练</text>
+  <text class="ts" x="166" y="590" text-anchor="middle">→ 拇指 / 食指指尖位置 6</text>
+  <rect class="bx" x="328" y="550" width="292" height="50" rx="7"/>
+  <text class="t" x="474" y="571" text-anchor="middle">手型头：同结构、独立训练</text>
+  <text class="ts" x="474" y="590" text-anchor="middle">→ 显示用的手指 16（防穿模）</text>
+</svg>
+</div>
+<figcaption>层的尺寸、激活与输入输出布局按现场 checkpoint 的权重形状核对过（<code>human_machine_interaction · training/artifacts/stage12_intent/results/final_endpoint_twofinger_geom_contacts_grasp.pt</code>，v20 头挂在 v19 掌心模型上）。斜线格 = 两指协议下固定的中指／无名指／小指 9 个关节：输入与标签里都换成同一个握拳模板值，网络在那里学到的就是常数。「几何版」输入不告诉网络物体是哪一类（one-hot 全 0），只给半尺寸，所以能套到没训练过的物体上。</figcaption>
+</figure>
+
+<ul>
+<li><b>训练数据。</b>全部来自生成的抓取库（YCB 五件 + 方块的两指捏取）：在每个库抓取周围按接近方向的分布采样 40 个「还在接近途中」的状态，共 21,160 对（状态 → 终点）；接近方向的分布与剩余转角的拟合取自 43 条 pilot 真人试次的统计（只作标定，评测用的 formal 52 条不参与）。12,000 步，5 个种子。</li>
+<li><b>为什么是单帧。</b>输入只有当前一帧，没有历史：训练对来自抓取库，库里只有终点和在它周围采样的独立状态，没有真实的时间轨迹，带历史的窗口无从生成。代价是不知道手在动多快（显示门里要另外估速度）。</li>
+<li><b>它擅长和不擅长的。</b>抬离前 1.5 s 以前远好于「保持当前姿态」，之后被保持追上（数字见<a href="l20-stage1-2-results.html#v17-accuracy">v17 准确度</a>与 <a href="l20-stage1-2-results.html#sidepinch-v19">v19</a>）。在线学习要补的正是它在远处的系统偏差。</li>
+</ul>
+
+<h2 id="s10"><span class="n">§ 10</span>实例：本项目的在线学习</h2>
+<p>当前登记、等待检验的三个变体都属于 A 族的「常数偏置」：v2 只修物体系的高度，v3 修预测手系里的 3 维掌心位置，v4 = v3 + 距离门控。下图是它们共用的现场结构（代码：<code>human_machine_interaction · training/stage12_intent/services/level_3_experiment/online_live.py</code>）。</p>
+
+<figure class="sv" id="fig-ol">
+<div class="scroll">
+<svg viewBox="0 0 640 600" role="img" aria-label="本项目在线学习的现场结构：接近中每帧用基座加修正预测，影子模式下头显仍显示基座；抬离后用标签经提交门算手系残差，进记录池，收缩后得到修正，下一帧生效">
+  <defs><marker id="oa3" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto"><path class="mk" d="M0,0 L8,3 L0,6 z"/></marker></defs>
+  <text class="tb" x="20" y="22">接近中 · 每一帧（约 20 ms）</text>
+  <rect class="bx" x="20" y="36" width="110" height="44" rx="7"/>
+  <text class="t" x="75" y="63" text-anchor="middle">当前帧 x</text>
+  <path class="ln" d="M130 58 H160" marker-end="url(#oa3)"/>
+  <rect class="bx" x="162" y="36" width="190" height="44" rx="7"/>
+  <text class="t" x="257" y="56" text-anchor="middle">基座 B(x)（冻结）</text>
+  <text class="ts" x="257" y="73" text-anchor="middle">5 个种子取均值</text>
+  <path class="ln" d="M352 58 H382" marker-end="url(#oa3)"/>
+  <rect class="bx-a" x="384" y="36" width="236" height="44" rx="7"/>
+  <text class="t" x="502" y="56" text-anchor="middle">修正：B + w · R_pred · h̄</text>
+  <text class="ts" x="502" y="73" text-anchor="middle">w = min(1, 剩余距离 / r₀)</text>
+  <path class="ln" d="M440 80 V112 H330 V128" marker-end="url(#oa3)"/>
+  <path class="ln" d="M560 80 V128" marker-end="url(#oa3)"/>
+  <rect class="bx-d" x="20" y="130" width="380" height="50" rx="7"/>
+  <text class="tm" x="34" y="151">影子模式（现场默认）</text>
+  <text class="t" x="34" y="171">头显显示 B；修正后的预测只写进日志</text>
+  <rect class="bx-k" x="410" y="130" width="210" height="50" rx="7"/>
+  <text class="tb" x="424" y="151">开启（检验通过后）</text>
+  <text class="t" x="424" y="171">显示修正后的预测</text>
+  <path class="ln-d" d="M10 204 H630"/>
+  <text class="tb" x="20" y="232">抬离后 · 每次抓取一次</text>
+  <rect class="bx" x="20" y="246" width="600" height="44" rx="7"/>
+  <text class="t" x="320" y="266" text-anchor="middle">标签 L：物体离桌前最后一刻的机器人掌心</text>
+  <text class="ts" x="320" y="283" text-anchor="middle">物体系（只取物体的水平朝向），与输入同一坐标系</text>
+  <path class="ln" d="M320 290 V312" marker-end="url(#oa3)"/>
+  <rect class="bx-d" x="110" y="314" width="420" height="44" rx="7"/>
+  <text class="t" x="320" y="334" text-anchor="middle">提交门：|L − 抬离时操作者掌心| ≤ 8 cm ？</text>
+  <text class="ts" x="320" y="351" text-anchor="middle">否 → 不学，只记录距离</text>
+  <path class="ln" d="M320 358 V380" marker-end="url(#oa3)"/>
+  <text class="ts" x="330" y="374">是</text>
+  <rect class="bx-a" x="20" y="382" width="600" height="50" rx="7"/>
+  <text class="t" x="320" y="403" text-anchor="middle">本次记录 h_k = 平均_j R_predᵀ ( L − B(x_j) )</text>
+  <text class="ts" x="320" y="421" text-anchor="middle">这次抓取的全部训练窗，在每个窗预测的手系里平均（3 个数）</text>
+  <path class="ln" d="M320 432 V454" marker-end="url(#oa3)"/>
+  <rect class="bx" x="20" y="456" width="600" height="44" rx="7"/>
+  <text class="t" x="320" y="476" text-anchor="middle">记录池 = 跨场先验 37 条 + 本场已提交的 n_s 条</text>
+  <text class="ts" x="320" y="493" text-anchor="middle">先验文件带 sha 校验，基座换了就拒绝加载</text>
+  <path class="ln" d="M320 500 V522" marker-end="url(#oa3)"/>
+  <rect class="bx-a" x="110" y="524" width="420" height="44" rx="7"/>
+  <text class="t" x="320" y="551" text-anchor="middle">h̄ = 记录均值 × n / (n + n₀)</text>
+  <path class="ln" d="M530 546 H632 V58 H624" marker-end="url(#oa3)"/>
+  <text class="ts" x="626" y="590" text-anchor="end">下一帧起生效</text>
+</svg>
+</div>
+<figcaption>示意（结构图）。三个登记变体的差别只在蓝框里：v2 = 只修物体系高度，$n_0=2$，$w\equiv1$；v3 = 预测手系 3 维，$n_0=2$，$w\equiv1$；v4 = v3 + 距离门控，$n_0=0.25$，$r_0=3$ cm。接触点预测跟着掌心一起平移同样的量。现场目前是「不学习 + v3 影子模式」：用户看到的与不学习逐字节相同。</figcaption>
+</figure>
+
+<h3 id="s10-path">走到这里的路</h3>
+<div class="tw" tabindex="0" role="region" aria-label="本项目在线学习的演进"><table>
+<caption>只列每一步改了什么、得出什么；数字与区间都在链接的实验记录里。标「离线」的是逐次模拟或回放，没有经过真人在环验证。</caption>
+<thead><tr><th scope="col">阶段</th><th scope="col">做了什么</th><th scope="col">得出</th></tr></thead>
+<tbody>
+<tr><td><a href="l20-stage1-2-results.html#online">v9</a></td><td>零真人基座 + 每次抓取学这个人：全网络微调 / 岭回归修正（离线，95 条方块）</td><td>第 5–7 次抓取过验收线；生成数据基座的价值在前 40 次</td></tr>
+<tr><td><a href="l20-stage1-2-results.html#online-v11">v11</a></td><td>按剩余距离混合两者（D 族）</td><td>1 s 前少约四分之一，抬离时刻不变（离线）</td></tr>
+<tr><td><a href="l20-stage1-2-results.html#online-v14">v14</a></td><td>遗忘、kNN、贝叶斯末层、大学习率只学最新一次……</td><td>没有一种超过 v11；瓶颈在数据而不在算法（离线）</td></tr>
+<tr><td><a href="l20-stage1-2-results.html#online-v17">v17</a> → <a href="l20-stage1-2-results.html#v17-live">现场</a></td><td>远端岭回归 + 近端保持，接到两指基座上现场跑</td><td>方块离线最好的那一个，在多物体现场把误差放大约一倍，撤回；现场改为不学习</td></tr>
+<tr><td><a href="l20-stage1-2-results.html#v17-redo">多物体重做</a></td><td>用多物体真人数据逐次重评各族</td><td>只有常数偏置一族不伤基座</td></tr>
+<tr><td><a href="l20-stage1-2-results.html#v17-label-frame">标签修正</a></td><td>标签改为物体离桌前最后一刻、只取水平朝向</td><td>场内从零学收益小；跨场累积的个性化在 1–3 s 降 0.6–1.0 cm；仍不上线</td></tr>
+<tr><td>登记 v2–v4</td><td>三个常数偏置变体事先登记，评测脚本冻结</td><td>等新场检验；现场先跑 v3 影子模式</td></tr>
+<tr><td>筛选（离线，未登记）</td><td>15 种方法统一对比、稠密未来标签、操作者自己的终点当标签、「什么时候抓」头</td><td>偏置族最好，更复杂的方法没有额外收益；稠密未来标签、操作者自己的终点当标签都没有带来新信息；「什么时候抓」头没有胜过现在的显示门（<code>human_machine_interaction · hand_control/plan/2026-10-07-online-strategies-coadaptation.md</code> §10.14–10.18）</td></tr>
+</tbody></table></div>
+
+<div class="key good"><b>从这个实例里能带走的。</b>
+① <b>基座做了大部分事。</b>换上更好的基座（v19）后，场内从零学的掌心收益只剩 0.1–0.2 cm、区间含 0；跨场累积的个性化才有 1–3 s 降 0.6–1.0 cm。先把基座的覆盖补齐，再谈在线学习。
+② <b>能学到的是稳定的个人常数。</b>这位操作者的终点比基座预测沿手的接近方向深约 2 cm（指向物体），跨物体、跨任务、跨场都稳定；逐次散布约 1.5 cm 学不到（离线测量，同上备忘 §10.17）。所以 3 个数的手系偏置就够了，35 个特征的岭回归反而过拟合。
+③ <b>样本数 = 抓取次数。</b>一场十几次，换算法提不了效率；跨场先验和多录几场才行。
+④ <b>安全阀先于学习器。</b>提交门、影子模式、事先登记，比挑一个更聪明的学习器更早决定了能不能上线。</div>
+
+<h2 id="s11"><span class="n">§ 11</span>参考</h2>
+<ul>
+<li id="ref-dawid">[Dawid] A. P. Dawid. Present position and potential developments: some personal views. Statistical theory: the prequential approach. <i>J. R. Stat. Soc. A</i> 147(2), 1984. <a href="https://doi.org/10.2307/2981683">doi:10.2307/2981683</a> — 先评后学。</li>
+<li id="ref-oco">[OCO] S. Shalev-Shwartz. Online Learning and Online Convex Optimization. <i>Foundations and Trends in ML</i> 4(2), 2012. <a href="https://www.cs.huji.ac.il/~shais/papers/OLsurvey.pdf">PDF</a> — 学习理论里的「在线学习」与 regret。</li>
+<li id="ref-l2sp">[L2-SP] X. Li, Y. Grandvalet, F. Davoine. Explicit Inductive Bias for Transfer Learning with Convolutional Networks. ICML 2018. <a href="https://arxiv.org/abs/1802.01483">arXiv:1802.01483</a></li>
+<li id="ref-ewc">[EWC] J. Kirkpatrick et al. Overcoming catastrophic forgetting in neural networks. <i>PNAS</i> 2017. <a href="https://arxiv.org/abs/1612.00796">arXiv:1612.00796</a></li>
+<li id="ref-lora">[LoRA] E. J. Hu et al. LoRA: Low-Rank Adaptation of Large Language Models. ICLR 2022. <a href="https://arxiv.org/abs/2106.09685">arXiv:2106.09685</a></li>
+<li id="ref-dngo">[DNGO] J. Snoek et al. Scalable Bayesian Optimization Using Deep Neural Networks. ICML 2015. <a href="https://arxiv.org/abs/1502.05700">arXiv:1502.05700</a> — 网络末层特征上的贝叶斯线性回归。</li>
+<li id="ref-alpaca">[ALPaCA] J. Harrison, A. Sharma, M. Pavone. Meta-Learning Priors for Efficient Online Bayesian Regression. WAFR 2018. <a href="https://arxiv.org/abs/1807.08912">arXiv:1807.08912</a></li>
+<li id="ref-maml">[MAML] C. Finn, P. Abbeel, S. Levine. Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks. ICML 2017. <a href="https://arxiv.org/abs/1703.03400">arXiv:1703.03400</a></li>
+<li id="ref-tent">[TENT] D. Wang et al. Tent: Fully Test-Time Adaptation by Entropy Minimization. ICLR 2021. <a href="https://arxiv.org/abs/2006.10726">arXiv:2006.10726</a></li>
+<li id="ref-gpml">[GPML] C. E. Rasmussen, C. K. I. Williams. Gaussian Processes for Machine Learning. MIT Press, 2006. <a href="https://gaussianprocess.org/gpml/">gaussianprocess.org/gpml</a></li>
+</ul>
+<p>相关页面：<a href="l20-stage1-2-training.html">Stage 1.2 计划页</a>（意图预测的任务与协议）· <a href="l20-stage1-2-results.html#online">Stage 1.2 结果页 · 在线学习各版本</a>（本页实例的全部数字）· <a href="basic-theorems.html">基本定理</a>（§4.1 用到的贝叶斯与高斯配方）。</p>
+
+<footer>Machine Learning Handbook · 主流理论 · 在线学习 · <a href="index.html">← Machine Learning Handbook</a></footer>
+</div>
+
+<script>
+(function () {
+  var cv = document.getElementById('cv-shrink');
+  var ids = ['sh-c', 'sh-s', 'sh-n0'];
+  var el = {}; ids.forEach(function (k) { el[k] = document.getElementById(k); });
+  var read = document.getElementById('sh-read');
+  var ctx = cv && cv.getContext ? cv.getContext('2d') : null;
+  var NMAX = 20;
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888'; }
+  function rmse(n, c, s, n0) {                     // next-grasp expected palm error with the shrunk mean of n grasps
+    if (n === 0) return Math.sqrt(c * c + s * s);
+    var w = n0 === Infinity ? 0 : n / (n + n0);
+    return Math.sqrt(w * w * s * s / n + (1 - w) * (1 - w) * c * c + s * s);
+  }
+  function params() {
+    return { c: +el['sh-c'].value, s: +el['sh-s'].value, n0: +el['sh-n0'].value };
+  }
+  function text(p) {
+    var opt = p.c > 0 ? p.s * p.s / (p.c * p.c) : Infinity;
+    document.getElementById('sh-c-v').textContent = p.c.toFixed(1) + ' cm';
+    document.getElementById('sh-s-v').textContent = p.s.toFixed(1) + ' cm';
+    document.getElementById('sh-n0-v').textContent = p.n0.toFixed(2);
+    var f = function (n, n0) { return rmse(n, p.c, p.s, n0).toFixed(2); };
+    read.textContent = '最优 n₀* = σ²/c² = ' + (isFinite(opt) ? opt.toFixed(2) : '∞（没有偏差，不该学）') +
+      '。下一次抓取的期望误差（cm），第 1 / 3 / 10 次之后：不学习 ' + f(0, 0) +
+      '；不收缩 ' + f(1, 0) + ' / ' + f(3, 0) + ' / ' + f(10, 0) +
+      '；你选的 n₀ ' + f(1, p.n0) + ' / ' + f(3, p.n0) + ' / ' + f(10, p.n0) +
+      '；下限 σ = ' + p.s.toFixed(2) + '。';
+  }
+  function draw() {
+    var p = params(); text(p);
+    if (!ctx) return;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var W = cv.clientWidth, H = 260;
+    if (!W) return;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+    var L = 62, R = 12, T = 12, B = 42, pw = W - L - R, ph = H - T - B;
+    var opt = p.c > 0 ? p.s * p.s / (p.c * p.c) : Infinity;
+    var ymax = Math.max(rmse(0, p.c, p.s, 0), rmse(1, p.c, p.s, 0)) * 1.06;
+    var step = ymax - p.s > 3 ? 1 : (ymax - p.s > 1.2 ? 0.5 : 0.25);
+    var ymin = Math.max(0, Math.floor(p.s * 0.9 / step) * step);      // the floor sigma sits just above the axis
+    var X = function (n) { return L + pw * n / NMAX; };
+    var Y = function (v) { return T + ph * (1 - (v - ymin) / (ymax - ymin)); };
+    ctx.strokeStyle = css('--line'); ctx.lineWidth = 1; ctx.fillStyle = css('--sub');
+    ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (var v = ymin; v <= ymax + 1e-9; v += step) {
+      ctx.beginPath(); ctx.moveTo(L, Y(v)); ctx.lineTo(W - R, Y(v)); ctx.stroke(); ctx.fillText(v.toFixed(step < 0.5 ? 2 : (step < 1 ? 1 : 0)), L - 6, Y(v));
+    }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (var n = 0; n <= NMAX; n += 5) ctx.fillText(String(n), X(n), H - B + 6);
+    ctx.fillText('已提交的抓取数 n', L + pw / 2, H - 18);
+    ctx.save(); ctx.translate(13, T + ph / 2); ctx.rotate(-Math.PI / 2); ctx.textBaseline = 'middle'; ctx.fillText('期望误差 cm', 0, 0); ctx.restore();
+    function curve(color, n0, dash, from) {
+      ctx.strokeStyle = css(color); ctx.lineWidth = 2.2; ctx.setLineDash(dash || []);
+      ctx.beginPath();
+      for (var k = from; k <= NMAX; k++) { var x = X(k), y = Y(rmse(k, p.c, p.s, n0)); if (k === from) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.strokeStyle = css('--line2'); ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(L, Y(p.s)); ctx.lineTo(W - R, Y(p.s)); ctx.stroke();
+    ctx.strokeStyle = css('--muted'); ctx.beginPath(); ctx.moveTo(L, Y(rmse(0, p.c, p.s, 0))); ctx.lineTo(W - R, Y(rmse(0, p.c, p.s, 0))); ctx.stroke(); ctx.setLineDash([]);
+    curve('--orange', 0, null, 1);
+    if (isFinite(opt)) curve('--green', opt, [6, 4], 0);
+    curve('--blue', p.n0, null, p.n0 > 0 ? 0 : 1);
+  }
+  ids.forEach(function (k) { el[k].addEventListener('input', draw); });
+  if (window.ResizeObserver) new ResizeObserver(draw).observe(cv); else window.addEventListener('resize', draw);
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  if (mq) { if (mq.addEventListener) mq.addEventListener('change', draw); else if (mq.addListener) mq.addListener(draw); }
+  draw();
+})();
+</script>
+</body>
+</html>

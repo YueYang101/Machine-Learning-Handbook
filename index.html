@@ -92,7 +92,7 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 
 <nav aria-label="内容分类">
   <div class="tabs" role="tablist" aria-label="内容分类">
-    <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="true" tabindex="0">理论<span class="cnt">6</span></button>
+    <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="true" tabindex="0">理论<span class="cnt">7</span></button>
     <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">9</span></button>
     <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验记录<span class="cnt">4</span></button>
     <button type="button" role="tab" id="tab-tools" aria-controls="panel-tools" aria-selected="false" tabindex="-1">工具</button>
@@ -134,6 +134,11 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
   <a href="ppo-variants-research.html"><span class="rel">相关研究 ·</span> <span class="t2">PPO 的局限、变体与灵巧抓取证据地图</span><br>
     <span class="d2">十类局限的机制/症状/研究方向 · 代表变体各自解决什么 · 灵巧手论文改的是哪一层 · PPO expert → Diffusion Policy 的接口问题 · 先跑诊断再选 variant · 一手资料与证据成熟度</span></a>
 </div>
+
+<a class="card" href="online-learning.html">
+  <div class="t">在线学习（Online Learning）：在冻结的基座上学这一位用户</div>
+  <div class="d">与在线凸优化 / 持续学习 / 测试时适应 / 元学习的区别 · 先评后学的问题设定 · 按「改基座哪一层」分四族：输出空间校正（收缩偏置 n/(n+n₀) 推导与交互图、手系偏置、距离门控、岭回归与 RLS、kNN / GP）、嵌入上的贝叶斯末层、改权重（L2-SP、LoRA）、组合与安全阀（混合、不伤害门、提交门、影子模式）· 怎么评不自欺 · 实例：Stage 1.2 基座与在线学习的结构图</div>
+</a>
 
 
 </section>

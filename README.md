@@ -29,6 +29,7 @@
 | [diffusion-policy.html](diffusion-policy.html) | Diffusion Policy 图解与完整推导：误区纠正、弹球比喻与方向场动画、正向/反向过程、从 $\log p_\theta(x_0)$ 到 $L_{\text{simple}}$ 的完整 loss 推导、DP 原论文要点、Flow Matching 对比 |
 | [ppo-learning.html](ppo-learning.html) | 强化学习到 PPO：三支流演进、Policy Gradient / Actor-Critic / GAE / Natural Gradient / TRPO / PPO 完整推导、5 个交互图、连续控制实现与训练诊断 |
 | ↳ [ppo-variants-research.html](ppo-variants-research.html) | **PPO 相关研究**：局限、变体与灵巧抓取证据地图；从 ratio / clip / advantage 已知处继续，不重复基础推导 |
+| [online-learning.html](online-learning.html) | 在线学习：在冻结的基座上学这一位用户——与相近概念的区别、先评后学、四族方法（输出空间校正 / 嵌入上的贝叶斯末层 / 改权重 / 组合与安全阀）与推导、怎么评；实例为 Stage 1.2 基座与在线学习的结构图 |
 
 ## 实验计划
 
