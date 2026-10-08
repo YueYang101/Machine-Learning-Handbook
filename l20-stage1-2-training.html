@@ -161,7 +161,7 @@ footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line);
 <div class="cr"><span class="cb">「开」档：显示修正后的掌心，接触点随之同步平移</span><span class="cn">「影子」档：只记录、不显示</span></div>
 <div class="cr"><span class="cb">手势头、接触点头：不改</span></div>
 </div>
-<div class="key warn"><b>现场默认仍是不学习（<code>--ol none</code>）。</b>10-08 的 YCB 现场里 hold_ridge 把 1 s 误差放大约一倍（9.1 对基座 5.3 cm）后已撤回，换 v19 基座重跑后掌心收益约 0，<b>本轮不上线</b>——见 <a href="l20-stage1-2-results.html#v17-live">v17 补记</a>。上图画的是 OL 开启时改动的位置，不代表它现在在跑。</div>
+<div class="key warn"><b>现场显示用的是基座预测；OL 默认以「影子」模式在跑。</b>自 2026-10-08 下午起，现场默认 = <code>--ol none</code> + <code>--ol-shadow hand_bias</code>：登记的手系偏置 v3 在后台照常学习、把修正后的预测<b>记进日志</b>，但发给头显显示的仍是基座预测，用于备忘 §10.10／§10.12 的登记检验。只有<b>「开」档</b>（<code>--ol hand_bias</code>）才改变显示，<b>目前不默认启用</b>，且要先过它的登记检验。所以上面 Q5 那张图画的是<b>开启时</b>改动的位置。历史：10-08 的 YCB 现场里 hold_ridge 把 1 s 误差放大约一倍（9.1 对基座 5.3 cm）后已撤回，换 v19 基座重跑后掌心收益约 0，本轮不上线——见 <a href="l20-stage1-2-results.html#v17-live">v17 补记</a>。</div>
 
 <h2 id="schemes">两个方案，不是同一个方法</h2>
 <div class="tw" tabindex="0" role="region" aria-label="Stage 1.2 两个方案总览"><table>
