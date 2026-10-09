@@ -74,7 +74,7 @@ a { color:var(--blue); text-decoration:none; }
 <body>
 <div class="wrap">
 <a class="bk" href="l20-stage1-3-shared-grasp.html">← Stage 1.3：共享抓取（计划）</a> · <a class="bk" href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
-<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.3 · 2026-09-13 → 2026-10-07</div>
+<div class="kicker">YUE YANG · NOTES · 实验记录 · Stage 1.3 · 2026-09-13 → 2026-10-09</div>
 <h1>Stage 1.3 结果：共享抓取残差 RL 首轮<br><span class="small" style="font-weight:400">L20SharedPinch 环境 · 腕部外生回放 · 手指有界残差 · α 门控 · berlin H200 单卡 + 4090 WSL2 · 20M 步</span></h1>
 
 <p class="lede">这是 <a href="l20-stage1-3-shared-grasp.html">Stage 1.3 计划</a>第 4 步（RL 残差策略）的第一次实际运行，接在第 2 步物理回放预检之后（预检结果记在 <a href="l20-stage1-2-results.html#closure">Stage 1.2 结果页</a>）。同一晚还做了三件配套的事：按录像核对并修订了腕部模拟方案、做了 Stage 1.3 相关工作的批判性综述、并按综述里的收益加训了两条对照臂。设计文档：<code>Dex_Hand/human_machine_interaction/hand_control/plan/stage13-shared-grasp-design.md</code>（§1.1 录像核对、§2.1 动态参与、§6c 环境实现、§8 学习曲线）；综述：<code>hand_control/plan/2026-09-13-stage13-related-work.md</code>。</p>
@@ -82,7 +82,7 @@ a { color:var(--blue); text-decoration:none; }
 <div class="callout"><b>本页不是 Stage 1.3 的正式结果。</b>全部在仿真里、只有一名操作者的 95 条 pinch 示教作人手来源、腕部用软 weld 而不是部署的有界 PD、每条臂只跑了 20M 步一个 seed。它回答的只是「这套环境能不能训、零残差的人自己能抓多少、第一版门控残差有没有动静」。结论先写在前面：<b>门控残差策略（α_max 0.3）两个 seed 在 20M 步后与 α=0 的配对差别在 1 到 7 个百分点内，施加的残差只有 2 到 5 mrad；把授权放开到 α≡1 训练的对照臂，在部署门控（α_max=1）下高 8 到 16 个百分点，完全不设门控再高 8 个百分点，掉落从 10% 降到 1%–4%，且不改变用户的抓法。</b>第一版没动静的主因是授权上限（45 mrad），不是没有学习信号。<b>2026-09-14 上午的 α 扫描</b>（<a href="#sweep">同一策略换 arbitration</a>）：收益在 α 0.3–0.5 饱和；几何门控比常数 α 低 6–8 个百分点；喂数据集平均抓取位姿与 oracle 目标成绩相同，真机不需要预测器。真机接线代码已就绪（<a href="#deploy">影子仿真 + 部署包络</a>），第一次真机试跑暴露并修掉了包络的判据问题。<b>2026-09-14 下午的发现改变本页全部仿真数字的读法：</b>jax 与 Warp 后端不等价，离群的是 jax；在 Warp（与 MuJoCo C 一致）下纯人手回放已 98%–100% 成功，手指残差没有东西可补（<a href="#pred">§C</a>）。<b>2026-09-16：</b>修掉训练封装不重置 <code>info</code> 的 bug（此前每个环境槽只有第一个 episode 是真的），把训练里的人换成<a href="#h2">有缺陷、会反应的人群 v2</a>：人单飞被压到 0.56–0.78，在人群上训的残差把手指侧缺陷补回 15–19 点、不伤干净的人、抬离早 0.1–0.3 s；而干净回放训的旧策略面对同样的缺陷几乎不帮——辅助的价值只能来自训练时见过的人的缺陷。</div>
 
 <div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
-<caption>版本索引 · 当前 v8 · 与 <a href="l20-stage1-3-shared-grasp.html#versions">计划页</a>共用版本号；「被取代」指该版策略数字不再作为结论依据，零线与接线事实仍有效</caption>
+<caption>版本索引 · 当前 v9 · 与 <a href="l20-stage1-3-shared-grasp.html#versions">计划页</a>共用版本号；「被取代」指该版策略数字不再作为结论依据，零线与接线事实仍有效</caption>
 <thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
 <tbody>
 <tr><td><a href="#v1">v1</a></td><td>2026-09-13</td><td>L20SharedPinch 环境首轮：α=0 零线，门控残差（α_max 0.3，两个 seed）、Const α≡1、Finger、Speed 四条臂，20M 步，berlin jax</td><td>Stage 1.3 计划第 4 步的第一次实跑；先看环境能不能训、零残差的人自己能抓多少</td><td><a href="#v1">§环境 → §对照臂</a>。策略数字<b>被 v3 取代</b>（jax 后端离群）、<b>被 v4 取代</b>（训练器 full_reset bug）</td><td><a href="#v1-fig">六段 rollout</a></td></tr>
@@ -92,7 +92,8 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td><a href="#v5">v5</a></td><td>2026-09-16</td><td>Stage 1.4 首轮：会话持续 K=5、历史特征 z、字典观测非对称 critic，H2Hist／H2HistOracle 两臂</td><td>研究备忘 C3：跨 trial 推断「这次是谁」</td><td><a href="#v5">§I</a>，验收 #2 未过；计划页在 <a href="l20-stage1-4-review.html#v2">Stage 1.4 v2</a></td><td><a href="#v5-fig">按序号曲线</a></td></tr>
 <tr><td><a href="#v6">v6</a></td><td>2026-09-30</td><td>换训练库：把合成抓取轨迹（物理筛后）当人手来源，四条同配方臂 R／S／SR／S2R，berlin Warp 单卡</td><td>真人只有 95 条；问「合成轨迹能不能替代或超过真人数据」</td><td><a href="#v6">§v6</a>：留出真人上只用合成 ≈ 只用真人，混合无增益；部署包 <code>…h2rand_srall20M.npz</code></td><td><a href="#v6-fig">四臂对照图</a></td></tr>
 <tr><td><a href="#v7">v7</a></td><td>2026-10-07</td><td>抓取残差改用两指终点模型的单帧预测列作目标</td><td>预测器换了（两指协议、单帧终点）；问新目标列能不能让残差更好</td><td><a href="#v7">§v7</a>：<b>判为等价</b>，验收未过（关口行 +3／−3，噪声内；该行已接近饱和）</td><td><a href="#v7-fig">对照图</a></td></tr>
-<tr><td><a href="#v8">v8</a></td><td>2026-10-07</td><td>新任务与新环境：把方块搬到底座上并<b>决定何时松手</b>；新库（从原始头显日志切放手窗口）、新臂、松手动作接口</td><td>10-07 用户指令：除抓取外还要学放手时机。这推翻了设计文档 §2「不自动张手」——变更以带日期的形式写在 HMI 的 <code>hand_control/plan/stage13-shared-grasp-design.md</code> §2 与 §6h，仅限仿真</td><td><a href="#v8">§v8</a>：<b>定稿，负结论</b>——规则 0.71，RL 形状奖励 100M×3 seed 0.63 ± 0.02，锚在规则上的 RL 正好复现规则；人自己 0.27。<b>此负结论当前不成立</b>：训练时每个 world 只有 4 个接触额度（见 <a href="#v8-contact-correction">§v8 更正</a>），修好后重测写在 <b>v9</b>（稍后补齐）</td><td><a href="#v8-fig">缺陷矩阵</a> · <a href="#v8-timing">松手时刻</a></td></tr>
+<tr><td><a href="#v8">v8</a></td><td>2026-10-07</td><td>新任务与新环境：把方块搬到底座上并<b>决定何时松手</b>；新库（从原始头显日志切放手窗口）、新臂、松手动作接口</td><td>10-07 用户指令：除抓取外还要学放手时机。这推翻了设计文档 §2「不自动张手」——变更以带日期的形式写在 HMI 的 <code>hand_control/plan/stage13-shared-grasp-design.md</code> §2 与 §6h，仅限仿真</td><td><a href="#v8">§v8</a>：<b>定稿，负结论</b>——规则 0.71，RL 形状奖励 100M×3 seed 0.63 ± 0.02，锚在规则上的 RL 正好复现规则；人自己 0.27。<b>此负结论当前不成立</b>：训练时每个 world 只有 4 个接触额度（见 <a href="#v8-contact-correction">§v8 更正</a>），修好后的重测进展写在 <a href="#v9">v9</a></td><td><a href="#v8-fig">缺陷矩阵</a> · <a href="#v8-timing">松手时刻</a></td></tr>
+<tr><td><a href="#v9">v9</a></td><td>2026-10-09</td><td>不改设计，只改一个仿真器参数：接触容量 <code>naconmax</code> 是<b>整批共享</b>的预算，两个放手环境是全仓库唯一没放大它的——2048 env 训练时每个 world 只剩 <b>4 个接触额度</b>。改成 <code>30×8192</code> 后重测放手线</td><td>导出包归一化器的指尖接触均值 0.071，而 64 env 回放同一 checkpoint 是 0.65；探针确认同一场景、同一动作下指尖只有 0.41 的步数能登记到接触（充足时 0.93），且<b>结果统计量本身被改变</b></td><td><a href="#v9">§v9</a>：<b>v2.2 的表站得住且差距变大</b>（+13/+12 → +18/+18，饿着的预算抬高的是规则）；<b>§6h 尚未重测完</b>（我跑错了臂，正确对照 R15 运行中）；真机口径：「放稳 → 松手」中位 0.14 s，对准占用的时间是它的 4.6 倍</td><td><a href="#v9-fig">接触预算</a> · <a href="#v9-fig2">前后对照</a> · <a href="#v9-fig3">真机 18 层</a></td></tr>
 </tbody></table></div>
 
 <nav class="tasknav" aria-label="本页目录"><div class="tcard"><div class="tname">本页目录</div>
@@ -100,7 +101,7 @@ a { color:var(--blue); text-decoration:none; }
 <a href="#v2">v2 α 扫描 + 接线</a><a href="#sweep">α 扫描</a><a href="#deploy">真机接线</a>
 <a href="#v3">v3 Long + Warp</a><a href="#pred">预测器接入 / jax≠Warp</a>
 <a href="#v4">v4 人群 v2</a><a href="#h2">人群 v2 A–H</a>
-<a href="#v5">v5 Stage 1.4 首轮</a><a href="#stage14">§I</a><a href="#v6">v6 合成轨迹库</a><a href="#v7">v7 新预测器列</a><a href="#v8">v8 放手时机</a><a href="#compute">算力</a><a href="#notdone">没做的与下一步</a></div></div></nav>
+<a href="#v5">v5 Stage 1.4 首轮</a><a href="#stage14">§I</a><a href="#v6">v6 合成轨迹库</a><a href="#v7">v7 新预测器列</a><a href="#v8">v8 放手时机</a><a href="#v9">v9 接触预算</a><a href="#compute">算力</a><a href="#notdone">没做的与下一步</a></div></div></nav>
 
 <section id="v1" aria-label="v1">
 <p class="small">版本 v1 · 2026-09-13 · berlin jax · 策略数字已被 v3／v4 取代，零线与环境事实仍有效</p>
@@ -408,7 +409,7 @@ a { color:var(--blue); text-decoration:none; }
 MJX/Warp 的接触容量 <code>naconmax</code> 是<b>整批共享</b>的预算，不是每个 world 一份。本节的训练跑 2048 个并行 world，而这两个放手环境配的是裸的 8192，于是<b>每个 world 只剩 4 个接触额度</b>：同一场景、同一动作下，指尖只有 <b>0.41</b> 的步数能登记到接触，而容量充足时是 <b>0.93</b>。评测却跑 256 个 world（32 个/world），所以<b>策略在半盲的世界里学、在接近正常的世界里被打分</b>。
 <b>波及范围只有两个文件</b>：<code>shared_pinch</code>、<code>cube_stack</code>、<code>hammer_nail</code>、<code>pick_cube</code>、<code>reorient</code> 一直用的是仓库约定的 <code>30×8192</code>；只有 <code>shared_release</code> 和从它派生的 <code>shared_release_v22</code> 用了裸值。<b>所以捏取线 v1–v7 不在本次缺陷范围内</b>，不需要重读。
 因此本节下文那句「在这个任务上 RL 对放手时机没有价值」应当读作「<b>在一个指尖半盲的仿真器里</b>，RL 对放手时机没有价值」。<b>下文四轮排除掉的替代解释（一次性奖励的早放漏洞、20→60→100 M 步数、奖励形状、seed）本身没有错</b>，它们只是都在同一个饱和的仿真器里做的——本节不是「全错」，是「条件错了」。
-修好容量后的重测数字写在 <b>v9</b>（本页稍后补齐；等第 3 个 seed 跑完一次写齐，届时这里改成链接）。</div>
+修好容量后的进展写在 <a href="#v9">v9</a>：<b>本节的重测尚未完成</b>——第一次重测跑错了臂（跑的是无形状奖励的 <code>L20SharedReleaseRand</code>，而本节的判决来自形状奖励的 <code>L20SharedReleaseShaped</code>），正确的对照正在跑。在它出来之前，本节的负结论既不能说成立，也不能说被推翻。</div>
 
 <h3>数据：原来就有，只是不在任何数据集里</h3>
 <p>派生数据集到抬离就停（实测：每条 trial 抬离后只剩 1 个样本），所以放手段不在现有两个库里。但原始头显日志是完整的 100 Hz 记录：物理行带 16 维命令、手腕 mocap、物体位姿、手掌位姿、接触数，事件行带阶段与成功标记。扫全部 66 个 session：22 个有放置事件、<b>151 次成功放手</b>。新 builder 切「搬运 → 放下 → 松手 → 静止」窗口，得到 <b>144 个窗口 / 19 个 session</b>，50 Hz，松手固定在同一索引。</p>
@@ -448,6 +449,84 @@ MJX/Warp 的接触容量 <code>naconmax</code> 是<b>整批共享</b>的预算�
 <p class="small">JSON 在 <code>assets/l20-stage1-3-results/v8/</code>（r4 = 两种停放约定的对照，r5 = 最终一轮）。代码在 HMI 仓库：库 <code>shared_release_bank.py</code>、环境 <code>shared_release.py</code> + <code>xmls/scene_mjx_shared_release.xml</code>、评测 <code>level_3_evaluation/shared_release_eval.py</code>，臂 <code>L20SharedRelease</code> / <code>…Rand</code> / <code>…Clean</code>。berlin 上 tmux <code>syn13</code>、显式单卡 GPU 1，脚本 <code>~/Projects/shc_warp/r1_release.sh</code> 到 <code>r5_final.sh</code>。</p>
 </section>
 
+<section id="v9" aria-label="v9">
+<p class="small">版本 v9 · 2026-10-09 · 不改设计，只改一个仿真器参数：接触容量</p>
+<h2 id="contact-budget">v9：接触预算是整批共享的——放手线的全部数字按这个重读</h2>
+<p>这一版<b>没有改任何协议、库、动作接口或奖励</b>。改的是一行环境配置：<code>nconmax = naconmax = naccdmax</code> 从裸的 <code>8192</code> 改成仓库其它环境一直在用的 <code>30 × 8192</code>。它之所以单独占一个版本号，是因为它让 <a href="#v8">v8</a> 的训练环境变成了另一个环境——<b>线上机制没变，被测量的对象变了</b>。</p>
+
+<h3>机制：<code>naconmax</code> 是整批的预算，不是每个 world 一份</h3>
+<p>在这个 mjx + Warp 版本上，<code>naconmax</code> 是<b>整个 vmap 批次</b>共享的接触条数上限，不是每个并行 world 各有一份。所以实际分到每个 world 的额度是 <code>naconmax ÷ 并行 world 数</code>，它随 batch 大小变——同一个环境配置，训练（2048 个 world）和评测（256 个）拿到的物理精度不一样。</p>
+<p>探针跑的是同一个场景、同一条动作（握紧不放），只改 batch 大小与容量：</p>
+<div class="tw"><table>
+<caption>同一场景、同一动作；<code>L20SharedReleaseV22Rand</code>，2026-10-09</caption>
+<thead><tr><th scope="col">并行 world</th><th scope="col"><code>naconmax</code></th><th scope="col">每个 world</th><th scope="col">指尖平均接触点数</th><th scope="col">有接触的步数</th><th scope="col">放成率</th></tr></thead><tbody>
+<tr><td>64</td><td>8 192</td><td>128</td><td>1.88</td><td>0.95</td><td>0.06</td></tr>
+<tr><td>64</td><td>131 072</td><td>2 048</td><td>1.88</td><td>0.95</td><td>0.06</td></tr>
+<tr><td>512</td><td>8 192</td><td>16</td><td>1.43</td><td>0.76</td><td>0.27</td></tr>
+<tr><td>512</td><td>131 072</td><td>256</td><td>1.89</td><td>0.95</td><td>0.06</td></tr>
+<tr><td><b>2 048</b>（训练用的 batch）</td><td><b>8 192</b></td><td><b>4</b></td><td><b>0.76</b></td><td><b>0.41</b></td><td><b>0.53</b></td></tr>
+<tr><td>2 048</td><td>131 072</td><td>64</td><td>1.85</td><td>0.93</td><td>0.07</td></tr>
+</tbody></table></div>
+<p><b>饿着的预算不只是加噪声，它换掉了结果的统计量。</b>接触被丢掉之后，方块会从一只已经攥紧的手里滑出来、落到塔面上，于是「放成率」反而从 0.07 涨到 0.53——手在半盲的同时，任务看起来还更容易。约 <b>128 个/world</b> 起饱和：128 与 2048 的统计完全相同，所以任何 ≥128 的值都是等价的。</p>
+<figure class="fig" id="v9-fig"><img src="assets/l20-stage1-3-results/v9-contact-budget.png" alt="每个 world 分到的接触额度从 4 增加到 2048 时，指尖接触比例与放成率的变化" loading="lazy"><figcaption>v9 · 横轴是每个 world 实际分到的额度（= <code>naconmax</code> ÷ 并行 world 数），同一场景、同一动作。指尖接触（蓝）在 4 个额度下只有 0.41 的步数能登记到，约 128 起饱和；放成率（红）反向走，说明<b>饿着的预算改的是结果而不只是精度</b>。训练跑在最左边那个点，评测跑在 32 个/world。</figcaption></figure>
+<p class="small"><b>当时有迹象，被我解释错了。</b>导出包里观测归一化器的指尖接触均值是 <b>0.071</b>，而把同一个 checkpoint 放到 64 个 world 回放是 <b>0.65</b>。这个矛盾当时记下来了，解释成「训练早期大多把方块掉了」。真正的原因是 batch 大小。<b>MJX 里只要抓握异常地弱、或者接触传感器触发得不合常理地少，先拿 batch 大小去除接触预算，再去怀疑策略。</b></p>
+
+<h3>波及范围：两个文件，按代码查出来的</h3>
+<p><code>shared_pinch.py</code>、<code>cube_stack.py</code>、<code>hammer_nail.py</code>、<code>pick_cube.py</code>、<code>reorient.py</code> 全都一直用仓库约定的 <code>30 × 8192</code>；<b>只有 <code>shared_release.py</code> 和从它派生的 <code>shared_release_v22.py</code> 用了裸的 8192</b>。缺陷就是这样进来的：新环境派生自整个包里唯一写错的那个文件。<code>git log -S "naconmax"</code> 在 <code>shared_pinch.py</code> 上只有一次命中，就是建立该文件的 <code>3a2c3b8</code>，当时已经是 <code>30 × 8192</code>。</p>
+<div class="callout"><b>捏取线 v1–v7 的状态，说准一点：「按代码查，不在波及范围内」，还不是「已重测验证」。</b>v1–v7 的 14 条臂全部来自 <code>shared_pinch.py</code>，该文件从未携带过裸值——这是版本史，不是推断。但还有一条诚实的余量要记：2048 个 world 下 <code>30 × 8192</code> 是每个 world <b>120</b> 个额度，而实测饱和拐点在 <b>128</b> 附近，所以捏取线是<b>恰好在拐点下面一点</b>，有效但余量不大。把这句升级成「已验证」需要把一条捏取臂在 4 倍容量下重评一次（不必重训），脚本 <code>r14_pinch_capacity.sh</code> 已排队，约 10 分钟，<b>尚未执行</b>。</div>
+
+<h3>重测一：v2.2 的表站得住，而且差距变大（R11）</h3>
+<p>这是一次口径干净的前后对比：同一条臂 <code>L20SharedReleaseV22Rand</code>、同样 100 M 步、同一套评测，唯一的变量就是接触预算。只重跑<b>评测</b>几乎等于什么都没做——评测本来就在 256 个 world（32 个/world）上跑，只是轻度饥饿；真正挨饿的是训练，所以 RL 那一行必须重训。</p>
+<div class="tw"><table>
+<caption>v2.2 叠塔任务，混合来源，256 条配对（population）。旧 = 4 接触/world 训练，新 = 120 接触/world</caption>
+<thead><tr><th scope="col">条件</th><th scope="col">旧</th><th scope="col">新</th><th scope="col">差</th></tr></thead><tbody>
+<tr><td>人自己 α=0</td><td>0.40</td><td>0.40</td><td>±0</td></tr>
+<tr><td>规则 α=1</td><td>0.68</td><td><b>0.64</b></td><td>−4</td></tr>
+<tr><td>规则 α=0.5</td><td>0.74</td><td><b>0.66</b></td><td>−8</td></tr>
+<tr><td>RL α=1</td><td>0.81</td><td><b>0.82</b></td><td>+1</td></tr>
+<tr><td>RL α=0.5</td><td>0.86</td><td><b>0.84</b></td><td>−2</td></tr>
+<tr><td><b>RL − 规则</b></td><td>+13 / +12</td><td><b>+18 / +18</b></td><td></td></tr>
+</tbody></table></div>
+<figure class="fig" id="v9-fig2"><img src="assets/l20-stage1-3-results/v9-before-after.png" alt="左：v2.2 任务五个条件的旧新对照；右：§6h 任务三个不含学习的对照行旧新一致" loading="lazy"><figcaption>v9 · <b>A</b>：v2.2 的表在容量修好后不但站得住，差距还从 +13/+12 张到 +18/+18——饿着的预算抬高的是<b>规则</b>，不是 RL。<b>B</b>：同一次修复里，§6h 任务上三个不含学习的行逐位复现；它们的<b>评测</b>也从 32 个/world 变成了 960 个/world 却没有动，所以评测侧的容量变化不是数字的来源。</figcaption></figure>
+<div class="callout bad"><b>这不改变部署层的撤回，两件事要分开记。</b>容量修复确认的是<b>这张表</b>。而「这条线可以上实机」那个读法仍然撤回，理由与接触容量无关：v2.2 的库切窗口时，窗口是从<b>方块已经放好之后</b>才开始的，所以在那个库上「立刻松手」本来就是最优解，表里量到的不是学出来的<b>松手时机</b>。</div>
+
+<h3>重测二：§6h 还没有被重测——我跑错了臂</h3>
+<div class="callout bad"><b>更正（2026-10-09 03:30，发表前自查发现）。</b>§6h 那个「RL 对放手时机没有价值」的判决（α=1 0.63 ± 0.02、α=0.5 0.68 ± 0.02）来自<b>形状奖励</b>的 <code>L20SharedReleaseShaped</code>；而我的重测跑的是<b>无形状奖励</b>的 <code>L20SharedReleaseRand</code>。在 <code>shared_release.py</code> 里 <code>shaped_config()</code> = <code>two_finger_config()</code> 再加 <code>reward.settled = 0.15</code> 与 <code>reward.timing = 8.0</code>，是两条不同的臂。所以「0.63 → 0.79」把<b>奖励配置</b>和<b>接触预算</b>混在了一起，这个对比不成立，<b>本页不采用</b>。教训很窄也很具体：<b>一条臂由它的 config 构造函数决定，不由 checkpoint 路径里的家族名决定</b>；在把一次运行称作另一次运行的「重测」之前，先对 <code>ARM_CONFIGS</code>。</div>
+<p>正确的对照 <code>r15_6h_shaped.sh</code> 已排在 R13 之后：同一条 <code>L20SharedReleaseShaped</code>、同样 100 M、同样 seed 1/2/3、规则行与 α=0 行也在同一条臂上重测，唯一变量是接触预算。<b>在它跑完之前，§6h 的结论既不能说「成立」也不能说「被推翻」，只能说「它所依据的仿真器已知有缺陷，正在重测」。</b></p>
+<p>跑错的那三个 seed 不是废数据，只是回答了另一个问题——<b>无形状奖励的臂在容量修好后 100 M 能到多少</b>。旧记录里这条臂只有 60 M = 0.62 / 0.63，没有 100 M 的对照，所以下表只能当新结果读，不是前后对比：</p>
+<div class="tw"><table>
+<caption><code>L20SharedReleaseRand</code>（无形状奖励），100 M × 3 seed，120 接触/world，population 256 条配对</caption>
+<thead><tr><th scope="col">条件</th><th scope="col">放成</th><th scope="col">早放率</th><th scope="col">终点误差</th></tr></thead><tbody>
+<tr><td>人自己 α=0</td><td>0.27</td><td>0.50</td><td>13.5 cm</td></tr>
+<tr><td>规则 α=1</td><td>0.71</td><td>0.27</td><td>7.1 cm</td></tr>
+<tr><td>规则 α=0.5</td><td>0.68</td><td>0.27</td><td>7.3 cm</td></tr>
+<tr><td><b>RL α=1</b></td><td><b>0.77 ± 0.01</b></td><td>0.17</td><td>6.1 cm</td></tr>
+<tr><td><b>RL α=0.5</b></td><td><b>0.73 ± 0.01</b></td><td>0.20</td><td>7.7 cm</td></tr>
+</tbody></table></div>
+<p class="small">三个 seed 分别是 0.785 / 0.762 / 0.758（α=1）与 0.738 / 0.734 / 0.723（α=0.5）。人自己与规则三行相对 v8 原表逐位复现（放成率、早放率、多握步数相同，终点误差差 0.1–0.2 cm），而它们的评测容量从 32 个/world 变成了 960 个/world——这就是「变的是训练不是评测」的对照。checkpoint <code>L20SharedReleaseRand-20261009-{022834-fix2, 025651-fix2s2, 031720-fix2s3}/000105840640</code>。</p>
+
+<h3>真机：这项辅助在实机上几乎没有时间可省</h3>
+<p>仿真里的「人」晚放 0.9 s，那是<b>构造</b>出来的缺陷人群，不是测出来的。真机那边用统一口径量过：<b>接触</b> = 块底距支撑面 ≤ 1 mm、|竖直速度| &lt; 5 cm/s、块心离面心水平 ≤ 2.5 cm，并要求先离开目标面 ≥ 2 cm、接触持续 ≥ 0.1 s；<b>松手</b> = 拇指与食指指尖和被搬方块的接触都消失后的下一帧（指尖接触在放下后会闪烁，最多断续 92 次，所以取<b>最后</b>一次指尖接触的下一行）。四场叠塔、18 层，两边独立实现后逐行对表一致。</p>
+<p><b>按住时间（最后一次放稳 → 松手）：中位 0.14 s，p10 −0.02 s，p90 0.47 s，最长 1.04 s。</b>这名操作者放稳之后基本立刻松手。<b>放手辅助的前提是「人按得太久」，这个前提对他不成立。</b>水平门取 2.5 cm 还是取联锁自己的 14 mm 结果完全一样——方块在竖直 1 mm 内且静止时本来就摆正了。</p>
+<figure class="fig" id="v9-fig3"><img src="assets/l20-stage1-3-results/v9-real-hold.png" alt="四场叠塔 18 层：每层「放稳到松手」与「首次碰到目标面到松手」的时长对照" loading="lazy"><figcaption>v9 · 真机 18 层。绿色 = 放稳之后还按了多久（中位 0.14 s），<b>这是放手辅助能省的全部</b>。浅蓝 = 从第一次碰到目标面算起（中位 0.35 s、p90 2.81 s、最长 6.40 s），两者之间的差就是<b>反复对准</b>——它不属于松手时机。</figcaption></figure>
+<div class="callout good"><b>真正被浪费的时间有了名字，而且归属清楚：对准。</b>把同样这 18 层按时间拆开——<b>按住</b>（最后一次放稳 → 松手，松手辅助能省的全部）总计 <b>3.55 s</b>，中位 0.14 s；<b>对准</b>（第一次碰到目标面 → 最后一次放稳）总计 <b>16.31 s</b>，是前者的 <b>4.6 倍</b>，中位 0.08 s、均值 0.91 s、p90 2.42 s、最长 5.99 s，集中在 18 层里的 9 层。这个拆法<b>不依赖任何「段数」阈值</b>，所以它是两边都能复算的版本。对准这件事归<b>放置</b>，不归松手；而按用户定下的手腕规则（手腕只跟用户输入），它只能走「以预测的目标放置点为条件、在手指侧微调」这条路。</div>
+<p class="small"><b>「重新对准」的正式判据（协调者 2026-10-09 拍板）：</b>两段接触之间，方块抬离支撑面 <b>≥ 2 mm</b>，<b>或</b>横向位移 <b>≥ 2 mm</b>，<b>或</b>偏航变化 <b>≥ 2°</b>（位移与偏航取后一段前 0.1 s 的中位），任一满足算一次。18 层的分布是 <b>13 层一次放准、4 层两段、1 层三段</b>，平均 <b>1.33</b>，<b>5 层</b>需要重新对准（<code>102650Z</code> t1、<code>103622Z</code> t1、<code>110347Z</code> t1、<code>125941Z</code> t3、<code>125941Z</code> t7）。要加这条量级门，是因为不加时计数对阈值极敏感：纯按抬高算，1 mm 给 10／6／1／1、2 mm 给 15／2／1——同一组数据里「一次放准」的层数能从 10 变到 15。逐层的 <code>gaps</code> 与各版本计数都留在 <code>contact_release_joint.json</code>（首条是 <code>_definition</code>）。上面那组时间拆分不依赖任何阈值。</p>
+<p class="small">这不推翻 R11（那是仿真内部「RL 对规则」的比较，与真机口径无关），但<b>限定它的用处</b>：仿真里 RL 确实赢规则，而真机上这项辅助的预算接近零。</p>
+
+<h3>作废的数字</h3>
+<ul>
+<li><b>每层「接触 → 松手」3.2–7.7 s、中位 4.0 s、六层合计 27.1 s</b>——我原来的 <code>touch</code> 判据是「块心到目标高度 4 mm 内」，<b>既没有速度门也没有水平门</b>，于是第 1 层在方块还没动时就「接触」、更高层在方块被<b>搬运经过</b>目标高度时触发。量到的是「第一次经过目标高度 → 松手」。</li>
+<li>由它派生的 <b>硬联锁上限 1.7 s/层、13.4 s/塔</b> 与 <b>「联锁自己要等 2.1 s」</b>。</li>
+<li>我一度写过的 <b>「中位 0.12 s」</b>——那是按<b>指令张开</b>（比指尖离开早 0–0.3 s）算的，而且只有一场。</li>
+<li><b>「§6h 被推翻、RL 0.63 → 0.79」</b>——跑错臂，见上。</li>
+</ul>
+
+<div class="callout"><b>跨阶段的教训，两次都是同一类。</b><a href="l20-stage1-2-results.html#v17">Stage 1.2 v17</a> 的 λ 是在单一物体上调的，那个选择把答案往「学习有用」偏；这一次饿着的接触预算把答案往「不学习更好」偏。<b>方向相反，类别相同：一个本该中立的旋钮被拧在了一个能决定结论的位置上，而结论照样被当成最终判决写了下来。</b>唯一可靠的防法是在宣布负结论之前，先问一句「这个结论依赖哪些没有被登记在协议里的数字」，然后把它们量一遍。</div>
+
+<p class="small">JSON 在 <code>assets/l20-stage1-3-results/v9/</code>（<code>r11_*</code> = v2.2 重测，<code>r12_*</code>／<code>r13_s*</code> = 无形状奖励臂的三个 seed，<code>contact_release_joint.json</code> = 真机 18 层时间戳）。代码在 HMI 仓库：环境 <code>shared_release.py</code>／<code>shared_release_v22.py</code>，真机口径工具 <code>hand_control/demo/contact_to_release_report.py</code>，备忘 <code>hand_control/plan/2026-10-08-tower-v2-and-sticky-release.md</code>。berlin 上 tmux <code>syn13</code>、显式单卡 GPU 1，脚本 <code>~/Projects/shc_warp/r11_v22_recheck.sh</code>、<code>r12_6h_recheck.sh</code>、<code>r13_6h_seeds.sh</code>、<code>r15_6h_shaped.sh</code>（运行中）、<code>r14_pinch_capacity.sh</code>（排队）。</p>
+</section>
+
+
 <h2 id="compute">算力与运行方式</h2>
 <div class="tw"><table>
 <tr><th>盒子</th><th>状态</th><th>用法</th></tr>
@@ -463,7 +542,7 @@ MJX/Warp 的接触容量 <code>naconmax</code> 是<b>整批共享</b>的预算�
 <li><b>人群 v2 没覆盖的人类行为</b>：动作中途的犹豫停顿；手腕在抓稳前提前抬走（评测来源 <code>replay_early_lift</code> 存在，full_reset 修复后没重跑）；人群参数全部取自文献，等真人 α 随机化会话来校准。</li>
 <li><b>Stage 1.4</b>：z 槽未导出到实机控制器；z_yield 估计要改定义；训练器按 epoch 整体重置把 K=5 会话截到约 2 个 episode，重启前要改训练器或取 K=2。</li>
 <li><b>多物体</b>：圆柱、球、长条的 bank 与残差臂要等 collection v2 的录像；现在这些 trial 只采数据。合成轨迹（v6）目前只有 cube。</li>
-<li><b>放手（v8）已定稿</b>：多 seed 与形状奖励都试过了，RL 仍不赢规则，这条线在仿真里到此为止。留给实机的两件：底座在仿真里是静止体、推不动，所以「把底座推走」这条失败模式只能在实机上测；几何门控（底面高度／横向偏差／竖直速度）留给部署层与实机包络一起定。</li>
+<li><b>放手（v8）的结论悬置，不是定稿</b>：多 seed 与形状奖励确实都试过了，但<a href="#v9">全部四轮都跑在一个指尖半盲的仿真器里</a>（每个 world 只有 4 个接触额度）。修好容量后的正确对照（同一条形状奖励臂、100 M、三个 seed）正在跑，结论以它为准。真机那边还有一件已经清楚了：<a href="#v9">这名操作者放稳之后中位 0.14 s 就松手</a>，所以即使仿真里 RL 赢了规则，这项辅助在实机上能省的时间也接近零——值得做的是<b>对准</b>（占用时间是按住的 4.6 倍），那属于放置策略。留给实机的两件：底座在仿真里是静止体、推不动，所以「把底座推走」这条失败模式只能在实机上测；几何门控（底面高度／横向偏差／竖直速度）留给部署层与实机包络一起定。</li>
 <li>多 seed（H2／H2Rand／Long 各一个 seed）；PD 腕部的前馈；质量／摩擦随机化与接触力惩罚；数据集 builder 保留 Transport 段。</li>
 </ul>
 
