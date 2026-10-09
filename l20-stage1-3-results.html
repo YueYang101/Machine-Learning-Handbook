@@ -473,7 +473,16 @@ MJX/Warp 的接触容量 <code>naconmax</code> 是<b>整批共享</b>的预算�
 
 <h3>波及范围：两个文件，按代码查出来的</h3>
 <p><code>shared_pinch.py</code>、<code>cube_stack.py</code>、<code>hammer_nail.py</code>、<code>pick_cube.py</code>、<code>reorient.py</code> 全都一直用仓库约定的 <code>30 × 8192</code>；<b>只有 <code>shared_release.py</code> 和从它派生的 <code>shared_release_v22.py</code> 用了裸的 8192</b>。缺陷就是这样进来的：新环境派生自整个包里唯一写错的那个文件。<code>git log -S "naconmax"</code> 在 <code>shared_pinch.py</code> 上只有一次命中，就是建立该文件的 <code>3a2c3b8</code>，当时已经是 <code>30 × 8192</code>。</p>
-<div class="callout"><b>捏取线 v1–v7 的状态，说准一点：「按代码查，不在波及范围内」，还不是「已重测验证」。</b>v1–v7 的 14 条臂全部来自 <code>shared_pinch.py</code>，该文件从未携带过裸值——这是版本史，不是推断。但还有一条诚实的余量要记：2048 个 world 下 <code>30 × 8192</code> 是每个 world <b>120</b> 个额度，而实测饱和拐点在 <b>128</b> 附近，所以捏取线是<b>恰好在拐点下面一点</b>，有效但余量不大。把这句升级成「已验证」需要把一条捏取臂在 4 倍容量下重评一次（不必重训），脚本 <code>r14_pinch_capacity.sh</code> 已排队，约 10 分钟，<b>尚未执行</b>。</div>
+<div class="callout good"><b>捏取线 v1–v7：已验证不在波及范围内——代码证据与实测证据各回答一半，两条并列。</b>
+<b>（一）代码查定（回答「它有没有用过裸值」）：</b>v1–v7 的 14 条臂全部来自 <code>shared_pinch.py</code>，<code>git log -S "naconmax"</code> 在该文件上只有一次命中，就是建立它的 <code>3a2c3b8</code>，当时已经是 <code>30 × 8192</code>。它从未携带过裸值——这是版本史，不是推断。
+<b>（二）4 倍容量重评（回答「120 个/world 够不够」）：</b><code>L20SharedPinchH2Rand</code>（checkpoint <code>…-20260930-185311-SRall/000024903680</code>），<b>只重评、不重训</b>，2048 个并行 world、80 步，同一场景同一动作，只改容量：</div>
+<div class="tw"><table>
+<caption>R14，2026-10-09：4 倍容量不改变任何一个数字，所以 120 个/world 对这个环境已经饱和</caption>
+<thead><tr><th scope="col"><code>naconmax</code></th><th scope="col">每个 world</th><th scope="col">指尖平均接触点数</th><th scope="col">有接触的步数</th><th scope="col">成功率</th></tr></thead><tbody>
+<tr><td>245 760（= 30 × 8192）</td><td>120</td><td>0.73</td><td>0.43</td><td>0.12</td></tr>
+<tr><td>983 040（4 倍）</td><td>480</td><td>0.73</td><td>0.43</td><td>0.12</td></tr>
+</tbody></table></div>
+<div class="callout"><p class="small" style="margin:0"><b>两点要留着，不要因为「已验证」就删。</b>（1）0.43 的有接触步数比放手环境健康时的 0.93 低得多，那是<b>任务</b>的性质——捏取 episode 的大半时间手还在接近——判据是<b>4 倍容量下三个数一模一样</b>，这才排除了预算是成因。（2）余量仍然很薄：2048 个 world 下 <code>30 × 8192</code> 是每个 world <b>120</b> 个，而实测饱和拐点在 <b>128</b> 附近，只差约 8 个。<b>以后谁把训练 batch 再调大，这条就要重算</b>——容量是 <code>naconmax ÷ batch</code>，batch 翻倍就跌到 60 个/world。</p></div>
 
 <h3>重测一：v2.2 的表站得住，而且差距变大（R11）</h3>
 <p>这是一次口径干净的前后对比：同一条臂 <code>L20SharedReleaseV22Rand</code>、同样 100 M 步、同一套评测，唯一的变量就是接触预算。只重跑<b>评测</b>几乎等于什么都没做——评测本来就在 256 个 world（32 个/world）上跑，只是轻度饥饿；真正挨饿的是训练，所以 RL 那一行必须重训。</p>
@@ -540,7 +549,7 @@ MJX/Warp 的接触容量 <code>naconmax</code> 是<b>整批共享</b>的预算�
 
 <div class="callout"><b>跨阶段的教训，两次都是同一类。</b><a href="l20-stage1-2-results.html#v17">Stage 1.2 v17</a> 的 λ 是在单一物体上调的，那个选择把答案往「学习有用」偏；这一次饿着的接触预算把答案往「不学习更好」偏。<b>方向相反，类别相同：一个本该中立的旋钮被拧在了一个能决定结论的位置上，而结论照样被当成最终判决写了下来。</b>唯一可靠的防法是在宣布负结论之前，先问一句「这个结论依赖哪些没有被登记在协议里的数字」，然后把它们量一遍。</div>
 
-<p class="small">JSON 在 <code>assets/l20-stage1-3-results/v9/</code>（<code>r11_*</code> = v2.2 重测，<code>r12_*</code>／<code>r13_s*</code> = 无形状奖励臂的三个 seed，<code>contact_release_joint.json</code> = 真机 18 层时间戳）。代码在 HMI 仓库：环境 <code>shared_release.py</code>／<code>shared_release_v22.py</code>，真机口径工具 <code>hand_control/demo/contact_to_release_report.py</code>，备忘 <code>hand_control/plan/2026-10-08-tower-v2-and-sticky-release.md</code>。berlin 上 tmux <code>syn13</code>、显式单卡 GPU 1，脚本 <code>~/Projects/shc_warp/r11_v22_recheck.sh</code>、<code>r12_6h_recheck.sh</code>、<code>r13_6h_seeds.sh</code>、<code>r15_6h_shaped.sh</code>、<code>r14_pinch_capacity.sh</code>（排队）。</p>
+<p class="small">JSON 在 <code>assets/l20-stage1-3-results/v9/</code>（<code>r11_*</code> = v2.2 重测，<code>r12_*</code>／<code>r13_s*</code> = 无形状奖励臂的三个 seed，<code>contact_release_joint.json</code> = 真机 18 层时间戳）。代码在 HMI 仓库：环境 <code>shared_release.py</code>／<code>shared_release_v22.py</code>，真机口径工具 <code>hand_control/demo/contact_to_release_report.py</code>，备忘 <code>hand_control/plan/2026-10-08-tower-v2-and-sticky-release.md</code>。berlin 上 tmux <code>syn13</code>、显式单卡 GPU 1，脚本 <code>~/Projects/shc_warp/r11_v22_recheck.sh</code>、<code>r12_6h_recheck.sh</code>、<code>r13_6h_seeds.sh</code>、<code>r15_6h_shaped.sh</code>、<code>r14_pinch_capacity.sh</code>。</p>
 </section>
 
 
