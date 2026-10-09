@@ -90,7 +90,7 @@ a { color:var(--blue); text-decoration:none; }
 <tr><td><a href="#v5">v5</a></td><td>2026-09-16</td><td>Stage 1.4 首轮：会话持续 K=5、历史特征 z、字典观测非对称 critic，H2Hist／H2HistOracle 两臂</td><td>研究备忘 C3：跨 trial 推断「这次是谁」</td><td><a href="#v5">§I</a>，验收 #2 未过；计划页在 <a href="l20-stage1-4-review.html#v2">Stage 1.4 v2</a></td><td><a href="#v5-fig">按序号曲线</a></td></tr>
 <tr><td><a href="#v6">v6</a></td><td>2026-09-30</td><td>换训练库：把合成抓取轨迹（物理筛后）当人手来源，四条同配方臂 R／S／SR／S2R，berlin Warp 单卡</td><td>真人只有 95 条；问「合成轨迹能不能替代或超过真人数据」</td><td><a href="#v6">§v6</a>：留出真人上只用合成 ≈ 只用真人，混合无增益；部署包 <code>…h2rand_srall20M.npz</code></td><td><a href="#v6-fig">四臂对照图</a></td></tr>
 <tr><td><a href="#v7">v7</a></td><td>2026-10-07</td><td>抓取残差改用两指终点模型的单帧预测列作目标</td><td>预测器换了（两指协议、单帧终点）；问新目标列能不能让残差更好</td><td><a href="#v7">§v7</a>：<b>判为等价</b>，验收未过（关口行 +3／−3，噪声内；该行已接近饱和）</td><td><a href="#v7-fig">对照图</a></td></tr>
-<tr><td><a href="#v8">v8</a></td><td>2026-10-07</td><td>新任务与新环境：把方块搬到底座上并<b>决定何时松手</b>；新库（从原始头显日志切放手窗口）、新臂、松手动作接口</td><td>10-07 用户指令：除抓取外还要学放手时机。这推翻了设计文档 §2「不自动张手」——变更以带日期的形式写在 HMI 的 <code>hand_control/plan/stage13-shared-grasp-design.md</code> §2 与 §6h，仅限仿真</td><td><a href="#v8">§v8</a>：<b>定稿，负结论</b>——规则 0.71，RL 形状奖励 100M×3 seed 0.63 ± 0.02，锚在规则上的 RL 正好复现规则；人自己 0.27</td><td><a href="#v8-fig">缺陷矩阵</a> · <a href="#v8-timing">松手时刻</a></td></tr>
+<tr><td><a href="#v8">v8</a></td><td>2026-10-07</td><td>新任务与新环境：把方块搬到底座上并<b>决定何时松手</b>；新库（从原始头显日志切放手窗口）、新臂、松手动作接口</td><td>10-07 用户指令：除抓取外还要学放手时机。这推翻了设计文档 §2「不自动张手」——变更以带日期的形式写在 HMI 的 <code>hand_control/plan/stage13-shared-grasp-design.md</code> §2 与 §6h，仅限仿真</td><td><a href="#v8">§v8</a>：<b>定稿，负结论</b>——规则 0.71，RL 形状奖励 100M×3 seed 0.63 ± 0.02，锚在规则上的 RL 正好复现规则；人自己 0.27。<b>此负结论当前不成立</b>：训练时每个 world 只有 4 个接触额度（见 <a href="#v8-contact-correction">§v8 更正</a>），修好后重测写在 <b>v9</b>（稍后补齐）</td><td><a href="#v8-fig">缺陷矩阵</a> · <a href="#v8-timing">松手时刻</a></td></tr>
 </tbody></table></div>
 
 <nav class="tasknav" aria-label="本页目录"><div class="tcard"><div class="tname">本页目录</div>
@@ -401,6 +401,12 @@ a { color:var(--blue); text-decoration:none; }
 <p class="small">版本 v8 · 2026-10-07 · 放手时机：新任务、新库、新环境</p>
 <h2 id="release">v8：把方块放到底座上，学「什么时候松手」</h2>
 <p>此前整条线都在辅助<b>合拢</b>。10-07 的指令要的是另一半：搬一块方块到另一块上，<b>在正确的时刻松手</b>。早松是从高处掉下来，晚松是放稳了还攥着。这推翻了设计文档 §2 原本的「不自动张手、释放是用户的独立明确输入」——该条已在 HMI 仓库里写成带日期的设计变更（原规则、为什么推翻、仅限仿真、实机控制器的释放行为不动），本节只记实验。</p>
+
+<div class="callout bad" id="v8-contact-correction"><b>更正（2026-10-09）：本节的负结论是在一个「指尖半盲」的仿真器里得出的，正在重测，当前不成立。</b>
+MJX/Warp 的接触容量 <code>naconmax</code> 是<b>整批共享</b>的预算，不是每个 world 一份。本节的训练跑 2048 个并行 world，而这两个放手环境配的是裸的 8192，于是<b>每个 world 只剩 4 个接触额度</b>：同一场景、同一动作下，指尖只有 <b>0.41</b> 的步数能登记到接触，而容量充足时是 <b>0.93</b>。评测却跑 256 个 world（32 个/world），所以<b>策略在半盲的世界里学、在接近正常的世界里被打分</b>。
+<b>波及范围只有两个文件</b>：<code>shared_pinch</code>、<code>cube_stack</code>、<code>hammer_nail</code>、<code>pick_cube</code>、<code>reorient</code> 一直用的是仓库约定的 <code>30×8192</code>；只有 <code>shared_release</code> 和从它派生的 <code>shared_release_v22</code> 用了裸值。<b>所以捏取线 v1–v7 不在本次缺陷范围内</b>，不需要重读。
+因此本节下文那句「在这个任务上 RL 对放手时机没有价值」应当读作「<b>在一个指尖半盲的仿真器里</b>，RL 对放手时机没有价值」。<b>下文四轮排除掉的替代解释（一次性奖励的早放漏洞、20→60→100 M 步数、奖励形状、seed）本身没有错</b>，它们只是都在同一个饱和的仿真器里做的——本节不是「全错」，是「条件错了」。
+修好容量后的重测数字写在 <b>v9</b>（本页稍后补齐；等第 3 个 seed 跑完一次写齐，届时这里改成链接）。</div>
 
 <h3>数据：原来就有，只是不在任何数据集里</h3>
 <p>派生数据集到抬离就停（实测：每条 trial 抬离后只剩 1 个样本），所以放手段不在现有两个库里。但原始头显日志是完整的 100 Hz 记录：物理行带 16 维命令、手腕 mocap、物体位姿、手掌位姿、接触数，事件行带阶段与成功标记。扫全部 66 个 session：22 个有放置事件、<b>151 次成功放手</b>。新 builder 切「搬运 → 放下 → 松手 → 静止」窗口，得到 <b>144 个窗口 / 19 个 session</b>，50 Hz，松手固定在同一索引。</p>
