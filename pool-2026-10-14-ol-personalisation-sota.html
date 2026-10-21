@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>底座学技能、适配学个人：OL 与意图预测 SOTA 调研 · 待并入 · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap canvas { width:100%; display:block; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+.ctl { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 10px; }
+.ctl button { font:600 .85rem/1 inherit; color:var(--ink); background:var(--bg);
+  border:1px solid var(--line2); border-radius:7px; padding:7px 11px; cursor:pointer; }
+.ctl button:hover { border-color:var(--blue); color:var(--blue); }
+.ctl button.pri { background:var(--blue); border-color:var(--blue); color:#fff; }
+.ctl label { display:inline-flex; gap:5px; align-items:center; font-size:.85rem; color:var(--sub);
+  cursor:pointer; user-select:none; }
+.ctl input[type=range] { flex:1 1 140px; min-width:120px; accent-color:var(--blue); }
+.ctl .ro { font:.8rem/1.4 ui-monospace,Menlo,monospace; color:var(--sub); }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+.num { font:.93rem/1.7 ui-monospace,Menlo,monospace; }
+/* ---- pool 页专用 ---- */
+code { overflow-wrap:anywhere; font-size:.9em; }
+.tw:focus-visible, a:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+table.w5 { min-width:560px; }
+table.w7 { min-width:760px; }
+blockquote { margin:1.2em 0; padding:8px 16px; border-left:3px solid var(--line2); color:var(--sub);
+  background:var(--panel); border-radius:0 8px 8px 0; }
+.status { font-size:.95rem; }
+.status ul { margin:.4em 0; padding-left:1.2em; }
+.status li { margin:.35em 0; }
+.tag { display:inline-block; font-size:.78rem; font-weight:600; color:var(--yellow); border:1px solid var(--yellow);
+  border-radius:20px; padding:0 8px; margin-left:6px; vertical-align:middle; }
+h2[id], h3[id] { scroll-margin-top:16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="bk" href="index.html#pool">← 待并入 Pool</a> · <a class="bk" href="index.html">Machine Learning Handbook</a>
+  <div class="kicker">MACHINE LEARNING HANDBOOK · 待并入 POOL · 2026-10-14</div>
+  <h1>「底座学技能、适配学个人」——我们的架构到底有没有用到这一点？<br><span style="font-size:.72em;color:var(--sub)">调研与改进建议：意图预测 SOTA · OL 与微调 · 同类可适配架构 · 对当前 OL 底座的分级改法</span></h1>
+  <p class="lede">用户 2026-10-14 的五个问题：现架构能不能利用「底座学技能、适配学个人」、意图预测的总体 SOTA、操作 / 遥操作里的意图预测 SOTA、OL 和微调的区别、和我们想法类似的架构；外加「当前 OL 底座怎么改会更好」。文献部分每条带 arXiv / DOI 和核实标记（V = 打开过一手页面，U = 只见过列表或片段）。</p>
+<div class="key warn status" role="note">
+<p><b>待并入 · 状态：待审，还没并入任何分类。</b>这一页暂存在 Pool 里：读完再决定并不并、并到哪；并入或弃用后本页删除（规则见仓库 <code>STYLE.md</code> §1「待并入（Pool）」）。</p>
+<ul>
+<li><b>来源：</b>2026-10-14「Share control 接触点预测模型架构」session 的调研备忘，原件 <code>human_machine_interaction · hand_control/plan/2026-10-14-base-skill-vs-personalisation-architecture-review.md</code>（私有仓库）。本页是原文的 HTML 转写，正文一字未改；只加了章节锚点和 arXiv / DOI 链接。</li>
+<li><b>收入 Pool：</b>2026-10-21。</li>
+<li><b>建议去向（待你定）：</b>§3–§6 与 §9 讲别人的方法 → 理论区，作为 <a href="online-learning.html">在线学习</a> 的相关研究挂在它下面；§0–§2、§7–§8 讲我们自己要怎么改 → 实验计划区，并进 <a href="l20-stage1-2-training.html">Stage 1.2 计划页</a>。也可以整页作为 Stage 1.2 的配套选型综述。</li>
+<li><b>读前须知：</b>文中 v9–v20 是 Stage 1.2 的版本号（如 v14 = <a href="l20-stage1-2-results.html#online-v14">在线学习四问</a>）；附录 13–19、§10.x、「协调者」「向导」指 HMI 仓库里的记录和工作 session，站上没有对应页面；原文的 <code>[[…]]</code> 内部笔记链接只保留了名字。</li>
+</ul>
+</div>
+  <nav class="toc" aria-label="目录"><b>目录</b> · <a href="#s0">§0 一句话结论</a> · <a href="#s1">§1 现状诊断：我们现在的架构是什么</a> · <a href="#s2">§2 问题 1：能不能利用「底座学技能、适配学个人」？——能，一条改法，写成检验</a> · <a href="#s3">§3 问题 2：意图预测模型的 SOTA（总体，2023–2026）</a> · <a href="#s4">§4 问题 3：操作 / 遥操作 / 共享控制里的意图预测 SOTA（2023–2026）</a> · <a href="#s5">§5 问题 4：OL 和微调的区别</a> · <a href="#s6">§6 问题 5：和我们想法类似的架构 / 文章 / 项目</a> · <a href="#s7">§7 对当前 OL 底座怎么改会更好——分级建议</a> · <a href="#s8">§8 风险（照实写）</a> · <a href="#s9">§9 参考文献</a></nav>
+
+<main>
+<ul>
+<li>起草：78e27521（本 session）。依据：用户 2026-10-14 的五个问题 + 「对当前 OL 底座怎么改会更好」。</li>
+<li>状态：讨论稿。只写不训，不改任何冻结 / 钉住的文件，不动附录 13–18 的登记。版本号由向导 / 协调者定。</li>
+<li>范围：<strong>只谈 Stage 1.2 的接触点 / 终点预测器及其在线适配（OL）</strong>。Stage 1.3 / 1.4 的辅助策略只作为「隐变量推断可行性」的证据引用，不在本页讨论。</li>
+<li>文献部分（§3、§4、§6）由三份并行调研汇总，每条带 arXiv / DOI 与核实标记；仓库证据部分（§1、§2、§7）每条带仓库路径。</li>
+</ul>
+<h2 id="s0"><span class="n">§ 0</span>一句话结论</h2>
+<p><strong>用户的判断成立：现在的架构没有利用「底座学技能、适配学个人」这个分工。</strong> 底座 λ0-Z3 是在<strong>一个</strong>生成分布上训练的群体均值回归器，训练数据里没有「操作者风格」这个轴，网络也没有任何上下文 / 隐变量输入；OL 是事后加在输出上的收缩常数。两者都没有被训练成「可适配的」。这不是实现瑕疵，是设计缺位——v14 §8 第 5 条已经把「生成数据加操作者风格随机化 → 为适应而训练的底座」列为<strong>未做的依赖</strong>，之后一直没做。</p>
+<p><strong>能不能补上：能，而且不违反零样本前提。</strong> 做法是把生成器从「一个分布」改成「一个操作者群体」（每个合成操作者一组风格参数，范围只由 choice / 几何给），再把底座训成<strong>以当前用户的前 k 次事件为上下文</strong>的模型（元学习 / 上下文条件化）。这样「零样本」= k = 0 的输出，「零样本 + OL」= k &gt; 0 的输出，是同一个网络的两列；测试时没有梯度步，没有岭回归记忆单个物体的偏移，σ 由群体校准、可直接喂 α。前置条件有三条（§2.3），每条都能先在生成群体上检验。</p>
+<p><strong>文献上的位置（§3–§6）</strong>：接触前预测指尖接触点没有先例（§4.1）；最像的实证是 Valkov 2025——接触前手指运动学 → 何时 / 何处，换新人退化 3 倍、每人 50–250 条序列微调后恢复——但底座是 15 人训的。「仿真群体 + 摊销 / 闭式个性化」在 HCI（Moon 等 CHI 2023）、机器人（Instant Policy / SynthICL，底座零真实样本）、驾驶（ALPaCA）、神经接口（Kaifosh 等 Nature 2025，数千人通用底座 + 20 分钟个性化）都有成立的先例；<strong>用同一个人自己的几条样本在上下文里个性化手 / 臂运动预报器，没有先例</strong>。</p>
+<p><strong>对当前 OL 底座的改法（§7）</strong>：先做不改底座的几件事（在 λ0-Z3 上重跑 §5b 覆盖诊断、承认 S1 / S1b 选参群体的循环论证、每份报告固定三列 k = 0 / k / 配对差、切换改软权重、提交门改在线校准），再做「学到的适配子空间」（一两天、复用冻结底座），最后才是上下文条件化底座（一周量级）。不要再做的：加容量、稠密未来标签修终点、原始特征岭回归、逐帧 Adam。</p>
+<h2 id="s1"><span class="n">§ 1</span>现状诊断：我们现在的架构是什么</h2>
+<h3 id="s1-1">1.1 底座（λ0-Z3）</h3>
+<ul>
+<li>掌心分支 <code>TrajMLP</code>（<code>training/stage12_intent/services/level_2_models/traj_mlp.py</code>）：<code>ConditionEncoder</code> 把 20 帧 × 28 通道的窗口压成 128 维 h，再出三个头：终点（25 维，当前掌姿 + 残差）、未来轨迹（50 步 × 3）、when（到零点的秒数）。</li>
+<li>手指 / 接触分支 <code>FullBranch2</code>（<code>.../level_2_models/unified_mlp.py</code>）：自己的编码器 + 掌心嵌入 → 实际手指 7 维（当前指令 + 残差）、过捏、接触点 6 维。</li>
+<li>训练数据：RL-A 零样本生成（v4s3 9302d911）+ hand-v2 Z bank（9c92f3c2），约 11.8 万窗；损失 MSE；<code>unified_train.run2_zero</code> 拒绝任何 <code>has_human_data != false</code> 的输入（<code>lam0z-zero-sample-20261011</code>）。</li>
+<li><strong>没有的东西</strong>：没有用户 / 会话 / 上下文输入，没有隐变量，没有不确定度头（σ 只来自 5 种子散布或启发式 <code>err_hat = remaining + 0.3 s × speed</code>，附录 6 的四个学习式信号全部未过线）。</li>
+</ul>
+<h3 id="s1-2">1.2 适配层（附录 17 / 18 的 OL）</h3>
+<ul>
+<li>附录 17 的 E 臂：<code>GraspOffset(n0=2, r0=3 cm, gate=6 cm)</code>（<code>.../level_2_models/ol_adapters.py</code>）——手系掌心 3 维常数偏置 + 拇指食指 7 维常数偏置，收缩 n/(n+n0)，按剩余距离加权，提交门 6 cm，<code>NeverWorse</code> 切换。</li>
+<li>附录 18：<code>KernelOffset</code>（按接近姿态核加权的偏置，h = ∞ 时就是 E；S1b 选参结果 h = ∞，所以 E_cond ≡ E，J_post 按构造 FAIL）；<code>OnlineDelta</code>（稠密岭 Δ）。</li>
+<li>试过并放弃的臂（v9–v19，<code>2026-10-07-online-strategies-coadaptation.md</code>）：全量微调 + L2-SP（ft）、35 维特征岭回归（现场 YCB 误差翻倍，撤回）、贝叶斯末层、kNN、遗忘 / 滑窗 / 回放、低秩适配器（附录 17 J3b，生成用户上 22/30 更差）、稠密未来头（附录 17 的 D，逐帧 Adam 发散）。</li>
+<li>结论性数字：零样本底座上 OL 的唯一正面证据是 T3（λ0-Z + v4 冷启动）掌心 −0.52 / −0.53 cm，显著；但它只补回 λ0-Z 对「保持不动」+1.01 cm 差距的一半。115417Z 上附录 13 / 14 / 15 全部 FAIL，附录 17 / 18 在测试中（§10.44）。</li>
+</ul>
+<h3 id="s1-3">1.3 为什么说这个架构「没有利用分工」</h3>
+<p>把「底座学技能、适配学个人」拆开看，分工成立要满足两件事：<strong>底座在训练时见过「人与人不同」这个维度</strong>，以及<strong>适配层只需要在那个维度上定位，而不是从零拟合</strong>。现在两件都不满足：</p>
+<div class="tw" tabindex="0" role="region" aria-label="表：1.3 为什么说这个架构「没有利用分工」"><table>
+<thead>
+<tr>
+<th>要件</th>
+<th>现状</th>
+<th>证据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>底座训练集里有「操作者」这个轴</td>
+<td>没有。生成器没有操作者风格旋钮；每条轨迹是同一分布的一次抽样</td>
+<td>v14 Q3：「生成器没有操作者风格旋钮（生成式 session 确认）」；挂点列了（<code>synthetic_approach_free.build()</code> 的 <code>style</code> dict、终点掌心偏置、f_rot 时序、速度、接近方向、姿态）但<strong>从未实现</strong>（<code>2026-10-07-online-strategies-coadaptation.md</code> §8 第 5 条「依赖（未做）」）</td>
+</tr>
+<tr>
+<td>底座有接收「这是谁」的入口</td>
+<td>没有。输入 = 当前窗口 + 物体几何，输出确定</td>
+<td>§1.1</td>
+</tr>
+<tr>
+<td>适配层是在底座学到的结构上定位</td>
+<td>不是。常数偏置的形式是人定的（§10.11 / §10.14 从真人数据筛出来的），和底座特征无关</td>
+<td><code>GraspOffset</code> 的形式来自 §10.11「手坐标系偏置最好」——这是在真人 44 次上发现的，不是底座学来的</td>
+</tr>
+<tr>
+<td>适配层的超参从群体里选</td>
+<td>选了，但<strong>群体只能验证常数偏置这一种形式</strong></td>
+<td>§1.4</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>决定性的事实是 v14 §5b 的 p(a | o) 诊断</strong>（<code>training/artifacts/stage12_intent/online/study_v14/diag_pa_given_o/</code>）：给定同样的最近 1 s 运动，生成数据会去的终点离这位操作者真正去的终点 5.6–6.6 cm，<strong>没有一个生成样本落在 2 cm 内</strong>；操作者自己的条件云很紧（离散 1.5–1.9 cm，最近点 1 cm）。读法原文：「不是同一个分布里的低概率模式，是另一个条件分布：『什么样的运动通向什么样的终点』这张映射是这个人自己的。」<strong>出处的时效要说明</strong>：这个诊断跑在 v9 时代的生成器（gd_free cube054）对 09-13 的 95 条真人试次上；λ0-Z3 的训练数据已换成 RL-A v4s3 + hand-v2 Z，95 条也在 10-11 被用户弃用（只看叠塔）。结构性结论大概率仍成立，但数字要在 λ0-Z3 自己的生成数据对 DEV14 叠塔场次（只作验证）上重跑一次才能当「决定性」引用——这是 §7.1 的第 1 条。底座能学的是<strong>几何可行集</strong>（对这个物体哪些掌位是物理上可行的抓取）——这是技能；学不到的是<strong>这个人从哪条路靠近、停在可行集的哪一点</strong>。所以「保留底座的多模态、在线只学一个选择器」在现在的底座上行不通，只能平移映射。</p>
+<p>这正是用户问题的技术翻译：底座确实学了技能（可行集），但它学成了<strong>一张</strong>映射，而人的差别恰恰在映射上。一个只见过一张映射的网络，没有「换一张映射」的自由度；OL 只好在输出端硬加常数。</p>
+<h3 id="s1-4">1.4 S1 / S1b 选参群体的循环论证（要在附录 17 / 18 的报告里声明）</h3>
+<p><code>ol_generated.sample_user</code>（附录 17）和 <code>ol2_generated.sample_user_postures</code>（附录 18）构造的「生成用户」= 底座自己的留出集 + 一个常数掌心偏置（手系，U(0, 4) cm）+ 常数手指偏置 + 节奏缩放（+ 18 的 3 个姿态簇）。这个群体里人与人的差别<strong>按构造就是常数平移</strong>。用它选 E / E_cond / 低秩适配器的超参，结果必然是：常数偏置可辨识、其它形式「最差 10 % 用户更差」走退路（S1 每个阶段都走了退路；J3b 低秩 +0.044 cm；S1b h = ∞）。这不是证据说「只有常数偏置有效」，是群体只容得下常数偏置。真人侧 §10.15 的 O − B ≈ 2 cm 沿手 x、§10.17 跨物体 / 任务 / 场稳定（+1.88 cm，95 % 同号）说明这位操作者<strong>恰好</strong>有一个大的常数分量，所以 E 在他身上有效（T3）；换一个人未必。</p>
+<h3 id="s1-5">1.5 从 Stage 1.4 借来的一个边界（隐变量什么时候才值钱）</h3>
+<p>Stage 1.4（<code>stage14-operator-latent-design.md</code> §7）给辅助策略加了「从交互历史推断的操作者隐变量 z」，验收未过：从历史推断的 z 第 2 个 episode 起没有提升；<strong>连真值 z 也只 +4 个点</strong>。原因写得很清楚：在单方块 pinch 上，人的缺陷（欠合拢、卸载）在 episode <strong>内</strong>就能从观测里看出来，策略不需要跨 episode 的先验。对预测器的启示反过来：<strong>隐变量只在「窗口里看不出来」的差异上值钱</strong>。§10.15 说终点偏差只在接近最后阶段、未来窗口碰到终点时才进入标签；<code>ol_generated</code> 的 warping 也是这样设计的（1 s 时底座看不到偏移，0.5 s 看到一部分）。所以对终点预测器，个人差异<strong>正好是窗口里看不出来的那种</strong>——承载它的应该是<strong>跨事件的上下文</strong>（这个人前 k 次抓取的（窗口，终点）对），而不是只读本次接近运动的 RMA 式推断。§2.2 的方案据此排序。</p>
+<h2 id="s2"><span class="n">§ 2</span>问题 1：能不能利用「底座学技能、适配学个人」？——能，一条改法，写成检验</h2>
+<h3 id="s2-1">2.1 改什么</h3>
+<p><strong>(a) 生成器：从「一个分布」到「一个操作者群体」。</strong> 每个合成操作者 u 抽一组风格参数 θ_u，整条轨迹 / 整个会话按 θ_u 生成，范围全由 choice 或任务几何给（零样本前提，<code>zero-sample-is-the-premise</code>）。风格轴要让 <strong>p(a | o, θ) 的映射本身不同</strong>，不只是输出平移。下表「为什么是它」一栏是促成这条轴的<strong>诊断</strong>（按第 2 栏披露）；<strong>每条轴的取值范围都是完整的几何 / 文献弧，不是真人的区间</strong>（§2.2）：</p>
+<div class="tw" tabindex="0" role="region" aria-label="表：2.1 改什么"><table>
+<thead>
+<tr>
+<th>风格轴</th>
+<th>为什么是它</th>
+<th>仓库依据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>终点在可行集上的位置（沿可行弧 / 面内的偏好点、停留深度）</td>
+<td>§5b：差别在「停在可行集的哪一点」</td>
+<td><code>study_v14/diag_pa_given_o/</code>；§10.17 深约 2 cm 稳定</td>
+</tr>
+<tr>
+<td>接近方向与倾角（含 25–55° 的空带）</td>
+<td>真人倾角 5–28° + 侧捏 75°，库里只有 5–8° / 67–75°</td>
+<td>§10.11、<code>angle_sweep_20261008/findings.md</code></td>
+</tr>
+<tr>
+<td>下降剖面（最后 1 s 的减速、是否先悬停）</td>
+<td>偏差在下降阶段形成（1.0 → 0.3 s +1.78 cm）</td>
+<td>§10.17</td>
+</tr>
+<tr>
+<td>节奏 / 峰速</td>
+<td>现场峰值 0.54 m/s，移植被放慢一半，未来头因此失效</td>
+<td>§10.15 (3)</td>
+</tr>
+<tr>
+<td>预形 / 手指偏置</td>
+<td>v19 手指常数偏置是唯一清楚的收益</td>
+<td>§10.7</td>
+</tr>
+<tr>
+<td>接近姿态簇的混合（1–3 种）</td>
+<td>用户要求「处理不同抓取姿势」</td>
+<td>附录 18、<code>user-decisions-20261012</code> 第 8 条</td>
+</tr>
+</tbody>
+</table></div>
+<p>两条来自文献的硬要求：① <strong>多样性要过阈值</strong>（Raventós 等 NeurIPS 2023）：群体太窄，模型只对那个群体贝叶斯最优、对新人失败；② <strong>风格在评测时刻的窗口里要不可辨</strong>（Yin 等 ICLR 2020 的「任务互斥」条件）：如果终点从窗口本身就能预测，元学习器会忽略上下文。现在 <code>ol_generated</code> 把偏移在最后 1 s 里混进输入，0.5 s 时已部分可见——这在 A 的<strong>训练</strong>里是一条记忆通道。这是训练期的约束，不改评测：上下文在两个评分时刻（1.0 / 0.5 s）的窗口里都不能是冗余的，做法是元增广（Rajendran 等 NeurIPS 2020）或生成器里按评分时刻匹配的混入时机；所有判定线仍评两个 τ。</p>
+<p>现有可复用的东西：<code>ol_generated.sample_user</code> / <code>warp_grasp</code>（常数偏置、节奏）、<code>ol2_generated.posture_clusters</code>（姿态簇）、<code>realism_auc.py</code>（<code>training/artifacts/stage12_intent/synthetic/gen/diag_20261007/</code>，覆盖检查）、<code>motion_priors.json</code> 的文献区间。缺的是「终点在可行集上的位置」和「下降剖面」两个轴——这两个要进 RL-A 生成器或 <code>op_surrogate</code> 的参数，不是事后 warping 能做的（warping 只会平移）。</p>
+<p><strong>(b) 底座：从「x → y」到「(x, C_u) → (y, σ)」。</strong> C_u = 这个用户在本会话里之前 k 次事件的（评测时刻的窗口特征，终点标签）对，k = 0…K。训练目标是<strong>前验式</strong>的：对每个合成用户、每个 k，用前 k 次事件做上下文，预测第 k + 1 次。k = 0 就是群体先验（= 现在的「零样本」列）。实现形式按代价排序：</p>
+<div class="tw" tabindex="0" role="region" aria-label="表：2.1 改什么"><table class="w5">
+<thead>
+<tr>
+<th>形式</th>
+<th>测试时做什么</th>
+<th>优点</th>
+<th>代价 / 风险</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>B. 学到的适配子空间</strong>（底座冻结 + 群体上学一组 d ≤ 8 维的「风格基」W；OL 只拟合系数 c_u，闭式岭 / 贝叶斯末层；= ALPaCA 的末层先验，<a href="https://arxiv.org/abs/1807.08912">arXiv 1807.08912</a>，或 VBLL <a href="https://arxiv.org/abs/2404.11599">arXiv 2404.11599</a>）</td>
+<td>一个 d 维最小二乘</td>
+<td>一两天；复用 λ0-Z3 的特征；修正了 v17「35 维岭回归记忆物体偏移」的病根（维度从人定的 35 变成群体学出来的 ≤ 8）</td>
+<td>子空间仍是线性的；群体必须真的含有多种映射，否则 W 退化成常数偏置（= 现在的 E）；<strong>外挂适配器有天花板</strong>（A-RMA 的教训：底座要和适配模块一起在环训练）</td>
+</tr>
+<tr>
+<td><strong>A. 上下文条件化底座</strong>（Neural-Process / in-context 式：上下文集经一个集合编码器进入网络；模板 = PFN <a href="https://arxiv.org/abs/2112.10510">arXiv 2112.10510</a>、TNP <a href="https://arxiv.org/abs/2207.04179">arXiv 2207.04179</a>，HCI 先例 Moon 等 CHI 2023）</td>
+<td>一次前向</td>
+<td>没有梯度步（D 发散的病根消失）；never-worse 是学来的（上下文无信息时网络学会忽略）；σ 由群体校准</td>
+<td>一周；要重训底座，附录 13 的 λ0-Z3 保持不动、作对照；元过拟合到生成群体的风格族</td>
+</tr>
+<tr>
+<td>C. RMA 式（只读本次接近的运动推断 θ；RMA <a href="https://arxiv.org/abs/2107.04034">arXiv 2107.04034</a> / A-RMA <a href="https://arxiv.org/abs/2205.15299">arXiv 2205.15299</a>）</td>
+<td>一次前向</td>
+<td>不需要事件标签</td>
+<td>§1.5：终点偏差在窗口里看不到 → 单独用不够，只能作为 A 的补充输入</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s2-2">2.2 为什么这仍然是零样本</h3>
+<ul>
+<li>第 1 栏「训练里的真人样本」仍是「无」：群体是程序生成的，θ 的范围是 choice / 几何 / 文献。</li>
+<li>第 2 栏要写：风格轴的<strong>选择</strong>受了 v14 §5b、§10.11、§10.15、§10.17 这些真人诊断的启发（和附录 17 的 E 臂一样，形式受真人启发、参数不来自真人）；范围是否盖住真人只做<strong>事后</strong>覆盖检查（dev 场次，<code>realism_auc</code> / 最近点距离），不回调。</li>
+<li>在线读的仍然只是当前用户的实时事件，和附录 17 完全一样的三路喂入（<code>on_sample</code> / <code>on_telemetry</code> / <code>on_phase</code>）。</li>
+</ul>
+<h3 id="s2-3">2.3 三个前置条件（都先在生成群体上检验，再看真人）</h3>
+<ol>
+<li><strong>风格轴真的改变映射</strong>：在新群体上重做 §5b 的诊断——同一窗口特征下，不同 θ 的终点云是否分开（簇间距 ≥ 簇内散布）。若分不开，群体只是噪声，A / B 都学不到东西。</li>
+<li><strong>覆盖</strong>：真人操作者的条件云要落在群体的张成里。诊断：对 DEV14 叠塔场次每个评测窗，群体里最近合成用户的条件终点距离——基线 = §7.1 第 1 条在 λ0-Z3 上重跑的 §5b 数字（v9 时代是 5.6 cm），目标降到操作者自身散布量级（约 2 cm）。这一条通不过，A / B 的收益会被截断在「群体能表达的那部分」。</li>
+<li><strong>可辨识</strong>：在生成留出用户上，学习曲线（误差对 k）要在 k ≤ 5 内明显下降，且 k = 0 不比冻结底座差。若需要 k &gt; 20 才见效，按每分钟约 6 次抓取（附录 17 §4.1）就超出一场的长度，实际意义不大。少样本下用户可能辨不出来（Finn, Xu, Levine NeurIPS 2018 的任务歧义）——所以 A 要输出分布 / 多假设，不是一个偏置。</li>
+</ol>
+<h3 id="s2-4">2.4 判定线（建议事先登记；编号由协调者定）</h3>
+<ul>
+<li><strong>G0 不退化</strong>：k = 0 的掌心 / 手指 / 接触点对冻结 λ0-Z3 非劣（掌心 +0.1 cm、手指 +0.01 rad、接触点 +0.3 cm 的边界，同附录 17 的口径）。</li>
+<li><strong>G1 生成留出风格</strong>：k = 5 时，A / B 对「冻结底座 + E」的掌心配对差 ≤ −0.3 cm（1.0 / 0.5 s 都要），上界 &lt; 0；最差 10 % 用户不比 k = 0 差 0.2 cm 以上。</li>
+<li><strong>G2 真人验证（前验式回放，场次按时间顺序，冷启动）</strong>：「零样本 + OL(k ≥ 5)」对「零样本 + E」的配对差 ≤ −0.3 cm，上界 &lt; 0；手指 / 接触点非劣。所有臂在<strong>底座</strong>判为显示的帧上评（§6.3 的规则）。</li>
+<li><strong>G3 校准</strong>：σ 的 1σ 覆盖在真人场次上落在 [50 %, 85 %]（PlaceNet-Z 现在是 5.5 %）；分布外用户的 σ 要变大而不是变小（F-PACOH 的要求，<a href="https://arxiv.org/abs/2106.03195">arXiv 2106.03195</a>）。</li>
+<li><strong>G4 风格外用户</strong>：生成一批 θ 在训练范围外的用户，k = 0…20 的误差不比冻结底座 + E 差——这是「元过拟合」的检验（Raventós 等 2023；Yin 等 2020）。</li>
+</ul>
+<h2 id="s3"><span class="n">§ 3</span>问题 2：意图预测模型的 SOTA（总体，2023–2026）</h2>
+<p>标记：<strong>V</strong> = 调研时打开过摘要 / 全文页核实；<strong>U</strong> = 只有列表 / 片段。「跨人」= 测试对象在训练里从未出现（按人切分），不是按场景切分。</p>
+<h3 id="s3-1">3.1 手 / 人体运动预报（预测「往哪走」）</h3>
+<div class="tw" tabindex="0" role="region" aria-label="表：3.1 手 / 人体运动预报（预测「往哪走」）"><table class="w7">
+<thead>
+<tr>
+<th>工作</th>
+<th>输入 → 输出</th>
+<th>视野</th>
+<th>训练数据</th>
+<th>误差</th>
+<th>跨人</th>
+<th>标记</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>USST</strong>（Bao 等，ICCV 2023，<a href="https://arxiv.org/abs/2307.08243">arXiv 2307.08243</a>）</td>
+<td>第一视角 RGB 片段前 60 % → 后 40 % 的 3D 手轨迹，每个未来点一个高斯（异方差损失）</td>
+<td>按帧比例</td>
+<td>H2O-PT、EgoPAT3D-DT</td>
+<td>ADE/FDE 3.1/5.2 cm（H2O-PT）；去掉不确定度损失 ADE 0.183 → 0.292 m</td>
+<td>否（按场景）</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>MADiff</strong>（<a href="https://arxiv.org/abs/2409.02638">arXiv 2409.02638</a>，TPAMI 2025）</td>
+<td>视频 + 视觉-语言特征 → 2D/3D 路点；潜扩散 + 运动感知 Mamba</td>
+<td>—</td>
+<td>五个公开集</td>
+<td>页面无数字</td>
+<td>—</td>
+<td>V（摘要）</td>
+</tr>
+<tr>
+<td><strong>Diff-IP2D → MMTwin → Uni-Hand</strong>（IROS 2025 / IROS 2025 / TPAMI 2026，<a href="https://arxiv.org/abs/2511.12878">arXiv 2511.12878</a>）</td>
+<td>RGB + 点云 + 过去路点 + 文本 → 3D 轨迹 + 自运动；Uni-Hand 加<strong>腕 / 指关节路点 + 逐帧接触位</strong></td>
+<td>约 5 s 片段的前后半</td>
+<td>EgoPAT3D-DT、H2O-PT、HOT3D、Ego4D、EPIC</td>
+<td>Uni-Hand H2O-PT ADE/FDE 3.0/5.0 cm；HOT3D 10.4/13.1 cm</td>
+<td>否</td>
+<td>V（全文）</td>
+</tr>
+<tr>
+<td><strong>EgoH4</strong>（<a href="https://arxiv.org/abs/2504.08654">arXiv 2504.08654</a>，2025）</td>
+<td>视频 + 相机位姿 + 身体姿态 → 双手 3D 轨迹 <strong>+ 关节姿态</strong>（含出视野）</td>
+<td>—</td>
+<td>Ego-Exo4D 156 K</td>
+<td>相对：ADE −3.4 cm、MPJPE −5.1 cm</td>
+<td>未说明</td>
+<td>V（摘要）</td>
+</tr>
+<tr>
+<td><strong>EgoMAN</strong>（Meta，<a href="https://arxiv.org/abs/2512.16907">arXiv 2512.16907</a>，2025-12）</td>
+<td>1 帧 RGB + 最近 5 个腕点（10 fps ≈ 0.5 s）+ VLM 推理 token → 双手 6-DoF 腕轨迹，<strong>flow matching</strong>，阶段 token <code>&lt;START&gt;/&lt;CONTACT&gt;/&lt;END&gt;</code></td>
+<td>0.5 s 观测 → ≤ 5 s</td>
+<td>Ego-Exo4D + Nymeria 219 K 条</td>
+<td>未见集 ADE/FDE 12.4/17.9 cm（best-of-10）；旋转 33–35°</td>
+<td>否（按数据集）</td>
+<td>V（全文）</td>
+</tr>
+<tr>
+<td><strong>BeLFusion / HumanMAC / SkeletonDiffusion</strong>（ICCV 2023 / ICCV 2023 / CVPR 2025）</td>
+<td>0.5 s 骨架 → 2 s；潜扩散 / DCT 掩码补全 / 非各向同性潜扩散</td>
+<td>0.5 → 2 s</td>
+<td>H36M、AMASS</td>
+<td>BeLFusion ADE/FDE 0.372/0.474（H36M）</td>
+<td>—</td>
+<td>V</td>
+</tr>
+<tr>
+<td>不确定度变体：<strong>MDMP</strong>（CVPR 2025 wksp，<a href="https://arxiv.org/abs/2410.03860">arXiv 2410.03860</a>，逐关节置信区）；<strong>GM-Latent Flow</strong>（<a href="https://arxiv.org/abs/2608.21093">arXiv 2608.21093</a>，可逆潜流 + GMM 先验，可算似然）</td>
+<td></td>
+<td></td>
+<td></td>
+<td>页面无数字</td>
+<td>—</td>
+<td>V（摘要）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>读法。</strong> ① 没有一篇报告 0.5 s / 1 s 时刻的误差，全是整段 ADE/FDE、按帧比例切分、多数不给帧率——和我们 1.0 / 0.5 s 口径直接可比的数字<strong>只有</strong> §4 的 Valkov 与 Salvato。② 不确定度有三种产法（逐点高斯、采样集 best-of-K、似然），但<strong>只当指标用</strong>，没有一篇拿它去驱动下游。③ 2025–26 的趋势：从 2D 手心到 6-DoF 腕 + 关节 + 头 + 接触位；扩散 → flow matching；VLM 推理 token 做条件。<strong>全部用大规模录制真人集训练，「未见」指场景 / 数据集，从来不指人。</strong></p>
+<h3 id="s3-2">3.2 目标 / 意图推断（预测「要哪个」）</h3>
+<div class="tw" tabindex="0" role="region" aria-label="表：3.2 目标 / 意图推断（预测「要哪个」）"><table class="w5">
+<thead>
+<tr>
+<th>工作</th>
+<th>输入 → 输出</th>
+<th>结果</th>
+<th>每用户适配</th>
+<th>标记</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Jain &amp; Argall</strong>（ACM THRI 2019/2020，<a href="https://doi.org/10.1145/3359614">doi 10.1145/3359614</a>）</td>
+<td>多路非言语观测 → 离散目标的递推贝叶斯后验（带不确定度）</td>
+<td>辅助遥操作</td>
+<td>无</td>
+<td>书目 V，内容 U</td>
+</tr>
+<tr>
+<td><strong>Aronson, AlMutlak, Admoni</strong>（IROS 2021）；<strong>Aronson &amp; Admoni</strong>（RSS 2022，<a href="https://doi.org/10.15607/RSS.2022.XVIII.025">doi 10.15607/RSS.2022.XVIII.025</a>）</td>
+<td>注视序列 → 目标 HMM；摇杆 + 注视 → 在线目标后验</td>
+<td>注视早而全局但单独不准，控制输入晚而局部，融合最好</td>
+<td>无</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>Robot Trajectron</strong>（ICRA 2024，<a href="https://arxiv.org/abs/2402.02499">arXiv 2402.02499</a>）→ <strong>V3</strong>（<a href="https://arxiv.org/abs/2607.09315">arXiv 2607.09315</a>，2026-07）</td>
+<td>起始后几秒的位 / 速 / 加速 → 概率未来轨迹 + 候选目标；V3：点云 + 抓取候选 + 过去运动 → SE(3) 轨迹先验 × 用户指令似然 → 后验逐步更新</td>
+<td>真人研究，胜基线（页面无数字）</td>
+<td>无</td>
+<td>V（摘要）</td>
+</tr>
+<tr>
+<td><strong>VOSA</strong>（HRI 2025，<a href="https://arxiv.org/abs/2501.08389">arXiv 2501.08389</a>）</td>
+<td>末端相机 + 现成视觉 → 对事先未知物体的意图；混合控制</td>
+<td>与知道意图集合的 oracle 持平</td>
+<td>无 / 零样本</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>Casper</strong>（Liu 等，CoRL 2025，<a href="https://arxiv.org/abs/2506.14727">arXiv 2506.14727</a>）</td>
+<td>100 步遥操作 + RGB（set-of-marks）+ 位姿 + 物体表 → VLM → (技能, 目标物体)</td>
+<td>13 名用户；成功 88.9 % 对纯遥操作 76.4 %</td>
+<td>无（固定阈值）</td>
+<td>V（全文）</td>
+</tr>
+<tr>
+<td><strong>BRACE</strong>（<a href="https://arxiv.org/abs/2601.23285">arXiv 2601.23285</a>，2026-01）</td>
+<td>贝叶斯意图推断与辅助之间端到端梯度；<strong>辅助应随目标不确定度下降、随约束上升</strong></td>
+<td>+6.3 % 成功、+41 % 路径效率</td>
+<td>无</td>
+<td>V（摘要）</td>
+</tr>
+<tr>
+<td><strong>GUIDER</strong>（<a href="https://arxiv.org/abs/2608.15446">arXiv 2608.15446</a>，2026-08）</td>
+<td>对<strong>抓取候选集</strong>的无目标概率意图，支撑面过滤</td>
+<td>3.7 s 后置信，离首次抓取还有 49.6 s</td>
+<td>无</td>
+<td>V（摘要）</td>
+</tr>
+<tr>
+<td><strong>TASC</strong>（IROS 2026，<a href="https://arxiv.org/abs/2509.10416">arXiv 2509.10416</a>）</td>
+<td>纯运动输入 + VLM 交互图 → 任务级意图</td>
+<td>仿真 + 实机，跨任务零样本</td>
+<td>无</td>
+<td>V（摘要）</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>读法。</strong> 贝叶斯一脉分成了两支：(i) 把学到的先验放进贝叶斯更新里（Trajectron V3、BRACE）；(ii) 用视觉 / VLM 零样本推断离散目标（VOSA、Casper、TASC、GUIDER）。第 (ii) 支回答的是「哪个物体 / 哪个技能」，<strong>没有一篇输出连续的预形或接触几何，没有一篇对用户做适配</strong>。注视仍是最早的线索，但只能与运动融合。BRACE 的原则（辅助随目标不确定度下降）正是我们 α 的设计前提——他们在臂级做，我们要在手级做。</p>
+<h3 id="s3-3">3.3 第一视角视频里的预期（anticipation）</h3>
+<p>Liu, Tang, Li, Rehg（ECCV 2020，<a href="https://arxiv.org/abs/1911.10967">arXiv 1911.10967</a>）：视频 → 潜「运动注意」→ 交互热点 + 下一动作；<strong>Ego4D STA</strong>（CVPR 2022，<a href="https://arxiv.org/abs/2110.07058">arXiv 2110.07058</a>）：末帧 → 下一活动物体框 + 名词 / 动词 + <strong>到接触时间</strong> + 置信；<strong>AFF-ttention / STAformer</strong>（ECCV 2024，<a href="https://arxiv.org/abs/2406.01194">arXiv 2406.01194</a>）：affordance 记忆 + 手 / 物轨迹热点，Top-5 mAP 相对 +45 %。扩散 / 流一脉（Diff-IP2D、MMTwin、Uni-Hand、EgoMAN）从部分观测出轨迹 + affordance / 接触位 / 阶段 token。Text2HOI（CVPR 2024）只是生成、无部分观测，排除。</p>
+<h2 id="s4"><span class="n">§ 4</span>问题 3：操作 / 遥操作 / 共享控制里的意图预测 SOTA（2023–2026）</h2>
+<h3 id="s4-1">4.1 从接触前的伸手运动预测抓取类型 / 预形 / 接触点</h3>
+<div class="tw" tabindex="0" role="region" aria-label="表：4.1 从接触前的伸手运动预测抓取类型 / 预形 / 接触点"><table class="w7">
+<thead>
+<tr>
+<th>工作</th>
+<th>输入 → 输出</th>
+<th>提前量</th>
+<th>数据</th>
+<th>误差 / 准确率</th>
+<th>每用户适配 / 跨人</th>
+<th>标记</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Valkov, Kockwelp, Daiber, Krüger</strong>（<a href="https://arxiv.org/abs/2506.10818">arXiv 2506.10818</a>，2025-06；CHI LBW 2023 前身）</td>
+<td>12 传感器电磁追踪（指甲 / 指节 / 掌骨，960 fps）；手速 + 指尖多边形特征 31 维，约 26 ms 窗 → LSTM → <strong>到抓取时间、手物距离、物体尺寸 / 身份</strong></td>
+<td>抓取前约 400 ms 距离 &lt; 15 mm；35 cm 内时间误差 &lt; 20 ms</td>
+<td>16 人，真实 + 合成物体（录制真人）</td>
+<td>4 折 CV：时间 MAE 21.5 ms、距离 8.8 mm；真实物体身份 &gt; 97 %（抓取前 350 ms）</td>
+<td><strong>留一人（L1UO）：距离 24.9 mm（最差 51.9）、时间 71.8 ms —— 约 3 倍退化；对新用户用 50–250 条序列微调后 → &lt; 15.5 mm、&lt; 50 ms、身份 &gt; 87 %</strong></td>
+<td>V（全文）</td>
+</tr>
+<tr>
+<td><strong>Zeng</strong>（<a href="https://arxiv.org/abs/2508.16582">arXiv 2508.16582</a>，2025-08，单作者硕士论文预印本）</td>
+<td>VR 手追踪序列 → 抓取分类 vs LSTM 回归抓取时间与位置</td>
+<td>抓取前 2 s 窗</td>
+<td>810 次 VR 试次</td>
+<td>时间 ≤ 0.25 s，位置 5–20 cm；姿态「仍然困难」</td>
+<td>分类「难以跨用户泛化」</td>
+<td>V（摘要）；论文预印本</td>
+</tr>
+<tr>
+<td><strong>Shi, Guo, Xu, Sheng</strong>（Biomimetics 8(2):250, 2023，<a href="https://doi.org/10.3390/biomimetics8020250">doi 10.3390/biomimetics8020250</a>）</td>
+<td>以物体为中心的运动先验场：接近过程中的 7 维手-物相对位姿 → 最终抓取位姿（仿生手预形）</td>
+<td>接近前 50 % 内即正确</td>
+<td>动捕接近-抓取序列</td>
+<td>类别 90.2 %，1.27 cm</td>
+<td>未说明</td>
+<td>V（S2 摘要）</td>
+</tr>
+<tr>
+<td><strong>i-GRIP</strong>（Moullet 等，Humanoids 2024，<a href="https://arxiv.org/abs/2410.06595">arXiv 2410.06595</a>）</td>
+<td>MediaPipe + 深度（2 × OAK-D，30 fps）+ CosyPose 物体位姿 → 多项式外推 + 4 个几何得分 → 目标；握法 = 手 |z| ≥ 0.85 × 物体长度则 pinch 否则 palmar。<strong>意图逻辑是规则，无任务专用训练</strong></td>
+<td>起始后 0.52 s 定目标（距抓取余 0.67 s），0.39 s 定握法</td>
+<td>11 名健全人，1 553 次有效试次，YCB 长形物体</td>
+<td>目标 89.9 %，握法 94.8 %；人间 SD 7.5 % / 4.3 %</td>
+<td>无（作者建议按人调）</td>
+<td>V（全文）</td>
+</tr>
+<tr>
+<td>旁证（EMG）：Batzianoulis 等 J NeuroEng Rehabil 2018（<a href="https://doi.org/10.1186/s12984-018-0396-5">doi 10.1186/s12984-018-0396-5</a>）：前臂 EMG 在伸手阶段 → 抓取类，起始后约 0.5 s；<strong>Trout 等 Nat Commun 16:10418, 2025</strong>（<a href="https://doi.org/10.1038/s41467-025-65965-9">doi 10.1038/s41467-025-65965-9</a>）：按报道，ANN 把每根手指送到接触点、用户 EMG 定整体抓握，动态加权和；4 名截肢者</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>书目 V，数字 / 机理 U</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>发现：没有一篇在接触前从伸手运动预测「指尖会落在物体哪里」。</strong> 最接近的是最终 6D 抓取位姿（Shi，1.27 cm）、关节路点 + 接触位（Uni-Hand）、生成式接触图（Text2HOI）、以及由设备反应式到达接触（Trout）。<strong>我们的接触点预测器在目标上是一个空档，但也意味着没有可比的基准数字。</strong></p>
+<h3 id="s4-2">4.2 灵巧手遥操作里的「共享自主」</h3>
+<div class="tw" tabindex="0" role="region" aria-label="表：4.2 灵巧手遥操作里的「共享自主」"><table class="w5">
+<thead>
+<tr>
+<th>工作</th>
+<th>预测什么、从什么</th>
+<th>操作者差异</th>
+<th>标记</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cui 等</strong>（<a href="https://arxiv.org/abs/2511.00139">arXiv 2511.00139</a>，2025-10）</td>
+<td>权限切分：人在 VR 里控臂位姿，DexGrasp-VLA 用触觉 + 手内相机 + 语言控 12-DoF 手；<strong>没有操作者意图模型</strong>；含未见物体 90 % 成功</td>
+<td>无；失败时「纠正性遥操作」</td>
+<td>V（摘要）</td>
+</tr>
+<tr>
+<td><strong>Tele-Catch</strong>（<a href="https://arxiv.org/abs/2603.28427">arXiv 2603.28427</a>，2026-03）</td>
+<td>手套信号注入扩散策略的去噪过程（DAIM，余弦调度）；混合权重由物体状态定</td>
+<td>无</td>
+<td>V（摘要）</td>
+</tr>
+<tr>
+<td><strong>DexTeleop-0</strong>（<a href="https://arxiv.org/abs/2606.23431">arXiv 2606.23431</a>，2026-06）</td>
+<td>触觉估计的接触点 → 雅可比关节修正到力顺应流形；纠正、不预测</td>
+<td>无</td>
+<td>V（摘要）</td>
+</tr>
+<tr>
+<td>Robot Trajectron V3 / GUIDER / TASC（§3.2）</td>
+<td>臂级 SE(3) 抓取轨迹后验 / 抓取候选集 / 任务意图；夹爪不是手指</td>
+<td>无</td>
+<td>V</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>发现：2024–26 的「灵巧手共享自主」= 权限切分，或把人的信号混进生成式策略；策略自己抓，不推断人会怎么抓。意图推断本身停在臂 / 夹爪级、离散目标。本次范围内没有任何手级系统做每用户标定或适配</strong>（已知的例外是已另行综述的 Adaptor，ICRA 2026）。</p>
+<h3 id="s4-3">4.3 到接触时间 / 什么时候介入 / 阶段</h3>
+<div class="tw" tabindex="0" role="region" aria-label="表：4.3 到接触时间 / 什么时候介入 / 阶段"><table class="w5">
+<thead>
+<tr>
+<th>工作</th>
+<th>信号 → 输出</th>
+<th>视野</th>
+<th>误差</th>
+<th>标记</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Salvato, Heravi, Okamura, Bohg</strong>（RA-L 7(2), 2022，<a href="https://doi.org/10.1109/LRA.2022.3148458">doi 10.1109/LRA.2022.3148458</a>）</td>
+<td>追踪手姿序列 + 虚拟物体几何 → 最小手物距离 + 自注意 → 接触起始</td>
+<td>100 ms</td>
+<td>52.8 ms；<strong>速度外推总是超出视野</strong>；对追踪 / 对齐噪声稳健</td>
+<td>V（PDF）</td>
+</tr>
+<tr>
+<td>Valkov 2025（§4.1）</td>
+<td>手指运动 LSTM → 到抓取时间</td>
+<td>连续</td>
+<td>21.5 ms（4 折），71.8 ms 留一人，微调后 &lt; 50 ms</td>
+<td>V</td>
+</tr>
+<tr>
+<td>Ego4D STA / AFF-ttention（§3.3）</td>
+<td>视频 → 到接触秒数（mAP 带容差）</td>
+<td>秒级</td>
+<td>无回归数字</td>
+<td>V</td>
+</tr>
+<tr>
+<td>EgoMAN / Uni-Hand（§3.1）</td>
+<td><code>&lt;CONTACT&gt;</code> 路点 token / 逐帧接触位</td>
+<td>≤ 5 s</td>
+<td>不单独报</td>
+<td>V</td>
+</tr>
+<tr>
+<td>GUIDER（§3.2）</td>
+<td>到「意图置信」的时间</td>
+<td>3.7 s</td>
+<td>—</td>
+<td>V</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>发现：「什么时候」在文献里要么是 ≤ 100 ms 的触觉延迟问题（Salvato），要么是 20–70 ms 的 HCI 伸手预测问题（Valkov），要么是粗糙的 STA 标签。没有一篇把预测的到接触时间当作操作辅助的门、在 0.5–1 s 提前量上评它。</strong> Salvato 的「速度外推失败」是反对纯运动学 when 规则的证据，支持我们现有的 <code>when</code> 头。</p>
+<h3 id="s4-4">4.4 对我们的含义（汇总）</h3>
+<ol>
+<li><strong>目标是空档</strong>：接触前预测指尖接触点，没有先例（§4.1）。好处是新意；代价是没有外部基准，所有判定线只能自己登记（附录体系已经在做）。</li>
+<li><strong>最像我们的证据是 Valkov</strong>：接触前手指运动学 → 何时 / 何处，跨人退化 3 倍、每用户 50–250 条序列恢复——这就是「底座学技能、适配学个人」在接触前运动学上的实证。但他们的底座是 15 个人训的，不是零样本；追踪器是 960 fps 电磁、无遮挡翻转。</li>
+<li><strong>零样本基线已有</strong>：i-GRIP 用规则（外推 + 几何得分）在起始后约 0.5 s 做到约 90 % 的目标 / 握法判断、无任务训练。我们的零样本底座在「哪个 / 哪种握法」上至少要不输这类规则。</li>
+<li><strong>σ → α 是另一个空档</strong>：预报器的不确定度（USST 高斯、扩散采样散布、流似然）存在，BRACE 也论证了辅助应随不确定度下降，但<strong>没有手级系统把预报器的不确定度接进混合</strong>。这支持 §7.2 第 5 条。</li>
+<li><strong>输出形式可借</strong>：EgoMAN 的阶段 token（START / CONTACT / END）和 Uni-Hand 的逐帧接触位，是把「when」和「where」联合监督的现成模板。</li>
+<li><strong>跨人评测在该领域几乎缺席</strong>：只有 Valkov（显式留一人）和 Zeng（报告失败）；第一视角预报器一律按场景切分。我们按人、按时间顺序的前验式评测在方法学上已经领先。</li>
+</ol>
+<h3 id="s4-5">4.5 先读哪几篇</h3>
+<ol>
+<li>Valkov 2025（<a href="https://arxiv.org/abs/2506.10818">arXiv 2506.10818</a>）——最近的类比；读 L1UO 与微调恢复那两张表。</li>
+<li>EgoMAN（<a href="https://arxiv.org/abs/2512.16907">arXiv 2512.16907</a>）——6-DoF 腕预报 + 阶段 token + flow matching；best-of-K 不确定度。</li>
+<li>Uni-Hand（<a href="https://arxiv.org/abs/2511.12878">arXiv 2511.12878</a>）——指关节路点 + 逐帧接触位的联合监督。</li>
+<li>Shi 2023（<a href="https://doi.org/10.3390/biomimetics8020250">doi 10.3390/biomimetics8020250</a>）——唯一的「手物相对位姿 → 最终抓取位姿」映射，7 维输入与我们接近。</li>
+<li>Salvato RA-L 2022——接触时序；速度外推的负结果。
+（Casper 与 Trajectron V3 代表 VLM 与贝叶斯两个阵营；i-GRIP 是规则式零样本基线。）</li>
+</ol>
+<h2 id="s5"><span class="n">§ 5</span>问题 4：OL 和微调的区别</h2>
+<h3 id="s5-1">5.1 一句话</h3>
+<p><strong>在线学习（OL）是一种「协议」：先预测、再看标签、再更新，一遍过，按累计误差打分。微调（fine-tuning）是一种「程序」：从预训练权重出发，在一批收集好的数据上做多轮梯度下降。两者是正交的。</strong> 我们部署的 E 臂（手系收缩常数偏置）是严格意义的 OL：对冻结底座输出的一个 3 维修正做递推贝叶斯估计，前验式评测。v9 的 ft 臂是「在线微调」：把微调程序放进 OL 协议里跑，带全量回放缓冲。我们没有任何一个臂是测试时适配（TTA）——我们有标签。</p>
+<h3 id="s5-2">5.2 定义（文献坐标系）</h3>
+<div class="tw" tabindex="0" role="region" aria-label="表：5.2 定义（文献坐标系）"><table class="w7">
+<thead>
+<tr>
+<th>名称</th>
+<th>数据怎么来</th>
+<th>改什么</th>
+<th>评什么</th>
+<th>典型保障 / 已知病</th>
+<th>关键文献</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>在线学习</strong></td>
+<td>样本按时间到，每条只看一次；标签可延迟</td>
+<td>任意；经典是线性 / 凸模型</td>
+<td><strong>前验式</strong>（Dawid 1984）：只评标签到来前发出的预测；对最好固定模型的 regret</td>
+<td>凸损失 O(√T)、强凸（平方误差）O(log T) regret；RLS = 岭回归的精确一遍解，Kalman = 带随机游走先验的 RLS</td>
+<td>Cesa-Bianchi &amp; Lugosi 2006；Dawid 1984；Hazan 2016；Sayed 2008</td>
+</tr>
+<tr>
+<td><strong>微调</strong></td>
+<td>先收一批，离线、多轮 epoch，留出集选模型</td>
+<td>预训练模型的全部或部分权重</td>
+<td>留出集</td>
+<td>灾难性遗忘；warm-start 差距（Ash &amp; Adams 2020）；L2-SP = 以底座为中心的高斯先验的 MAP（Li 等 2018）</td>
+<td><a href="https://arxiv.org/abs/1910.08475">arXiv 1910.08475</a>；<a href="https://arxiv.org/abs/1802.01483">1802.01483</a></td>
+</tr>
+<tr>
+<td><strong>参数高效微调</strong></td>
+<td>同微调</td>
+<td>低秩 / 适配器 / 末层 / 偏置</td>
+<td>同微调</td>
+<td>子空间限制本身是正则；<strong>特征好 + 偏移大时，全量微调会扭曲特征，分布外输给线性探针</strong>（LP-FT, Kumar 等 ICLR 2022）</td>
+<td>Houlsby 2019；LoRA <a href="https://arxiv.org/abs/2106.09685">2106.09685</a>；BitFit <a href="https://arxiv.org/abs/2106.10199">2106.10199</a>；LP-FT <a href="https://arxiv.org/abs/2202.10054">2202.10054</a>；Lee 等 2023 surgical FT</td>
+</tr>
+<tr>
+<td><strong>测试时适配</strong></td>
+<td>测试流，<strong>无标签</strong></td>
+<td>归一化层 / 少量参数</td>
+<td>流上的准确率</td>
+<td>小批、混合偏移、相关标签流下不稳定、塌缩（SAR, Niu 2023）；长流上几乎都输给不适配，周期性重置到 θ₀ 就是 SOTA（RDumb, Press 2023）</td>
+<td>TENT <a href="https://arxiv.org/abs/2006.10726">2006.10726</a>；<a href="https://arxiv.org/abs/2302.12400">2302.12400</a>；<a href="https://arxiv.org/abs/2306.05401">2306.05401</a></td>
+</tr>
+<tr>
+<td><strong>在线 / 持续元学习</strong></td>
+<td>任务按时间到，每个任务少量样本</td>
+<td>「初始化」或「适配算法」本身</td>
+<td>每个新任务用 k 条后的误差</td>
+<td>底座必须<strong>被训练成可适配的</strong>；ALPaCA 元学习特征 + 末层权重先验，测试时 = 精确的在线贝叶斯线性回归</td>
+<td>FTML <a href="https://arxiv.org/abs/1902.08438">1902.08438</a>；MOCA <a href="https://arxiv.org/abs/1912.08866">1912.08866</a>；ALPaCA <a href="https://arxiv.org/abs/1807.08912">1807.08912</a></td>
+</tr>
+<tr>
+<td><strong>持续学习</strong></td>
+<td>任务序列</td>
+<td>全部权重</td>
+<td>不忘旧 + 学会新</td>
+<td>EWC（L2-SP 是其各向同性特例）、回放、GEM</td>
+<td><a href="https://arxiv.org/abs/1612.00796">1612.00796</a>；<a href="https://arxiv.org/abs/1811.11682">1811.11682</a>；<a href="https://arxiv.org/abs/1706.08840">1706.08840</a></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>标签延迟对我们不是约束。</strong> 延迟 D 步可由 D 个交错学习器吸收（Weinberger &amp; Ordentlich 2002）；随机设置下 regret 代价只是加性的（Joulani 等 2013）。我们的延迟约 1 s，事件间隔约 10 s，任何时刻最多一个预测在等标签。<strong>约束是 n（5–40），不是延迟。</strong></p>
+<h3 id="s5-3">5.3 两个轴的地图：改什么 × 数据怎么用（我们的九个臂）</h3>
+<div class="tw" tabindex="0" role="region" aria-label="表：5.3 两个轴的地图：改什么 × 数据怎么用（我们的九个臂）"><table class="w5">
+<thead>
+<tr>
+<th>改什么 ＼ 数据怎么用</th>
+<th>离线批</th>
+<th>顺序、一次、无缓冲</th>
+<th>顺序 + 回放缓冲</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>全部权重</td>
+<td>经典微调；n ≫ 40 或 L2-SP；分布外特征扭曲（LP-FT）</td>
+<td>在线 SGD（v14 sgd_new，最差 +0.65 cm）：遗忘 + warm-start 差距</td>
+<td><strong>v9 ft</strong>（+L2-SP；1 s 1.86 cm）：分布内小增益、分布外风险、逐事件方差高；L2-SP 只封顶损失、不提供信号</td>
+</tr>
+<tr>
+<td>子空间适配器</td>
+<td>PEFT 本义，为 10²–10⁴ 样本设计</td>
+<td>—</td>
+<td><strong>附录 17 J3b 低秩适配器</strong>（Adam 逐事件）：n ≈ 10 时仍是噪声 SGD 估计，对闭式末层无优势（观测一致）</td>
+</tr>
+<tr>
+<td>末层 / 线性头</td>
+<td>线性探针：特征好、偏移大时的正确目标</td>
+<td><strong>BLL</strong>（= 带先验的 RLS = 测试时的 ALPaCA）：先验以底座头为中心且校准时才有效；<strong>附录 17 的 D</strong>（逐帧一步 Adam）：这正是 SAR / RDumb 的小批、相关流、不重置的失稳区间，且 Adam 没有在线凸保证（Reddi 2018）→ <strong>发散是预期结果</strong></td>
+<td><strong>v17 ridge / hold_ridge</strong>（35 维，缓冲重拟合 = RLS）：n &lt; d = 35 时，拟合出的修正落在缓冲里「会变」的特征方向上，而单物体缓冲里会变的就是物体身份 → 修正是物体专属的、搬到下一个物体就错（现场翻倍）；3 维修正器编码不了物体身份，所以 E 臂没有这个病</td>
+</tr>
+<tr>
+<td>低维偏置 / 隐变量</td>
+<td>BitFit 式</td>
+<td><strong>E 臂（部署）</strong>：n/(n+n₀) = 共轭高斯后验均值，n₀ 的经验贝叶斯选择 = James–Stein（Efron &amp; Morris 1975）：所有臂里方差最低，d ≥ 3 时在平方误差上优于不收缩的均值，<strong>但只能捕捉系统偏差，修不了随物体变的误差</strong>。<strong>遗忘变体</strong>（forget_ridge / recency）：λ &lt; 1 的有效窗口 1/(1−λ)、方差 ∝ (1−λ)；n 已经很小时只有漂移快于 n 次事件才划算 → 更差（观测一致）</td>
+<td>—</td>
+</tr>
+<tr>
+<td>只改输出（非参数 / 元）</td>
+<td>—</td>
+<td><strong>NeverWorse 切换</strong>：对专家集 {底座, 适配} 的硬阈值、带窗的 follow-the-leader；文献的版本是<strong>软权重</strong>（Hedge、fixed share、switch distribution）</td>
+<td><strong>kNN 修正</strong>（kNN-LM 式插值）：n ≈ 10 时最近邻常是另一个物体；只在重复物体上划算</td>
+</tr>
+</tbody>
+</table></div>
+<p>ridge、E、BLL 其实是一族，差别只在收缩修正的维度（35 维零中心先验 / 3 维 / 35 维底座中心先验）。<strong>§2 的元学习 / 上下文条件化在这张表之外</strong>：它把「改什么」从测试时搬到训练时——测试时不改参数，只给输入。</p>
+<h3 id="s5-4">5.4 「永不比底座差」的标准工具（给现在的 NeverWorse 和提交门找出处）</h3>
+<ol>
+<li><strong>专家聚合</strong>：weighted-majority / Hedge 对更好的专家 regret O(√(T log N))（Littlestone &amp; Warmuth 1994；Freund &amp; Schapire 1997）；fixed share 对最好的<strong>切换序列</strong> regret 与切换次数成线性（Herbster &amp; Warmuth 1998）；switch distribution 是其贝叶斯前验式对应、达到 minimax 累计风险（van Erven 等 2012）。NeverWorse 是它的硬阈值退化情形；建议改成带「底座」先验质量的软权重。</li>
+<li><strong>向底座收缩</strong>：James–Stein / 经验贝叶斯在 d ≥ 3 时优于不收缩估计（Efron &amp; Morris 1975）；权重空间的对应是 L2-SP 与 WiSE-FT 插值（Wortsman 等 2022）。</li>
+<li><strong>在线校准</strong>：adaptive conformal inference 在任意分布偏移下保长期覆盖、不要求可交换（Gibbs &amp; Candès 2021）；AgACI（Zaffran 等 2022）、conformal PID（Angelopoulos 等 2023）。<strong>可以让提交门由校准的误差界驱动，而不是手定的 6 cm。</strong></li>
+<li><strong>闭环人在环解码器</strong>（只作指针）：CLDA / SmoothBatch（Orsborn 2012；Dangi 2013）、ReFIT（Gilja 2012）、自校准 iBCI（Jarosiewicz 2015）。</li>
+</ol>
+<h3 id="s5-5">5.5 共适应：标签不再独立</h3>
+<p>用户看见预测就会反应，标签依赖于部署的预测器——这是 performative prediction（Perdomo 等 ICML 2020；综述 Hardt &amp; Mendler-Dünner 2023）：重复再训练收敛到「performatively stable」点而不是最优点。神经工程把同一回路叫「两个学习者」（Shenoy &amp; Carmena 2014；Orsborn 2012）；肌电回路里机器增益太高放大噪声、太低则慢而不完整（Couraud 等 2018）。<strong>评测协议由此推出（不是某篇文献的「标准」）</strong>：(a) <strong>逐 trial 随机不显示影子手</strong>的对照 trial 与显示 trial 交错、分开报告——只有显示不能影响人的动作时，标签才独立于预测器，前验式打分才成立；(b) <strong>反事实回放</strong>是离策略估计（Li 等 2011；Bottou 等 2013），只在人的动作不依赖所显示预测的地方无偏——我们「回放的人是开环的」这条限制就是这个意思，必须写明。</p>
+<h3 id="s5-6">5.6 论文里怎么写（建议措辞）</h3>
+<blockquote>
+<p>底座预测器只在生成数据上训练（零真人录制样本），部署时冻结。个性化是<strong>前验式意义上的在线学习</strong>（Dawid 1984；Cesa-Bianchi &amp; Lugosi 2006）：每次带标签的抓取事件（约每分钟 6 次，标签延迟约 1 s）之后，手系里一个低维输出修正以闭式更新为向「零修正」收缩的共轭高斯后验均值（Efron &amp; Morris 1975）；每个报告的误差都是标签到来之前发出的预测的误差。它不是测试时适配（用了标签），不是微调（没有底座权重被更新）；对照臂 ft 是带回放、L2-SP 约束的在线微调（Li 等 2018）。</p>
+</blockquote>
+<p>「少样本个性化」描述数据量（每人 5–40）是公平的，但作为方法名有误导——它通常意味着<strong>元训练过的底座</strong>（FTML / MOCA / ALPaCA），而我们的不是。在 n ≈ 5–40、冻结的生成器训练底座这个条件下，<strong>最站得住的适配目标是低维输出修正 + 向底座收缩（现在的 E 臂）</strong>，不是子空间适配器、也不是全部权重：LP-FT 给出不动特征的理由，Efron &amp; Morris 给出估计量及其优势保证。<strong>升级路径是以底座为中心的末层（BLL），条件是它的先验要从生成的操作者变异性里学出来</strong>（ALPaCA 的做法）——零样本规则允许这一条。这正是 §2 方案 B。</p>
+<h2 id="s6"><span class="n">§ 6</span>问题 5：和我们想法类似的架构 / 文章 / 项目</h2>
+<p>「底座学技能（群体先验）、适配学个人」这个模式在文献里有五个家族。标记同 §3（V / U）。我们的 OL 单位：每分钟约 6 次事件，5 分钟 ≈ 30 次，20 分钟 ≈ 120 次。</p>
+<h3 id="s6-1">6.1 梯度式元学习（底座 = 被训练成「可适配」的初始化）</h3>
+<div class="tw" tabindex="0" role="region" aria-label="表：6.1 梯度式元学习（底座 = 被训练成「可适配」的初始化）"><table class="w7">
+<thead>
+<tr>
+<th>工作</th>
+<th>训练在什么群体上</th>
+<th>测试时改什么、怎么改</th>
+<th>每用户数据</th>
+<th>收益</th>
+<th>与我们的关系</th>
+<th>标记</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MAML</strong>（Finn, Abbeel, Levine, ICML 2017, <a href="https://arxiv.org/abs/1703.03400">arXiv 1703.03400</a>）</td>
+<td>任务分布</td>
+<td>全部权重，1–几步 SGD</td>
+<td>K-shot</td>
+<td>定义了模式</td>
+<td>我们的底座<strong>从未</strong>被训成可适配</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>Reptile</strong>（<a href="https://arxiv.org/abs/1803.02999">arXiv 1803.02999</a>）</td>
+<td>同上</td>
+<td>一阶；最便宜，适合多步内循环</td>
+<td></td>
+<td></td>
+<td>能直接挂到逐 episode 的训练器上</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>ANIL</strong>（ICLR 2020, <a href="https://arxiv.org/abs/1909.09157">arXiv 1909.09157</a>）</td>
+<td>同上</td>
+<td>只内循环头 = MAML</td>
+<td></td>
+<td>「特征复用」占主导</td>
+<td>只改头可以，<strong>前提是特征被元训练过</strong>——我们的特征没有</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>FTML 在线元学习</strong>（ICML 2019, <a href="https://arxiv.org/abs/1902.08438">arXiv 1902.08438</a>）</td>
+<td>任务按序到</td>
+<td>跨任务更新元初始化，O(log T) regret</td>
+<td></td>
+<td></td>
+<td>是<strong>会话间</strong>而不是会话内的改进</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>PAML</strong>（Gui 等，ECCV 2018, <a href="https://doi.org/10.1007/978-3-030-01237-3_27">doi 10.1007/978-3-030-01237-3_27</a>）</td>
+<td>H3.6M 骨架运动预报</td>
+<td>MAML + 少样本→多样本参数回归网络</td>
+<td></td>
+<td>小样本显著（无数字）</td>
+<td>经典的「元学习做运动预报」，但适配的是新<strong>动作</strong>不是新<strong>人</strong></td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>FAZE</strong>（Park 等，ICCV 2019 oral, <a href="https://arxiv.org/abs/1905.01941">arXiv 1905.01941</a>）</td>
+<td>真人注视</td>
+<td>元学习的每人注视回归器</td>
+<td>≤ 9 条标定样本（3 条起见效）</td>
+<td>3.18°，比先前好 19 %</td>
+<td>每人少样本回归，数据量在我们量级（9 条 ≈ 1.5 分钟事件）；底座是真人训的</td>
+<td>V</td>
+</tr>
+<tr>
+<td>外骨骼元模仿（Ma 等 2025, <a href="https://arxiv.org/abs/2509.13736">arXiv 2509.13736</a>，预印本）</td>
+<td>仿真重定向的公开视频 / 动捕</td>
+<td>肘轨迹预测器 MAML，新用户几步梯度</td>
+<td>页面无 N</td>
+<td>EMG / 代谢下降</td>
+<td>最接近我们前提，但重定向动捕仍是真人数据</td>
+<td>V</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s6-2">6.2 贝叶斯 / 闭式快速适配（底座 = 特征 + 末层先验）</h3>
+<div class="tw" tabindex="0" role="region" aria-label="表：6.2 贝叶斯 / 闭式快速适配（底座 = 特征 + 末层先验）"><table class="w5">
+<thead>
+<tr>
+<th>工作</th>
+<th>要点</th>
+<th>与我们的关系</th>
+<th>标记</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ALPaCA</strong>（Harrison, Sharma, Pavone, WAFR 2018, <a href="https://arxiv.org/abs/1807.08912">arXiv 1807.08912</a>）</td>
+<td>元学习特征 φ(x; w) 与末层权重的矩阵正态先验；测试时 = 精确递推贝叶斯线性回归，O(1) / 样本，无梯度，预测方差 (1 + φᵀΛ⁻¹φ)Σ；带遗忘变体。真人实验：变道驾驶 19 对 1105 回合 10 Hz，误差随回合近线性下降、胜 MAML</td>
+<td><strong>就是我们试过的形状（冻结特征 + 贝叶斯末层 BLL），缺的那一味是：特征要被训练得「让后验更新有用」。每事件校准方差免费得到</strong></td>
+<td>V（全文）</td>
+</tr>
+<tr>
+<td><strong>MOCA</strong>（NeurIPS 2020, <a href="https://arxiv.org/abs/1912.08866">arXiv 1912.08866</a>）</td>
+<td>元学习器 + 可微贝叶斯变点检测，训练 / 测试于未分段的时间序列</td>
+<td>我们的流没有任务边界（疲劳、状态变化）：MOCA 决定<strong>什么时候重置</strong>每用户后验——比 v14 否掉的「遗忘」更对症</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>VBLL</strong>（ICLR 2024, <a href="https://arxiv.org/abs/2404.11599">arXiv 2404.11599</a>）</td>
+<td>确定性变分贝叶斯末层，无采样，更好校准 / OOD</td>
+<td>训练期就把底座末层变成贝叶斯的即插件</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>Deep Kernel Transfer</strong>（NeurIPS 2020, <a href="https://arxiv.org/abs/1910.05199">arXiv 1910.05199</a>）</td>
+<td>元学习深核 + 每任务贝叶斯推断，无任务专属参数</td>
+<td>回归 + 跨域强，带不确定度</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>PACOH / F-PACOH</strong>（ICML 2021 <a href="https://arxiv.org/abs/2002.05551">arXiv 2002.05551</a>；NeurIPS 2021 <a href="https://arxiv.org/abs/2106.03195">arXiv 2106.03195</a>）</td>
+<td>PAC-Bayes 元学习 GP / BNN 先验；F-PACOH 在<strong>函数空间</strong>正则，元训练数据稀疏处先验显式更不确定</td>
+<td>对「分布外用户 → 要更不确定」的直接回答，仲裁门正需要这个</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>少样本共形</strong>（Fisch 等 ICML 2021 <a href="https://arxiv.org/abs/2102.08898">arXiv 2102.08898</a>）；<strong>元学习 PAC 预测集</strong>（Park 等 NeurIPS 2022 <a href="https://arxiv.org/abs/2207.02440">arXiv 2207.02440</a>）</td>
+<td>用几十条每用户样本得到覆盖</td>
+<td><strong>保证只在用户是元分布的一次抽样时成立；生成群体不是真人群体 → 当诊断用，不当保证用</strong></td>
+<td>V</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s6-3">6.3 摊销 / 上下文（in-context）适配（底座 = 吃上下文集的网络）</h3>
+<div class="tw" tabindex="0" role="region" aria-label="表：6.3 摊销 / 上下文（in-context）适配（底座 = 吃上下文集的网络）"><table class="w5">
+<thead>
+<tr>
+<th>工作</th>
+<th>要点</th>
+<th>与我们的关系</th>
+<th>标记</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CNP / ANP / TNP</strong>（ICML 2018 <a href="https://arxiv.org/abs/1807.01613">arXiv 1807.01613</a>；ICLR 2019 <a href="https://arxiv.org/abs/1901.05761">arXiv 1901.05761</a>；ICML 2022 <a href="https://arxiv.org/abs/2207.04179">arXiv 2207.04179</a>）</td>
+<td>编码一组 (x, y) 上下文对，零梯度步</td>
+<td>§2 方案 A 的直接模板</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>PFN</strong>（Müller 等，ICLR 2022, <a href="https://arxiv.org/abs/2112.10510">arXiv 2112.10510</a>）</td>
+<td><strong>在从先验采样的数据集上训练</strong>；一次前向 ≈ 贝叶斯后验预测；几乎精确模仿 GP</td>
+<td>「底座训在生成群体上、上下文里对个人做后验」的最干净对应——<strong>前提是生成器采样的是用户，不是均值</strong></td>
+<td>V</td>
+</tr>
+<tr>
+<td>Garg 等（NeurIPS 2022 <a href="https://arxiv.org/abs/2208.01066">arXiv 2208.01066</a>）</td>
+<td>从零训的 transformer 能做上下文线性回归 ≈ 最小二乘</td>
+<td></td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>Raventós 等</strong>（NeurIPS 2023, <a href="https://arxiv.org/abs/2306.15063">arXiv 2306.15063</a>）</td>
+<td><strong>任务多样性阈值</strong>：低于阈值，模型对<strong>狭窄的预训练任务先验</strong>贝叶斯最优（记住它）、新任务失败；高于阈值才像对所有任务（含未见）的岭回归</td>
+<td><strong>对生成群体的核心警告</strong>（§8）</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>ICRT</strong>（<a href="https://arxiv.org/abs/2408.15980">arXiv 2408.15980</a>）；<strong>Instant Policy</strong>（Vosylius &amp; Johns, ICLR 2025, <a href="https://arxiv.org/abs/2411.12633">arXiv 2411.12633</a>）；<strong>SynthICL</strong>（<a href="https://arxiv.org/abs/2606.08154">arXiv 2606.08154</a>，2026 预印本）</td>
+<td>机器人上下文模仿：几条示范做提示、不改权重；Instant Policy 底座训在仿真伪示范上；SynthICL <strong>完全在合成 RGB 上训练</strong>、测试时 1 条示范、16 个未见真实任务平均 79 %</td>
+<td><strong>零真实样本底座 + 上下文适配在机器人上成立的证据</strong>；但上下文是任务示范，不是这个人的样本</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>TrajICL</strong>（NeurIPS 2025, <a href="https://arxiv.org/abs/2506.00871">arXiv 2506.00871</a>）</td>
+<td>行人预报的上下文学习，训在大规模合成集；从<strong>同一场景</strong>检索示例，「胜过微调」</td>
+<td>相邻：适配的是场景不是人</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>H/P-TTP</strong>（ICCV 2023, <a href="https://doi.org/10.1109/ICCV51070.2023.00032">doi 10.1109/ICCV51070.2023.00032</a>）</td>
+<td>3D 姿态预报；helper 学跨人不变知识，predictor 在测试时对新人优化</td>
+<td>梯度式 TTA，不是上下文</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>空档（扩展检索后仍空）</strong></td>
+<td>没有找到任何工作用<strong>同一个人自己的几条样本</strong>在上下文里个性化手 / 臂运动预报器</td>
+<td>我们的方案 A 在这一点上没有先例</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s6-4">6.4 仿真群体 + 在线隐变量推断（底座 = 以隐变量为条件的策略）</h3>
+<div class="tw" tabindex="0" role="region" aria-label="表：6.4 仿真群体 + 在线隐变量推断（底座 = 以隐变量为条件的策略）"><table class="w5">
+<thead>
+<tr>
+<th>工作</th>
+<th>要点</th>
+<th>与我们的关系</th>
+<th>标记</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>RMA</strong>（Kumar, Fu, Pathak, Malik, RSS 2021, <a href="https://arxiv.org/abs/2107.04034">arXiv 2107.04034</a>）</td>
+<td>特权量 e ∈ R¹⁷（负载、电机强度、摩擦、地形）→ z = μ(e) ∈ R⁸ 条件化底座策略；适配模块：最近 50 个状态-动作对（≈ 0.5 s）→ ẑ，在仿真 on-policy 轨迹上监督回归到 μ(e)；部署时无梯度。仿真 73.5 % 对无适配 52.1 %（专家 76.2 %）</td>
+<td>一一对应：生成器参数 = extrinsics，1 s 窗 = 历史，适配模块 = 仿真上的回归。<strong>开放问题是可辨识性</strong>：RMA 读 0.5 s <strong>闭环</strong>交互；我们得在事件前从接触前运动里读（§1.5）</td>
+<td>V（全文）</td>
+</tr>
+<tr>
+<td><strong>A-RMA</strong>（IROS 2022, <a href="https://arxiv.org/abs/2205.15299">arXiv 2205.15299</a>）</td>
+<td>在不完美的估计 ẑ 下用无模型 RL 微调底座</td>
+<td><strong>教训：底座要和适配模块一起在环训练，不是冻结底座 + 外挂适配器</strong>——这正是方案 B 的天花板、方案 A 的理由</td>
+<td>V</td>
+</tr>
+<tr>
+<td>人作为环境：<strong>Luo 等 Nature 630:353–359, 2024</strong>（<a href="https://doi.org/10.1038/s41586-024-07382-4">doi 10.1038/s41586-024-07382-4</a>）</td>
+<td>髋外骨骼控制器完全在肌骨仿真里学（「experiment-free」），上人：代谢 −24.3 / −13.1 / −15.4 %（走 / 跑 / 楼梯）；摘要无每人调参</td>
+<td>零真人样本底座能走多远的参考点</td>
+<td>V</td>
+</tr>
+<tr>
+<td>Li 等 2026（<a href="https://arxiv.org/abs/2609.28027">arXiv 2609.28027</a>，预印本）</td>
+<td>同配方 + 从两两比较做 GP 偏好学习个性化幅度（手设 1 维隐变量、几次询问）</td>
+<td></td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>空档</strong></td>
+<td>没有核实到任何 RMA 式<strong>学习型</strong>适配模块，其隐变量是人类伙伴 / 操作者、训在仿真人上（已另行综述的 RILI / PALM 家族最近）</td>
+<td></td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s6-5">6.5 超网络 / 条件化的每用户模型</h3>
+<div class="tw" tabindex="0" role="region" aria-label="表：6.5 超网络 / 条件化的每用户模型"><table class="w5">
+<thead>
+<tr>
+<th>工作</th>
+<th>要点</th>
+<th>与我们的关系</th>
+<th>标记</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>pFedHN</strong>（ICML 2021, <a href="https://arxiv.org/abs/2103.04628">arXiv 2103.04628</a>）</td>
+<td>一个超网络为每个客户端出一套个人模型；对新客户端泛化</td>
+<td>经典每用户超网络；真实客户端</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>DriveDNA</strong>（<a href="https://arxiv.org/abs/2607.23822">arXiv 2607.23822</a>，2026 预印本，全文）</td>
+<td>465 名驾驶员；从 1–10 分钟窗口得少样本风格向量；<strong>FiLM 条件化</strong> +0.4–1.4 % RMSE（k = 5），<strong>同一向量拼进 query 反而 −0.7 %</strong>；55 % 未见驾驶员似然改善，点误差≈持平</td>
+<td>两个教训：<strong>条件化机制能把收益归零</strong>；几分钟的风格向量只买到约 1 % 点误差（我们的个人偏差是 2 cm 量级，比这大得多）</td>
+<td>V</td>
+</tr>
+<tr>
+<td><strong>Moon, Oulasvirta, Lee</strong>（CHI 2023, <a href="https://doi.org/10.1145/3544548.3581439">doi 10.1145/3544548.3581439</a>）</td>
+<td>在<strong>一组用户模型参数范围内仿真</strong>的合成行为上预训练神经代理，几十毫秒推断真人参数（打字、菜单搜索、指点），在真人数据上评</td>
+<td><strong>这就是「底座 = 仿真群体、适配 = 对用户参数的摊销后验」</strong>，HCI 里的现成先例</td>
+<td>V（元数据 + 项目页）</td>
+</tr>
+<tr>
+<td>Typoist（CHI 2025, <a href="https://arxiv.org/abs/2502.03560">arXiv 2502.03560</a>）；Log2Motion（<a href="https://arxiv.org/abs/2601.21043">arXiv 2601.21043</a>）</td>
+<td>用户参数仿真能力分组 / 从触控日志合成运动</td>
+<td>离线推参数，不在线</td>
+<td>V</td>
+</tr>
+<tr>
+<td>ABC（<a href="https://arxiv.org/abs/2606.27375">arXiv 2606.27375</a>，2026）</td>
+<td>发布匿名遥操作者 ID，「Operator-ID conditioning」在推理时选操作者风格</td>
+<td>机制与效果未核</td>
+<td>V 摘要</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="s6-6">6.6 神经 / 肌电接口（最大规模的「通用底座 + 个性化」实证）</h3>
+<ul>
+<li><strong>通用 sEMG 神经运动接口</strong>（Kaifosh, Reardon 等，CTRL-labs at Reality Labs，Nature 645:702–711, 2025，<a href="https://doi.org/10.1038/s41586-025-09255-w">doi 10.1038/s41586-025-09255-w</a>；已发表摘要 V；协议数字来自 <strong>bioRxiv v2 <a href="https://doi.org/10.1101/2024.02.23.581779">doi 10.1101/2024.02.23.581779</a> 全文 V</strong>，可能与终稿有别）：通用解码器训在数千名参与者上、<strong>无每人标定</strong>；手写「个性化可再改善 16 %」。预印本细节：手写底座预训 6 527 人；个性化 = 约 20 分钟用户数据、40 名留出者、<strong>全部参数微调、300 epoch、无早停</strong>；60.2 M 模型：88 % 的用户改善，中位相对 CER 下降 8.35 %；在一人上微调、测另一人只有 7 % 的对有帮助；<strong>随预训练语料增大，个性化收益缩小</strong>（25 人底座时 20 分钟个人 ≈ 14 000 分钟通用）；<strong>通用误差高的用户收益最大，本来就好的用户可能退化</strong>。</li>
+<li>对我们的含义：20 分钟<strong>稠密</strong>信号远多于我们的 120 次事件；无早停的全量微调会让好用户退化（= 我们 L2-SP 的经验）；<strong>个性化的价值与群体底座对这个用户的覆盖成反比</strong>——报告时要给每用户收益的分布，不只是均值；「不劣于底座」的切换因此是必需品而不是保险。</li>
+<li>EEG-Reptile（<a href="https://arxiv.org/abs/2412.19725">arXiv 2412.19725</a>，预印本）：跨被试 Reptile 做 EEG 运动想象分类，零样本 / 少样本胜迁移学习；轻量 TTA 做 EMG 手势（<a href="https://arxiv.org/abs/2601.04181">arXiv 2601.04181</a>，2026 预印本）：因果自适应 BN + GMM 对齐 + 元学习少样本标定，NinaPro DB6 <strong>同人跨会话</strong>最高 82 %，跨人未涉及。</li>
+</ul>
+<h3 id="s6-7">6.7 机器人基础策略 + 个性化适配器</h3>
+<ul>
+<li><strong>少样本偏好学习</strong>（Hejna &amp; Sadigh, CoRL 2022, <a href="https://arxiv.org/abs/2212.03363">arXiv 2212.03363</a>，全文）：奖励模型用 Bradley–Terry 损失在<strong>人工标注</strong>的偏好对上 MAML 预训（底座无人类标签）；测试时<strong>重置到元初始化、对迄今全部反馈重新适配（≤ 40 步 MAML）</strong>，集成分歧选询问；真人 36–100 次询问（22–60 分钟），比 PEBBLE 少 20 倍；「预训但不重适配」的消融更差。<strong>在我们的硬前提下（底座零人类标签、测试时真人、几十次事件）最好的存在性证明；它的「重置再重适配」协议可以直接替换增量微调。</strong></li>
+<li>VLA 的机制式微调（<a href="https://arxiv.org/abs/2511.22697">arXiv 2511.22697</a>，预印本，只调任务相关注意头）、Bring My Cup / VAP（ICML 2026, <a href="https://arxiv.org/abs/2512.20014">arXiv 2512.20014</a>，几张参考图 → 用户的<strong>物体</strong>）、RKO（<a href="https://arxiv.org/abs/2602.09583">arXiv 2602.09583</a>）、TacStyle（<a href="https://arxiv.org/abs/2606.14862">arXiv 2606.14862</a>，低维风格潜空间 + LLM 映射语言偏好）：都是任务 / 物体 / 语言偏好，<strong>没有找到对特定操作者做 LoRA / 适配器微调的工作</strong>，最近的是 ABC 的 Operator-ID 条件化。</li>
+</ul>
+<h3 id="s6-8">6.8 哪些最适合「冻结生成器、零真人样本」的底座（判断）</h3>
+<ol>
+<li><strong>ALPaCA / DKT / PFN 是对我们诊断最对的形状。</strong> 我们已经有冻结特征 + 末层适配器，缺的是特征（或整个上下文模型）要在<strong>采样出来的函数</strong>上训练，小的闭式 / 摊销更新才有用。具体说：生成器必须每条 episode 出一个用户隐变量（手的尺寸、接近方向 / 速度、抓取偏移、时序），底座必须带着这种异质性训练；否则任何适配器都是在对群体均值拟合残差（DriveDNA 量级的收益）。PFN 最直接，因为它的训练数据字面上就是先验样本。</li>
+<li><strong>RMA / A-RMA 是策略形式的同一个想法</strong>，一一对应；开放问题是可辨识性（§1.5：要在事件前从接触前运动里读）。</li>
+<li><strong>校准的不确定度</strong>：ALPaCA / VBLL 每事件预测方差零成本；F-PACOH 是分布外过自信的显式解药；共形 / PAC 集合只在用户是元分布抽样时有保证——当诊断。</li>
+<li><strong>Hejna &amp; Sadigh 是硬前提下最近的存在性证明</strong>；重置再重适配协议可直接复用。</li>
+<li><strong>整网 MAML 最不可取</strong>：ANIL 说收益在特征；Kaifosh 显示无早停的全量微调让好用户退化；我们事件稀疏。</li>
+<li><strong>没有一条修得了分布外用户</strong>（最近生成终点 5.6 cm）。Raventós：狭窄的合成群体给出的是对<strong>那个群体</strong>贝叶斯最优的模型，不是对所有用户的岭回归。<strong>解药是生成器的多样性，不是适配器的设计。</strong></li>
+</ol>
+<h3 id="s6-9">6.9 已知失败模式（带出处）</h3>
+<ul>
+<li><strong>记忆 / 元过拟合</strong>（任务不互斥时）：Yin 等 ICLR 2020（<a href="https://arxiv.org/abs/1912.03820">arXiv 1912.03820</a>）；Rajendran 等 NeurIPS 2020（<a href="https://arxiv.org/abs/2007.05549">arXiv 2007.05549</a>，模型与基学习器都会过拟合，元增广）。对我们：<strong>如果生成的终点从窗口本身就能预测，元学习器会忽略用户上下文</strong>——群体设计必须让终点在评测时刻的窗口里不可辨（§2.3 第 1 条的反面）。</li>
+<li><strong>上下文学习的任务多样性阈值</strong>：Raventós 等 2023。</li>
+<li><strong>少样本下的任务歧义</strong>：Finn, Xu, Levine NeurIPS 2018（<a href="https://arxiv.org/abs/1806.02817">arXiv 1806.02817</a>）——几次事件可能辨不出用户，<strong>保留多个假设而不是一个偏置</strong>。</li>
+<li><strong>不完美的隐变量估计器</strong>：A-RMA；RMA 需要 0.5 s 交互历史，隐变量在首次接触前可能不可辨。</li>
+<li><strong>个性化让好用户退化、跨人迁移为负、底座越好收益越小</strong>：Kaifosh 等 bioRxiv v2。</li>
+<li><strong>长期在线自监督个性化的误差累积</strong>：Wen, Dong, Sugano AAAI 2026（<a href="https://arxiv.org/abs/2511.18851">arXiv 2511.18851</a>），解药 = 聚类锚点 + 向 EMA 的软重置。与我们按抬离 / 接触打标签的 OL 直接相关。</li>
+<li><strong>流里未知的任务边界</strong>：MOCA。<strong>分布外的过自信元先验</strong>：F-PACOH。<strong>条件化机制能归零收益</strong>：DriveDNA（FiLM +0.4–1.4 % 对 query 拼接 −0.7 %）。</li>
+</ul>
+<h2 id="s7"><span class="n">§ 7</span>对当前 OL 底座怎么改会更好——分级建议</h2>
+<p>每条都标：<strong>带不带真人数据进训练</strong>（必须「否」）、判定线、它回应哪条历史结果。</p>
+<h3 id="s7-1">7.1 不改底座、今天就能做（协议层）</h3>
+<ol>
+<li><strong>把 v14 §5b 的「最近条件终点」诊断在 λ0-Z3 上重跑</strong>：用 λ0-Z3 自己的生成数据（v4s3 + hand-v2 Z）对 DEV14 叠塔场次（只作验证，不读测试场次），输出同一张表（生成云最近点 / 2 cm 内占比 / 操作者自身云离散）。它是 §1.3 结论的时效校验，也是 §2.3 第 2 条的基线。脚本 <code>training/artifacts/stage12_intent/online/study_v14/diag_pa_given_o/pa_given_o.py</code> 改数据路径即可。带真人数据进训练：否（诊断，第 2 栏）。</li>
+<li><strong>在附录 17 / 18 的最终报告里声明 §1.4 的循环论证</strong>：选参群体按构造只有常数平移，所以「E 最好、其它形式走退路」不能读成「常数偏置是最优形式」。带真人数据进训练：否。</li>
+<li><strong>报告固定三列</strong>：k = 0（零样本）、k（零样本 + OL，按事件序号）、配对差；学习曲线横轴用事件序号和累计有效样本数两种（附录 17 §6.2 已有，照做）。</li>
+<li><strong>把「never-worse 切换」的对照改成对 E 而不是只对底座</strong>（附录 18 的「下一版注记」已经写了，照办）。</li>
+<li><strong>NeverWorse 从硬阈值改成软权重</strong>：对专家集 {底座, 适配} 用 fixed share / switch distribution 的权重（§5.4），先验质量放在「底座」上。硬阈值在 K = 5 的窗里就是 follow-the-leader，文献里它的 regret 比软权重差；改动只在 <code>NeverWorse.choose</code>，不碰底座。带真人数据进训练：否。</li>
+<li><strong>提交门从手定的 6 cm 改成在线校准的误差界</strong>：adaptive conformal inference（§5.4 第 3 条）在用户自己的前验式误差上维持目标覆盖，门限随人、随场自适应。带真人数据进训练：否（只读当前用户的实时误差，和 E 臂一样）。</li>
+</ol>
+<h3 id="s7-2">7.2 改适配层、不动底座权重（一两天；方案 B）</h3>
+<ol start="7">
+<li><strong>学到的适配子空间</strong>：在（新的）合成操作者群体上，对冻结 λ0-Z3 的 128 维嵌入 h 学一组 W（d ≤ 8），使「标签 − 底座」≈ W·c_u；在线只做 c_u 的闭式岭 / 贝叶斯末层（先验 = 群体上 c 的分布）。它直接回应 v17（35 维岭回归过拟合单物体）与附录 17 J3b（随机初始化的低秩适配器更差）：<strong>低秩本身没错，错在子空间是随机的 / 维度是人定的</strong>。文献形状 = ALPaCA（§6.2）：特征 + 末层先验在群体上元学习，测试时精确递推贝叶斯线性回归。判定：G0、G1、G2。带真人数据进训练：否（群体生成）。已知天花板：外挂适配器（A-RMA）——这是第 7 条之后要做第 9 条的理由，不是不做第 7 条的理由。</li>
+<li><strong>σ 从群体来</strong>：同一个群体上拟合 c_u 的后验方差 → 每帧 σ_palm / σ_finger，喂现在 <code>0.5^(err_hat/6 cm)</code> 的位置做对照臂。回应附录 6（四个学习式置信信号全部未过线，都是在真人 dev 上拟合的）。实现上用 VBLL（<a href="https://arxiv.org/abs/2404.11599">arXiv 2404.11599</a>）或 ALPaCA 的预测方差；分布外要变大（F-PACOH）。判定：G3。</li>
+</ol>
+<h3 id="s7-3">7.3 改底座（一周；方案 A）</h3>
+<ol start="9">
+<li><strong>上下文条件化底座</strong>：集合编码器吃 C_u，输出终点 + 手指 + 接触点 + σ；前验式训练目标（k = 0…K 都算损失，k = 0 的权重足够大以守住 G0）。λ0-Z3 保持冻结作对照。回应 v14 Q3（容量不是杠杆——这次加的不是容量，是<strong>输入</strong>）、附录 17 的 D（逐帧 Adam 发散——这次测试时没有优化器）。三条实现细节要事先登记：(i) <strong>条件化机制</strong>——DriveDNA 显示 FiLM +0.4–1.4 % 而同一向量拼进 query −0.7 %，机制能把收益归零，登记时写死用注意 / FiLM；(ii) <strong>底座与上下文编码器一起训</strong>（A-RMA），不是冻结 λ0-Z3 外挂；(iii) <strong>会话间的重置</strong>用 MOCA 式变点检测或 Hejna &amp; Sadigh 的「重置到元初始化、对迄今全部事件重适配」，不用遗忘因子（v14 的否定结论仍然成立）。判定：G0–G4。</li>
+<li><strong>RMA 式补充输入</strong>只在第 9 条之后、作为消融加：把本次接近的运动特征（0.3 s 航向、倾角、速度剖面）作为 θ 的额外证据。§10.11 的「0.3 s 航向在 1 s 时指向操作者终点 6/7」说明有一点信息，但 §1.5 说它不是主载体。</li>
+</ol>
+<h3 id="s7-4">7.4 数据侧（验证用，不进训练）</h3>
+<ol start="11">
+<li><strong>多操作者验证场次</strong>：≥ 2 位其他操作者 × ≥ 20 次同协议（v14 Q1 的结论）。用途只有两个：覆盖检查（§2.3 第 2 条）和 G2。没有这批数据，「这是个人习惯还是界面 / 抓姿库的固定偏差」分不开（§10.17 的结论），也就无法知道现在 E 的收益能否推广到第二个人。</li>
+<li><strong>逐 trial 随机不显示影子手的对照 trial</strong>（v14 Q2、10-04 的 R2）：共适应会让现场曲线好看一倍（v14 §5 代理：误差对实际落点 1.35 → 0.67，对意图不变）。没有它，任何在线收益都只能在开环回放里报告。</li>
+</ol>
+<h3 id="s7-5">7.5 不要再做的（都有过线的反证）</h3>
+<ul>
+<li>更大的底座 / 生成式底座：v14 Q3（容量只改起点，起点差别在种子噪声内）；flow matching 臂与回归等价（§10.11 补充）。</li>
+<li>稠密未来标签修终点：v11、§10.15（b1 +1.21 cm）、附录 17 H3（生成用户上 w_D &gt; 0 更差）。稠密只用在它直接监督的输出上。</li>
+<li>原始特征的岭回归一族：v17 / v19（λ 到 1000 仍在 A 上伤）。</li>
+<li>逐帧 / 逐事件的 Adam 适配：附录 17 的 D 发散、J3b 更差。</li>
+<li>遗忘 / 滑窗：v14（会话间反弹是「人的状态变了」，不是模型旧了）。</li>
+<li>无早停的全量微调：Kaifosh 等（§6.6）在 6 527 人的底座上个性化，12 % 的用户没有改善、本来就好的用户最容易退化；我们的 L2-SP 经验同型。</li>
+</ul>
+<h2 id="s8"><span class="n">§ 8</span>风险（照实写）</h2>
+<ul>
+<li><strong>元过拟合</strong>：群体的风格族是我们定义的，真人可能在族外。G4 只能检验「范围外」，检不了「族外」。缓解：风格轴尽量用物理 / 几何量（可行集上的位置、倾角、深度），不用抽象隐变量；多样性过阈值（Raventós）；风格在窗口里不可辨（Yin）。</li>
+<li><strong>个性化的收益分布不均</strong>：Kaifosh 等的 6 527 人底座上，收益与底座对该用户的覆盖成反比，好用户会退化。报告每用户收益分布，「不劣于底座」的切换是必需品。</li>
+<li><strong>一位操作者</strong>：到今天所有真人证据都来自一个人。E 在他身上有效，可能只是因为他恰好有大的常数分量（§10.17）。</li>
+<li><strong>覆盖通不过</strong>：若 §2.3 第 2 条做不到 2 cm 量级，A / B 的真人收益会被截断；那时的正确做法是回到生成器（加轴），不是回到真人数据。</li>
+<li><strong>开环回放</strong>：G2 测不到共适应；7.4 第 9 条是补这个洞的唯一办法。</li>
+<li><strong>与附录 13–18 的关系</strong>：新方向是<strong>下一版</strong>，与现在的测试并行；不替换任何已冻结的候选，不改 <code>ol_adapters.py</code> / <code>ol2_adapters.py</code> 等代码字典里的文件。</li>
+</ul>
+<h2 id="s9"><span class="n">§ 9</span>参考文献</h2>
+<h3 id="s9-1">9.1 §5（OL / 微调 / TTA / 安全 / 共适应）——全部经 arXiv API 或 Crossref 核过；† = 会议名按常见引用，未从一手页面确认</h3>
+<p>在线学习与前验式评测：Cesa-Bianchi &amp; Lugosi 2006（<a href="https://doi.org/10.1017/CBO9780511546921">doi 10.1017/CBO9780511546921</a>）；Shalev-Shwartz 2012（<a href="https://doi.org/10.1561/2200000018">doi 10.1561/2200000018</a>）；Dawid 1984（<a href="https://doi.org/10.2307/2981683">doi 10.2307/2981683</a>）；Hazan 2016（<a href="https://arxiv.org/abs/1909.05207">arXiv 1909.05207</a>）；Hazan, Agarwal, Kale 2007（<a href="https://doi.org/10.1007/s10994-007-5016-8">doi 10.1007/s10994-007-5016-8</a>）；Kalman 1960（<a href="https://doi.org/10.1115/1.3662552">doi 10.1115/1.3662552</a>）；Sayed 2008（<a href="https://doi.org/10.1002/9780470374122">doi 10.1002/9780470374122</a>）；延迟标签：Weinberger &amp; Ordentlich 2002（<a href="https://doi.org/10.1109/TIT.2002.1013136">doi 10.1109/TIT.2002.1013136</a>）、Joulani 等 ICML 2013（<a href="https://arxiv.org/abs/1306.0686">arXiv 1306.0686</a>）、Csaba 等 NeurIPS 2024（<a href="https://arxiv.org/abs/2312.00923">arXiv 2312.00923</a>）。</p>
+<p>微调与 PEFT：McCloskey &amp; Cohen 1989（<a href="https://doi.org/10.1016/S0079-7421(08)60536-8">doi 10.1016/S0079-7421(08)60536-8</a>）；French 1999（<a href="https://doi.org/10.1016/S1364-6613(99)01294-2">doi 10.1016/S1364-6613(99)01294-2</a>）；Ash &amp; Adams NeurIPS 2020（<a href="https://arxiv.org/abs/1910.08475">arXiv 1910.08475</a>）；L2-SP, Li, Grandvalet, Davoine ICML 2018（<a href="https://arxiv.org/abs/1802.01483">arXiv 1802.01483</a>）；Houlsby 等 ICML 2019（<a href="https://arxiv.org/abs/1902.00751">arXiv 1902.00751</a>）；LoRA, Hu 等 ICLR 2022†（<a href="https://arxiv.org/abs/2106.09685">arXiv 2106.09685</a>）；BitFit, Ben Zaken 等 ACL 2022（<a href="https://arxiv.org/abs/2106.10199">arXiv 2106.10199</a>）；LP-FT, Kumar 等 ICLR 2022（<a href="https://arxiv.org/abs/2202.10054">arXiv 2202.10054</a>）；Lee 等 ICLR 2023（<a href="https://arxiv.org/abs/2210.11466">arXiv 2210.11466</a>）；WiSE-FT, Wortsman 等 CVPR 2022（<a href="https://arxiv.org/abs/2109.01903">arXiv 2109.01903</a>）。</p>
+<p>测试时适配：TENT, Wang 等 ICLR 2021（<a href="https://arxiv.org/abs/2006.10726">arXiv 2006.10726</a>）；CoTTA, CVPR 2022（<a href="https://arxiv.org/abs/2203.13591">arXiv 2203.13591</a>）；EATA, ICML 2022（<a href="https://arxiv.org/abs/2204.02610">arXiv 2204.02610</a>）；SAR, Niu 等 ICLR 2023（<a href="https://arxiv.org/abs/2302.12400">arXiv 2302.12400</a>）；RDumb, Press 等 NeurIPS 2023（<a href="https://arxiv.org/abs/2306.05401">arXiv 2306.05401</a>）。</p>
+<p>在线 / 持续元学习与持续学习：FTML, Finn 等 ICML 2019（<a href="https://arxiv.org/abs/1902.08438">arXiv 1902.08438</a>）；MOCA, Harrison 等 NeurIPS 2020（<a href="https://arxiv.org/abs/1912.08866">arXiv 1912.08866</a>）；ALPaCA, Harrison, Sharma, Pavone WAFR 2018（<a href="https://arxiv.org/abs/1807.08912">arXiv 1807.08912</a>）；EWC, Kirkpatrick 等 PNAS 2017（<a href="https://arxiv.org/abs/1612.00796">arXiv 1612.00796</a>）；回放, Rolnick 等 NeurIPS 2019（<a href="https://arxiv.org/abs/1811.11682">arXiv 1811.11682</a>）；GEM（<a href="https://arxiv.org/abs/1706.08840">arXiv 1706.08840</a>）；Mai 等 Neurocomputing 2022（<a href="https://arxiv.org/abs/2101.10423">arXiv 2101.10423</a>）；Aljundi 等 CVPR 2019（<a href="https://arxiv.org/abs/1812.03596">arXiv 1812.03596</a>）；Parisi 等 Neural Networks 2019（<a href="https://doi.org/10.1016/j.neunet.2019.01.012">doi 10.1016/j.neunet.2019.01.012</a>）；Adam 收敛性, Reddi, Kale, Kumar ICLR 2018（<a href="https://arxiv.org/abs/1904.09237">arXiv 1904.09237</a>）；kNN-LM, Khandelwal 等 ICLR 2020（<a href="https://arxiv.org/abs/1911.00172">arXiv 1911.00172</a>）。</p>
+<p>安全与校准：Littlestone &amp; Warmuth 1994（<a href="https://doi.org/10.1006/inco.1994.1009">doi 10.1006/inco.1994.1009</a>）；Freund &amp; Schapire 1997（<a href="https://doi.org/10.1006/jcss.1997.1504">doi 10.1006/jcss.1997.1504</a>）；fixed share, Herbster &amp; Warmuth 1998（<a href="https://doi.org/10.1023/A:1007424614876">doi 10.1023/A:1007424614876</a>）；switch distribution, van Erven, Grünwald, de Rooij JRSS B 2012（<a href="https://doi.org/10.1111/j.1467-9868.2011.01025.x">doi 10.1111/j.1467-9868.2011.01025.x</a>）；James–Stein, Efron &amp; Morris JASA 1975（<a href="https://doi.org/10.1080/01621459.1975.10479864">doi 10.1080/01621459.1975.10479864</a>）；ACI, Gibbs &amp; Candès NeurIPS 2021†（<a href="https://arxiv.org/abs/2106.00170">arXiv 2106.00170</a>）；AgACI, Zaffran 等 ICML 2022（<a href="https://arxiv.org/abs/2202.07282">arXiv 2202.07282</a>）；conformal PID, Angelopoulos, Candès, Tibshirani NeurIPS 2023（<a href="https://arxiv.org/abs/2307.16895">arXiv 2307.16895</a>）。</p>
+<p>共适应与闭环解码器：Perdomo 等 ICML 2020（<a href="https://arxiv.org/abs/2002.06673">arXiv 2002.06673</a>）；Mendler-Dünner 等 NeurIPS 2020（<a href="https://arxiv.org/abs/2006.06887">arXiv 2006.06887</a>）；Hardt &amp; Mendler-Dünner, Statistical Science 2023（<a href="https://arxiv.org/abs/2310.16608">arXiv 2310.16608</a>）；Couraud 等 J. Neural Eng. 2018（<a href="https://doi.org/10.1088/1741-2552/aa87cf">doi 10.1088/1741-2552/aa87cf</a>）；Shenoy &amp; Carmena, Neuron 2014（<a href="https://doi.org/10.1016/j.neuron.2014.08.038">doi 10.1016/j.neuron.2014.08.038</a>）；Orsborn 等 IEEE TNSRE 2012（<a href="https://doi.org/10.1109/TNSRE.2012.2185066">doi 10.1109/TNSRE.2012.2185066</a>）；Dangi 等 Neural Computation 2013（<a href="https://doi.org/10.1162/NECO_a_00460">doi 10.1162/NECO_a_00460</a>）；ReFIT, Gilja 等 Nat. Neurosci. 2012（<a href="https://doi.org/10.1038/nn.3265">doi 10.1038/nn.3265</a>）；Jarosiewicz 等 Sci. Transl. Med. 2015（<a href="https://doi.org/10.1126/scitranslmed.aac7328">doi 10.1126/scitranslmed.aac7328</a>）；离策略评估：Li, Chu, Langford, Schapire WSDM 2011（<a href="https://arxiv.org/abs/1003.5956">arXiv 1003.5956</a>）、Bottou 等 JMLR 2013（<a href="https://arxiv.org/abs/1209.2355">arXiv 1209.2355</a>）。</p>
+<h3 id="s9-2">9.2 §3 / §4（意图预测）——V = 打开过摘要 / 全文页</h3>
+<p>运动预报：USST, Bao 等 ICCV 2023（<a href="https://arxiv.org/abs/2307.08243">arXiv 2307.08243</a>，<a href="https://doi.org/10.1109/ICCV51070.2023.01260">doi 10.1109/ICCV51070.2023.01260</a>）；MADiff（<a href="https://arxiv.org/abs/2409.02638">arXiv 2409.02638</a>）；Diff-IP2D IROS 2025（<a href="https://arxiv.org/abs/2405.04370">arXiv 2405.04370</a>）；MMTwin IROS 2025（<a href="https://arxiv.org/abs/2504.07375">arXiv 2504.07375</a>）；Uni-Hand TPAMI 2026（<a href="https://arxiv.org/abs/2511.12878">arXiv 2511.12878</a>）；EgoH4（<a href="https://arxiv.org/abs/2504.08654">arXiv 2504.08654</a>）；EgoMAN（<a href="https://arxiv.org/abs/2512.16907">arXiv 2512.16907</a>）；HandsOnVLM（<a href="https://arxiv.org/abs/2412.13187">arXiv 2412.13187</a>）；EgoPAT3Dv2 ICRA 2024（<a href="https://arxiv.org/abs/2403.05046">arXiv 2403.05046</a>）；HIGFlow（<a href="https://arxiv.org/abs/2609.08636">arXiv 2609.08636</a>）；BeLFusion ICCV 2023（<a href="https://arxiv.org/abs/2211.14304">arXiv 2211.14304</a>）；HumanMAC ICCV 2023（<a href="https://arxiv.org/abs/2302.03665">arXiv 2302.03665</a>）；SkeletonDiffusion CVPR 2025（<a href="https://arxiv.org/abs/2501.06035">arXiv 2501.06035</a>）；MDMP（<a href="https://arxiv.org/abs/2410.03860">arXiv 2410.03860</a>）；GM-Latent Flow（<a href="https://arxiv.org/abs/2608.21093">arXiv 2608.21093</a>）。</p>
+<p>目标 / 意图推断：Jain &amp; Argall THRI 2019（<a href="https://doi.org/10.1145/3359614">doi 10.1145/3359614</a>）；Aronson, AlMutlak, Admoni IROS 2021；Aronson &amp; Admoni RSS 2022（<a href="https://doi.org/10.15607/RSS.2022.XVIII.025">doi 10.15607/RSS.2022.XVIII.025</a>）；Robot Trajectron ICRA 2024（<a href="https://arxiv.org/abs/2402.02499">arXiv 2402.02499</a>）；Robot Trajectron V3（<a href="https://arxiv.org/abs/2607.09315">arXiv 2607.09315</a>）；VOSA HRI 2025（<a href="https://arxiv.org/abs/2501.08389">arXiv 2501.08389</a>）；Casper CoRL 2025（<a href="https://arxiv.org/abs/2506.14727">arXiv 2506.14727</a>）；BRACE（<a href="https://arxiv.org/abs/2601.23285">arXiv 2601.23285</a>）；GUIDER（<a href="https://arxiv.org/abs/2608.15446">arXiv 2608.15446</a>）；TASC IROS 2026（<a href="https://arxiv.org/abs/2509.10416">arXiv 2509.10416</a>）。</p>
+<p>第一视角预期：Liu 等 ECCV 2020（<a href="https://arxiv.org/abs/1911.10967">arXiv 1911.10967</a>）；Ego4D CVPR 2022（<a href="https://arxiv.org/abs/2110.07058">arXiv 2110.07058</a>）；AFF-ttention ECCV 2024（<a href="https://arxiv.org/abs/2406.01194">arXiv 2406.01194</a>）；Text2HOI CVPR 2024（<a href="https://arxiv.org/abs/2404.00562">arXiv 2404.00562</a>，排除）。</p>
+<p>操作 / 遥操作：Valkov 等（<a href="https://arxiv.org/abs/2506.10818">arXiv 2506.10818</a>）；Zeng（<a href="https://arxiv.org/abs/2508.16582">arXiv 2508.16582</a>，论文预印本）；Shi 等 Biomimetics 2023（<a href="https://doi.org/10.3390/biomimetics8020250">doi 10.3390/biomimetics8020250</a>）；i-GRIP Humanoids 2024（<a href="https://arxiv.org/abs/2410.06595">arXiv 2410.06595</a>）；Batzianoulis 等 JNER 2018（<a href="https://doi.org/10.1186/s12984-018-0396-5">doi 10.1186/s12984-018-0396-5</a>）；Trout 等 Nat Commun 2025（<a href="https://doi.org/10.1038/s41467-025-65965-9">doi 10.1038/s41467-025-65965-9</a>）；Cui 等（<a href="https://arxiv.org/abs/2511.00139">arXiv 2511.00139</a>）；Tele-Catch（<a href="https://arxiv.org/abs/2603.28427">arXiv 2603.28427</a>）；DexTeleop-0（<a href="https://arxiv.org/abs/2606.23431">arXiv 2606.23431</a>）；Salvato 等 RA-L 2022（<a href="https://doi.org/10.1109/LRA.2022.3148458">doi 10.1109/LRA.2022.3148458</a>）。</p>
+<p>调研方法：30+ 篇摘要 / 全文页（arXiv、ar5iv、Crossref、Semantic Scholar、RSS / RI CMU、一份 RA-L PDF）；Nature Comms 全文、MDPI、EPFL 记录打不开，已标 U；SkeletonDiffusion 的数字因抓到的表格错列而故意不引；只有片段的候选（DITTO-X、IMCopilot、SOIA-DOD、Assistron、Manschitz <a href="https://arxiv.org/abs/2504.18186">2504.18186</a>）宁缺勿引。</p>
+<h3 id="s9-3">9.3 §6（可适配底座 / 个性化架构）——V = 打开过 arXiv / 会议页或全文；三条 U 已在正文标明</h3>
+<p>梯度式元学习：MAML, Finn, Abbeel, Levine ICML 2017（<a href="https://arxiv.org/abs/1703.03400">arXiv 1703.03400</a>）；Reptile（<a href="https://arxiv.org/abs/1803.02999">arXiv 1803.02999</a>）；ANIL ICLR 2020（<a href="https://arxiv.org/abs/1909.09157">arXiv 1909.09157</a>）；FTML ICML 2019（<a href="https://arxiv.org/abs/1902.08438">arXiv 1902.08438</a>）；PAML, Gui 等 ECCV 2018（<a href="https://doi.org/10.1007/978-3-030-01237-3_27">doi 10.1007/978-3-030-01237-3_27</a>）；FAZE, Park 等 ICCV 2019（<a href="https://arxiv.org/abs/1905.01941">arXiv 1905.01941</a>）；Ma 等 2025（<a href="https://arxiv.org/abs/2509.13736">arXiv 2509.13736</a>，预印本）。</p>
+<p>贝叶斯 / 闭式：ALPaCA, Harrison, Sharma, Pavone WAFR 2018（<a href="https://arxiv.org/abs/1807.08912">arXiv 1807.08912</a>）；MOCA NeurIPS 2020（<a href="https://arxiv.org/abs/1912.08866">arXiv 1912.08866</a>）；VBLL, Harrison, Willes, Snoek ICLR 2024（<a href="https://arxiv.org/abs/2404.11599">arXiv 2404.11599</a>）；Deep Kernel Transfer, Patacchiola 等 NeurIPS 2020（<a href="https://arxiv.org/abs/1910.05199">arXiv 1910.05199</a>）；PACOH ICML 2021（<a href="https://arxiv.org/abs/2002.05551">arXiv 2002.05551</a>）；F-PACOH NeurIPS 2021（<a href="https://arxiv.org/abs/2106.03195">arXiv 2106.03195</a>）；Fisch 等 ICML 2021（<a href="https://arxiv.org/abs/2102.08898">arXiv 2102.08898</a>）；Park 等 NeurIPS 2022（<a href="https://arxiv.org/abs/2207.02440">arXiv 2207.02440</a>）。</p>
+<p>上下文 / 摊销：CNP, Garnelo 等 ICML 2018（<a href="https://arxiv.org/abs/1807.01613">arXiv 1807.01613</a>）；ANP ICLR 2019（<a href="https://arxiv.org/abs/1901.05761">arXiv 1901.05761</a>）；TNP, Nguyen &amp; Grover ICML 2022（<a href="https://arxiv.org/abs/2207.04179">arXiv 2207.04179</a>）；PFN, Müller 等 ICLR 2022（<a href="https://arxiv.org/abs/2112.10510">arXiv 2112.10510</a>）；Garg 等 NeurIPS 2022（<a href="https://arxiv.org/abs/2208.01066">arXiv 2208.01066</a>）；Raventós 等 NeurIPS 2023（<a href="https://arxiv.org/abs/2306.15063">arXiv 2306.15063</a>）；ICRT（<a href="https://arxiv.org/abs/2408.15980">arXiv 2408.15980</a>）；Instant Policy, Vosylius &amp; Johns ICLR 2025（<a href="https://arxiv.org/abs/2411.12633">arXiv 2411.12633</a>）；SynthICL（<a href="https://arxiv.org/abs/2606.08154">arXiv 2606.08154</a>，预印本）；TrajICL NeurIPS 2025（<a href="https://arxiv.org/abs/2506.00871">arXiv 2506.00871</a>）；H/P-TTP ICCV 2023（<a href="https://doi.org/10.1109/ICCV51070.2023.00032">doi 10.1109/ICCV51070.2023.00032</a>）；Human-in-Context（<a href="https://arxiv.org/abs/2508.10897">arXiv 2508.10897</a>，U）。</p>
+<p>仿真群体 + 隐变量：RMA, Kumar, Fu, Pathak, Malik RSS 2021（<a href="https://arxiv.org/abs/2107.04034">arXiv 2107.04034</a>）；A-RMA IROS 2022（<a href="https://arxiv.org/abs/2205.15299">arXiv 2205.15299</a>）；Luo 等 Nature 630:353–359, 2024（<a href="https://doi.org/10.1038/s41586-024-07382-4">doi 10.1038/s41586-024-07382-4</a>）；Li 等 2026（<a href="https://arxiv.org/abs/2609.28027">arXiv 2609.28027</a>，预印本）。</p>
+<p>超网络 / 条件化：pFedHN ICML 2021（<a href="https://arxiv.org/abs/2103.04628">arXiv 2103.04628</a>）；DriveDNA（<a href="https://arxiv.org/abs/2607.23822">arXiv 2607.23822</a>，预印本）；Moon, Oulasvirta, Lee CHI 2023（<a href="https://doi.org/10.1145/3544548.3581439">doi 10.1145/3544548.3581439</a>）；Typoist CHI 2025（<a href="https://arxiv.org/abs/2502.03560">arXiv 2502.03560</a>）；Log2Motion（<a href="https://arxiv.org/abs/2601.21043">arXiv 2601.21043</a>）；ABC（<a href="https://arxiv.org/abs/2606.27375">arXiv 2606.27375</a>，机制 U）。</p>
+<p>神经 / 肌电：Kaifosh 等 Nature 645:702–711, 2025（<a href="https://doi.org/10.1038/s41586-025-09255-w">doi 10.1038/s41586-025-09255-w</a>；协议数字自 bioRxiv v2 <a href="https://doi.org/10.1101/2024.02.23.581779">doi 10.1101/2024.02.23.581779</a>）；EEG-Reptile（<a href="https://arxiv.org/abs/2412.19725">arXiv 2412.19725</a>，预印本）；EMG TTA（<a href="https://arxiv.org/abs/2601.04181">arXiv 2601.04181</a>，预印本）。</p>
+<p>基础策略 + 适配器：Hejna &amp; Sadigh CoRL 2022（<a href="https://arxiv.org/abs/2212.03363">arXiv 2212.03363</a>）；Mitra 等 2025（<a href="https://arxiv.org/abs/2511.22697">arXiv 2511.22697</a>）；VAP, Lee, Mo, Han ICML 2026（<a href="https://arxiv.org/abs/2512.20014">arXiv 2512.20014</a>）；RKO（<a href="https://arxiv.org/abs/2602.09583">arXiv 2602.09583</a>）；TacStyle（<a href="https://arxiv.org/abs/2606.14862">arXiv 2606.14862</a>）。</p>
+<p>失败模式：Yin 等 ICLR 2020（<a href="https://arxiv.org/abs/1912.03820">arXiv 1912.03820</a>）；Rajendran 等 NeurIPS 2020（<a href="https://arxiv.org/abs/2007.05549">arXiv 2007.05549</a>）；Finn, Xu, Levine NeurIPS 2018（<a href="https://arxiv.org/abs/1806.02817">arXiv 1806.02817</a>）；Wen, Dong, Sugano AAAI 2026（<a href="https://arxiv.org/abs/2511.18851">arXiv 2511.18851</a>）。</p>
+<p>调研方法：扩展检索后四个子问题为空（同一人样本的上下文个性化运动预报；RMA 式学习型人类隐变量模块；HCI 里训在合成用户上的超网络；对特定操作者的 VLA / 扩散策略适配器），按空档报告、不填充。Kaifosh 终稿全文在 nature.com / PMC / Europe PMC 三处被拦，终稿摘要的「16 %」与预印本的中位 8.35 % 可能是不同模型 / 指标。</p>
+
+</main>
+
+  <footer>待并入 Pool · 原件 <code>human_machine_interaction · hand_control/plan/2026-10-14-base-skill-vs-personalisation-architecture-review.md</code> · <a href="index.html#pool">← 待并入 Pool</a> · <a href="index.html">Machine Learning Handbook</a></footer>
+</div>
+</body>
+</html>
