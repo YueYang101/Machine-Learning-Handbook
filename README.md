@@ -10,7 +10,7 @@
 
 | 页面 | 内容 |
 |---|---|
-| [index.html](index.html) | GitHub Pages 首页与公开导航；理论 / 实验计划 / 实验记录 三个标签页（`#theory` / `#plans` / `#experiments` 可直接分享），分类层级与本索引及 `STYLE.md` §1 保持同步 |
+| [index.html](index.html) | GitHub Pages 首页与公开导航；理论 / 实验计划 / 实验记录 三个标签页（`#theory` / `#plans` / `#experiments` 可直接分享），另有「待并入」暂存标签页（`#pool`）；分类层级与本索引及 `STYLE.md` §1 保持同步 |
 
 ## 理论
 
@@ -66,3 +66,9 @@
 | [dexhand-rl.html](dexhand-rl.html) | 灵巧手 RL 实验记录：锤钉与抓取，每个 reward 版本的视频与失败解剖 |
 | [dexhand-engineering.html](dexhand-engineering.html) | 灵巧手工程记录：Quest 真人搬运与物理力审计、RT 已试／未验证对照、新手势测试；历史碰撞简化与 JAX→Warp 迁移 |
 | [hand-control.html](hand-control.html) | Hand Control 技术路线手册：EMG + Quest 手部追踪 + L20 遥操作 |
+
+## 待并入（Pool）
+
+暂存区，不是分类：写完但还没决定并不并入、并到哪一类的内容，读完再定；规则见 `STYLE.md` §1「待并入（Pool）」。页面 URL 是临时的，并入或弃用后删除。
+
+目前没有待审的页面。

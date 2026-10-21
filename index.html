@@ -38,8 +38,9 @@ a.card .d { color:var(--sub); font-size:.92rem; margin-top:4px; }
 .sub .t2 { font-weight:600; }
 .sub .d2 { color:var(--muted); font-size:.86rem; }
 .sub .rel { color:var(--muted); font-size:.78rem; letter-spacing:.06em; }
-.tabs { display:flex; gap:22px; border-bottom:1px solid var(--line); margin:30px 0 0; }
-.tabs button { appearance:none; background:none; border:0; border-bottom:2px solid transparent;
+.tabs { display:flex; flex-wrap:wrap; column-gap:22px; border-bottom:1px solid var(--line); margin:30px 0 0; }
+@media (max-width:420px) { .tabs { column-gap:12px; } }
+.tabs button { flex:none; white-space:nowrap; appearance:none; background:none; border:0; border-bottom:2px solid transparent;
   margin-bottom:-1px; padding:0 2px; min-height:44px; cursor:pointer; color:var(--sub);
   font:600 1rem/1 inherit; letter-spacing:.02em; }
 .tabs button:hover { color:var(--ink); }
@@ -88,13 +89,14 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 <div class="kicker">YUE YANG · NOTES</div>
 <h1>Machine Learning Handbook</h1>
 <p class="lede">个人机器学习笔记。单文件 HTML，手机可读，公式 MathJax，动画为按解析解实时模拟的原生 canvas。<br>
-分三类：<b>理论</b>（概念与推导）·<b>实验计划</b>（方案与判据已定，还没跑出数据）·<b>实验记录</b>（跑出来的曲线、视频、失败解剖）。下面的标签页只切换显示哪一类，链接可直接分享（<code>#theory</code> / <code>#plans</code> / <code>#experiments</code>）。<b>工具</b>标签是自用的远程连接指令（<code>#tools</code>），与笔记无关，仅登录可见。</p>
+分三类：<b>理论</b>（概念与推导）·<b>实验计划</b>（方案与判据已定，还没跑出数据）·<b>实验记录</b>（跑出来的曲线、视频、失败解剖）。下面的标签页只切换显示哪一类，链接可直接分享（<code>#theory</code> / <code>#plans</code> / <code>#experiments</code>）。<b>待并入</b>标签（<code>#pool</code>）是暂存区：写完但还没决定并不并入、并到哪一类的内容，读完再定。<b>工具</b>标签是自用的远程连接指令（<code>#tools</code>），与笔记无关，仅登录可见。</p>
 
 <nav aria-label="内容分类">
   <div class="tabs" role="tablist" aria-label="内容分类">
     <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="true" tabindex="0">理论<span class="cnt">7</span></button>
     <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">9</span></button>
     <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验记录<span class="cnt">4</span></button>
+    <button type="button" role="tab" id="tab-pool" aria-controls="panel-pool" aria-selected="false" tabindex="-1">待并入<span class="cnt">0</span></button>
     <button type="button" role="tab" id="tab-tools" aria-controls="panel-tools" aria-selected="false" tabindex="-1">工具</button>
   </div>
 </nav>
@@ -213,6 +215,14 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 </a>
 </section>
 
+<section id="panel-pool" role="tabpanel" aria-labelledby="tab-pool" tabindex="0">
+
+<h2 id="pool">待并入<span class="en">POOL</span></h2>
+<p class="note">暂存区，不是第四个分类：已经写完、还没决定并不并入、并到哪一类的内容（调研、备忘、讨论稿）。每页顶部写明来源与建议去向；读完决定后并入对应分类或删除，所以这里的链接是临时的。</p>
+<p class="note">目前没有待审的页面。</p>
+
+</section>
+
 <section id="panel-tools" role="tabpanel" aria-labelledby="tab-tools" tabindex="0">
 
 <h2>工具<span class="en">TOOLS</span></h2>
@@ -268,8 +278,8 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 (function () {
   var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
   if (!tabs.length) return;                       // 无 JS / 结构变动时两栏都留在页面上
-  var byHash = { '#theory': 0, '#plans': 1, '#experiments': 2, '#tools': 3 };
-  var hashOf = ['#theory', '#plans', '#experiments', '#tools'];
+  var byHash = { '#theory': 0, '#plans': 1, '#experiments': 2, '#pool': 3, '#tools': 4 };
+  var hashOf = ['#theory', '#plans', '#experiments', '#pool', '#tools'];
 
   function select(i, focus) {
     tabs.forEach(function (tab, j) {
