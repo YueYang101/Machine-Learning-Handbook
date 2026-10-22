@@ -73,4 +73,4 @@
 
 | 页面 | 内容 |
 |---|---|
-| [pool-2026-10-14-ol-personalisation-sota.html](pool-2026-10-14-ol-personalisation-sota.html) | **待审 · 2026-10-14 调研备忘**（原件在私有 HMI 仓库）：「底座学技能、适配学个人」——现架构有没有用到 · 意图预测 SOTA · 操作 / 遥操作里的意图预测 · OL 与微调的区别 · 同类可适配架构（元学习、ALPaCA、PFN、RMA、超网络等）与失败模式 · 对当前 OL 底座的分级改法；文献带 arXiv / DOI 链接 |
+| [pool-2026-10-14-ol-personalisation-sota.html](pool-2026-10-14-ol-personalisation-sota.html) | **待审 · 2026-10-22 按 SOTA 综述角度重写**（原件为 2026-10-14 调研备忘，在私有 HMI 仓库）：群体底座 + 个体适配——意图预测 SOTA（运动预报、目标推断与生成式 copilot、接触前抓取 / 接触预测、灵巧遥操作与假肢）· 个性化方法谱系（元学习、闭式贝叶斯、PFN / 上下文推断、仿真群体 + 隐变量、用户嵌入）· 神经接口的通用底座 vs 个性化实证 · 评测、保底、失败模式与研究空档；文献带 arXiv / DOI 链接 |
