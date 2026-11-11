@@ -118,6 +118,8 @@ code { font:.88em ui-monospace,Menlo,monospace; background:var(--panel); border:
 
 <div class="key"><b>你担心的那一点是对的。</b>无论 Alice 出终点还是出码，伸手那一段都是现有的显式生成器画的。要摆脱它，只能从多个真人的数据里学，这条路现在被数据卡住。</div>
 
+<div class="key"><b>三个容易混的点。</b>一，Bob 不输出风格，今天的 Bob 也没有任何风格输入：风格码由一个单独的小模块从这个人做完的几次抓握里读出来，再交给 Bob。二，码先用最简单的办法接：拼在 Bob 的输入后面。三，生成分两段：终点抓握由抓握隐码生成，伸手那一段仍是显式生成器。细节在 <a href="manip-gen-alice-latent.html#wiring">具体计划 § 5</a>。</div>
+
 <h2 id="figure"><span class="n">3</span>一张图</h2>
 <div class="figwrap">
 <a href="assets/manip-gen-alice-latent/fig-mg-overview.png"><img src="assets/manip-gen-alice-latent/fig-mg-overview.png" alt="三个面板的方法示意图：仿真训练时风格旋钮压成风格码并和 Bob 一起训练；Alice 出码，冻结的执行器展开成连续轨迹，按 Bob 误差减 Carol 误差打分；上线时从做完的 k 次抓握读出风格码。" width="1920" height="3270" loading="lazy"></a>
@@ -128,7 +130,7 @@ code { font:.88em ui-monospace,Menlo,monospace; background:var(--panel); border:
 <p>下面“跑过”的三条都来自预测器这条线。</p>
 <ul>
 <li><b>跑过：</b>生成式的头两次都和 MLP 打平（<a href="l20-stage1-2-results.html#v1">v1</a>、<a href="l20-stage1-2-results.html#v19">v19</a>）。那两次没有测过歧义的情况，所以多模的好处是没测，不是被否定。</li>
-<li><b>跑过：</b>在旧的抓握库上，把真实风格告诉 Bob 没有帮助。新库的抓握类型从 3 种增到 8 种，还没有重测。</li>
+<li><b>跑过：</b>在旧的抓握库上，把真实风格告诉一个线性预测器没有帮助。那次用的不是 Bob 的网络；新库的抓握类型从 3 种增到 8 种，也还没有重测。</li>
 <li><b>跑过：</b>合成的伸手比真人快得多（约 0.9 秒对 2.2 秒）。这要在显式生成器里改，和 latent 无关。</li>
 <li><b>没跑过：</b>抓握隐码、风格码、Alice / Bob。本页和具体计划里关于它们的内容都是设计。</li>
 </ul>
