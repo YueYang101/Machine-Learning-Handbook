@@ -94,7 +94,7 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 <nav aria-label="内容分类">
   <div class="tabs" role="tablist" aria-label="内容分类">
     <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="true" tabindex="0">理论<span class="cnt">7</span></button>
-    <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">9</span></button>
+    <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">11</span></button>
     <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验记录<span class="cnt">4</span></button>
     <button type="button" role="tab" id="tab-pool" aria-controls="panel-pool" aria-selected="false" tabindex="-1">待并入<span class="cnt">1</span></button>
     <button type="button" role="tab" id="tab-tools" aria-controls="panel-tools" aria-selected="false" tabindex="-1">工具</button>
@@ -150,7 +150,7 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 <h2 id="plans">实验计划<span class="en">PLANNED</span></h2>
 <p class="note">研究路线、项目选型综述和待执行操作说明。实际运行后在「实验记录」保留带 run ID 的结果；长期维护的操作协议留在此处并双向索引。</p>
 
-<nav class="plan-jumps" aria-label="实验计划快速跳转"><a href="#plan-long-term">长期能力路线</a><a href="#plan-shared-control">共享控制与小阶段</a><a href="#plan-options">待验证方案</a></nav>
+<nav class="plan-jumps" aria-label="实验计划快速跳转"><a href="#plan-long-term">长期能力路线</a><a href="#plan-shared-control">共享控制与小阶段</a><a href="#plan-manip-gen">Manipulation 泛化测试</a><a href="#plan-options">待验证方案</a></nav>
 <h3>研究路线</h3>
 <p class="note">论文地图 + 自己的架构与实验设计。</p>
 <a class="card" id="plan-long-term" href="l20-robust-grasp.html">
@@ -168,6 +168,13 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
   <a href="l20-stage1-4-review.html"><span class="rel">Stage 1.4 · 讨论中 ·</span> <span class="t2">阶段性总结与待决问题</span><br><span class="d2">汇总预测、任务、释放、仲裁、泛化、RL、人群、skill 与抖动；当前先讨论实时更新的最终抓姿＋物体约束＋置信度。</span></a>
   <a href="l20-stage1-alternatives.html"><span class="rel">1.2 配套候选 ·</span> <span class="t2">数学推断与 VLM 辅助</span><br><span class="d2">几何评分、递归贝叶斯、VLM 先验及融合；按问题选用，均待验证。</span></a>
   <a href="l20-grasp-sources-review.html"><span class="rel">配套选型综述 ·</span> <span class="t2">抓姿来源：人手 Retarget / 模型生成 / 数学优化</span><br><span class="d2">数据库、方法与已有资产审计；按需查阅，不作为同时执行的任务。</span></a>
+</nav>
+<a class="card" id="plan-manip-gen" href="manip-gen-alice-latent-brief.html">
+  <div class="t">Manipulation 泛化测试：Alice / Bob + 隐码<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">设计稿 · 未运行</span></div>
+  <div class="d">独立于共享控制的一条线，编号 MG-x：不用真人数据，找出模型没覆盖到的人和抓法并补上。抓握隐码 z、风格码 c、出题者 Alice；当前测试床是 Stage 1.2 的终点预测器。本卡进入快速阅览：四个设计问题的回答、一张方法示意图、步骤与待定事项。</div>
+</a>
+<nav class="sub stage-list" aria-label="Manipulation 泛化测试的页面">
+  <a href="manip-gen-alice-latent.html"><span class="rel">MG · 具体计划 ·</span> <span class="t2">证据、隐式风格化四档、Alice 出码、Bob 头部对比、MG-0 … MG-4</span><br><span class="d2">执行用的版本：已有证据按实验线标注；隐式风格化现有技术能做到哪一档；Alice 只出码、由冻结执行器展开；Bob 头部对比（MLP / 混合头 / flow matching / DDPM）；步骤全部待执行，闸门阈值暂定。</span></a>
 </nav>
 
 <h3 id="plan-options">待验证方案</h3>

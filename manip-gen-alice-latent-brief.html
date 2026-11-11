@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alice / Bob + 隐码：快速阅览（Manipulation 泛化测试） · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+.num { font:.93rem/1.7 ui-monospace,Menlo,monospace; }
+td.n, th.n { text-align:right; font-family:ui-monospace,Menlo,monospace; font-size:.9rem; }
+.pill { display:inline-block; padding:1px 7px; border-radius:20px; font-size:.8rem;
+  border:1px solid var(--line2); color:var(--sub); }
+code { font:.88em ui-monospace,Menlo,monospace; background:var(--panel); border:1px solid var(--line);
+  border-radius:5px; padding:1px 5px; overflow-wrap:anywhere; }
+.figwrap img { width:100%; max-width:560px; height:auto; display:block; margin:0 auto; border-radius:6px; }
+.tw table { min-width:560px; }
+.tw.wide table { min-width:760px; }
+.pill.ran { color:var(--green); border-color:var(--green); }
+.pill.todo { color:var(--yellow); border-color:var(--yellow); }
+.pill.none { color:var(--muted); }
+.ln { display:inline-block; padding:0 6px; border-radius:5px; font-size:.8rem; white-space:nowrap;
+  border:1px solid var(--line2); color:var(--sub); background:var(--panel); }
+.qa { border:1px solid var(--line); border-radius:10px; padding:10px 16px; margin:1em 0; }
+.qa .q { font-weight:700; }
+.qa .a { margin:.4em 0 .2em; }
+</style>
+</head>
+<body>
+<main class="wrap">
+<a class="bk" href="index.html">← Machine Learning Handbook</a>
+<div class="kicker">实验计划 · Manipulation 泛化测试（MG）· 快速阅览 2026-11-11 · 未运行</div>
+<h1>Alice / Bob + 隐码：快速阅览</h1>
+<p class="lede">这条线想弄清一件事：不用真人数据，能不能系统地找出预测器还不会的人和抓法，再把它补上。</p>
+<p class="lede">本页只讲结论和要你拍板的事，三分钟读完。证据、设计细节、闸门和每一步怎么做，都在 <a href="manip-gen-alice-latent.html">具体计划</a>。</p>
+
+<div class="key warn"><b>全部是设计，还没有跑任何一步。</b>下面提到的数字来自以前在预测器上做过的实验，阈值都是暂定的。</div>
+
+<nav class="toc" aria-label="本页目录"><a href="#roles">三个角色</a> · <a href="#answers">四个回答</a> · <a href="#figure">一张图</a> · <a href="#known">知道的和不知道的</a> · <a href="#steps">接下来几步</a> · <a href="#decisions">待你定</a></nav>
+
+<h2 id="roles"><span class="n">1</span>三个角色</h2>
+<ul>
+<li><b>Bob 是预测器。</b>它看抬离前 1 秒的手部运动，猜最后抓在哪、手是什么形状。就是 Stage 1.2 现在的模型。</li>
+<li><b>Alice 是出题者。</b>它给 Bob 造新的练习题，目标是找到 Bob 还不会、但学得会的地方。</li>
+<li><b>两个码。</b>抓握隐码 <i>z</i> 表示“在这个物体上怎么抓”；风格码 <i>c</i> 表示“这个人怎么伸手”。</li>
+</ul>
+<p>这条线从共享控制路线里单独出来，编号用 MG-0 到 MG-4。现在的测试对象是预测器；以后机械臂操作任务的泛化测试也可以挂到这里。</p>
+
+<h2 id="answers"><span class="n">2</span>四个回答</h2>
+
+<div class="qa"><div class="q">Alice 生成连续轨迹，还是只生成最终抓握？</div>
+<p class="a"><b>都不是：Alice 只出几个码，连续轨迹交给一个固定不动的执行器去画。</b>只出终点没法训练 Bob，因为 Bob 要看的是伸手的过程。让 Alice 直接画整条轨迹也不行：没有真人数据作参照，它会画出物理上成立、但没人会这么做的动作。</p></div>
+
+<div class="qa"><div class="q">Bob 的模型要不要换成生成式？</div>
+<p class="a"><b>先不换，但借这个机会正式比一次：MLP、带多个候选的 MLP、flow matching、diffusion。</b>以前比过两次，生成式都只和 MLP 打平。原因是那时的数据里没有“同一个开头、可能去两个地方”的情况，而 Alice 正好会把这种情况找出来。所以这是第一次公平的比较。</p></div>
+
+<div class="qa"><div class="q">先做 latent 风格化，还是先做 Alice？</div>
+<p class="a"><b>先 latent，但只先做一个两三天的小测试。</b>测的是：把真实的风格参数直接告诉 Bob，它猜得会不会更准。会，再做风格码，然后让 Alice 在码里搜。不会，就不做风格码，Alice 只搜物体和抓法。只出终点的那一层 Alice 不依赖风格，可以同时做。</p></div>
+
+<div class="qa"><div class="q">latent 风格化，现在的技术做得了吗？</div>
+<p class="a"><b>把现有的 113 个风格旋钮压成几维的码，做得了，不需要新数据。从真人动作里学风格，做不了，因为手头的真人数据只有 1 个人。</b>还有一点要讲清楚：压出来的码只是同一组旋钮换了个写法。它让 Alice 搜得动、上线时读得出，但不会让伸手的过程更像真人。</p></div>
+
+<div class="key"><b>你担心的那一点是对的。</b>无论 Alice 出终点还是出码，伸手那一段都是现有的显式生成器画的。要摆脱它，只能从多个真人的数据里学，这条路现在被数据卡住。</div>
+
+<h2 id="figure"><span class="n">3</span>一张图</h2>
+<div class="figwrap">
+<a href="assets/manip-gen-alice-latent/fig-mg-overview.png"><img src="assets/manip-gen-alice-latent/fig-mg-overview.png" alt="三个面板的方法示意图：仿真训练时风格旋钮压成风格码并和 Bob 一起训练；Alice 出码，冻结的执行器展开成连续轨迹，按 Bob 误差减 Carol 误差打分；上线时从做完的 k 次抓握读出风格码。" width="1920" height="3270" loading="lazy"></a>
+<div class="cap"><b>示意图，不是结果。</b>(a) 训练时，仿真知道每个虚拟操作者的风格旋钮，把它压成风格码，和 Bob 一起训练。(b) Alice 出码，执行器画出轨迹；一道题只有在“Bob 不会、多学几步就会”时才得分。(c) 上线时不知道旋钮，就从这个人已经做完的几次抓握里把风格码读出来，Bob 本身不改。点图可看大图。</div>
+</div>
+
+<h2 id="known"><span class="n">4</span>知道的和不知道的</h2>
+<p>下面“跑过”的三条都来自预测器这条线。</p>
+<ul>
+<li><b>跑过：</b>生成式的头两次都和 MLP 打平（<a href="l20-stage1-2-results.html#v1">v1</a>、<a href="l20-stage1-2-results.html#v19">v19</a>）。那两次没有测过歧义的情况，所以多模的好处是没测，不是被否定。</li>
+<li><b>跑过：</b>在旧的抓握库上，把真实风格告诉 Bob 没有帮助。新库的抓握类型从 3 种增到 8 种，还没有重测。</li>
+<li><b>跑过：</b>合成的伸手比真人快得多（约 0.9 秒对 2.2 秒）。这要在显式生成器里改，和 latent 无关。</li>
+<li><b>没跑过：</b>抓握隐码、风格码、Alice / Bob。本页和具体计划里关于它们的内容都是设计。</li>
+</ul>
+
+<h2 id="steps"><span class="n">5</span>接下来几步</h2>
+<div class="tw"><table>
+<tr><th>步</th><th>做什么</th><th>不过怎么办</th></tr>
+<tr><td><b>MG-0</b></td><td>先量三件事：评测脚本能复现旧数字；把真实风格告诉 Bob 有没有用；抓握隐码采出来的抓法过不过物理检查</td><td>风格没用：不做风格码，Alice 只搜物体和抓法</td></tr>
+<tr><td><b>MG-1</b></td><td>三件事并行：风格码的两种读法；Alice 对比“均匀随机出题”；Bob 的四种头</td><td>Alice 赢不了均匀随机：停掉 Alice，保留随机出题</td></tr>
+<tr><td><b>MG-2</b></td><td>合起来重训 Bob，看一个新的人做完几次抓握后误差降多少</td><td>—</td></tr>
+<tr><td><b>MG-3</b></td><td>离线回放上线流程：零样本、读码适应、在线学习三路输出，谁最近更准用谁</td><td>—</td></tr>
+<tr><td><b>MG-4</b></td><td>封存的 op01 后 46 场读一次，只报数</td><td>—</td></tr>
+</table></div>
+<p>五步都还没开始。粗估 MG-0 两到三天，MG-1 约一周。全程不需要戴头显，也不需要新录数据。</p>
+
+<h2 id="decisions"><span class="n">6</span>待你定</h2>
+<ol>
+<li><b>是否开始 MG-0。</b>我建议开始。</li>
+<li><b>是否下载更多真人数据</b>（DexYCB 另外 9 个人，约 9 × 12 GB，或者注册 GRAB）。我建议先不下：它只影响“从真人学风格”那一档，不挡前面几步。</li>
+<li><b>其余的默认值和暂定阈值</b>，列在 <a href="manip-gen-alice-latent.html#decisions">具体计划的最后一节</a>。不改就按默认走。</li>
+</ol>
+
+<footer><a href="manip-gen-alice-latent.html">具体计划</a> · <a href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
+</main>
+</body>
+</html>

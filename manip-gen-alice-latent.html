@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alice / Bob + 隐码：具体计划（Manipulation 泛化测试） · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+.num { font:.93rem/1.7 ui-monospace,Menlo,monospace; }
+td.n, th.n { text-align:right; font-family:ui-monospace,Menlo,monospace; font-size:.9rem; }
+.pill { display:inline-block; padding:1px 7px; border-radius:20px; font-size:.8rem;
+  border:1px solid var(--line2); color:var(--sub); }
+code { font:.88em ui-monospace,Menlo,monospace; background:var(--panel); border:1px solid var(--line);
+  border-radius:5px; padding:1px 5px; overflow-wrap:anywhere; }
+.figwrap img { width:100%; max-width:560px; height:auto; display:block; margin:0 auto; border-radius:6px; }
+.tw table { min-width:560px; }
+.tw.wide table { min-width:760px; }
+.pill.ran { color:var(--green); border-color:var(--green); }
+.pill.todo { color:var(--yellow); border-color:var(--yellow); }
+.pill.none { color:var(--muted); }
+.ln { display:inline-block; padding:0 6px; border-radius:5px; font-size:.8rem; white-space:nowrap;
+  border:1px solid var(--line2); color:var(--sub); background:var(--panel); }
+.qa { border:1px solid var(--line); border-radius:10px; padding:10px 16px; margin:1em 0; }
+.qa .q { font-weight:700; }
+.qa .a { margin:.4em 0 .2em; }
+</style>
+</head>
+<body>
+<main class="wrap">
+<a class="bk" href="index.html">← Machine Learning Handbook</a>
+<div class="kicker">实验计划 · Manipulation 泛化测试（MG）· 设计稿 2026-11-11 · 未运行</div>
+<h1>Alice / Bob + 隐码：具体计划</h1>
+<p class="lede">这条线回答一个问题：不用真人数据，怎样系统地找出预测器没覆盖到的人和抓法，再把它补上。做法是三件事：把一种抓法压成抓握隐码 <i>z</i>，把一个人的风格压成风格码 <i>c</i>，再让出题者 Alice 在这两个码里找 Bob 还不会、但学得会的地方。</p>
+<p class="lede">本页是执行用的具体版本：证据、设计细节、闸门和步骤都在这里。只想看结论和要拍板的事，读 <a href="manip-gen-alice-latent-brief.html">快速阅览</a>。</p>
+
+<div class="key warn"><b>状态：设计稿，没有任何一步跑过。</b>页面里的数字都来自以前的实验，每个都标了出自哪条实验线；所有阈值是暂定值，开工前可以改。编号 MG-0 … MG-4 是这条线自己的，和共享控制路线的 Stage 1.x 无关。</div>
+
+<nav class="toc" aria-label="本页目录"><a href="#answers">四个问题的回答</a> · <a href="#scope">这条线的位置</a> · <a href="#symbols">三个量</a> · <a href="#evidence">已有证据</a> · <a href="#latent-style">隐式风格化能做到哪一档</a> · <a href="#alice">Alice 出什么</a> · <a href="#bob-head">Bob 的头部对比</a> · <a href="#order">先后顺序</a> · <a href="#steps">步骤与闸门</a> · <a href="#risks">风险</a> · <a href="#decisions">待你定</a></nav>
+
+<h2 id="answers"><span class="n">§ 1</span>四个问题的回答</h2>
+
+<div class="qa"><div class="q">1. Alice 生成连续轨迹，还是只生成最终抓握？</div>
+<p class="a"><b>Alice 只出码，连续轨迹由一个冻结的执行器从码展开。</b>Alice 的动作是（物体与摆位 <i>o</i>，抓握隐码 <i>z</i>，风格码 <i>c</i>）。执行器先把 <i>z</i> 解成终点手形并过物理闸门，再按 <i>c</i> 对应的风格画出整段接近。Bob 吃到的仍然是完整的 1 s 窗口。详见 <a href="#alice">§ 6</a>。</p></div>
+
+<div class="qa"><div class="q">2. Alice 会把 Bob 往多分布上推，Bob 的模型要不要改？</div>
+<p class="a"><b>主干先不换，加一场头部对比：MLP 残差、K 模混合头、flow matching、DDPM 四个臂。</b>以前两次生成式对比（v1、v19）的结论都是“和 MLP 等价”，但那两次的数据里没有“同一个窗口、后面可能去两个终点”的情形。Alice 会把这种情形找出来，所以现在才是第一次能公平地比。详见 <a href="#bob-head">§ 7</a>。</p></div>
+
+<div class="qa"><div class="q">3. 先用 latent 解决风格化，还是先碰 Alice？</div>
+<p class="a"><b>先 latent，但只先做一个小闸门（P0）；只出终点的 Alice 第一层同时做。</b>P0 问的是：把真实的风格旋钮直接告诉 Bob，1 s 提前量上的误差降不降。降，才值得做风格码；不降，风格只当扰动随机化，Alice 只在物体和抓法里搜。详见 <a href="#order">§ 8</a>。</p></div>
+
+<div class="qa"><div class="q">4. latent 风格化，现有技术做得了吗？</div>
+<p class="a"><b>做得了前三档，第四档被数据卡住。</b>把显式旋钮压成低维码（训练时编码、上线时从历史读出）现在就能做，不需要新数据。从真人运动里学风格做不了：盘上的 DexYCB 只有 1 个人。还要说清一点：这样得到的 latent 是同一组旋钮换了坐标，它不会让接近段更像人。详见 <a href="#latent-style">§ 5</a>。</p></div>
+
+<div class="figwrap">
+<a href="assets/manip-gen-alice-latent/fig-mg-overview.png"><img src="assets/manip-gen-alice-latent/fig-mg-overview.png" alt="三个面板的方法示意图：仿真训练时风格旋钮经编码器得到风格码并和 Bob 一起训练；Alice 出码，冻结的执行器展开成连续轨迹，按 Bob 误差减 Carol 误差给 Alice 打分；上线时历史编码器从做完的 k 次抓握读出风格码，Bob 权重不动。" width="1920" height="3270" loading="lazy"></a>
+<div class="cap"><b>示意图，不是结果。</b>(a) 仿真里风格旋钮 <i>w</i> 是特权信息，经编码器 μ 压成风格码 <i>c</i>，和 Bob 一起训练。(b) Alice 只出码；冻结的执行器把码展开成连续轨迹；得分是 Bob 的误差减去“多学了几步的副本”Carol 的误差。(c) 上线时没有 <i>w</i>，历史编码器 φ 从这个人做完的 <i>k</i> 次抓握读出 <i>ĉ</i>，Bob 的权重不动。点图可看大图。</div>
+</div>
+
+<h2 id="scope"><span class="n">§ 2</span>这条线的位置</h2>
+<p>共享控制路线（<a href="shared-control.html#stages">Stage 1.x</a>）问的是“怎么帮操作者把这一次抓握做成”。这条线问的是另一件事：<b>模型在没见过的人、抓法和物体上还行不行，怎样系统地找出不行的地方并补上。</b>所以它从主页单独出一张卡，编号用 MG-x。</p>
+<div class="tw"><table>
+<tr><th>项</th><th>内容</th></tr>
+<tr><td>当前测试床</td><td>Stage 1.2 的终点预测器（本页叫 Bob）：输入抬离前的 1 s 窗口，输出最终抓握的掌姿与手形，指标是厘米误差。模型与历史见 <a href="l20-stage1-2-training.html">Stage 1.2 计划</a> 和 <a href="l20-stage1-2-results.html">结果</a>。</td></tr>
+<tr><td>以后可以挂进来的</td><td>RL 操作线（机械臂 + L20 的抽屉、插孔任务）的任务泛化测试。那条线的结果在本页只当类比，没有一项被写成“在预测器上试过”。</td></tr>
+<tr><td>硬约束</td><td>零真人样本（2026-10-11 定）：本项目录到的操作者数据不进入风格生成器。操作者 op01 的前 46 场只用来评测（先预测、后对答案），后 46 场封存，最后只读一次。</td></tr>
+<tr><td>本页相对 11-10 计划稿新增的</td><td>隐式风格化的四档可行性（§ 5）、Alice 只出码的结论（§ 6）、Bob 头部对比（§ 7）、先后顺序（§ 8）。原计划稿在 <code>human_machine_interaction · training/plan/2026-11-10-alice-bob-latent-three-lines-plan.md</code>。</td></tr>
+</table></div>
+
+<h2 id="symbols"><span class="n">§ 3</span>三个量</h2>
+<p>仓库里显式风格向量的变量名是 z，和抓握隐码撞名。本页统一改成下面的叫法。</p>
+<div class="tw"><table>
+<tr><th>符号</th><th>是什么</th><th>大小</th><th>谁产生</th><th>现状</th></tr>
+<tr><td><i>w</i></td><td>显式风格旋钮：一个虚拟操作者的全部风格参数（速度、张开量、接近方向偏好、抓握类型偏好等）</td><td>35 行，展开 113 维</td><td>层级采样器</td><td><span class="pill ran">已有</span> <code>operator_style.py</code></td></tr>
+<tr><td><i>c</i></td><td>风格码：<i>w</i> 压出来的低维码，Bob 的一个额外输入。<i>c</i> = 0 就是现在的零样本基座</td><td>≤ 8 维（暂定）</td><td>训练时由 μ(<i>w</i>) 给出；上线时从历史读出</td><td><span class="pill none">未实现</span></td></tr>
+<tr><td><i>z</i></td><td>抓握隐码：某个物体上的一种抓法（终点手形与掌姿），物体作条件</td><td>待定</td><td>物体条件 VAE，在 v3 抓握库上训练，训完冻结</td><td><span class="pill none">未实现</span></td></tr>
+<tr><td><i>o</i></td><td>物体与摆位</td><td>—</td><td>采样</td><td><span class="pill ran">已有</span></td></tr>
+</table></div>
+<p><i>z</i> 在输出一侧，管“去哪儿”；<i>c</i> 在输入一侧，管“这个人怎么去”。两个码互不替代。</p>
+
+<h2 id="evidence"><span class="n">§ 4</span>已有证据</h2>
+<p>每一行都标了实验线。<span class="ln">预测器线</span> 指 Stage 1.2 的终点预测，指标是厘米；<span class="ln">操作线</span> 指 RL 操作策略，指标是成功率。跨线的结果只能当类比。</p>
+<div class="tw wide"><table>
+<tr><th>结果</th><th>实验线</th><th>状态</th><th>对本计划的含义</th><th>出处</th></tr>
+<tr><td>v1（2026-09-13）：flow matching 减 MLP 残差基线 M0 = +0.03 cm，95 % 区间 [−0.29, +0.34]。序列生成两臂里 flow matching 好于 DDPM（ADE 2.66 对 3.65 cm），两者都没赢 M0</td><td><span class="ln">预测器线</span><br>单方块 95 条 pinch，1 个操作者</td><td><span class="pill ran">跑过</span></td><td>单模数据上，生成式没有收益</td><td><a href="l20-stage1-2-results.html#v1">结果页 v1</a></td></tr>
+<tr><td>v19（2026-10-08）：条件 flow matching 与 M0 按预登记规则等价。真人方块 52 条上 1 / 0.5 / 0 s 误差：M0 2.52 / 2.29 / 1.88，flow matching 取最近模 2.97 / 2.25 / 1.70 cm。两个抓握家族的模间距中位只有 2.5 cm；预测落在两族之间的比例为 0</td><td><span class="ln">预测器线</span><br>v2 库：5 个 YCB 物体 + 方块，529 个两指抓握</td><td><span class="pill ran">跑过</span></td><td>“同一个位置两种抓法都可能”从没被构造出来。多模优势是<b>没测</b>，不是被否定</td><td><a href="l20-stage1-2-results.html#v19">结果页 v19</a></td></tr>
+<tr><td>v10（2026-10-07）：把 DexYCB 的真人伸手运动接到生成的终点上。只用掌姿输入时 3.85 / 2.81 / 1.43 cm，公式运动 4.06 / 3.14 / 1.77。配对差只在抬离时刻成立（−0.34 [−0.49, −0.21]），1 s 前没有差别（+0.01 [−0.73, +0.46]）</td><td><span class="ln">预测器线</span><br>1 个人的 46 条运动，2,145 条 trial</td><td><span class="pill ran">跑过</span></td><td>真人运动迁移过来的是节奏，接近方向没迁移过来；在 1 s 提前量上没有收益</td><td><a href="l20-stage1-2-results.html#v10">结果页 v10</a></td></tr>
+<tr><td>11-01 风格线（v2 库，暂定结论）：把真实风格向量直接给 Bob，1 s 窗口的终点误差没有下降</td><td><span class="ln">预测器线</span><br>v2 库，只有 3 个正权重抓握类型</td><td><span class="pill ran">跑过</span><br>v3 库上没重跑</td><td>这正是 P0 闸门要在 v3 库上重新回答的问题</td><td><code>human_machine_interaction · hand_control/plan/2026-11-01-grasp-types-style-implementation.md</code></td></tr>
+<tr><td>v3 抓握库：3,562 行通过闸门，正权重抓握类型从 3 个增到 8 个</td><td><span class="ln">预测器线</span><br>数据资产</td><td><span class="pill ran">已生成</span></td><td><i>z</i> 的训练集。v2 时类型太少，抓握隐码没法公平地测</td><td>同上</td></tr>
+<tr><td>op01 诊断：分类器把合成和真人完全分开（AUC 1.00），主要靠接近时长（op01 约 2.2 s，合成约 0.9 s）和到位前的停顿。生成终点到 op01 真终点的中位距离 3.1–3.7 cm，2 cm 内覆盖率为 0</td><td><span class="ln">预测器线</span><br>诊断，只报不回灌</td><td><span class="pill ran">跑过</span></td><td>接近段最大的差距在时序。这是显式生成器的问题，换成 latent 不会变</td><td>同上</td></tr>
+<tr><td>DexYCB 在盘上只有 subject 01：100 条序列，其中 50 条右手</td><td>数据资产</td><td><span class="pill ran">已核对</span></td><td>人与人之间的风格差异没法从现有真人数据学</td><td><code>human_machine_interaction · hand_control/plan/2026-10-07-dexycb-human-motion.md</code></td></tr>
+<tr><td>抓取放置任务上的隐码试点（2026-11-08）：冻结的物体形状码表臂在没见过的物体类别上成功率 83.1 %，基线臂 94.2 %；没见过的类别读出的码落在码表的分布之外，任务本身已接近饱和</td><td><span class="ln">操作线</span><br>RL 策略，成功率</td><td><span class="pill ran">跑过</span><br>不是这个任务；数字取自项目备忘，本页没有重新核对</td><td>只能当类比：提示码表对分布外的输入外推差。不能说“码表在预测器上试过”</td><td>—</td></tr>
+<tr><td>抓握隐码、风格码、Alice / Bob</td><td><span class="ln">预测器线</span></td><td><span class="pill none">从没跑过</span></td><td>本页全部是设计</td><td>—</td></tr>
+</table></div>
+
+<h2 id="latent-style"><span class="n">§ 5</span>隐式风格化能做到哪一档</h2>
+<div class="tw wide"><table>
+<tr><th>档</th><th>做法</th><th>要不要新数据</th><th>结论</th></tr>
+<tr><td><b>L0 显式</b></td><td>113 维旋钮 <i>w</i>，层级采样出虚拟操作者，带风格的接近生成器画轨迹</td><td>不要</td><td><span class="pill ran">已有</span> 在 v2 库上跑过</td></tr>
+<tr><td><b>L1 压成码</b></td><td>旋钮编码器 μ(<i>w</i>) → <i>c</i>，和 Bob 一起训练；上线用历史编码器或闭式更新读出 <i>c</i></td><td>不要</td><td><span class="pill todo">现在能做</span></td></tr>
+<tr><td><b>L2 可解回的低维风格</b></td><td>在 <i>w</i> 里找出真正影响 Bob 的少数几个方向 <i>U</i>，令 <i>w</i> = <i>w̄</i> + <i>U c</i>。Alice 直接在 <i>c</i> 里搜，再解回旋钮</td><td>不要</td><td><span class="pill todo">现在能做</span></td></tr>
+<tr><td><b>L3 从真人运动学风格</b></td><td>分层的轨迹解码器：接近段由物体、终点、“这个人的码”和单次噪声共同决定</td><td>要：多个人的伸手抓取</td><td><span class="pill none">卡在数据</span> 盘上只有 1 个人</td></tr>
+</table></div>
+
+<div class="key warn"><b>要说清的一点。</b>L1 和 L2 的 latent 是在显式生成器的输出上学出来的，所以它是同一组旋钮换了坐标：维数更低、平滑、Alice 搜得动、上线读得出。它<b>不会</b>让接近段更像人，也没有去掉对显式生成器的依赖。接近段现在最大的已测差距（时长 0.9 s 对 2.2 s、到位前的停顿）要在显式生成器里改。</div>
+
+<h3 id="l2">L2 怎么做</h3>
+<ol>
+<li>用现成的 <code>sample_population</code> 抽 N 个虚拟操作者，每人生成一批 trial。</li>
+<li>每人算两样东西：Bob 看到的窗口的统计量，和这个人最后选中的终点。</li>
+<li>做降秩回归：标准化后的 <i>w</i> 里，哪几个方向一动，这两样东西就跟着动。取影响最大的前 <i>r</i> 个方向记成 <i>U</i>，<i>r</i> ≤ 8。</li>
+<li>风格码是 <i>w</i> 在这几个方向上的坐标；解回旋钮用 <i>w</i> = <i>w̄</i> + <i>U c</i>，再走现成的 <code>destandardise</code> 并做范围检查。</li>
+</ol>
+<p>副产品是影响力的谱。前几个方向占掉大部分，说明几维就够；谱整体很小，说明风格几乎不改变 Bob 看到的东西，那就不需要风格码。</p>
+<p>不直接用自编码器压 <i>w</i> 的原因：自编码器会忠实保留所有旋钮，包括对预测毫无影响的那些。这里要的是按对预测的影响排序。生成器不可微，所以用总体回归，不用雅可比。</p>
+
+<h3 id="l1">L1 怎么做：两种读法并列比</h3>
+<div class="tw"><table>
+<tr><th>读法</th><th>训练</th><th>上线</th><th>现有代码</th></tr>
+<tr><td><b>编码器</b></td><td>先用 μ(<i>w</i>) 得到 <i>c</i> 并和 Bob 联合训练；再训练历史编码器 φ，让它从做完的 <i>k</i> 次抓握回归出 <i>c</i>；最后联合微调</td><td>前向一次得到 <i>ĉ</i></td><td>要新写</td></tr>
+<tr><td><b>线性头 + 闭式更新</b></td><td>让 Bob 的最后一层对 <i>c</i> 是线性的：$y = f(x) + W(x)\,c$。<i>W</i> 是从虚拟人群里学到的风格基</td><td>冻结 Bob，只解 <i>c</i>：岭回归或贝叶斯线性回归，顺带给出不确定度</td><td>闭式更新 <code>blr_update</code> 已有</td></tr>
+</table></div>
+<p>怎么确认 <i>c</i> 装的是风格，而不是别的：四个读数。</p>
+<ul>
+<li><b>线性探针。</b><i>c</i> 能不能线性地读回真实旋钮。</li>
+<li><b>换人对照。</b>把别人的 <i>c</i> 给这个人用，误差应当变差。</li>
+<li><b>学习曲线。</b><i>k</i> = 0、1、2、5、10 次时误差应当逐步下降，<i>k</i> = 0 时不比基座差。</li>
+<li><b>四臂对比。</b>无码、真实旋钮、编码器读出的码、闭式更新读出的码。</li>
+</ul>
+
+<h3 id="l3">L3 为什么现在做不了</h3>
+<p>从 DexYCB 到 L20 的导入管线是有的（v10 用过），但 <code>~/Datasets/dexycb</code> 里只解出了 subject 01。一个人学不出“人与人之间”的码。要做有两条路，都需要你点头：</p>
+<ul>
+<li>下载 DexYCB 另外 9 个 subject，原始数据约 9 × 12 GB。</li>
+<li>注册 GRAB 和 MANO 后下载 GRAB。</li>
+</ul>
+<p>预期收益也要压低：v10 显示单人真人运动在 1 s 提前量上没有带来改善，而且那个人的接近方向和我们的操作者不同。所以 L3 不在 MG-0 到 MG-2 的路径上。</p>
+
+<h3 id="have">现有技术清单</h3>
+<div class="tw"><table>
+<tr><th>需要的东西</th><th>现状</th><th>位置（<code>human_machine_interaction</code> 仓库）</th></tr>
+<tr><td>显式风格合同、层级采样、标准化</td><td><span class="pill ran">有</span></td><td><code>common_tool/level_1_universal_tool/contracts/operator_style.py</code></td></tr>
+<tr><td>带风格的接近生成器</td><td><span class="pill ran">有</span></td><td><code>training/stage12_intent/services/level_1_dataset/synthetic_approach_styled.py</code></td></tr>
+<tr><td>虚拟人群数据集</td><td><span class="pill ran">有</span> v2 库上跑过，换源到 v3 即可</td><td><code>…/level_3_experiment/style_population.py</code>、<code>…/level_1_dataset/style_bank_view.py</code></td></tr>
+<tr><td>抓握物理闸门</td><td><span class="pill ran">有</span></td><td><code>…/level_1_dataset/grasp_gate_v3.py</code></td></tr>
+<tr><td>flow matching 与 DDPM 的训练、采样</td><td><span class="pill ran">有</span></td><td><code>…/level_2_models/flow_matching.py</code></td></tr>
+<tr><td>在线仲裁（只有赢过基座才生效）</td><td><span class="pill ran">有</span></td><td><code>…/level_2_models/ol_adapters.py</code> 的 <code>NeverWorse</code></td></tr>
+<tr><td>旋钮编码器、历史编码器、风格基 <i>U</i>、抓握 VAE、Alice 采样器、Carol 评分、K 模混合头</td><td><span class="pill none">没有</span> 要新写</td><td>—</td></tr>
+<tr><td>多个人的真人接近数据</td><td><span class="pill none">没有</span></td><td>—</td></tr>
+</table></div>
+
+<h2 id="alice"><span class="n">§ 6</span>Alice 出什么</h2>
+<div class="tw wide"><table>
+<tr><th>方案</th><th>Alice 的输出</th><th>好处</th><th>问题</th></tr>
+<tr><td>A · 只出终点</td><td>物体摆位和最终抓握，不管接近段</td><td>最简单，不需要 Bob 就能自检</td><td>Bob 的输入是 1 s 窗口，没有接近段就训不了 Bob。只适合做第一层自检</td></tr>
+<tr><td><b>B · 出码，执行器展开（推荐）</b></td><td>(<i>o</i>, <i>z</i>, <i>c</i>)</td><td>终点的物理合法性由闸门保证；接近段由 <i>c</i> 对应的风格先验约束；搜索空间只有十几维</td><td>接近段的真实度仍然取决于显式生成器</td></tr>
+<tr><td>C · 直接出原始轨迹</td><td>每一帧的掌姿和手指</td><td>表达力最强</td><td>零真人样本下没有“像人”的锚。Alice 会找到物理上可行、但没人会这么做的轨迹，Bob 学了也没用</td></tr>
+</table></div>
+<p>方案 B 里的执行器是冻结的，由四段现成或待写的部件串成：抓握解码器（<i>z</i> → 终点，待写）、物理闸门（已有）、<i>c</i> → <i>w</i> 的解码（L2，待写）、带风格的接近生成器（已有）。v10 移植真人运动时用过的净空检查（指令路径扫过物体超过 5 mm 或桌面超过 3 mm 的丢掉）可以原样接在执行器后面。</p>
+
+<h3 id="alice-layers">三层，一层一层开</h3>
+<div class="tw"><table>
+<tr><th>层</th><th>做什么</th><th>需要 Bob 吗</th><th>看什么</th></tr>
+<tr><td>第 1 层 · 只出终点</td><td>从 <i>z</i> 的先验采样、在两个库内抓握之间插值</td><td>不需要</td><td>过闸门的比例；到最近库内抓握的距离；op01 真终点到最近生成终点的距离（现状 3.1–3.7 cm，只报不回灌）</td></tr>
+<tr><td>第 2 层 · 随机搜</td><td>按先验随机抽码，留下高分的；再在高分点附近扰动 (<i>z</i>, <i>c</i>)</td><td>需要</td><td>同样的样本预算下，是否赢过均匀随机</td></tr>
+<tr><td>第 3 层 · 学出来的出题者</td><td>训练一个提议网络</td><td>需要</td><td>只有第 2 层赢了才做</td></tr>
+</table></div>
+
+<h3 id="score">得分：不能只刁难 Bob</h3>
+<p>得分 = Bob 的误差 − Carol 的误差。Carol 是 Bob 的副本，在这一批题的一半上多学几步，在另一半上测。</p>
+<ul>
+<li>Bob 已经会的题：两者误差都小，得 0 分。</li>
+<li>谁也学不会的题（纯歧义、纯噪声）：两者误差都大，得 0 分。</li>
+<li>Bob 不会、Carol 学几步就会的题：得正分。这才是“没覆盖到、但能补上”的地方。</li>
+</ul>
+<div class="key bad"><b>生死对照：均匀随机臂。</b>同一个执行器、同样的样本数，只是码改成均匀随机抽。Alice 赢不了它，这条线就停，保留随机化作为数据来源。</div>
+
+<h2 id="bob-head"><span class="n">§ 7</span>Bob 的头部对比</h2>
+<p>Alice 的目标之一就是找出这种状态：同一个 1 s 窗口，后面可能去两个不同的终点。均方误差回归在这里会预测到两个终点中间，误差降不下去。这是生成式头可能有用的唯一情形，而 v1 和 v19 的数据里都没有它。</p>
+<p>有两层应对。第一层已经在得分里：纯歧义的题 Carol 也学不会，Alice 拿不到分。第二层是下面这场对比。</p>
+<div class="tw wide"><table>
+<tr><th>臂</th><th>头</th><th>显示给操作者的那一个预测</th><th>现有代码</th></tr>
+<tr><td>A0</td><td>MLP 残差（现行）</td><td>直接输出</td><td><span class="pill ran">有</span> <code>mlp.py</code></td></tr>
+<tr><td>A1</td><td>MLP + K 模混合头：K 个终点加各自的概率</td><td>概率最大的模</td><td><span class="pill none">要写</span> 改动小</td></tr>
+<tr><td>B1</td><td>条件 flow matching</td><td>采 16 个，取离当前手掌最近的模（沿用 v19）</td><td><span class="pill ran">有</span> <code>train_fm</code> / <code>sample_fm</code></td></tr>
+<tr><td>B2</td><td>DDPM 的 ε 预测 + DDIM 采样（Diffusion Policy 的目标）</td><td>同 B1</td><td><span class="pill ran">有</span> <code>train_ddpm</code> / <code>sample_ddpm</code>；终点臂没跑过，v1 只跑过序列臂</td></tr>
+<tr><td>可选</td><td>序列版：生成未来 1 s 的 20 步</td><td>序列末端</td><td><span class="pill ran">有</span> v1 的 FMS / DPS</td></tr>
+</table></div>
+<p>四个臂用同一个主干、同一份输入、同一份训练集、同样的种子数。序列版只在终点臂显示出差别以后再加。</p>
+
+<h3 id="ambiguous">测试集分两层</h3>
+<ul>
+<li><b>歧义子集。</b>构造法：同一个虚拟操作者、同一个物体摆位、同一个起点，配两个不同的终点（不同的 <i>z</i>），取两条轨迹还没分开的那段窗口。检索法作核对：在训练集里找输入最近的几个窗口，它们的终点彼此相距超过阈值（暂定 3 cm）。</li>
+<li><b>非歧义子集。</b>其余窗口。</li>
+</ul>
+<p>两个子集分开报，不合并成一个均值。</p>
+
+<h3 id="metrics">指标与判据</h3>
+<div class="tw"><table>
+<tr><th>指标</th><th>回答什么</th></tr>
+<tr><td>单个显示预测的掌心误差，1.0 / 0.5 / 0 s</td><td>操作者实际看到的那个预测准不准；和历史版本可比</td></tr>
+<tr><td>K 个里最好的那个（oracle 模）</td><td>头有没有把对的模生成出来</td></tr>
+<tr><td>2 cm 内的模覆盖率</td><td>真实的几个终点各自有没有被覆盖</td></tr>
+<tr><td>概率校准</td><td>头给的概率或离散度信不信得过</td></tr>
+<tr><td>落在两模之间的比例、穿模率</td><td>有没有预测出物理上不成立的中间值</td></tr>
+<tr><td>20 Hz 下的推理耗时</td><td>上线跑不跑得动</td></tr>
+</table></div>
+<p>判据（暂定）：非歧义子集上不退步，沿用 v19 写过的 +0.2 cm 线；歧义子集上单个显示预测有区间不跨零的改善。两条都满足才换头，否则保留 A0，把结果记下来。</p>
+
+<h2 id="order"><span class="n">§ 8</span>先后顺序</h2>
+<p><b>先 latent，但只先过一个小闸门；Alice 第 1 层同时做。</b></p>
+<ol>
+<li><b>P0（在 v3 库上）。</b>两个主臂：Bob 不带码；Bob 直接拿到真实旋钮。另加一个常数偏移对照，排除“多一个输入就变好”。看留出操作者上 1 s 处的误差。真实旋钮臂比无码臂低 0.3 cm 以上（暂定），才算风格对 Bob 有用。</li>
+<li><b>P0 通过</b> → 做 L2 的风格基和 L1 的两种读法 → Alice 在 (<i>o</i>, <i>z</i>, <i>c</i>) 里搜。</li>
+<li><b>P0 不通过</b> → 风格只当扰动随机化，不做风格码；Alice 只在 (<i>o</i>, <i>z</i>) 里搜；先查哪根风格轴没有改变“同一窗口 → 不同终点”的映射，把精力转到接近生成器上。</li>
+<li><b>Alice 第 1 层</b>只测 <i>z</i> 的覆盖，不依赖风格，不等 P0。</li>
+</ol>
+<p>不先做 Alice 的原因：没有 <i>c</i>，Alice 只能直接拧 113 个旋钮，搜索空间大，而且多数方向对 Bob 没有影响。不把 latent 做大再碰 Alice 的原因：v2 库上已经出现过一次“真实风格没有帮助”，先花一周做编码器可能白做。</p>
+<div class="key"><b>你担心的那一点是对的。</b>不管 Alice 出的是终点还是码，接近段都是显式生成器画出来的，latent 改变不了这件事。latent 做的是把 113 个旋钮压成 Alice 搜得动、上线读得出的几维。要摆脱显式生成器只有 L3 一条路，现在被数据卡住。</div>
+
+<h2 id="steps"><span class="n">§ 9</span>步骤与闸门</h2>
+<p>阈值都是暂定值。状态栏只有真的跑过才会改。</p>
+<div class="tw wide"><table>
+<tr><th>步</th><th>做什么</th><th>闸门（暂定）</th><th>状态</th></tr>
+<tr><td><b>MG-0a</b></td><td>评测脚本：合成的留出操作者、op01 前 46 场按时间顺序回放、歧义子集划分、§ 7 的全部指标</td><td>能复现现有基座的数字</td><td><span class="pill todo">待执行</span></td></tr>
+<tr><td><b>MG-0b</b></td><td>在 v3 库上重建虚拟人群；P0 的两臂加一个常数偏移对照</td><td>真实旋钮臂 ≤ 无码臂 − 0.3 cm（留出操作者，1 s）</td><td><span class="pill todo">待执行</span></td></tr>
+<tr><td><b>MG-0c</b></td><td>训练抓握 VAE；Alice 第 1 层</td><td>先验采样与插值过闸门的比例 ≥ 库内抓握重验通过率 × 0.8</td><td><span class="pill todo">待执行</span></td></tr>
+<tr><td><b>MG-1a</b></td><td>风格码：L2 的风格基，L1 的两种读法，四个读数</td><td><i>k</i> = 0 不差于基座；留出操作者 <i>k</i> = 5 时 ≤ −0.3 cm；换人对照变差</td><td><span class="pill todo">待执行</span></td></tr>
+<tr><td><b>MG-1b</b></td><td>Alice 第 2 层跑 3 轮，加均匀随机对照</td><td>同样预算下 Alice 臂的误差低于对照臂</td><td><span class="pill todo">待执行</span></td></tr>
+<tr><td><b>MG-1c</b></td><td>Bob 头部对比：A0 / A1 / B1 / B2</td><td>§ 7 的两条判据</td><td><span class="pill todo">待执行</span></td></tr>
+<tr><td><b>MG-2</b></td><td>合并：胜出的读码方式 + Alice 生成的人群，重训 Bob；测训练范围之外的风格；画 <i>k</i> 对误差的曲线</td><td>四臂对比；范围外风格不崩</td><td><span class="pill todo">待执行</span></td></tr>
+<tr><td><b>MG-3</b></td><td>上线拼接的离线回放：零样本、码适应、权重级在线学习三路输出，按最近几次的误差仲裁；<i>k</i> ≥ 5 后码还没赢基座，就升级到权重级在线学习</td><td>任何时刻不比现行基座差</td><td><span class="pill todo">待执行</span></td></tr>
+<tr><td><b>MG-4</b></td><td>op01 后 46 场只读一次</td><td>只报数</td><td><span class="pill todo">待执行</span></td></tr>
+</table></div>
+
+<h3 id="now">当前一步：MG-0</h3>
+<ol>
+<li>写评测脚本，先在现成的模型上复现已有数字。</li>
+<li>把 <code>BankView</code> 的数据源换成 v3 库，重新生成虚拟人群（先 50 人 × 3 个种子）。</li>
+<li>训练 P0 的各臂，报留出操作者 1 s 处的配对差和区间。</li>
+<li>训练抓握 VAE，报先验采样与插值的闸门通过率。</li>
+<li>把结果写成一页记录，再决定 MG-1 怎么走。</li>
+</ol>
+<p>粗估（估计，不是承诺）：MG-0 两到三天，MG-1 约一周，MG-2 两到三天。训练都是小 MLP，人群生成是 CPU 活，不需要头显，也不需要新录数据。</p>
+<p>代码落点：采样器进 <code>training/stage12_intent/services/level_1_dataset/</code>，编码器、风格基和码更新进 <code>level_2_models/</code>，实验入口进 <code>level_3_experiment/</code>。</p>
+
+<h2 id="risks"><span class="n">§ 10</span>风险</h2>
+<ul>
+<li><b>P0 不通过。</b>v2 库上已经出现过一次。退路在 § 8 第 3 条。</li>
+<li><b>latent 只是换坐标。</b>接近段的真实度不会因此变好。</li>
+<li><b>op01 只有一个人。</b>真人上只能说“对这个人有效”，跨人的结论只来自合成的留出操作者。</li>
+<li><b>op01 目前在合成人群之外。</b>2 cm 覆盖率为 0。码适应可能在合成上好看、在真人上无效；MG-3 的仲裁和升级就是为这个留的。</li>
+<li><b>在 op01 前 46 场上反复选模型也是一种泄漏。</b>所以后 46 场封存到最后。</li>
+<li><b>Alice 找到的全是歧义。</b>由 Carol 项和头部对比两层应对。</li>
+<li><b>Alice 赢不了均匀随机。</b>停线，保留随机化。</li>
+<li><b>闸门通过不等于人会这么抓。</b>抓握库是合成的，闸门只管物理上成立。</li>
+</ul>
+
+<h2 id="decisions"><span class="n">§ 11</span>待你定</h2>
+<div class="tw"><table>
+<tr><th>#</th><th>事项</th><th>我的默认</th></tr>
+<tr><td>1</td><td>是否开始 MG-0</td><td>开始。不用头显，不用新数据</td></tr>
+<tr><td>2</td><td>是否为 L3 下载 DexYCB 另外 9 个 subject（约 9 × 12 GB），或注册 GRAB</td><td>先不下。它不挡 MG-0 到 MG-2</td></tr>
+<tr><td>3</td><td>是否放宽接近时长的先验</td><td>可以放宽，但只按文献或对称放宽来定，不照 op01 的数调</td></tr>
+<tr><td>4</td><td>头部对比是否包含序列版</td><td>先不含，终点臂出现差别再加</td></tr>
+<tr><td>5</td><td>三个暂定值：<i>c</i> 的维数上限 8、P0 阈值 0.3 cm、歧义阈值 3 cm</td><td>先用这些</td></tr>
+<tr><td>6</td><td>11-10 计划稿 § 7 的七个默认值（零真人口径、<i>z</i> 只编码终点、<i>z</i> 先平铺等）</td><td>沿用</td></tr>
+</table></div>
+
+<footer><a href="manip-gen-alice-latent-brief.html">快速阅览</a> · <a href="l20-stage1-2-results.html">Stage 1.2 结果</a> · <a href="shared-control.html#stages">共享控制路线</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
+</main>
+</body>
+</html>

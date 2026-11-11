@@ -47,6 +47,8 @@
 | ↳ [l20-stage1-4-review.html](l20-stage1-4-review.html) | Stage 1.4 阶段性总结与待决问题（讨论中）：汇总十项问题，当前先讨论实时更新的最终抓姿＋物体约束＋置信度；已有证据与方案分开 |
 | ↳ [l20-stage1-alternatives.html](l20-stage1-alternatives.html) | Stage 1.2 配套候选：几何评分、递归贝叶斯、VLM 先验及融合；按问题选用，均待验证 |
 | ↳ [l20-grasp-sources-review.html](l20-grasp-sources-review.html) | 配套选型综述：人手 Retarget / 模型生成 / 数学优化，数据库、方法与已有资产审计；按需查阅，不作为同时执行的任务 |
+| [manip-gen-alice-latent-brief.html](manip-gen-alice-latent-brief.html) | Manipulation 泛化测试（MG-x，独立于共享控制）：Alice / Bob + 隐码的快速阅览——四个设计问题的回答、一张方法示意图、步骤与待定事项；当前测试床是 Stage 1.2 的终点预测器；设计稿，未运行 |
+| ↳ [manip-gen-alice-latent.html](manip-gen-alice-latent.html) | MG 具体计划：已有证据按实验线标注；隐式风格化现有技术能做到哪一档；Alice 只出码、由冻结执行器展开；Bob 头部对比（MLP / 混合头 / flow matching / DDPM）；MG-0 … MG-4 全部待执行，闸门阈值暂定 |
 
 ### 待验证方案
 
