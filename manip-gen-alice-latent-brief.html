@@ -90,7 +90,7 @@ code { font:.88em ui-monospace,Menlo,monospace; background:var(--panel); border:
 <p class="lede">这条线想弄清一件事：不用真人数据，能不能系统地找出预测器还不会的人和抓法，再把它补上。</p>
 <p class="lede">本页只讲结论和要你拍板的事，三分钟读完。证据、设计细节、闸门和每一步怎么做，都在 <a href="manip-gen-alice-latent.html">具体计划</a>。</p>
 
-<div class="key warn"><b>全部是设计，还没有跑任何一步。</b>下面提到的数字来自以前在预测器上做过的实验，阈值都是暂定的。</div>
+<div class="key warn"><b>全部是设计，还没有任何一步的结果。</b>MG-0 已定开始（2026-11-11）。下面提到的数字来自以前在预测器上做过的实验，阈值都是暂定的。</div>
 
 <nav class="toc" aria-label="本页目录"><a href="#roles">三个角色</a> · <a href="#answers">四个回答</a> · <a href="#figure">一张图</a> · <a href="#known">知道的和不知道的</a> · <a href="#steps">接下来几步</a> · <a href="#decisions">待你定</a></nav>
 
@@ -118,7 +118,7 @@ code { font:.88em ui-monospace,Menlo,monospace; background:var(--panel); border:
 
 <div class="key"><b>你担心的那一点是对的。</b>无论 Alice 出终点还是出码，伸手那一段都是现有的显式生成器画的。要摆脱它，只能从多个真人的数据里学，这条路现在被数据卡住。</div>
 
-<div class="key"><b>三个容易混的点。</b>一，Bob 不输出风格，今天的 Bob 也没有任何风格输入：风格码由一个单独的小模块从这个人做完的几次抓握里读出来，再交给 Bob。二，码先用最简单的办法接：拼在 Bob 的输入后面。三，生成分两段：终点抓握由抓握隐码生成，伸手那一段仍是显式生成器。细节在 <a href="manip-gen-alice-latent.html#wiring">具体计划 § 5</a>。</div>
+<div class="key"><b>三个容易混的点。</b>一，Bob 不输出风格，今天的 Bob 也没有任何风格输入：风格码由一个单独的小模块从这个人做完的几次抓握里读出来，再交给 Bob。“让 Bob 只凭当前窗口自己猜风格再用”作为 MG-0 里的一个附加臂来测（2026-11-11 加），只报数。二，码先用最简单的办法接：拼在 Bob 的输入后面。三，生成分两段：终点抓握由抓握隐码生成，伸手那一段仍是显式生成器。细节在 <a href="manip-gen-alice-latent.html#wiring">具体计划 § 5</a>。</div>
 
 <h2 id="figure"><span class="n">3</span>一张图</h2>
 <div class="figwrap">
@@ -138,17 +138,17 @@ code { font:.88em ui-monospace,Menlo,monospace; background:var(--panel); border:
 <h2 id="steps"><span class="n">5</span>接下来几步</h2>
 <div class="tw"><table>
 <tr><th>步</th><th>做什么</th><th>不过怎么办</th></tr>
-<tr><td><b>MG-0</b></td><td>先量三件事：评测脚本能复现旧数字；把真实风格告诉 Bob 有没有用；抓握隐码采出来的抓法过不过物理检查</td><td>风格没用：不做风格码，Alice 只搜物体和抓法</td></tr>
+<tr><td><b>MG-0</b></td><td>先量三件事：评测脚本能复现旧数字；把真实风格告诉 Bob 有没有用（另加一臂：Bob 只凭当前窗口自己猜风格）；抓握隐码采出来的抓法过不过物理检查</td><td>风格没用：不做风格码，Alice 只搜物体和抓法</td></tr>
 <tr><td><b>MG-1</b></td><td>三件事并行：风格码的两种读法；Alice 对比“均匀随机出题”；Bob 的四种头</td><td>Alice 赢不了均匀随机：停掉 Alice，保留随机出题</td></tr>
 <tr><td><b>MG-2</b></td><td>合起来重训 Bob，看一个新的人做完几次抓握后误差降多少</td><td>—</td></tr>
 <tr><td><b>MG-3</b></td><td>离线回放上线流程：零样本、读码适应、在线学习三路输出，谁最近更准用谁</td><td>—</td></tr>
 <tr><td><b>MG-4</b></td><td>封存的 op01 后 46 场读一次，只报数</td><td>—</td></tr>
 </table></div>
-<p>五步都还没开始。粗估 MG-0 两到三天，MG-1 约一周。全程不需要戴头显，也不需要新录数据。</p>
+<p>MG-0 已定开始（2026-11-11），其余四步未开始；目前还没有任何一步的结果。粗估 MG-0 两到三天，MG-1 约一周。全程不需要戴头显，也不需要新录数据。</p>
 
 <h2 id="decisions"><span class="n">6</span>待你定</h2>
 <ol>
-<li><b>是否开始 MG-0。</b>我建议开始。</li>
+<li><b>是否开始 MG-0。</b>已定（2026-11-11）：开始，训练在 berlin 上跑。</li>
 <li><b>是否下载更多真人数据</b>（DexYCB 另外 9 个人，约 9 × 12 GB，或者注册 GRAB）。我建议先不下：它只影响“从真人学风格”那一档，不挡前面几步。</li>
 <li><b>其余的默认值和暂定阈值</b>，列在 <a href="manip-gen-alice-latent.html#decisions">具体计划的最后一节</a>。不改就按默认走。</li>
 </ol>
