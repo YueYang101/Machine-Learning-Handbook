@@ -95,7 +95,7 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
   <div class="tabs" role="tablist" aria-label="内容分类">
     <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="true" tabindex="0">理论<span class="cnt">7</span></button>
     <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">11</span></button>
-    <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验记录<span class="cnt">4</span></button>
+    <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验记录<span class="cnt">7</span></button>
     <button type="button" role="tab" id="tab-pool" aria-controls="panel-pool" aria-selected="false" tabindex="-1">待并入<span class="cnt">1</span></button>
     <button type="button" role="tab" id="tab-tools" aria-controls="panel-tools" aria-selected="false" tabindex="-1">工具</button>
   </div>
@@ -190,6 +190,11 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 
 <h2>实验记录<span class="en">EXPERIMENTS</span></h2>
 <p class="note">自己跑出来的东西：版本、曲线、视频、失败解剖。</p>
+
+<a class="card" href="rgb-shape-stacking-results.html">
+  <div class="t">换形状叠放（RGB-Stacking 式测试，UR3e + L20）：只看位姿 D 对拿到真实形状 E</div>
+  <div class="d">DeepMind RGB 物体集按公开参数重建成 152 个凸棱柱（训练 103 / 留出 36 / 测试 13），红叠蓝，每档 4096 局 · D（只看位姿）87.9 / 74.4 / 61.3 %，E（真实形状参数，上界）90.8 / 78.1 / 65.4 %，同世界配对差 +2.9 / +3.7 / +4.1 点 · 留出档的增益全在含细高物体的局（+13.8 点），其余局差 0.0 · 测试组合 3（29×29×150 mm）两臂 0 %：抓起时已在手里歪，没放下 · 倾斜 ≥ 35° 两臂都约 54 % · 脚本基线 60.2 / 66.7 / 25.5 % · 8 段视频 + 失败分类 · 每臂 1 个种子，S 臂（SDF 形状码）训练中。</div>
+</a>
 
 <a class="card" href="l20-stage1-1-results.html">
   <div class="t">Stage 1.1 结果：数采质量——手指翻转、门控与相机仲裁</div>
