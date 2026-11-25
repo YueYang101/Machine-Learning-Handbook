@@ -99,24 +99,26 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <body>
 <main class="wrap">
 <a class="bk" href="index.html">← Machine Learning Handbook</a>
-<div class="kicker">实验计划 · 分层架构 SOTA 复现（HS）· 当前 v4 · 2026-11-25</div>
+<div class="kicker">实验计划 · 分层架构 SOTA 复现（HS）· 当前 v5 · 2026-11-25</div>
 <h1>预训练上层 + 快速下层：具体计划</h1>
 <p class="lede">这条线测两层结构：预训练的 VLM 或视频模型当上层，单独训练的策略当下层，两层之间有明确的交接。回答三个问题：交接传 latent 还是显式的量；上层的输入输出和运行频率；上层要不要跑完。</p>
 <p class="lede">本页是执行用的具体版本。只想看结论和要拍板的事，读 <a href="hier-sota-repro-brief.html">快速阅览</a>；已经跑出来的数字在 <a href="hier-sota-results.html">实验记录</a>。</p>
 
-<div class="key good" id="v4"><b>当前 v4：H1 两个对照臂完成，其余排成单卡队列（2026-11-25）。</b>关规则 39.2%，详细句 39.6%，默认 49.6%；重跑在跑。H2、H3、H4 的流程检查通过。各实验的规模在本版定下：H3 五个臂各 3 万步，H4 闸门 333 回合，H2 闸门 100 条序列，H1 没微调的上层 100 回合。</div>
+<div class="key good" id="v5"><b>当前 v5：H1 加两个固定步数的臂（2026-11-25）。</b>默认设置重跑 54.4%，第一遍 49.6%；关规则 39.2%，详细句 39.6%，都低 10 到 15 个点，超出两遍默认之间的差。没微调的上层跑完的 5 个回合全败，中途停掉：它给的预计步数只有 1 或 2 步（微调版给 50 到 150），下层每段只走 2 到 4 步。预计步数是交接的一部分（预算、下层的提示词、停止阈值都用它），所以新增两个臂把它固定为 50：上层用原版一个，用微调版一个，各 100 回合。</div>
+<div class="key" id="v4"><b>v4：各实验的规模（2026-11-25）。</b>H3 五个臂各 3 万步，H4 闸门 333 回合，H2 闸门 100 条序列，H1 没微调的上层 100 回合；全部排在一张卡、20 个核上依次跑。</div>
 <div class="key" id="v3"><b>v3：H1 过闸门（2026-11-25）。</b>MIRA 在官方设置下 250 回合 49.6%，官方 51.4%；上层约 0.24 Hz。H1 的三个对照臂和一次重跑在跑。H2 的刷新间隔改为 1、2、4、8；H3 按核查结果改用论文配方；新增 H4。数字在 <a href="hier-sota-results.html">实验记录</a>。</div>
 <div class="key warn" id="v2"><b>v2 的改题（2026-11-25）。</b>v1 用“现成权重上能直接切的开关”筛候选，选到的三组都是上下层联合训练的整体模型。v2 按 § 2 的合格条件重新筛，定了 H1、H2、H3 三个实验。v1 的 A、B 组保留为旁证并裁剪。标 <span class="pill ran">已核</span> 的事实是我直接从仓库、README 或论文表格读的；标 <span class="pill none">转述</span> 的由检索代理读出，开跑前我会再核。</div>
 <div id="v1"></div>
 
 <div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
-<caption>版本索引 · 当前 v4</caption>
+<caption>版本索引 · 当前 v5</caption>
 <thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
 <tbody>
 <tr><td><a href="#v1">v1</a></td><td>2026-11-25</td><td>立项：选了三组（π0.5、Fast-WAM、DexJoCo 的 π0.5），都用官方权重，只动推理开关</td><td>当时的筛选条件是“现成权重上能直接切的开关”</td><td>A 组基线过闸门，两个模型的耗时量完：<a href="hier-sota-results.html#v1">结果 v1</a>。被 v2 取代</td><td>无</td></tr>
 <tr><td><a href="#v2">v2</a></td><td>2026-11-25</td><td>改题：改测真正的两层系统。新增 H1（MIRA）、H2（RoboDual）、H3（SmolVLA）；v1 的 A、B 组降为旁证并裁剪；C 组和 LIBERO-Plus 暂缓</td><td>v1 的三组都是上下层一起训练好的整体模型，测不到分层结构；允许训练下层以后，候选范围变了</td><td>被 v3 更新</td><td>无</td></tr>
 <tr><td><a href="#v3">v3</a></td><td>2026-11-25</td><td>H1 过闸门并量出上层的实际频率；H2 的刷新间隔改成 1、2、4、8；H3 改用论文配方（上层原版冻结、下层从零训）；新增 H4（mimic-video）；H1 闸门从每任务 10 回合改成 5 回合，并加一次默认设置的重跑</td><td>RoboDual 的粗动作块只有 8 步；SmolVLA 放出的权重没有官方成绩，层数对照必须同一初始化；mimic-video 的权重核实为免授权；MIRA 一遍 250 回合要 1.5 小时</td><td>H1 闸门 49.6% 对官方 51.4%，上层约 0.24 Hz：<a href="hier-sota-results.html#v2">结果 v2</a></td><td><a href="hier-sota-results.html#videos">两段示例</a></td></tr>
 <tr><td><a href="#v4">v4</a></td><td>2026-11-25</td><td>H1 的“没微调的上层”改成每任务 2 回合的子集；H3 定为五个臂各 3 万步；H4 闸门改为 333 回合；H2 闸门改为 100 条序列；全部排在一张卡、20 个核上依次跑</td><td>原版上层一回合要 7 分钟多；一张卡上训练和评测要分时间；用户要求守住单卡 20 核</td><td>H1 两个臂各低约 10 个点；H2、H3、H4 的流程检查通过：<a href="hier-sota-results.html#v3">结果 v3</a></td><td>无</td></tr>
+<tr><td><a href="#v5">v5</a></td><td>2026-11-25</td><td>H1 加两个臂：把交给下层的预计步数固定为 50，上层分别用原版和微调版，各 100 回合。其余不变</td><td>原版上层给的预计步数只有 1 到 2 步，下层每段只走几步就被叫停，测不到它写的子目标文字好不好；预计步数同时写进下层的提示词，所以要用开关固定，不能只放大预算</td><td>默认设置重跑 54.4%，与第一遍差 4.8 个点；两个对照臂低 10 到 15 个点，结论定下：<a href="hier-sota-results.html#v4">结果 v4</a></td><td>无</td></tr>
 </tbody></table></div>
 
 <nav class="toc" aria-label="本页目录"><a href="#scope">问题与范围</a> · <a href="#criteria">合格条件与候选</a> · <a href="#tests">四个实验</a> · <a href="#sota">文献数字</a> · <a href="#protocol">测量协议</a> · <a href="#steps">步骤与闸门</a> · <a href="#resources">资源</a> · <a href="#deviations">偏离官方流程的地方</a> · <a href="#risks">限制</a> · <a href="#decisions">待你定</a></nav>
@@ -162,9 +164,10 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <tr><td>上层读的特权信息</td><td>每轮输入里有“当前任务状态”，来自模拟器的成功判定；还有夹爪状态。官方在提示词里标明是特权信息 <span class="pill ran">已核</span></td></tr>
 <tr><td>下层</td><td>π0.5，输入三路图像、状态和子目标文字，输出动作块和子目标完成度；20 Hz，每 16 步重规划；完成度到 0.95 或停住不动时结束这一段 <span class="pill ran">已核</span></td></tr>
 <tr><td>闸门</td><td>官方：50 个任务各 50 回合，总体 51.4%；原子任务 78.8%，见过的组合任务 49.4%，没见过的组合任务 22.6% <span class="pill ran">已核</span>。我们每任务跑前 5 回合（250 回合）。<b>结果：49.6%，三类 83.3 / 40.0 / 21.2，过。</b>按官方每任务成功率算应得 128.5 个成功，实得 124 个 <span class="pill ran">已核</span></td></tr>
-<tr><td>对照 1：上层没微调</td><td>上层换成 <code>Qwen/Qwen3-VL-4B-Instruct</code> 原版，提示词、下层和其余设置不动。原版每次回复很长，一回合要 7 分钟多，所以只跑每任务前 2 回合（100 回合），与闸门的同序号回合配对</td></tr>
+<tr><td>对照 1：上层没微调</td><td>上层换成 <code>Qwen/Qwen3-VL-4B-Instruct</code> 原版，提示词、下层和其余设置不动。计划每任务前 2 回合（100 回合）。<b>结果：跑完的 5 个回合全败，中途停掉。</b>原版给的预计步数是 1 或 2，下层每段只走 2 到 4 步，接着跑不会有别的结果；改由对照 1b 回答</td></tr>
+<tr><td>对照 1b：固定预计步数</td><td>评测循环加一个开关 <code>HS_FIXED_EST=50</code>：不用上层给的步数，下层一律拿到 50（官方的缺省值，也是微调版最常给的值）。默认关闭，关闭时与官方代码逐行相同。两个臂：原版上层 + 固定 50；微调上层 + 固定 50（量这个开关本身的代价）。各 100 回合</td></tr>
 <tr><td>对照 2：手写修正规则</td><td>官方开关 <code>--no-task-lang-steer</code>、<code>--no-general-lang-steer</code>。全开是官方默认；全关只留“同一子目标重复三次就推进”，同时关掉“最后一个里程碑重试” <span class="pill ran">已核</span></td></tr>
-<tr><td>重跑</td><td>官方默认再跑一遍 250 回合，量这个样本量上的噪声底；对照臂的差别小于它就不算发现</td></tr>
+<tr><td>重跑</td><td>官方默认再跑一遍 250 回合，量这个样本量上的噪声底；对照臂的差别小于它就不算发现。<b>结果：54.4%，与第一遍差 4.8 个点，68 个回合翻转。</b>两个臂的差值同时报对第一遍、对重跑和对两遍合并三个数</td></tr>
 <tr><td>对照 3：交接的详细程度</td><td>官方开关 <code>--prompt-source subgoal|subgoal_detail</code></td></tr>
 <tr><td>要量的</td><td>三类任务的成功率；上层每次调用的耗时和 token 数；每回合调用几次、平均隔多少步；下层每次推理的耗时</td></tr>
 <tr><td>能说</td><td>这个两层系统里，上层要不要微调、修正规则值多少、上层实际多久运行一次</td></tr>
@@ -249,20 +252,20 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <tr><td><b>HS-2</b></td><td>旁证 B：Fast-WAM 两种模式，裁到 LIBERO-10</td><td>README 的 97.0 和 95.8</td><td><span class="pill ran">完成</span> 97.4 和 95.4，<a href="hier-sota-results.html#b-modes">结果</a></td></tr>
 <tr><td><b>HS-3</b></td><td>DexJoCo 的 π0.5；LIBERO-Plus 抽样臂</td><td>—</td><td><span class="pill none">暂缓</span> 权重已删，可重下</td></tr>
 <tr><td><b>HS-4</b></td><td>空 GPU 计时</td><td>π0.5 的耗时随 flow 步数线性变化</td><td><span class="pill ran">完成</span> <a href="hier-sota-results.html#timing">结果</a></td></tr>
-<tr><td><b>HS-5</b></td><td>H1：MIRA 闸门，然后三个对照、一次重跑、一次单独计时</td><td>总体在官方 51.4% 的约 5 个点以内</td><td><span class="pill ran">闸门过，两个臂完成</span> 关规则 39.2%，详细句 39.6%，<a href="hier-sota-results.html#h1-arms">结果</a>；重跑在跑，没微调的子集排队</td></tr>
+<tr><td><b>HS-5</b></td><td>H1：MIRA 闸门，三个对照、一次重跑、两个固定步数的臂、一次单独计时</td><td>总体在官方 51.4% 的约 5 个点以内</td><td><span class="pill ran">闸门、重跑、三个臂完成</span> 默认 49.6% 和 54.4%，关规则 39.2%，详细句 39.6%，没微调的上层 0 / 5 后停掉，<a href="hier-sota-results.html#h1-arms">结果</a>；固定步数的两个臂和单独计时排队</td></tr>
 <tr><td><b>HS-6</b></td><td>H2：RoboDual 闸门，然后扫刷新间隔</td><td>调试数据集能代替全量数据；默认间隔与 3.66 相符</td><td><span class="pill todo">冒烟通过</span> 第一条成立；闸门排在队列最后</td></tr>
-<tr><td><b>HS-7</b></td><td>H3：SmolVLA 按论文配方训两个种子，然后 N = 8、32 和“上层一起训”三个臂</td><td>流程检查与第三方数字相符；基线落在论文 87.3 与第三方重训 80.2 附近；两个种子之差已知</td><td><span class="pill todo">在训</span> 流程检查通过；四个臂在训，第五个排队</td></tr>
-<tr><td><b>HS-8</b></td><td>H4：mimic-video 闸门，然后扫视频去噪停在第几步</td><td>Spatial 94.2（论文表 II）</td><td><span class="pill todo">冒烟通过</span> 闸门跑到一半，续跑排队</td></tr>
+<tr><td><b>HS-7</b></td><td>H3：SmolVLA 按论文配方训两个种子，然后 N = 8、32 和“上层一起训”三个臂</td><td>流程检查与第三方数字相符；基线落在论文 87.3 与第三方重训 80.2 附近；两个种子之差已知</td><td><span class="pill todo">在训</span> 流程检查通过；五个臂都在训</td></tr>
+<tr><td><b>HS-8</b></td><td>H4：mimic-video 闸门，然后扫视频去噪停在第几步</td><td>Spatial 94.2（论文表 II）</td><td><span class="pill todo">冒烟通过</span> 闸门续跑中</td></tr>
 <tr><td><b>HS-9</b></td><td>汇总，更新实验记录，清理权重</td><td>—</td><td><span class="pill todo">待执行</span></td></tr>
 </table></div>
 
 <h3 id="now">当前一步：单卡队列</h3>
 <p>全部在 GPU 3、60 到 79 号核上，按显存和核数能容纳的量依次放。每个训练臂训完自动评测。</p>
 <ol>
-<li>H1 默认设置重跑（250 回合），然后“没微调的上层”子集（100 回合）。与此同时 H3 的四个臂在训：基线两个种子、保留 8 层、上层一起训。</li>
-<li>H1 结束后，H3 第五个臂（保留 32 层）开始。</li>
+<li>H3 的五个臂在训：基线两个种子、保留 8 层、保留 32 层、上层一起训。H1 的重跑已完成，“没微调的上层”子集已停。</li>
 <li>H4 闸门续跑到 333 回合，然后 N = 5 和 N = 20 各 100 回合。</li>
 <li>H2 闸门：间隔 8，100 条序列。之后按速度决定间隔 1、2、4 各跑多少条。</li>
+<li>H1 的两个固定步数臂（各 100 回合），在 H4 跑完、显存够的时候插进来。</li>
 <li>卡空下来后量 H1 的单独计时。每个实验跑完就把结果拷回 Mac 并更新实验记录。</li>
 </ol>
 
@@ -290,9 +293,9 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <h2 id="risks"><span class="n">§ 9</span>限制</h2>
 <ul>
 <li><b>四个实验不能横比。</b>基准、下层、数据都不同。</li>
-<li><b>H1 的“没微调”一臂是下限。</b>提示词是为微调版写的。</li>
+<li><b>H1 的“没微调”一臂是下限。</b>提示词是为微调版写的。固定步数的臂改了评测循环的一行（开关默认关闭），不是官方流程。</li>
 <li><b>H1 的官方成绩含手写规则和模拟器真值。</b>80% 的回合触发过规则；上层读一个真值的“任务是否完成”。真机上没有这一位。</li>
-<li><b>H1 每个臂只有 250 回合。</b>总体的 95% 区间约 ±6 个点。闸门是单独占卡跑的，对照臂和重跑是与训练共用一张卡跑的。</li>
+<li><b>H1 每个臂只有 250 回合。</b>同一设置跑两遍差 4.8 个点，27% 的回合成败翻转。第一遍是单独占卡跑的，重跑和对照臂是与训练共用一张卡跑的，所以对照臂的差值报两个数。分到三类任务以后每类只有 80 到 90 回合，15 个点以内的差别不可靠。</li>
 <li><b>H3 的训练步数只有论文的三成。</b>绝对成绩会低于论文，只看臂间的相对差别。</li>
 <li><b>H2 取决于一个还没实测的前提。</b>调试数据集能否代替全量数据。</li>
 <li><b>H3 的上层很小。</b>0.5B 的 VLM 上的截断结论，不一定能推到 4B 或 7B。</li>
