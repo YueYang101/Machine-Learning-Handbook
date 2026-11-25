@@ -89,84 +89,104 @@ table.versions caption { text-align:left; color:var(--sub); padding:0 0 8px; cap
 table.nums th:first-child, table.nums td:first-child { min-width:8em; }
 .tw.fit table { min-width:0; }
 .tw.fit td:first-child, .tw.fit th:first-child { white-space:nowrap; }
+details { border-top:1px solid var(--line); margin:1.2em 0; }
+details > summary { cursor:pointer; padding:10px 0; }
+details > summary h2 { display:inline; margin:0; font-size:1.2rem; }
+details > summary .one { display:block; color:var(--sub); font-size:.95rem; margin-top:4px; }
 </style>
 </head>
 <body>
 <main class="wrap">
 <a class="bk" href="index.html">← Machine Learning Handbook</a>
-<div class="kicker">实验计划 · 分层架构 SOTA 复现（HS）· 快速阅览 · 当前 v1 · 2026-11-25</div>
+<div class="kicker">实验计划 · 分层架构 SOTA 复现（HS）· 快速阅览 · 当前 v2 · 2026-11-25</div>
 <h1>预训练上层 + 快速下层：快速阅览</h1>
-<p class="lede">这条线想弄清三件事：上层和下层之间传什么，上层能跑多快，上层能不能不跑完。做法是复现几个公开的 SOTA，每次只动一个推理开关，看成功率和耗时怎么变。</p>
-<p class="lede">本页只讲结论、进度和要你拍板的事，三分钟读完。选型依据、每一组的闸门和做法，都在 <a href="hier-sota-repro.html">具体计划</a>。</p>
+<p class="lede">这条线测的是两层结构本身：上层是预训练好的 VLM 或视频模型，下层是单独训练的策略，两层之间有一个说得清的交接。要弄清三件事：交接传什么，上层跑多快，上层能不能不跑完。</p>
+<p class="lede">本页只讲结论、进度和要你拍板的事，三分钟读完。每个实验的细节在 <a href="hier-sota-repro.html">具体计划</a>，已经跑出来的数字在 <a href="hier-sota-results.html">实验记录</a>。</p>
 
-<div class="key warn" id="v1"><b>当前 v1：还没有对照结果（2026-11-25）。</b>检索和选型做完了，三套环境都装在 berlin 上。π0.5 和 Fast-WAM 的冒烟测试各跑了 3 回合，全部成功。π0.5 的基线复现正在跑（共 2,000 回合）。本页里“哪种做法更好”的数字都来自别人的论文，不是我们跑出来的。</div>
+<div class="key warn" id="v2"><b>当前 v2：改题了（2026-11-25）。</b>v1 选的三组都是上下层一起训练好的整体模型，测到的是推理开关，不是分层结构。v2 改成真正的两层系统，定了三个实验，第四个（视频模型当上层）还在调查。三个实验都还没有结果。v1 的两组降为旁证，已有的数字在实验记录里。</div>
+<div id="v1"></div>
 
 <div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
-<caption>版本索引 · 当前 v1</caption>
+<caption>版本索引 · 当前 v2</caption>
 <thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
 <tbody>
-<tr><td><a href="#v1">v1</a></td><td>2026-11-25</td><td>立项：四路检索与选型做完，三组实验定下，三套环境装在 berlin 上；A、B 两组冒烟测试通过，A 组基线复现开始跑</td><td>三个问题要用公开 SOTA 的同一权重、只动一个推理开关来回答</td><td>还没有对照结果；记录页待生成</td><td>待补</td></tr>
+<tr><td><a href="#v1">v1</a></td><td>2026-11-25</td><td>立项：选了三组（π0.5、Fast-WAM、DexJoCo 的 π0.5），都用官方权重，只动推理开关</td><td>当时的筛选条件是“现成权重上能直接切的开关”</td><td>A 组基线过闸门，两个模型的耗时量完：<a href="hier-sota-results.html#v1">结果 v1</a>。被 v2 取代</td><td>待补</td></tr>
+<tr><td><a href="#v2">v2</a></td><td>2026-11-25</td><td>改题：改测真正的两层系统。新增 H1（MIRA）、H2（RoboDual）、H3（SmolVLA）；v1 的 A、B 组降为旁证并裁剪；C 组和 LIBERO-Plus 暂缓</td><td>v1 的三组都是上下层一起训练好的整体模型，测不到分层结构；允许训练下层以后，候选范围变了</td><td>还没有结果</td><td>待补</td></tr>
 </tbody></table></div>
 
-<nav class="toc" aria-label="本页目录"><a href="#answers">三个问题现在的回答</a> · <a href="#groups">三组实验</a> · <a href="#limits">能说和不能说的</a> · <a href="#steps">进度</a> · <a href="#decisions">待你定</a></nav>
+<nav class="toc" aria-label="本页目录"><a href="#criteria">什么算分层测试</a> · <a href="#tests">三个实验</a> · <a href="#answers">三个问题谁来回答</a> · <a href="#limits">能说和不能说的</a> · <a href="#steps">进度</a> · <a href="#decisions">待你定</a></nav>
 
-<h2 id="answers"><span class="n">1</span>三个问题现在的回答</h2>
-<p>每个回答分两半：文献怎么说，我们自己能测什么。</p>
-
-<div class="qa"><div class="q">接口用 latent 还是显式的？</div>
-<p class="a"><b>文献：分场景。</b>在训练见过的场景里，latent 更快，成功率和显式的持平。换了视角、光照、数据很少或任务没见过时，带着“未来会怎样”这份信息的做法明显更稳。</p>
-<p class="a"><b>我们能测的只有一半。</b>视频模型当上层的那一侧，Fast-WAM 放出了同一个权重、两种模式的官方开关，我们跑（B 组）。VLM 当上层的那一侧，没有任何开源项目同时放出两种接口的可运行权重，这一半只能读文献。</p></div>
-
-<div class="qa"><div class="q">上层的输入输出和运行频率是什么，怎么让它懂我们的任务？</div>
-<p class="a"><b>输入输出。</b>输入基本都是一到三路相机图像、一句语言指令和本体状态。输出要么是一段动作块，要么是交给下层的 latent。</p>
-<p class="a"><b>频率。</b>公开数字里上层在 2.5 到 10 Hz：Helix 7 到 9 Hz，SONIC 配 GR00T N1.7 是 2.5 Hz，DreamZero 约 7 Hz 但要两张 GB200。你要的 5 到 10 Hz 在这个范围里。</p>
-<p class="a"><b>懂任务。</b>现在的做法都是微调：每个任务几十到几百条演示，或者多任务一起训。要不要冻结上层，文献说法不一。</p>
-<p class="a"><b>我们能测的。</b>“上层慢、下层快而且下层自己有反馈”的真双频率结构，没有一个免授权、能在 MuJoCo 上评测的公开权重，这部分只能引文献。我们测两件相近的事：整个策略隔多久重跑一次，以及推理结果晚到几步（A 组和 C 组）。</p></div>
-
-<div class="qa"><div class="q">上层要不要跑完？</div>
-<p class="a"><b>视频模型：训练时学预测视频，测试时可以不生成。</b>Fast-WAM 论文报告，这样在训练见过的场景里只掉约 1 个点，耗时降到约四分之一。扰动下差距会变大，另外两篇论文报告了 3 到 14 个点。</p>
-<p class="a"><b>VLM：能直接动的是去噪步数和动作块执行多长。</b>只取中间层要重训动作头；在现成权重上硬切，测到的是“没训练过所以崩”，不是这个设计好不好。</p>
-<p class="a"><b>我们能测的。</b>flow 步数（A 组），生成和不生成（B 组）。</p></div>
-
-<h2 id="groups"><span class="n">2</span>三组实验</h2>
-<p>三组都用作者放出的权重和评测脚本，不重训。每组先把论文或 README 的数字复现出来，过了才算对照。</p>
-<div class="qa"><div class="q">A 组：π0.5（官方 openpi），LIBERO</div>
-<p class="a"><b>先复现到：</b>四个套件 98.8 / 98.2 / 98.0 / 92.4。</p>
-<p class="a"><b>只动：</b>每 1、2、5、10 步重跑一次策略；flow 步数 1、2、3、5、10；推理晚到 2、4 步。</p></div>
-<div class="qa"><div class="q">B 组：Fast-WAM（官方），LIBERO</div>
-<p class="a"><b>先复现到：</b>两种模式的四套件平均 98.55 和 97.75。</p>
-<p class="a"><b>只动：</b>同一个权重，先想象未来视频再出动作，或者不想象。</p></div>
-<div class="qa"><div class="q">C 组：DexJoCo 的 π0.5，16 自由度灵巧手</div>
-<p class="a"><b>先复现到：</b>Water Plant 88.7，Pick Bucket 84.0，Fold Glasses 72.0。</p>
-<p class="a"><b>只动：</b>推理晚到几步、重规划阈值、flow 步数。</p></div>
-<p>耗时在空 GPU 上单独量，上层和下层分开报。你的 5 到 10 Hz 目标看的是上层那一项。</p>
-
-<h2 id="limits"><span class="n">3</span>能说和不能说的</h2>
-<div class="key warn"><b>A 组不是双频率实验。</b>π0.5 一次调用同时跑 VLM 和动作头，然后照着动作块开环执行。它回答的是“整个策略多久要重跑一次”，不回答“上层慢、下层快且自带反馈”。</div>
-<div class="key warn"><b>B 组在标准 LIBERO 上分不出高下。</b>官方两种模式只差 0.8 个点，2,000 回合的抽样误差就有这么大。这一组能给的是耗时比，以及“训练见过的场景里没有可测的差别”。扰动下的差别要用 LIBERO-Plus 测，全量约一万个变体，单卡跑不完，只能抽样（见待你定第 1 条）。</div>
-<div class="key warn"><b>C 组的官方评测和机器快慢有关。</b>DexJoCo 的评测是异步的：推理的时候仿真继续走。所以闸门那一次要独占 GPU 跑。对照臂我会改成“晚到几步由我指定”的版本，并注明这不是官方流程。</div>
-<div class="key"><b>三组都不是我们的 L20。</b>LIBERO 是平行夹爪，DexJoCo 是装在 Panda 上的 16 自由度手。对我们自己的线，这些结果只能当类比。</div>
-
-<h2 id="steps"><span class="n">4</span>进度</h2>
-<div class="tw fit"><table>
-<tr><th>步</th><th>做什么</th><th>状态</th></tr>
-<tr><td><b>HS-0</b></td><td>四路检索，核对每个权重是否免授权，定下三组</td><td><span class="pill ran">完成</span> 11-25</td></tr>
-<tr><td><b>HS-1</b></td><td>A 组：基线复现，然后跑对照臂</td><td><span class="pill todo">进行中</span> 冒烟 3/3；基线在跑</td></tr>
-<tr><td><b>HS-2</b></td><td>B 组：两种模式全量评测</td><td><span class="pill todo">待执行</span> 冒烟两种模式各 3/3</td></tr>
-<tr><td><b>HS-3</b></td><td>C 组：闸门，然后对照臂</td><td><span class="pill todo">待执行</span> 环境和三个任务的权重已就位</td></tr>
-<tr><td><b>HS-4</b></td><td>空 GPU 计时，结果写成记录页</td><td><span class="pill todo">待执行</span></td></tr>
-</table></div>
-<p>全部在 berlin 的一张 H200 上跑。粗估 A 组 4 到 5 小时，B 组全量约 8 小时，C 组还没量过。</p>
-
-<h2 id="decisions"><span class="n">5</span>待你定</h2>
+<h2 id="criteria"><span class="n">1</span>什么算分层测试</h2>
+<p>一个实验要同时满足下面四条才算。不满足的只当旁证，不进主表。</p>
 <ol>
-<li><b>B 组要不要加 LIBERO-Plus 抽样臂。</b>每种模式抽约 1,000 个变体，各 2 到 3 小时。我建议加：这是唯一能分出“生成”和“不生成”的地方。</li>
-<li><b>C 组用哪几个任务。</b>默认是 Water Plant、Pick Bucket、Fold Glasses，都是单臂任务，论文基线在 72% 到 89%。</li>
-<li><b>要不要给 berlin 一个 Hugging Face 令牌。</b>Cosmos Policy 和 GR00T N1.7 的底座要点一次授权，现在跳过了。不给就维持现状。</li>
-<li><b>跑完后删除下载的权重。</b>约 60 GB。你说过可以删；删之前我会把结果、配置和日志拷回 Mac，并列出删除清单。</li>
+<li>上层是预训练的 VLM 或视频模型，保持冻结，或者由作者单独微调。</li>
+<li>下层是另一个模块，单独训练，有自己的观测。</li>
+<li>两层之间的交接说得出名字：一句文字、一个 latent，等等。</li>
+<li>每次只变一处：交接、上层多久刷新一次、上层截到哪里、上层要不要微调。</li>
 </ol>
 
-<footer><a href="hier-sota-repro.html">具体计划</a> · <a href="manip-gen-alice-latent-brief.html">另一条独立路线：MG</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
+<h2 id="tests"><span class="n">2</span>三个实验</h2>
+
+<div class="qa"><div class="q">H1　显式交接：MIRA，RoboCasa365</div>
+<p class="a"><b>上层：</b>Qwen3-VL-4B 规划器。先看一张图写出里程碑计划，之后每执行完一段，看那一段的视频，给出下一个子目标。</p>
+<p class="a"><b>交接：</b>一句子目标文字，加一个预计步数。</p>
+<p class="a"><b>下层：</b>按子目标执行的 π0.5，20 Hz，有自己的三路图像，自己判断这一段何时结束。</p>
+<p class="a"><b>变什么：</b>上层换成没微调过的同款模型；手写的修正规则开或关；交给下层的文字用短句还是详细句。</p>
+<p class="a"><b>训练：</b>不需要，两层权重都公开。<b>先复现到：</b>官方总体 51.4%（2,500 回合），我们跑子集，对各任务的官方数字。</p></div>
+
+<div class="qa"><div class="q">H2　latent 交接，两层不同频率：RoboDual，CALVIN</div>
+<p class="a"><b>上层：</b>OpenVLA-7B，冻结，每 8 步跑一次。</p>
+<p class="a"><b>交接：</b>上层最后一层的 latent，加一段粗动作。</p>
+<p class="a"><b>下层：</b>一个小的扩散策略，每步都跑，有自己的彩色和深度图像。</p>
+<p class="a"><b>变什么：</b>上层每 1、2、4、8、16、32 步刷新一次。</p>
+<p class="a"><b>训练：</b>不需要。<b>先复现到：</b>论文的 3.66（连续完成的任务数，满分 5）。</p></div>
+
+<div class="qa"><div class="q">H3　冻结上层、只训下层，并把上层截短：SmolVLA，LIBERO</div>
+<p class="a"><b>上层：</b>SmolVLM2，冻结，只用前 N 层。</p>
+<p class="a"><b>交接：</b>第 N 层的特征。</p>
+<p class="a"><b>下层：</b>动作头，由我们训练。</p>
+<p class="a"><b>变什么：</b>N 取 8、16、32，每个都重训下层；上层冻结，或者和下层一起训。</p>
+<p class="a"><b>训练：</b>需要。先按官方配方原样训一遍，再换种子训一遍，知道训练本身的波动后才比各臂。</p>
+<p class="a"><b>注意：</b>它其实是一个骨干冻结的小 VLA，上层不能单独刷新。只用它回答“截短”和“冻结”，不回答频率。</p></div>
+
+<p>第四个实验是视频模型当上层、只走一次前向、下层单独训练的两阶段系统。候选是 VPP，还在核对它能不能在我们的机器上评测。</p>
+
+<h2 id="answers"><span class="n">3</span>三个问题谁来回答</h2>
+<ul>
+<li><b>交接用 latent 还是显式的。</b>H1 是显式的，H2 和 H3 是 latent，但它们的下层和任务都不同，不能直接横比。在同一个下层上换接口的开源框架只有 VLA-OS，它没有放出评测代码，四个臂在单卡上要训好几天，所以只引它论文的数字，不复现。</li>
+<li><b>上层跑多快。</b>H1 的上层不是固定频率，是每段结束触发一次；我们量它实际隔多久调用一次、每次多少毫秒。H2 直接扫上层的刷新间隔。</li>
+<li><b>上层能不能不跑完。</b>H3 把 VLM 截到前 N 层再重训下层。视频模型那一侧等第四个实验。</li>
+<li><b>怎么让上层懂我们的任务。</b>H1 里把微调过的上层换成没微调的同款模型，下层不动，看差多少。</li>
+</ul>
+
+<h2 id="limits"><span class="n">4</span>能说和不能说的</h2>
+<div class="key warn"><b>H1 的上层是作者微调过的。</b>“拿来即用”的那一臂用的是为微调版写的提示词，所以它给的是下限，不是没微调的 VLM 的最好水平。</div>
+<div class="key warn"><b>H2 的下层只在“每 8 步”上训练过。</b>其他间隔它没专门学过。数字说明的是这个系统对刷新间隔有多敏感，不是最优间隔是多少。</div>
+<div class="key warn"><b>三个实验不能横比。</b>基准、下层和训练数据都不同。每个实验只在自己内部比。</div>
+<div class="key"><b>都不是我们的 L20，下层也都不是 RL。</b>检索里没有找到“下层用 RL 训练、读上层 latent”的开源系统。这些结果对我们的线只能当类比。</div>
+
+<h2 id="steps"><span class="n">5</span>进度</h2>
+<div class="tw fit"><table>
+<tr><th>项</th><th>做什么</th><th>状态</th></tr>
+<tr><td><b>调查</b></td><td>两轮检索，第二轮只收真正的两层系统</td><td><span class="pill ran">完成</span> 视频上层那一路未回</td></tr>
+<tr><td><b>H1</b></td><td>MIRA：闸门，然后三个对照</td><td><span class="pill todo">准备中</span> 环境和权重在装</td></tr>
+<tr><td><b>H2</b></td><td>RoboDual：闸门，然后扫刷新间隔</td><td><span class="pill todo">待执行</span></td></tr>
+<tr><td><b>H3</b></td><td>SmolVLA：原样训两遍，然后各臂</td><td><span class="pill todo">待执行</span></td></tr>
+<tr><td><b>旁证 A</b></td><td>π0.5 的推理开关</td><td><span class="pill ran">基线过闸门</span> 对照臂在跑，裁到 7 个</td></tr>
+<tr><td><b>旁证 B</b></td><td>Fast-WAM 生成与不生成</td><td><span class="pill todo">在跑</span> 只跑 LIBERO-10</td></tr>
+<tr><td><b>暂缓</b></td><td>LIBERO-Plus 抽样臂；DexJoCo 的 π0.5</td><td><span class="pill none">暂缓</span> 没有取消</td></tr>
+</table></div>
+<p>顺序是 H1、H2、H3。全部在 berlin 的一张 H200 上。</p>
+
+<h2 id="decisions"><span class="n">6</span>待你定</h2>
+<ol>
+<li><b>H3 用 SmolVLA 行不行。</b>它便宜，冻结和层数都有官方开关，论文里有可对的数字。不接受的话换 GR00T N1.5（冻结 2B 的 VLM 加动作头）：训练贵几倍，而且它的动作头看不到图像。</li>
+<li><b>顺序。</b>默认 H1、H2、H3。想先看哪个可以调。</li>
+<li><b>LIBERO-Plus 和 DexJoCo 的 π0.5。</b>现在暂缓，等三个分层实验跑完再排。</li>
+<li><b>磁盘。</b>我只删了这条线自己下载的东西。如果还不够，会先列出以前目录的清单再问你；OakInk2 的数据不动。</li>
+</ol>
+
+<footer><a href="hier-sota-repro.html">具体计划</a> · <a href="hier-sota-results.html">实验记录</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
 </main>
 </body>
 </html>

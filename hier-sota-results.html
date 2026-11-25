@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>预训练上层 + 快速下层：实验记录（分层架构 SOTA 复现） · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+.num { font:.93rem/1.7 ui-monospace,Menlo,monospace; }
+td.n, th.n { text-align:right; font-family:ui-monospace,Menlo,monospace; font-size:.9rem; }
+.pill { display:inline-block; padding:1px 7px; border-radius:20px; font-size:.8rem;
+  border:1px solid var(--line2); color:var(--sub); }
+code { font:.88em ui-monospace,Menlo,monospace; background:var(--panel); border:1px solid var(--line);
+  border-radius:5px; padding:1px 5px; overflow-wrap:anywhere; }
+.figwrap img { width:100%; max-width:560px; height:auto; display:block; margin:0 auto; border-radius:6px; }
+.tw table { min-width:560px; }
+.tw.wide table { min-width:760px; }
+.pill.ran { color:var(--green); border-color:var(--green); }
+.pill.todo { color:var(--yellow); border-color:var(--yellow); }
+.pill.none { color:var(--muted); }
+.ln { display:inline-block; padding:0 6px; border-radius:5px; font-size:.8rem; white-space:nowrap;
+  border:1px solid var(--line2); color:var(--sub); background:var(--panel); }
+.qa { border:1px solid var(--line); border-radius:10px; padding:10px 16px; margin:1em 0; }
+.qa .q { font-weight:700; }
+.qa .a { margin:.4em 0 .2em; }
+.figwrap svg { width:100%; max-width:520px; height:auto; display:block; margin:0 auto; }
+figure.figwrap figcaption { display:block; }
+table.versions { display:table; min-width:760px; }
+table.versions caption { text-align:left; color:var(--sub); padding:0 0 8px; caption-side:top; font-size:.88rem; }
+.pill.fail { color:var(--red); border-color:var(--red); }
+.ci { color:var(--sub); font-size:.86em; white-space:nowrap; }
+table.nums th:first-child, table.nums td:first-child { min-width:8em; }
+.tw.fit table { min-width:0; }
+.tw.fit td:first-child, .tw.fit th:first-child { white-space:nowrap; }
+details { border-top:1px solid var(--line); margin:1.2em 0; }
+details > summary { cursor:pointer; padding:10px 0; }
+details > summary h2 { display:inline; margin:0; font-size:1.2rem; }
+details > summary .one { display:block; color:var(--sub); font-size:.95rem; margin-top:4px; }
+</style>
+</head>
+<body>
+<main class="wrap">
+<a class="bk" href="index.html">← Machine Learning Handbook</a>
+<div class="kicker">实验记录 · 分层架构 SOTA 复现（HS）· 当前 v1 · 2026-11-25</div>
+<h1>预训练上层 + 快速下层：实验记录</h1>
+<p class="lede">这页只放真正跑出来的数字。计划和每个实验的设计在 <a href="hier-sota-repro.html">具体计划</a>，三分钟版在 <a href="hier-sota-repro-brief.html">快速阅览</a>。</p>
+
+<div class="key warn" id="v1"><b>当前 v1：只有旁证组的数字（2026-11-25）。</b>这些来自整体式模型（π0.5 和 Fast-WAM）在 LIBERO 上的复现和计时，不是分层结构测试。分层实验 H1、H2、H3 还没有结果。机器是 berlin 的一张 H200。</div>
+
+<div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
+<caption>版本索引 · 当前 v1</caption>
+<thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
+<tbody>
+<tr><td><a href="#v1">v1</a></td><td>2026-11-25</td><td>π0.5 在 LIBERO 四个套件上的基线复现；π0.5 和 Fast-WAM 的空 GPU 计时</td><td>对应计划页 v1 的 A 组闸门和计时</td><td>基线过闸门；计时见 § 2</td><td>待补</td></tr>
+</tbody></table></div>
+
+<nav class="toc" aria-label="本页目录"><a href="#main">主要结论</a> · <a href="#overview">总表</a> · <a href="#a-baseline">§ 1 π0.5 基线</a> · <a href="#timing">§ 2 计时</a> · <a href="#deviations">§ 3 偏离官方流程的地方</a> · <a href="#not-run">§ 4 还没跑的</a></nav>
+
+<div class="key good" id="main"><b>主要结论。</b>
+<ul>
+<li>官方 π0.5 的 LIBERO 数字复现了：四个套件 98.4 / 98.0 / 97.6 / 93.2，README 是 98.8 / 98.2 / 98.0 / 92.4。每个套件 500 回合。</li>
+<li>π0.5 在 H200 上，VLM 前缀一次约 23 ms，每个 flow 步约 2.1 ms。默认 10 步合计 43.7 ms，约 23 Hz。</li>
+<li>Fast-WAM 在 H200 上，不想象未来是 71.5 ms（约 14 Hz），先想象未来是 179.1 ms（约 5.6 Hz），相差 2.5 倍。</li>
+<li>这些都不是分层结构的结果，只说明两个整体式模型的速度量级。</li>
+</ul></div>
+
+<h2 id="overview">总表</h2>
+<div class="tw fit"><table>
+<tr><th>项</th><th>设置</th><th>结果</th></tr>
+<tr><td>π0.5 成功率</td><td>LIBERO 四套件，各 500 回合</td><td>98.4 / 98.0 / 97.6 / 93.2</td></tr>
+<tr><td>π0.5 耗时</td><td>VLM 前缀；每个 flow 步</td><td>22.7 ms；2.09 ms</td></tr>
+<tr><td>Fast-WAM 耗时</td><td>不想象；先想象（各 10 步）</td><td>71.5 ms；179.1 ms</td></tr>
+<tr><td>Fast-WAM 显存</td><td>推理峰值</td><td>25.0 GB</td></tr>
+</table></div>
+
+<details id="a-baseline" open><summary><h2><span class="n">§ 1</span>π0.5 基线</h2><span class="one">四个套件都在 README 数字的 1 个点以内，过闸门。</span></summary>
+<p>官方 openpi（提交 215abfb），权重 <code>gs://openpi-assets/checkpoints/pi05_libero</code>。官方设置：动作块 10 步，每 5 步重规划，flow 10 步，种子 7，每任务 50 回合。</p>
+<div class="tw"><table>
+<tr><th>套件</th><th>我们</th><th>95% 区间</th><th>README</th><th>差</th></tr>
+<tr><td>Spatial</td><td class="n">98.4%（492 / 500）</td><td class="n">96.9 – 99.2</td><td class="n">98.8</td><td class="n">−0.4</td></tr>
+<tr><td>Object</td><td class="n">98.0%（490 / 500）</td><td class="n">96.4 – 98.9</td><td class="n">98.2</td><td class="n">−0.2</td></tr>
+<tr><td>Goal</td><td class="n">97.6%（488 / 500）</td><td class="n">95.9 – 98.6</td><td class="n">98.0</td><td class="n">−0.4</td></tr>
+<tr><td>LIBERO-10</td><td class="n">93.2%（466 / 500）</td><td class="n">90.6 – 95.1</td><td class="n">92.4</td><td class="n">+0.8</td></tr>
+<tr><td>平均</td><td class="n">96.80</td><td class="n">—</td><td class="n">96.85</td><td class="n">−0.05</td></tr>
+</table></div>
+<p>2,000 回合里没有因异常中断的回合。闸门规则是每个套件差 3 个点以内、平均差 1.5 个点以内，都满足。冒烟测试（LIBERO-10 第 0 号任务，3 回合）3 / 3。</p>
+</details>
+
+<details id="timing" open><summary><h2><span class="n">§ 2</span>计时</h2><span class="one">π0.5 的耗时随 flow 步数严格线性；Fast-WAM 先想象未来比不想象慢 2.5 倍。</span></summary>
+<p>条件：GPU 上没有别的进程，批大小 1。数字是端到端的一次推理，包含输入预处理和把结果取回主机。</p>
+<h3 id="timing-pi05">π0.5</h3>
+<p>先预热 10 次，再量 100 次，取中位数。</p>
+<div class="tw fit"><table>
+<tr><th>flow 步数</th><th>中位数</th><th>第 10 到 90 百分位</th></tr>
+<tr><td>1</td><td class="n">24.81 ms</td><td class="n">24.77 – 24.86</td></tr>
+<tr><td>2</td><td class="n">26.90 ms</td><td class="n">26.86 – 26.94</td></tr>
+<tr><td>3</td><td class="n">28.99 ms</td><td class="n">28.93 – 29.04</td></tr>
+<tr><td>5</td><td class="n">33.17 ms</td><td class="n">33.12 – 33.22</td></tr>
+<tr><td>10（默认）</td><td class="n">43.67 ms</td><td class="n">43.62 – 43.76</td></tr>
+<tr><td>20</td><td class="n">64.58 ms</td><td class="n">64.53 – 64.67</td></tr>
+</table></div>
+<p>直线拟合：截距 22.71 ms，斜率 2.094 ms 每步。截距是 VLM 前缀加预处理，也就是上层那一部分；斜率是动作头走一步。只算上层，H200 上能到约 44 Hz。</p>
+<h3 id="timing-fastwam">Fast-WAM</h3>
+<p>官方仓库（提交 7faa711）的同一个推理函数，包含文本编码和 VAE 编码。先预热 6 次，再量 30 次。动作块 32 步。</p>
+<div class="tw fit"><table>
+<tr><th>去噪步数</th><th>不想象未来</th><th>先想象未来</th></tr>
+<tr><td>10（默认）</td><td class="n">71.5 ms</td><td class="n">179.1 ms</td></tr>
+<tr><td>5</td><td class="n">50.6 ms</td><td class="n">106.0 ms</td></tr>
+<tr><td>2</td><td class="n">38.1 ms</td><td class="n">61.8 ms</td></tr>
+<tr><td>1</td><td class="n">33.3 ms</td><td class="n">47.2 ms</td></tr>
+</table></div>
+<p>推理峰值显存 25.0 GB。成功率还在跑，没有数字。冒烟测试（LIBERO-10 第 0 号任务，3 回合）两种模式各 3 / 3。</p>
+</details>
+
+<details id="deviations"><summary><h2><span class="n">§ 3</span>偏离官方流程的地方</h2><span class="one">模型、权重和每回合的执行逻辑没有改，改的是评测外壳。</span></summary>
+<ol>
+<li><b>π0.5 客户端拆成多个进程。</b>官方脚本按顺序跑完一个套件；我的版本把 10 个任务分给几个进程，回合循环照抄官方，另加每回合一行的记录。</li>
+<li><b>π0.5 服务端只监听本机。</b></li>
+<li><b>基线用了两个服务端同时跑。</b>它们共用一张卡，所以基线期间记下的推理耗时不能用；§ 2 的计时是另外在空 GPU 上量的。</li>
+<li><b>Fast-WAM 的文本编码器和 VAE 换了下载地方。</b>仓库默认指向的 ModelScope 镜像现在要登录。我改从 Wan 官方的 Hugging Face 发布下载同一份权重，并用仓库自带的开关 <code>model.redirect_common_files=false</code>。</li>
+</ol>
+</details>
+
+<details id="not-run"><summary><h2><span class="n">§ 4</span>还没跑的</h2><span class="one">分层实验 H1、H2、H3 都没有结果；旁证组的对照臂在跑。</span></summary>
+<ul>
+<li>分层实验 H1（MIRA）、H2（RoboDual）、H3（SmolVLA）：见 <a href="hier-sota-repro.html#tests">具体计划 § 3</a>。</li>
+<li>π0.5 的对照臂（flow 步数、延迟、重规划间隔）：在跑，跑完补到这里。</li>
+<li>Fast-WAM 两种模式在 LIBERO-10 上的成功率：在跑。</li>
+<li>DexJoCo 灵巧手和 LIBERO-Plus：暂缓。</li>
+</ul>
+</details>
+
+<footer><a href="hier-sota-repro-brief.html">快速阅览</a> · <a href="hier-sota-repro.html">具体计划</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
+<script>
+(function () {
+  function openTarget() {
+    var id = location.hash.slice(1);
+    if (!id) return;
+    var el = document.getElementById(id);
+    while (el) { if (el.tagName === 'DETAILS') el.open = true; el = el.parentElement; }
+  }
+  window.addEventListener('hashchange', openTarget);
+  openTarget();
+})();
+</script>
+</main>
+</body>
+</html>

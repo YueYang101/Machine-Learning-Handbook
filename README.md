@@ -49,8 +49,8 @@
 | ↳ [l20-grasp-sources-review.html](l20-grasp-sources-review.html) | 配套选型综述：人手 Retarget / 模型生成 / 数学优化，数据库、方法与已有资产审计；按需查阅，不作为同时执行的任务 |
 | [manip-gen-alice-latent-brief.html](manip-gen-alice-latent-brief.html) | Manipulation 泛化测试（MG-x，独立于共享控制）：Alice / Bob + 隐码的快速阅览——四个设计问题的回答、一张方法示意图、步骤与待定事项；当前测试床是 Stage 1.2 的终点预测器；设计稿，未运行 |
 | ↳ [manip-gen-alice-latent.html](manip-gen-alice-latent.html) | MG 具体计划：已有证据按实验线标注；隐式风格化现有技术能做到哪一档；Alice 只出码、由冻结执行器展开；Bob 头部对比（MLP / 混合头 / flow matching / DDPM）；MG-0 … MG-4 全部待执行，闸门阈值暂定 |
-| [hier-sota-repro-brief.html](hier-sota-repro-brief.html) | 分层架构 SOTA 复现（HS-x，独立于共享控制）：预训练上层 + 快速下层的快速阅览——接口、上层频率、上层要不要跑完三个问题现在的回答，三组实验（π0.5 / Fast-WAM / DexJoCo 灵巧手），能说和不能说的，进度与待定事项；v1，基线复现中，无对照结果 |
-| ↳ [hier-sota-repro.html](hier-sota-repro.html) | HS 具体计划：文献数字分已核与转述；选型与弃用原因；三组实验的闸门、开关与结论边界；测量协议；偏离官方流程的六处；步骤 HS-0 … HS-4，对照臂全部待执行，阈值暂定 |
+| [hier-sota-repro-brief.html](hier-sota-repro-brief.html) | 分层架构 SOTA 复现（HS-x，独立于共享控制）：预训练上层 + 快速下层的快速阅览——什么算分层测试的四条合格条件，三个实验（H1 MIRA 显式交接 / H2 RoboDual latent 双频率 / H3 SmolVLA 冻结并截短上层），三个问题谁来回答，能说和不能说的，进度与待定事项；v2，分层实验待执行 |
+| ↳ [hier-sota-repro.html](hier-sota-repro.html) | HS 具体计划：合格条件与候选逐条对照；三个实验的上层、下层、交接、闸门与对照；文献数字分已核与转述；测量协议（训练臂先原样复现再换种子）；步骤 HS-0 … HS-9；v1 的整体式模型两组降为旁证 |
 
 ### 待验证方案
 
@@ -64,6 +64,7 @@
 
 | 页面 | 内容 |
 |---|---|
+| [hier-sota-results.html](hier-sota-results.html) | 分层架构 SOTA 复现（HS）实验记录：目前只有旁证组——官方 π0.5 的 LIBERO 四套件基线复现（98.4 / 98.0 / 97.6 / 93.2 %，各 500 回合）与 π0.5、Fast-WAM 在 H200 上的空 GPU 计时；分层实验 H1 / H2 / H3 还没有结果 |
 | [rgb-shape-stacking-results.html](rgb-shape-stacking-results.html) | 换形状叠放（RGB-Stacking 式测试，UR3e + L20，操作线）：DeepMind RGB 物体集重建成 152 个凸棱柱，训练 103 个、留出 36 个、测试 5 个组合，每档 4096 局；D（只看位姿）87.9 / 74.4 / 61.3 %，E（真实形状参数，上界）90.8 / 78.1 / 65.4 %，配对差 +2.9 / +3.7 / +4.1 点；S（SDF 形状码，新形状的码离线反解）75.6 / 42.7 / 30.9 %，比 D 低 12 / 32 / 30 点，换码诊断（最近训练码 60.5 / 50.7 %、平均码 54.3 / 30.0 %）；按细高物体与倾斜角拆分、失败分类（没到叠放位 / 到过又丢）、测试组合 3 三臂 0 %、11 段视频、训练曲线与选点、脚本基线与探针；每臂 1 个种子 |
 | [l20-stage1-1-results.html](l20-stage1-1-results.html) | Stage 1.1 结果：数采质量——Quest 遮挡手指翻转的测量（单帧 28–110 mm、每指 3–24 次/min、置信位无用、几何遮挡 4–5 倍）、速度门控（~40% 翻转不到机器人）、Mac 相机 + MediaPipe 配对分析（3-D 骨长不可信、只能用伸展比）与 Kalman 仲裁、09-20 在环失败（相机看手背投错票）与按视角选线索的修正、"伸直被弯"核查（人手 MCP 本就弯 50–70°）、工具（网页控制台、头显面板第三版）、session 台账与未解决问题 |
 | [l20-stage1-2-results.html](l20-stage1-2-results.html) | Stage 1.2 结果：意图预测／人类模型建模——95 条 pinch 示教留一 session 的阶梯结果、影子手逐帧预测视频、序列生成器与输入消融、数据侧发现、Stage 1.3 第二步物理回放预检；2026-09-14 追加：实时预测进头显（影子手／接触点、可切换预测器、与数采隔离）与「预测物体上的点」两次消融（接触头以平均先验落地） |
