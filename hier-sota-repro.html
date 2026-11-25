@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>预训练上层 + 快速下层：具体计划（分层架构 SOTA 复现） · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+.num { font:.93rem/1.7 ui-monospace,Menlo,monospace; }
+td.n, th.n { text-align:right; font-family:ui-monospace,Menlo,monospace; font-size:.9rem; }
+.pill { display:inline-block; padding:1px 7px; border-radius:20px; font-size:.8rem;
+  border:1px solid var(--line2); color:var(--sub); }
+code { font:.88em ui-monospace,Menlo,monospace; background:var(--panel); border:1px solid var(--line);
+  border-radius:5px; padding:1px 5px; overflow-wrap:anywhere; }
+.figwrap img { width:100%; max-width:560px; height:auto; display:block; margin:0 auto; border-radius:6px; }
+.tw table { min-width:560px; }
+.tw.wide table { min-width:760px; }
+.pill.ran { color:var(--green); border-color:var(--green); }
+.pill.todo { color:var(--yellow); border-color:var(--yellow); }
+.pill.none { color:var(--muted); }
+.ln { display:inline-block; padding:0 6px; border-radius:5px; font-size:.8rem; white-space:nowrap;
+  border:1px solid var(--line2); color:var(--sub); background:var(--panel); }
+.qa { border:1px solid var(--line); border-radius:10px; padding:10px 16px; margin:1em 0; }
+.qa .q { font-weight:700; }
+.qa .a { margin:.4em 0 .2em; }
+.figwrap svg { width:100%; max-width:520px; height:auto; display:block; margin:0 auto; }
+figure.figwrap figcaption { display:block; }
+table.versions { display:table; min-width:760px; }
+table.versions caption { text-align:left; color:var(--sub); padding:0 0 8px; caption-side:top; font-size:.88rem; }
+.pill.fail { color:var(--red); border-color:var(--red); }
+.ci { color:var(--sub); font-size:.86em; white-space:nowrap; }
+table.nums th:first-child, table.nums td:first-child { min-width:8em; }
+.tw.fit table { min-width:0; }
+.tw.fit td:first-child, .tw.fit th:first-child { white-space:nowrap; }
+</style>
+</head>
+<body>
+<main class="wrap">
+<a class="bk" href="index.html">← Machine Learning Handbook</a>
+<div class="kicker">实验计划 · 分层架构 SOTA 复现（HS）· 当前 v1 · 2026-11-25</div>
+<h1>预训练上层 + 快速下层：具体计划</h1>
+<p class="lede">这条线回答三个问题：预训练的 VLM 或视频模型当上层、VLA 或 RL 当下层时，两层之间传 latent 还是显式的量；上层的输入输出和运行频率是什么；上层要不要跑完。做法是复现公开的 SOTA，每次只动一个作者自己公开的推理开关。</p>
+<p class="lede">本页是执行用的具体版本：文献数字、选型、每组的闸门、测量协议和偏离官方流程的地方都在这里。只想看结论和要拍板的事，读 <a href="hier-sota-repro-brief.html">快速阅览</a>。</p>
+
+<div class="key warn" id="v1"><b>当前 v1：还没有对照结果（2026-11-25）。</b>已完成：检索与选型；berlin 上的三套环境；π0.5 在 LIBERO-10 第 0 号任务上冒烟 3/3；Fast-WAM 在同一任务上两种模式各 3/3。进行中：π0.5 四个套件的基线复现（2,000 回合）。其余各步待执行。§ 2 的数字来自别人的论文。</div>
+
+<div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
+<caption>版本索引 · 当前 v1</caption>
+<thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
+<tbody>
+<tr><td><a href="#v1">v1</a></td><td>2026-11-25</td><td>立项：四路检索与选型做完，三组实验定下，三套环境装在 berlin 上；A、B 两组冒烟测试通过，A 组基线复现开始跑</td><td>三个问题要用公开 SOTA 的同一权重、只动一个推理开关来回答</td><td>还没有对照结果；记录页待生成</td><td>待补</td></tr>
+</tbody></table></div>
+
+<nav class="toc" aria-label="本页目录"><a href="#scope">问题与范围</a> · <a href="#sota">文献现状</a> · <a href="#selection">选型</a> · <a href="#groups">三组实验</a> · <a href="#protocol">测量协议</a> · <a href="#steps">步骤与闸门</a> · <a href="#resources">资源</a> · <a href="#deviations">偏离官方流程的地方</a> · <a href="#risks">限制</a> · <a href="#decisions">待你定</a></nav>
+
+<h2 id="scope"><span class="n">§ 1</span>问题与范围</h2>
+<div class="tw"><table>
+<tr><th>问题</th><th>可测的版本</th><th>哪一组</th></tr>
+<tr><td>接口用 latent 还是显式的</td><td>视频模型上层：同一权重，测试时生成未来视频（显式的未来）对只走一次（latent）。VLM 上层：没有可运行的两接口权重，读文献</td><td>B；文献</td></tr>
+<tr><td>上层的输入输出、频率，怎么懂任务</td><td>单独量上层和下层的耗时；整个策略隔多久重跑一次时成功率怎么变；推理晚到几步时怎么变。懂任务的做法读文献</td><td>A、C；文献</td></tr>
+<tr><td>上层要不要跑完</td><td>flow 或去噪步数；视频生成开或关</td><td>A、B</td></tr>
+</table></div>
+<p><b>目标频率。</b>上层 5 到 10 Hz，下层更快。</p>
+<p><b>不在范围内。</b>训练新模型；在 L20 或 UR3e 上做实验；自己搭一个小模型来比接口。最后一条是有意不做的：自制的小对照不是 SOTA 复现。</p>
+<p><b>这条线的位置。</b>独立于共享控制，编号 HS-0 到 HS-4。它为“意图主线里上层用预训练模型”这个还没定的想法提供依据，本身不改任何已有路线。</p>
+
+<h2 id="sota"><span class="n">§ 2</span>文献现状</h2>
+<p>标 <span class="pill ran">已核</span> 的数字是我直接从 README 或论文表格读的，复现闸门只用这一类。标 <span class="pill none">转述</span> 的数字由检索代理从论文页读出，我没有逐条复核，只用来说明方向。这些都是别人的结果，机器人和任务都和我们的不同。</p>
+
+<h3 id="sota-q1">接口：latent 对显式</h3>
+<div class="tw wide"><table>
+<tr><th>来源</th><th>比的是什么</th><th>数字</th><th>核对</th></tr>
+<tr><td>Fast-WAM，<a href="https://arxiv.org/abs/2603.16666">arXiv 2603.16666</a></td><td>同一权重，LIBERO 四套件平均：先想象视频再出动作，对不想象</td><td>98.55 对 97.75</td><td><span class="pill ran">已核</span> README</td></tr>
+<tr><td>同上，论文正文</td><td>一次前向对联合去噪的耗时</td><td>190 ms 对 810 ms；去掉训练时的视频损失后 LIBERO 93.5</td><td><span class="pill none">转述</span></td></tr>
+<tr><td>Simple-WAM，<a href="https://arxiv.org/abs/2609.34981">arXiv 2609.34981</a></td><td>LIBERO-Plus（扰动）：显式对 latent；纯噪声未来只走一次</td><td>67.7 对 53.8；79.5（74.7 ms 对 286.9 ms）</td><td><span class="pill none">转述</span></td></tr>
+<tr><td>VLA-OS，<a href="https://arxiv.org/abs/2506.17561">arXiv 2506.17561</a></td><td>VLM 上层，LIBERO-Long：隐式规划、把显式规划喂回自己、分层、只出动作</td><td>71.7 / 50.7 / 74.2 / 66.0</td><td><span class="pill none">转述</span></td></tr>
+<tr><td>SONIC，<a href="https://arxiv.org/abs/2511.07820">arXiv 2511.07820</a> 与 GR00T-WholeBodyControl 文档</td><td>同一个下层，两个版本的上层接口</td><td>论文：VLA 出遥操作格式的指令（显式）。文档：GR00T N1.7 以 2.5 Hz 出 64 维动作 latent，下层 50 Hz 解码</td><td><span class="pill ran">已核</span> 两处原文</td></tr>
+</table></div>
+<p><b>读法。</b>训练见过的场景里 latent 更快、成功率持平。分布变了以后，带未来信息的做法更稳。没有一项研究在公开基准上把文字、轨迹、子目标图像和 latent 换到同一个冻结的下层上比过。</p>
+
+<h3 id="sota-q2">频率与过时</h3>
+<div class="tw wide"><table>
+<tr><th>来源</th><th>量的是什么</th><th>数字</th><th>核对</th></tr>
+<tr><td>Helix；GR00T N1；SONIC + GR00T N1.7</td><td>上层频率 / 下层频率</td><td>7 到 9 Hz / 200 Hz；10 Hz / 120 Hz；2.5 Hz / 50 Hz</td><td>前两项来自此前的讨论；SONIC <span class="pill ran">已核</span></td></tr>
+<tr><td>π0.5 README（openpi）</td><td>LIBERO 四套件，每 5 步重规划，10 步 flow</td><td>98.8 / 98.2 / 98.0 / 92.4</td><td><span class="pill ran">已核</span></td></tr>
+<tr><td>HiRT</td><td>VLM 每步都跑，对每 6 步跑一次</td><td>94.2 / 76.0 降到 63.4 / 52.5</td><td><span class="pill none">转述</span>，原表没写基准名</td></tr>
+<tr><td>SmolVLA</td><td>动作块 50 步，执行 1、10、30、50 步后再重跑</td><td>80.3 / 82.8 / 70.8 / 51.8</td><td><span class="pill none">转述</span></td></tr>
+<tr><td>OpenHelix，<a href="https://arxiv.org/abs/2505.03912">arXiv 2505.03912</a></td><td>CALVIN：latent 保持 10 步对 60 步</td><td>3.45 对 3.44</td><td><span class="pill none">转述</span></td></tr>
+<tr><td>DexJoCo，<a href="https://arxiv.org/abs/2605.16257">arXiv 2605.16257</a> 表 II</td><td>π0.5，灵巧手，异步推理，rand-obj</td><td>11 个任务平均 54.1 ± 1.8</td><td><span class="pill ran">已核</span></td></tr>
+<tr><td>VLA-Adapter，<a href="https://arxiv.org/abs/2509.09372">arXiv 2509.09372</a>；GR00T N1.5</td><td>冻结上层的 VLM</td><td>VLA-Adapter：LIBERO-Long 95.0 降到 86.4。GR00T N1.5：冻结后比 N1 更好，但同时改了别的</td><td><span class="pill none">转述</span></td></tr>
+</table></div>
+<p><b>读法。</b>上层隔得越久才更新，成功率通常越低，但 OpenHelix 报告不敏感，结论不统一。几个双频率系统在训练时就模拟了上层的延迟，没有一个公布完整的频率扫描。要不要冻结上层，文献也不一致。</p>
+
+<h3 id="sota-q3">不跑完</h3>
+<div class="tw wide"><table>
+<tr><th>做法</th><th>例子</th><th>代价</th><th>能在现成权重上直接切吗</th></tr>
+<tr><td>训练学预测视频，测试不生成</td><td>Fast-WAM</td><td>LIBERO 约 0.8 个点 <span class="pill ran">已核</span></td><td>能，作者训练时就支持两种模式</td></tr>
+<tr><td>视频模型只走一步，读中间特征</td><td>VPP（<a href="https://arxiv.org/abs/2412.14803">arXiv 2412.14803</a>）：1 步 4.33，2 步 4.19 <span class="pill none">转述</span></td><td>—</td><td>不能，动作头是在那一步的特征上训的</td></tr>
+<tr><td>减少去噪步数</td><td>Cosmos Policy 5 步改 1 步：67.1 降到 66.4，0.61 s 降到 0.16 s <span class="pill none">转述</span></td><td>小</td><td>能</td></tr>
+<tr><td>VLM 只用一半层</td><td>SmolVLA 用 32 层里的 16 层：78.5 对 80.3 <span class="pill none">转述</span></td><td>约 2 个点</td><td>不能，要按那一层重训动作头</td></tr>
+<tr><td>没训练过就跳层</td><td>随机跳一半层掉约 6 个点 <span class="pill none">转述</span></td><td>大</td><td>能切，但测到的是分布外崩溃</td></tr>
+</table></div>
+
+<h2 id="selection"><span class="n">§ 3</span>选型</h2>
+<p>筛选条件按这个顺序：权重免授权；评测基准不需要 Vulkan；单张 H200 放得下；作者公开了要动的那个开关。berlin 上没有 Hugging Face 令牌，也没有 NVIDIA 的 Vulkan 驱动。</p>
+<div class="tw wide"><table>
+<tr><th>候选</th><th>结果</th><th>原因</th></tr>
+<tr><td>π0.5，openpi，<code>gs://openpi-assets/checkpoints/pi05_libero</code></td><td><b>选用（A）</b></td><td>公开桶，不需要 PaliGemma 授权；重规划步数和 flow 步数都是公开参数</td></tr>
+<tr><td>Fast-WAM，<code>yuanty/fastwam</code> 的 <code>libero_optional_idm_2cam224.pt</code></td><td><b>选用（B）</b></td><td>一个权重、两种官方推理模式，README 给了两个数字；底座 Wan2.2-TI2V-5B 免授权</td></tr>
+<tr><td>DexJoCo 的 π0.5，<code>DexJoCo/DexJoCo-Pi05</code></td><td><b>选用（C）</b></td><td>检索到的 MuJoCo 基准里，只有它同时有 16 自由度以上的手和公开的 π0.5 权重；单臂任务基线 24% 到 89%，没有饱和</td></tr>
+<tr><td>Simple-WAM，<code>rpzhou/Simple-WAM</code></td><td>候选</td><td>自带 LIBERO-Plus 评测；全量约一万个变体，只能抽样，待你定</td></tr>
+<tr><td>Cosmos Policy；GR00T N1.7-LIBERO</td><td>不用</td><td>底座仓库要登录点授权</td></tr>
+<tr><td>OpenHelix；VPP</td><td>不用</td><td>只有 CALVIN 权重，数据 517 GB，配额放不下</td></tr>
+<tr><td>DreamZero</td><td>不用</td><td>实时推理要两张卡，评测走 Isaac</td></tr>
+<tr><td>VLA-OS</td><td>不用</td><td>有接口开关，但没有放出策略权重和评测代码</td></tr>
+<tr><td>RoboTwin、SimplerEnv 上的各项</td><td>不用</td><td>渲染要 Vulkan</td></tr>
+</table></div>
+
+<h3 id="papers">选用的三项</h3>
+<div class="tw wide"><table>
+<tr><th>项</th><th>论文</th><th>输入 / 输出</th><th>代码与权重</th><th>离我们的本体差什么</th></tr>
+<tr><td>π0.5</td><td>π0.5: a Vision-Language-Action Model with Open-World Generalization，Physical Intelligence，2025，<a href="https://arxiv.org/abs/2504.16054">arXiv 2504.16054</a></td><td>两路 224 像素图像、8 维状态、语言 / 10 步动作块（LIBERO 配置）</td><td><a href="https://github.com/Physical-Intelligence/openpi">openpi</a>，提交 215abfb（2026-08-24）；权重公开</td><td>平行夹爪，7 维动作；没有手指</td></tr>
+<tr><td>Fast-WAM</td><td>Fast-WAM: Do World Action Models Need Test-time Future Imagination?，Yuan、Dong、Liu、Zhao，2026，<a href="https://arxiv.org/abs/2603.16666">arXiv 2603.16666</a></td><td>两路图像、状态、语言 / 32 步动作块，可选 9 帧未来视频 latent</td><td><a href="https://github.com/yuantianyuan01/FastWAM">FastWAM</a>，提交 7faa711（2026-08-20）；权重公开</td><td>同上</td></tr>
+<tr><td>DexJoCo</td><td>DexJoCo: A Benchmark and Toolkit for Task-Oriented Dexterous Manipulation on MuJoCo，Wang 等 14 人，2026，<a href="https://arxiv.org/abs/2605.16257">arXiv 2605.16257</a></td><td>前视和腕部图像、23 维状态、语言 / 30 步动作块，每步 22 维（6 维腕 + 16 维手）</td><td><a href="https://github.com/brave-eai/dexjoco">dexjoco</a>，提交 8d23b0f（2026-05-29）；每个任务一份 π0.5 LoRA 权重</td><td>16 自由度手装在 Panda 上，不是 L20 + UR3e。我们仓库已经 vendor 了它的场景</td></tr>
+</table></div>
+<p><b>和 L20 最近的资产。</b>DexJoCo-X 里有一个 <code>linkerhand_l20</code> 环境和 300 条演示，但它的说明写着模型是从 LinkerHand L25 改的，不是官方 L20，也没有策略权重。这一条由检索代理读到，我没有核对文件。</p>
+
+<h2 id="groups"><span class="n">§ 4</span>三组实验</h2>
+
+<h3 id="group-a">A 组：π0.5，LIBERO</h3>
+<div class="tw wide"><table>
+<tr><th>项</th><th>内容</th></tr>
+<tr><td>结构</td><td>PaliGemma（SigLIP + Gemma 2B）先算一次前缀，300M 的动作头做 flow matching，每步都读前缀的缓存</td></tr>
+<tr><td>官方设置</td><td>动作块 10 步，执行前 5 步后重规划，flow 10 步，种子 7，每任务 50 回合，最多 220 / 280 / 300 / 520 步</td></tr>
+<tr><td>闸门</td><td>四个套件各 500 回合，对 README 的 98.8 / 98.2 / 98.0 / 92.4。规则见 § 5</td></tr>
+<tr><td>开关 1：重规划间隔</td><td>每 1、2、5、10 步重跑一次策略（LIBERO-10，各 500 回合）。作者公开的参数</td></tr>
+<tr><td>开关 2：flow 步数</td><td>1、2、3、5、10。作者公开的 <code>num_steps</code> 参数</td></tr>
+<tr><td>压力测试：推理晚到</td><td>动作块晚 2 步或 4 步才生效，中间继续执行上一块。模型没有为此训练过，所以只报数，不对设计下结论</td></tr>
+<tr><td>对照臂</td><td>默认设置经新的服务端和客户端再跑一遍，用来核对改动没有影响结果，并给出两次运行之间的噪声</td></tr>
+<tr><td>能说</td><td>这个策略要多频繁地重跑才不掉分；动作头少走几步掉多少；耗时里前缀和每个 flow 步各占多少</td></tr>
+<tr><td>不能说</td><td>双频率结构的结论。这里每次重跑都是 VLM 和动作头一起跑</td></tr>
+</table></div>
+
+<h3 id="group-b">B 组：Fast-WAM，LIBERO</h3>
+<div class="tw wide"><table>
+<tr><th>项</th><th>内容</th></tr>
+<tr><td>结构</td><td>Wan2.2-TI2V-5B 视频 DiT 加一个动作 DiT（宽 1024，30 层），两者共享注意力</td></tr>
+<tr><td>官方设置</td><td>动作块 32 步，执行前 10 步后重规划，去噪 10 步，<code>sigma_shift=1.0</code>，每任务 50 回合，最多 400 或 700 步</td></tr>
+<tr><td>闸门也是对照</td><td>两种官方模式各跑四个套件：<code>idm</code>（先想象未来视频）99.0 / 98.6 / 99.6 / 97.0，平均 98.55；<code>first_frame</code>（不想象）98.2 / 97.8 / 99.2 / 95.8，平均 97.75</td></tr>
+<tr><td>开关 2</td><td>去噪步数 10、5、2、1（视耗时决定跑哪几档）</td></tr>
+<tr><td>能说</td><td>两种模式的耗时比；训练见过的场景里有没有可测的差别</td></tr>
+<tr><td>不能说</td><td>“不生成也一样好”。官方差 0.8 个点，约等于 2,000 回合的两倍标准误；扰动下的结论要 LIBERO-Plus</td></tr>
+</table></div>
+
+<h3 id="group-c">C 组：DexJoCo 的 π0.5，灵巧手</h3>
+<div class="tw wide"><table>
+<tr><th>项</th><th>内容</th></tr>
+<tr><td>结构</td><td>和 A 组同一个 π0.5，LoRA 微调，每个任务一份权重；控制 50 Hz（环境的 <code>control_dt</code> 是 0.02），动作块 30 步</td></tr>
+<tr><td>官方设置</td><td>异步推理：缓冲里剩的动作少于 24 步就发新请求，推理期间仿真继续走，新旧动作块在重叠处融合；每任务 50 回合，3 个种子</td></tr>
+<tr><td>闸门</td><td>论文表 II（rand-obj）：Water Plant 88.7 ± 3.1，Pick Bucket 84.0 ± 7.2，Fold Glasses 72.0 ± 3.5。用官方客户端，独占 GPU</td></tr>
+<tr><td>对照臂</td><td>把“推理晚到几步”改成我指定的固定步数；再扫重规划阈值和 flow 步数。这一版不是官方流程</td></tr>
+<tr><td>能说</td><td>多指手任务对推理延迟和重跑间隔有多敏感</td></tr>
+<tr><td>不能说</td><td>闸门没过之前，这一组什么都不算</td></tr>
+</table></div>
+
+<h2 id="protocol"><span class="n">§ 5</span>测量协议</h2>
+<ul>
+<li><b>闸门规则。</b>README 的数字本身也是一次抽样，所以按两个样本比：每个套件各 500 回合，差距在约 3 个点以内，四套件平均在 1.5 个点以内，算过。某个套件没过，先换一个种子重跑，再去找原因。阈值暂定。</li>
+<li><b>配对。</b>所有臂用 LIBERO 自带的同一批初始状态，按“任务、回合序号”配对比较。</li>
+<li><b>区间。</b>成功率报回合数和 95% 区间。几百个回合上 1 到 2 个点的差不算发现。</li>
+<li><b>噪声基线。</b>对照臂和基线之间的差，就是同一设置跑两次的噪声；每个臂的差都要和它比。</li>
+<li><b>计时。</b>空 GPU、批大小 1、先预热、每次调用前后同步。上层和下层分开：π0.5 用不同 flow 步数的耗时拟合一条直线，截距是前缀，斜率是每个 flow 步。</li>
+<li><b>精度。</b>保持作者的设置，不改半精度或编译选项。</li>
+<li><b>故障不算失败。</b>策略服务端连不上时客户端直接退出，不记成失败回合；一个臂只有回合数齐了才算跑完。</li>
+</ul>
+
+<h2 id="steps"><span class="n">§ 6</span>步骤与闸门</h2>
+<div class="tw wide"><table>
+<tr><th>步</th><th>做什么</th><th>闸门</th><th>状态</th></tr>
+<tr><td><b>HS-0</b></td><td>检索三个问题的 SOTA；核对权重授权和体积；定三组</td><td>每组至少一个免授权、带公开数字的权重</td><td><span class="pill ran">完成</span> 11-25</td></tr>
+<tr><td><b>HS-1a</b></td><td>A 组基线：四套件各 500 回合</td><td>见 § 5</td><td><span class="pill todo">进行中</span> 冒烟 3/3</td></tr>
+<tr><td><b>HS-1b</b></td><td>A 组对照臂，LIBERO-10：对照臂、flow 步数 4 档、延迟 2 档、重规划间隔 3 档</td><td>先过 HS-1a；计时随步数线性变化（否则 flow 步数没有生效）</td><td><span class="pill todo">待执行</span> 队列已写好</td></tr>
+<tr><td><b>HS-2</b></td><td>B 组：两种模式各四套件</td><td>各自平均在 README 的 1.5 个点以内</td><td><span class="pill todo">待执行</span> 冒烟各 3/3</td></tr>
+<tr><td><b>HS-3a</b></td><td>C 组闸门：三个任务，官方客户端，独占 GPU</td><td>每个任务在论文数字的约 8 个点以内（暂定）</td><td><span class="pill todo">待执行</span> 环境与权重就位</td></tr>
+<tr><td><b>HS-3b</b></td><td>C 组对照臂</td><td>先过 HS-3a</td><td><span class="pill todo">待执行</span></td></tr>
+<tr><td><b>HS-4</b></td><td>两个模型的空 GPU 计时；写记录页 <code>hier-sota-results.html</code>（待生成）；清理权重</td><td>—</td><td><span class="pill todo">待执行</span></td></tr>
+</table></div>
+
+<h3 id="now">当前一步：HS-1</h3>
+<ol>
+<li>等基线跑完，按 § 5 判是否过闸门。</li>
+<li>空 GPU 上量 π0.5 的耗时，确认随 flow 步数线性变化。</li>
+<li>放 A 组队列，同时开 B 组的两种模式。</li>
+<li>A 组队列空出 GPU 后，C 组闸门独占 GPU 跑。</li>
+</ol>
+
+<h2 id="resources"><span class="n">§ 7</span>资源</h2>
+<ul>
+<li><b>机器。</b>berlin，一张 H200（GPU 3，143 GB），20 个核（60 到 79，全部进程绑在这一段）。渲染用 MuJoCo 的 EGL，已测通。</li>
+<li><b>位置。</b>全部在 <code>berlin · ~/Projects/hier_sota</code>：<code>harness/</code> 是我写的启动和评测脚本，<code>results/</code> 是每回合一行的记录，<code>logs/</code> 是日志。</li>
+<li><b>磁盘。</b>配额 200 GB，立项前已用 102 GB，现在 174 GB。这条线下载的：π0.5 权重 12 GB，Fast-WAM 权重 12 GB 加 Wan 的文本编码器和 VAE 14 GB，DexJoCo 三个任务 19 GB，三套环境约 22 GB。</li>
+<li><b>清理。</b>跑完后先把结果、配置和日志拷回 Mac，再删这条线下载的权重和环境，不动别的目录。</li>
+</ul>
+
+<h2 id="deviations"><span class="n">§ 8</span>偏离官方流程的地方</h2>
+<p>模型、权重和每回合的执行逻辑都没有改。下面是评测外壳上的改动，逐条列出。</p>
+<ol>
+<li><b>A 组客户端拆成多个进程。</b>官方脚本按顺序跑完一个套件。我的版本把 10 个任务分给几个进程，回合循环逐行照抄官方的，另加每回合一行的记录和断点续跑。</li>
+<li><b>A 组服务端。</b>只监听本机；flow 步数可以随请求指定，这样一个服务端服务所有臂。用的是作者的 <code>num_steps</code> 参数。</li>
+<li><b>A 组基线用了两个服务端。</b>为了快，四个套件分给两个服务端同时跑。它们共用一张卡，所以基线期间记下的推理耗时不能用，计时另外单独量。</li>
+<li><b>B 组的文本编码器和 VAE 换了下载地方。</b>仓库默认指向的 ModelScope 镜像现在要登录。我改从 Wan 官方的 Hugging Face 发布下载同一份权重，并用仓库自带的开关 <code>model.redirect_common_files=false</code>。</li>
+<li><b>B 组一张卡上开多个管理进程。</b>官方管理脚本每张卡一个进程。我把 40 个任务分成几份任务清单，各起一个管理进程，脚本本身不改。</li>
+<li><b>C 组对照臂。</b>官方客户端的延迟由机器快慢决定。对照臂要一个可以指定的延迟，这需要改客户端的主循环；闸门仍用原版。</li>
+</ol>
+
+<h2 id="risks"><span class="n">§ 9</span>限制</h2>
+<ul>
+<li><b>LIBERO 已经饱和。</b>基线在 92% 到 99%，开关的影响可能被天花板盖住。重点看 LIBERO-10 和 C 组。</li>
+<li><b>A 组不是双频率。</b>见 § 4。双频率的结论只能引文献，而文献自己也不一致。</li>
+<li><b>B 组在标准 LIBERO 上分不出高下。</b>见 § 4。</li>
+<li><b>C 组依赖墙钟时间。</b>闸门的数字和机器有关，论文的延迟表是在 RTX 4090 上量的。过不了时先看实际延迟了几步，再判断是不是复现失败。</li>
+<li><b>每个臂只有一个种子。</b>除闸门的重跑以外，没有多种子。</li>
+<li><b>都不是 L20。</b>对我们自己的线，这些结果是类比，不能写成“已经验证”。</li>
+</ul>
+
+<h2 id="decisions"><span class="n">§ 10</span>待你定</h2>
+<div class="tw"><table>
+<tr><th>事项</th><th>默认</th><th>我的建议</th></tr>
+<tr><td>B 组加不加 LIBERO-Plus 抽样臂</td><td>不加</td><td>加。每种模式抽约 1,000 个变体，两种模式用同一批；要另下约 18 GB，得先删掉 A 组的权重腾地方</td></tr>
+<tr><td>C 组的任务</td><td>Water Plant、Pick Bucket、Fold Glasses</td><td>按默认。想看更难的可以加 Pinch Tongs（论文 24.0）</td></tr>
+<tr><td>Hugging Face 令牌</td><td>不给</td><td>不急。给了可以补 Cosmos Policy 和 GR00T N1.7 两个对比</td></tr>
+<tr><td>闸门阈值</td><td>§ 5 和 § 6 的暂定值</td><td>先按暂定值走，出结果后一起看</td></tr>
+<tr><td>跑完删除权重</td><td>删</td><td>按你说的删，删前列清单</td></tr>
+</table></div>
+
+<footer><a href="hier-sota-repro-brief.html">快速阅览</a> · <a href="manip-gen-alice-latent.html">另一条独立路线：MG 具体计划</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
+</main>
+</body>
+</html>

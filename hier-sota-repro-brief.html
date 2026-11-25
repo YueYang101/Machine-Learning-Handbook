@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>预训练上层 + 快速下层：快速阅览（分层架构 SOTA 复现） · Machine Learning Handbook</title>
+<script>
+window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg:#f9f9f7; --panel:#fcfcfb; --ink:#1a1a1a; --sub:#52514e; --muted:#898781;
+  --line:#e1e0d9; --line2:#c3c2b7;
+  --blue:#2a78d6; --orange:#eb6834; --green:#1baf7a; --red:#e34948; --magenta:#e87ba4; --yellow:#b98000;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg:#0d0d0d; --panel:#1a1a19; --ink:#f2f1ec; --sub:#c3c2b7; --muted:#898781;
+    --line:#2c2c2a; --line2:#383835;
+    --blue:#3987e5; --orange:#e0692f; --green:#27b07e; --red:#e66767; --magenta:#d55181; --yellow:#d09a2e;
+  }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.8 system-ui,-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:40px 20px 100px; }
+.kicker { color:var(--muted); font-size:.85rem; letter-spacing:.08em; }
+h1 { font-size:1.85rem; line-height:1.35; margin:.3em 0 .4em; }
+.lede { color:var(--sub); font-size:1.02rem; }
+h2 { font-size:1.35rem; margin:2.6em 0 .6em; }
+h2 .n { color:var(--blue); font-weight:800; margin-right:.5em; font-size:.95em; }
+h3 { font-size:1.08rem; margin:1.8em 0 .5em; }
+a { color:var(--blue); text-decoration:none; }
+a:hover { text-decoration:underline; }
+p, li { margin:.6em 0; }
+.key { border-left:3px solid var(--blue); background:var(--panel); border-radius:0 8px 8px 0;
+  padding:10px 16px; margin:1.2em 0; }
+.key.bad { border-left-color:var(--red); }
+.key.good { border-left-color:var(--green); }
+.key.warn { border-left-color:var(--yellow); }
+.figwrap { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px; margin:1.4em 0; }
+.figwrap .cap { color:var(--sub); font-size:.9rem; margin-top:8px; line-height:1.65; }
+.figrow { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:1.4em 0; }
+.figrow .figwrap { margin:0; }
+table { border-collapse:collapse; width:100%; margin:1.2em 0; font-size:.93rem; }
+th, td { border-bottom:1px solid var(--line); padding:7px 10px; text-align:left; vertical-align:top; }
+th { color:var(--sub); border-bottom-color:var(--line2); }
+.tw { overflow-x:auto; }
+.math { background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:6px 16px; margin:1.2em 0; overflow-x:auto; }
+.math .why { color:var(--sub); font-size:.92rem; margin:4px 0 8px; }
+mjx-container[display="true"] { overflow-x:auto; overflow-y:hidden; max-width:100%; padding:3px 0; }
+.algo { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 16px; margin:0; }
+.algo .t { font-weight:700; margin-bottom:4px; }
+.algo ol { margin:4px 0 4px 20px; padding:0; }
+.duo { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; margin:1.2em 0; }
+.toc { color:var(--sub); font-size:.92rem; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  padding:10px 0; margin:1.6em 0; }
+footer { color:var(--muted); font-size:.85rem; border-top:1px solid var(--line); margin-top:60px; padding-top:14px; }
+.bk { display:inline-block; color:var(--muted); font-size:.85rem; margin-bottom:6px; }
+.bk:hover { color:var(--blue); }
+.num { font:.93rem/1.7 ui-monospace,Menlo,monospace; }
+td.n, th.n { text-align:right; font-family:ui-monospace,Menlo,monospace; font-size:.9rem; }
+.pill { display:inline-block; padding:1px 7px; border-radius:20px; font-size:.8rem;
+  border:1px solid var(--line2); color:var(--sub); }
+code { font:.88em ui-monospace,Menlo,monospace; background:var(--panel); border:1px solid var(--line);
+  border-radius:5px; padding:1px 5px; overflow-wrap:anywhere; }
+.figwrap img { width:100%; max-width:560px; height:auto; display:block; margin:0 auto; border-radius:6px; }
+.tw table { min-width:560px; }
+.tw.wide table { min-width:760px; }
+.pill.ran { color:var(--green); border-color:var(--green); }
+.pill.todo { color:var(--yellow); border-color:var(--yellow); }
+.pill.none { color:var(--muted); }
+.ln { display:inline-block; padding:0 6px; border-radius:5px; font-size:.8rem; white-space:nowrap;
+  border:1px solid var(--line2); color:var(--sub); background:var(--panel); }
+.qa { border:1px solid var(--line); border-radius:10px; padding:10px 16px; margin:1em 0; }
+.qa .q { font-weight:700; }
+.qa .a { margin:.4em 0 .2em; }
+.figwrap svg { width:100%; max-width:520px; height:auto; display:block; margin:0 auto; }
+figure.figwrap figcaption { display:block; }
+table.versions { display:table; min-width:760px; }
+table.versions caption { text-align:left; color:var(--sub); padding:0 0 8px; caption-side:top; font-size:.88rem; }
+.pill.fail { color:var(--red); border-color:var(--red); }
+.ci { color:var(--sub); font-size:.86em; white-space:nowrap; }
+table.nums th:first-child, table.nums td:first-child { min-width:8em; }
+.tw.fit table { min-width:0; }
+.tw.fit td:first-child, .tw.fit th:first-child { white-space:nowrap; }
+</style>
+</head>
+<body>
+<main class="wrap">
+<a class="bk" href="index.html">← Machine Learning Handbook</a>
+<div class="kicker">实验计划 · 分层架构 SOTA 复现（HS）· 快速阅览 · 当前 v1 · 2026-11-25</div>
+<h1>预训练上层 + 快速下层：快速阅览</h1>
+<p class="lede">这条线想弄清三件事：上层和下层之间传什么，上层能跑多快，上层能不能不跑完。做法是复现几个公开的 SOTA，每次只动一个推理开关，看成功率和耗时怎么变。</p>
+<p class="lede">本页只讲结论、进度和要你拍板的事，三分钟读完。选型依据、每一组的闸门和做法，都在 <a href="hier-sota-repro.html">具体计划</a>。</p>
+
+<div class="key warn" id="v1"><b>当前 v1：还没有对照结果（2026-11-25）。</b>检索和选型做完了，三套环境都装在 berlin 上。π0.5 和 Fast-WAM 的冒烟测试各跑了 3 回合，全部成功。π0.5 的基线复现正在跑（共 2,000 回合）。本页里“哪种做法更好”的数字都来自别人的论文，不是我们跑出来的。</div>
+
+<div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
+<caption>版本索引 · 当前 v1</caption>
+<thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
+<tbody>
+<tr><td><a href="#v1">v1</a></td><td>2026-11-25</td><td>立项：四路检索与选型做完，三组实验定下，三套环境装在 berlin 上；A、B 两组冒烟测试通过，A 组基线复现开始跑</td><td>三个问题要用公开 SOTA 的同一权重、只动一个推理开关来回答</td><td>还没有对照结果；记录页待生成</td><td>待补</td></tr>
+</tbody></table></div>
+
+<nav class="toc" aria-label="本页目录"><a href="#answers">三个问题现在的回答</a> · <a href="#groups">三组实验</a> · <a href="#limits">能说和不能说的</a> · <a href="#steps">进度</a> · <a href="#decisions">待你定</a></nav>
+
+<h2 id="answers"><span class="n">1</span>三个问题现在的回答</h2>
+<p>每个回答分两半：文献怎么说，我们自己能测什么。</p>
+
+<div class="qa"><div class="q">接口用 latent 还是显式的？</div>
+<p class="a"><b>文献：分场景。</b>在训练见过的场景里，latent 更快，成功率和显式的持平。换了视角、光照、数据很少或任务没见过时，带着“未来会怎样”这份信息的做法明显更稳。</p>
+<p class="a"><b>我们能测的只有一半。</b>视频模型当上层的那一侧，Fast-WAM 放出了同一个权重、两种模式的官方开关，我们跑（B 组）。VLM 当上层的那一侧，没有任何开源项目同时放出两种接口的可运行权重，这一半只能读文献。</p></div>
+
+<div class="qa"><div class="q">上层的输入输出和运行频率是什么，怎么让它懂我们的任务？</div>
+<p class="a"><b>输入输出。</b>输入基本都是一到三路相机图像、一句语言指令和本体状态。输出要么是一段动作块，要么是交给下层的 latent。</p>
+<p class="a"><b>频率。</b>公开数字里上层在 2.5 到 10 Hz：Helix 7 到 9 Hz，SONIC 配 GR00T N1.7 是 2.5 Hz，DreamZero 约 7 Hz 但要两张 GB200。你要的 5 到 10 Hz 在这个范围里。</p>
+<p class="a"><b>懂任务。</b>现在的做法都是微调：每个任务几十到几百条演示，或者多任务一起训。要不要冻结上层，文献说法不一。</p>
+<p class="a"><b>我们能测的。</b>“上层慢、下层快而且下层自己有反馈”的真双频率结构，没有一个免授权、能在 MuJoCo 上评测的公开权重，这部分只能引文献。我们测两件相近的事：整个策略隔多久重跑一次，以及推理结果晚到几步（A 组和 C 组）。</p></div>
+
+<div class="qa"><div class="q">上层要不要跑完？</div>
+<p class="a"><b>视频模型：训练时学预测视频，测试时可以不生成。</b>Fast-WAM 论文报告，这样在训练见过的场景里只掉约 1 个点，耗时降到约四分之一。扰动下差距会变大，另外两篇论文报告了 3 到 14 个点。</p>
+<p class="a"><b>VLM：能直接动的是去噪步数和动作块执行多长。</b>只取中间层要重训动作头；在现成权重上硬切，测到的是“没训练过所以崩”，不是这个设计好不好。</p>
+<p class="a"><b>我们能测的。</b>flow 步数（A 组），生成和不生成（B 组）。</p></div>
+
+<h2 id="groups"><span class="n">2</span>三组实验</h2>
+<p>三组都用作者放出的权重和评测脚本，不重训。每组先把论文或 README 的数字复现出来，过了才算对照。</p>
+<div class="qa"><div class="q">A 组：π0.5（官方 openpi），LIBERO</div>
+<p class="a"><b>先复现到：</b>四个套件 98.8 / 98.2 / 98.0 / 92.4。</p>
+<p class="a"><b>只动：</b>每 1、2、5、10 步重跑一次策略；flow 步数 1、2、3、5、10；推理晚到 2、4 步。</p></div>
+<div class="qa"><div class="q">B 组：Fast-WAM（官方），LIBERO</div>
+<p class="a"><b>先复现到：</b>两种模式的四套件平均 98.55 和 97.75。</p>
+<p class="a"><b>只动：</b>同一个权重，先想象未来视频再出动作，或者不想象。</p></div>
+<div class="qa"><div class="q">C 组：DexJoCo 的 π0.5，16 自由度灵巧手</div>
+<p class="a"><b>先复现到：</b>Water Plant 88.7，Pick Bucket 84.0，Fold Glasses 72.0。</p>
+<p class="a"><b>只动：</b>推理晚到几步、重规划阈值、flow 步数。</p></div>
+<p>耗时在空 GPU 上单独量，上层和下层分开报。你的 5 到 10 Hz 目标看的是上层那一项。</p>
+
+<h2 id="limits"><span class="n">3</span>能说和不能说的</h2>
+<div class="key warn"><b>A 组不是双频率实验。</b>π0.5 一次调用同时跑 VLM 和动作头，然后照着动作块开环执行。它回答的是“整个策略多久要重跑一次”，不回答“上层慢、下层快且自带反馈”。</div>
+<div class="key warn"><b>B 组在标准 LIBERO 上分不出高下。</b>官方两种模式只差 0.8 个点，2,000 回合的抽样误差就有这么大。这一组能给的是耗时比，以及“训练见过的场景里没有可测的差别”。扰动下的差别要用 LIBERO-Plus 测，全量约一万个变体，单卡跑不完，只能抽样（见待你定第 1 条）。</div>
+<div class="key warn"><b>C 组的官方评测和机器快慢有关。</b>DexJoCo 的评测是异步的：推理的时候仿真继续走。所以闸门那一次要独占 GPU 跑。对照臂我会改成“晚到几步由我指定”的版本，并注明这不是官方流程。</div>
+<div class="key"><b>三组都不是我们的 L20。</b>LIBERO 是平行夹爪，DexJoCo 是装在 Panda 上的 16 自由度手。对我们自己的线，这些结果只能当类比。</div>
+
+<h2 id="steps"><span class="n">4</span>进度</h2>
+<div class="tw fit"><table>
+<tr><th>步</th><th>做什么</th><th>状态</th></tr>
+<tr><td><b>HS-0</b></td><td>四路检索，核对每个权重是否免授权，定下三组</td><td><span class="pill ran">完成</span> 11-25</td></tr>
+<tr><td><b>HS-1</b></td><td>A 组：基线复现，然后跑对照臂</td><td><span class="pill todo">进行中</span> 冒烟 3/3；基线在跑</td></tr>
+<tr><td><b>HS-2</b></td><td>B 组：两种模式全量评测</td><td><span class="pill todo">待执行</span> 冒烟两种模式各 3/3</td></tr>
+<tr><td><b>HS-3</b></td><td>C 组：闸门，然后对照臂</td><td><span class="pill todo">待执行</span> 环境和三个任务的权重已就位</td></tr>
+<tr><td><b>HS-4</b></td><td>空 GPU 计时，结果写成记录页</td><td><span class="pill todo">待执行</span></td></tr>
+</table></div>
+<p>全部在 berlin 的一张 H200 上跑。粗估 A 组 4 到 5 小时，B 组全量约 8 小时，C 组还没量过。</p>
+
+<h2 id="decisions"><span class="n">5</span>待你定</h2>
+<ol>
+<li><b>B 组要不要加 LIBERO-Plus 抽样臂。</b>每种模式抽约 1,000 个变体，各 2 到 3 小时。我建议加：这是唯一能分出“生成”和“不生成”的地方。</li>
+<li><b>C 组用哪几个任务。</b>默认是 Water Plant、Pick Bucket、Fold Glasses，都是单臂任务，论文基线在 72% 到 89%。</li>
+<li><b>要不要给 berlin 一个 Hugging Face 令牌。</b>Cosmos Policy 和 GR00T N1.7 的底座要点一次授权，现在跳过了。不给就维持现状。</li>
+<li><b>跑完后删除下载的权重。</b>约 60 GB。你说过可以删；删之前我会把结果、配置和日志拷回 Mac，并列出删除清单。</li>
+</ol>
+
+<footer><a href="hier-sota-repro.html">具体计划</a> · <a href="manip-gen-alice-latent-brief.html">另一条独立路线：MG</a> · <a href="index.html">← Machine Learning Handbook</a></footer>
+</main>
+</body>
+</html>

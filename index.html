@@ -94,7 +94,7 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 <nav aria-label="内容分类">
   <div class="tabs" role="tablist" aria-label="内容分类">
     <button type="button" role="tab" id="tab-theory" aria-controls="panel-theory" aria-selected="true" tabindex="0">理论<span class="cnt">7</span></button>
-    <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">11</span></button>
+    <button type="button" role="tab" id="tab-plans" aria-controls="panel-plans" aria-selected="false" tabindex="-1">实验计划<span class="cnt">13</span></button>
     <button type="button" role="tab" id="tab-experiments" aria-controls="panel-experiments" aria-selected="false" tabindex="-1">实验记录<span class="cnt">7</span></button>
     <button type="button" role="tab" id="tab-pool" aria-controls="panel-pool" aria-selected="false" tabindex="-1">待并入<span class="cnt">1</span></button>
     <button type="button" role="tab" id="tab-tools" aria-controls="panel-tools" aria-selected="false" tabindex="-1">工具</button>
@@ -150,7 +150,7 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 <h2 id="plans">实验计划<span class="en">PLANNED</span></h2>
 <p class="note">研究路线、项目选型综述和待执行操作说明。实际运行后在「实验记录」保留带 run ID 的结果；长期维护的操作协议留在此处并双向索引。</p>
 
-<nav class="plan-jumps" aria-label="实验计划快速跳转"><a href="#plan-long-term">长期能力路线</a><a href="#plan-shared-control">共享控制与小阶段</a><a href="#plan-manip-gen">Manipulation 泛化测试</a><a href="#plan-options">待验证方案</a></nav>
+<nav class="plan-jumps" aria-label="实验计划快速跳转"><a href="#plan-long-term">长期能力路线</a><a href="#plan-shared-control">共享控制与小阶段</a><a href="#plan-manip-gen">Manipulation 泛化测试</a><a href="#plan-hier-sota">分层架构 SOTA 复现</a><a href="#plan-options">待验证方案</a></nav>
 <h3>研究路线</h3>
 <p class="note">论文地图 + 自己的架构与实验设计。</p>
 <a class="card" id="plan-long-term" href="l20-robust-grasp.html">
@@ -175,6 +175,14 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 </a>
 <nav class="sub stage-list" aria-label="Manipulation 泛化测试的页面">
   <a href="manip-gen-alice-latent.html"><span class="rel">MG · 具体计划 ·</span> <span class="t2">证据、隐式风格化四档、Alice 出码、Bob 头部对比、MG-0 … MG-4</span><br><span class="d2">执行用的版本：已有证据按实验线标注；隐式风格化现有技术能做到哪一档；Alice 只出码、由冻结执行器展开；Bob 头部对比（MLP / 混合头 / flow matching / DDPM）；步骤全部待执行，闸门阈值暂定。</span></a>
+</nav>
+
+<a class="card" id="plan-hier-sota" href="hier-sota-repro-brief.html">
+  <div class="t">分层架构 SOTA 复现：预训练上层 + 快速下层<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">v1 · 基线复现中，无对照结果</span></div>
+  <div class="d">独立于共享控制的一条线，编号 HS-x：VLM 或视频模型当上层、VLA 或 RL 当下层时，接口传什么、上层跑多快、上层要不要跑完。复现公开 SOTA（π0.5、Fast-WAM、DexJoCo 灵巧手），每次只动一个推理开关。本卡进入快速阅览：三个问题现在的回答、三组实验、能说和不能说的、进度与待定事项。</div>
+</a>
+<nav class="sub stage-list" aria-label="分层架构 SOTA 复现的页面">
+  <a href="hier-sota-repro.html"><span class="rel">HS · 具体计划 ·</span> <span class="t2">文献现状、选型、三组实验的闸门与开关、测量协议、HS-0 … HS-4</span><br><span class="d2">执行用的版本：文献数字分“已核”和“转述”；三组都用官方权重和评测脚本；闸门、配对比较和计时协议；偏离官方流程的六处逐条列出；对照臂全部待执行，阈值暂定。</span></a>
 </nav>
 
 <h3 id="plan-options">待验证方案</h3>
