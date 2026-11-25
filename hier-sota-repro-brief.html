@@ -104,7 +104,7 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <p class="lede">这条线测的是两层结构本身：上层是预训练好的 VLM 或视频模型，下层是单独训练的策略，两层之间有一个说得清的交接。要弄清三件事：交接传什么，上层跑多快，上层能不能不跑完。</p>
 <p class="lede">本页只讲结论、进度和要你拍板的事，三分钟读完。每个实验的细节在 <a href="hier-sota-repro.html">具体计划</a>，已经跑出来的数字在 <a href="hier-sota-results.html">实验记录</a>。</p>
 
-<div class="key good" id="v3"><b>当前 v3：第一个分层实验有结果了（2026-11-25）。</b>H1（MIRA）在官方设置下复现到 49.6%，官方 51.4%。它的上层平均每 4.2 秒才运行一次，约 0.24 Hz，离 5 到 10 Hz 差二十倍以上；单次调用约 0.8 秒。三个对照臂在跑。H2、H3 还没开始，要等 H1 腾出磁盘。</div>
+<div class="key good" id="v3"><b>当前 v3：第一个分层实验有结果了（2026-11-25）。</b>H1（MIRA）在官方设置下复现到 49.6%，官方 51.4%。它的上层平均每 4.2 秒才运行一次，约 0.24 Hz，离 5 到 10 Hz 差二十倍以上；单次调用约 0.8 秒。三个对照臂在跑。H2、H3、H4 还没开始，要等 H1 腾出磁盘。</div>
 <div class="key warn" id="v2"><b>v2 的改题仍然有效。</b>只测真正的两层系统：上层预训练，下层单独训练，中间有说得清的交接。v1 的整体式模型两组只当旁证。</div>
 <div id="v1"></div>
 
@@ -114,10 +114,10 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <tbody>
 <tr><td><a href="#v1">v1</a></td><td>2026-11-25</td><td>立项：选了三组（π0.5、Fast-WAM、DexJoCo 的 π0.5），都用官方权重，只动推理开关</td><td>当时的筛选条件是“现成权重上能直接切的开关”</td><td>A 组基线过闸门，两个模型的耗时量完：<a href="hier-sota-results.html#v1">结果 v1</a>。被 v2 取代</td><td>无</td></tr>
 <tr><td><a href="#v2">v2</a></td><td>2026-11-25</td><td>改题：改测真正的两层系统。新增 H1（MIRA）、H2（RoboDual）、H3（SmolVLA）；v1 的 A、B 组降为旁证并裁剪；C 组和 LIBERO-Plus 暂缓</td><td>v1 的三组都是上下层一起训练好的整体模型，测不到分层结构；允许训练下层以后，候选范围变了</td><td>被 v3 更新</td><td>无</td></tr>
-<tr><td><a href="#v3">v3</a></td><td>2026-11-25</td><td>H1 过闸门并量出上层的实际频率；H2 的刷新间隔改成 1、2、4、8；H1 闸门从每任务 10 回合改成 5 回合，并加一次默认设置的重跑</td><td>RoboDual 的粗动作块只有 8 步，间隔不能超过 8；MIRA 一遍 250 回合要 1.5 小时，四个臂加重跑放不下 500 回合</td><td>H1 闸门 49.6% 对官方 51.4%，上层约 0.24 Hz：<a href="hier-sota-results.html#v2">结果 v2</a></td><td><a href="hier-sota-results.html#videos">两段示例</a></td></tr>
+<tr><td><a href="#v3">v3</a></td><td>2026-11-25</td><td>H1 过闸门并量出上层的实际频率；H2 的刷新间隔改成 1、2、4、8；H3 改用论文配方（上层原版冻结、下层从零训）；新增 H4（mimic-video）；H1 闸门从每任务 10 回合改成 5 回合，并加一次默认设置的重跑</td><td>RoboDual 的粗动作块只有 8 步；SmolVLA 放出的权重没有官方成绩，层数对照必须同一初始化；mimic-video 的权重核实为免授权；MIRA 一遍 250 回合要 1.5 小时</td><td>H1 闸门 49.6% 对官方 51.4%，上层约 0.24 Hz：<a href="hier-sota-results.html#v2">结果 v2</a></td><td><a href="hier-sota-results.html#videos">两段示例</a></td></tr>
 </tbody></table></div>
 
-<nav class="toc" aria-label="本页目录"><a href="#criteria">什么算分层测试</a> · <a href="#tests">三个实验</a> · <a href="#answers">三个问题谁来回答</a> · <a href="#limits">能说和不能说的</a> · <a href="#steps">进度</a> · <a href="#decisions">待你定</a></nav>
+<nav class="toc" aria-label="本页目录"><a href="#criteria">什么算分层测试</a> · <a href="#tests">四个实验</a> · <a href="#answers">三个问题谁来回答</a> · <a href="#limits">能说和不能说的</a> · <a href="#steps">进度</a> · <a href="#decisions">待你定</a></nav>
 
 <h2 id="criteria"><span class="n">1</span>什么算分层测试</h2>
 <p>一个实验要同时满足下面四条才算。不满足的只当旁证，不进主表。</p>
@@ -128,7 +128,7 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <li>每次只变一处：交接、上层多久刷新一次、上层截到哪里、上层要不要微调。</li>
 </ol>
 
-<h2 id="tests"><span class="n">2</span>三个实验</h2>
+<h2 id="tests"><span class="n">2</span>四个实验</h2>
 
 <div class="qa"><div class="q">H1　显式交接：MIRA，RoboCasa365</div>
 <p class="a"><b>上层：</b>Qwen3-VL-4B 规划器。先看一张图写出里程碑计划，之后每执行完一段，看那一段的视频，给出下一个子目标。</p>
@@ -146,20 +146,26 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <p class="a"><b>训练：</b>不需要。<b>先复现到：</b>论文的 3.66（连续完成的任务数，满分 5）。</p></div>
 
 <div class="qa"><div class="q">H3　冻结上层、只训下层，并把上层截短：SmolVLA，LIBERO</div>
-<p class="a"><b>上层：</b>SmolVLM2，冻结，只用前 N 层。</p>
-<p class="a"><b>交接：</b>第 N 层的特征。</p>
-<p class="a"><b>下层：</b>动作头，由我们训练。</p>
-<p class="a"><b>变什么：</b>N 取 8、16、32，每个都重训下层；上层冻结，或者和下层一起训。</p>
-<p class="a"><b>训练：</b>需要。先按官方配方原样训一遍，再换种子训一遍，知道训练本身的波动后才比各臂。</p>
-<p class="a"><b>注意：</b>它其实是一个骨干冻结的小 VLA，上层不能单独刷新。只用它回答“截短”和“冻结”，不回答频率。</p></div>
+<p class="a"><b>上层：</b>SmolVLM2（约 0.5B）原版，没见过机器人数据，冻结，只用前 N 层。</p>
+<p class="a"><b>交接：</b>逐层的特征。下层第 i 层读上层第 i 层，不是只读最后一层。</p>
+<p class="a"><b>下层：</b>动作头，约 1 亿参数，由我们在 LIBERO 上从零训练。</p>
+<p class="a"><b>变什么：</b>N 取 8、16、32，每个都从同一初始化重训；上层冻结，或者和下层一起训。</p>
+<p class="a"><b>训练：</b>需要。按论文的配方（上层冻结、只训下层）训 N = 16，再换种子训一遍，知道训练本身的波动后才比各臂。</p>
+<p class="a"><b>参照：</b>论文 87.3%（四个套件平均）；别人按同一配方重训得到 80.2%。官方放出的权重用的是另一个配方，没有官方成绩，只拿来验证评测流程。</p>
+<p class="a"><b>注意：</b>上层不能单独刷新，所以不回答频率。下层的层数跟着 N 变，这是它的结构决定的，“截短上层”和“下层变小”分不开。</p></div>
 
-<p>第四个实验（H4）是视频模型当上层。候选是 mimic-video：视频骨干冻结，动作解码器读它中间层的状态，评测时可以设“视频去噪到第几步就停”。正在核对它的权重是不是全部免授权；有一份要授权就只能引用论文数字。</p>
+<div class="qa"><div class="q">H4　视频模型当上层，不生成完就交接：mimic-video，LIBERO</div>
+<p class="a"><b>上层：</b>Cosmos-Predict2 2B 视频模型，冻结。</p>
+<p class="a"><b>交接：</b>视频去噪到第 N 步时，模型第 20 层（共 28 层）的隐状态。</p>
+<p class="a"><b>下层：</b>动作解码器，作者单独训练。</p>
+<p class="a"><b>变什么：</b>视频去噪停在第几步。N = 0 就是完全不生成视频，只做一次前向；N 越大，上层每次算得越多（N + 1 遍）。</p>
+<p class="a"><b>训练：</b>不需要，权重全部免授权。<b>先复现到：</b>论文的 Spatial 94.2%、Object 96.8%。作者没有写这两个数用的是第几步，只说“小于 10”，所以闸门先扫 0 和几个小值。</p></div>
 
 <h2 id="answers"><span class="n">3</span>三个问题谁来回答</h2>
 <ul>
 <li><b>交接用 latent 还是显式的。</b>H1 是显式的，H2 和 H3 是 latent，但它们的下层和任务都不同，不能直接横比。在同一个下层上换接口的开源框架只有 VLA-OS，它没有放出评测代码，四个臂在单卡上要训好几天，所以只引它论文的数字，不复现。</li>
 <li><b>上层跑多快。</b>H1 已量到：上层由下层触发，平均每 4.2 秒一次，单次约 0.8 秒。它没有做到 5 到 10 Hz，也不靠这个频率工作。固定频率的上层要看 H2，它直接扫上层的刷新间隔，其中 7.5 Hz 一档正好落在目标区间。</li>
-<li><b>上层能不能不跑完。</b>H3 把 VLM 截到前 N 层再重训下层。视频模型那一侧看 H4：视频去噪到一半就停，动作还准不准。</li>
+<li><b>上层能不能不跑完。</b>H3 把 VLM 截到前 N 层再重训下层。H4 让视频模型去噪到第 N 步就停，直接回答“不生成视频行不行”。</li>
 <li><b>怎么让上层懂我们的任务。</b>H1 里把微调过的上层换成没微调的同款模型，下层不动，看差多少。</li>
 </ul>
 
@@ -167,7 +173,7 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <div class="key warn"><b>H1 的官方成绩不是纯两层的成绩。</b>上层和下层之间有一组手写规则，80% 的回合触发过；上层每轮还读一个来自模拟器的真值，告诉它任务是否已完成。关掉规则的对照臂在跑。</div>
 <div class="key warn"><b>H1 的上层是作者微调过的。</b>“拿来即用”的那一臂用的是为微调版写的提示词，所以它给的是下限，不是没微调的 VLM 的最好水平。</div>
 <div class="key warn"><b>H2 的下层只在“每 8 步”上训练过。</b>其他间隔它没专门学过。数字说明的是这个系统对刷新间隔有多敏感，不是最优间隔是多少。</div>
-<div class="key warn"><b>三个实验不能横比。</b>基准、下层和训练数据都不同。每个实验只在自己内部比。</div>
+<div class="key warn"><b>四个实验不能横比。</b>基准、下层和训练数据都不同。每个实验只在自己内部比。</div>
 <div class="key"><b>都不是我们的 L20，下层也都不是 RL。</b>检索里没有找到“下层用 RL 训练、读上层 latent”的开源系统。这些结果对我们的线只能当类比。</div>
 
 <h2 id="steps"><span class="n">5</span>进度</h2>
@@ -176,18 +182,19 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <tr><td><b>调查</b></td><td>两轮检索，第二轮只收真正的两层系统</td><td><span class="pill ran">完成</span></td></tr>
 <tr><td><b>H1</b></td><td>MIRA：闸门，然后三个对照和一次重跑</td><td><span class="pill ran">闸门过</span> <a href="hier-sota-results.html#h1-gate">结果</a>；对照臂在跑</td></tr>
 <tr><td><b>H2</b></td><td>RoboDual：闸门，然后扫刷新间隔</td><td><span class="pill todo">待执行</span> 等 H1 腾出磁盘</td></tr>
-<tr><td><b>H3</b></td><td>SmolVLA：原样训两遍，然后各臂</td><td><span class="pill todo">待执行</span></td></tr>
+<tr><td><b>H3</b></td><td>SmolVLA：论文配方训两遍，然后各臂</td><td><span class="pill todo">待执行</span> 设计已按核查结果改过</td></tr>
+<tr><td><b>H4</b></td><td>mimic-video：闸门，然后扫去噪停在第几步</td><td><span class="pill todo">待执行</span> 权重免授权，约 51 GB</td></tr>
 <tr><td><b>旁证 A</b></td><td>π0.5：基线和一次重跑</td><td><span class="pill ran">完成</span> <a href="hier-sota-results.html#a-baseline">结果</a>；其余臂不跑了</td></tr>
 <tr><td><b>旁证 B</b></td><td>Fast-WAM 生成与不生成</td><td><span class="pill ran">完成</span> <a href="hier-sota-results.html#b-modes">结果</a></td></tr>
 <tr><td><b>暂缓</b></td><td>LIBERO-Plus 抽样臂；DexJoCo 的 π0.5</td><td><span class="pill none">暂缓</span> 没有取消</td></tr>
 </table></div>
-<p>顺序是 H1、H2、H3。全部在 berlin 的一张 H200 上。</p>
+<p>顺序是 H1，然后 H3 的训练在后台跑，同时做 H4 和 H2 的评测。全部在 berlin 的一张 H200 上，磁盘一次只放得下一到两个实验。</p>
 
 <h2 id="decisions"><span class="n">6</span>待你定</h2>
 <ol>
 <li><b>H3 用 SmolVLA 行不行。</b>它便宜，冻结和层数都有官方开关，论文里有可对的数字。不接受的话换 GR00T N1.5（冻结 2B 的 VLM 加动作头）：训练贵几倍，而且它的动作头看不到图像。</li>
-<li><b>顺序。</b>默认 H1、H2、H3。想先看哪个可以调。</li>
-<li><b>LIBERO-Plus 和 DexJoCo 的 π0.5。</b>现在暂缓，等三个分层实验跑完再排。</li>
+<li><b>顺序。</b>默认 H1，然后 H3 训练与 H4、H2 的评测并行。想先看哪个可以调。</li>
+<li><b>LIBERO-Plus 和 DexJoCo 的 π0.5。</b>现在暂缓，等分层实验跑完再排。</li>
 <li><b>磁盘。</b>配额 200 GB，现在用了 184 GB，H1 占约 70 GB。默认做法是排队：H1 跑完删掉，再装 H2 和 H3，不动以前的目录。如果你同意删 <code>gen_grasp</code>、<code>Share-Control-Hand</code>、<code>stage12_eval</code>、<code>latent_adapt</code>、<code>shc_warp</code>（共约 40 GB，删了不能恢复），H2 可以和 H1 同时准备，快几个小时。OakInk2 的数据不动。</li>
 </ol>
 

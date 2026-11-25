@@ -49,8 +49,8 @@
 | ↳ [l20-grasp-sources-review.html](l20-grasp-sources-review.html) | 配套选型综述：人手 Retarget / 模型生成 / 数学优化，数据库、方法与已有资产审计；按需查阅，不作为同时执行的任务 |
 | [manip-gen-alice-latent-brief.html](manip-gen-alice-latent-brief.html) | Manipulation 泛化测试（MG-x，独立于共享控制）：Alice / Bob + 隐码的快速阅览——四个设计问题的回答、一张方法示意图、步骤与待定事项；当前测试床是 Stage 1.2 的终点预测器；设计稿，未运行 |
 | ↳ [manip-gen-alice-latent.html](manip-gen-alice-latent.html) | MG 具体计划：已有证据按实验线标注；隐式风格化现有技术能做到哪一档；Alice 只出码、由冻结执行器展开；Bob 头部对比（MLP / 混合头 / flow matching / DDPM）；MG-0 … MG-4 全部待执行，闸门阈值暂定 |
-| [hier-sota-repro-brief.html](hier-sota-repro-brief.html) | 分层架构 SOTA 复现（HS-x，独立于共享控制）：预训练上层 + 快速下层的快速阅览——什么算分层测试的四条合格条件，三个实验（H1 MIRA 显式交接 / H2 RoboDual latent 双频率 / H3 SmolVLA 冻结并截短上层），三个问题谁来回答，能说和不能说的，进度与待定事项；v3，H1 过闸门（49.6 % 对官方 51.4 %），上层约 0.24 Hz，对照臂在跑 |
-| ↳ [hier-sota-repro.html](hier-sota-repro.html) | HS 具体计划：合格条件与候选逐条对照；三个实验的上层、下层、交接、闸门与对照；文献数字分已核与转述；测量协议（训练臂先原样复现再换种子）；步骤 HS-0 … HS-9；v3 把 H2 的刷新间隔改为 1、2、4、8，H1 加一次默认设置重跑 |
+| [hier-sota-repro-brief.html](hier-sota-repro-brief.html) | 分层架构 SOTA 复现（HS-x，独立于共享控制）：预训练上层 + 快速下层的快速阅览——什么算分层测试的四条合格条件，四个实验（H1 MIRA 显式交接 / H2 RoboDual latent 双频率 / H3 SmolVLA 冻结并截短上层 / H4 mimic-video 视频上层），三个问题谁来回答，能说和不能说的，进度与待定事项；v3，H1 过闸门（49.6 % 对官方 51.4 %），上层约 0.24 Hz，对照臂在跑 |
+| ↳ [hier-sota-repro.html](hier-sota-repro.html) | HS 具体计划：合格条件与候选逐条对照；四个实验的上层、下层、交接、闸门与对照；文献数字分已核与转述；测量协议（训练臂先原样复现再换种子）；步骤 HS-0 … HS-9；v3 把 H2 的刷新间隔改为 1、2、4、8，H3 改用论文配方，新增 H4，H1 加一次默认设置重跑 |
 
 ### 待验证方案
 

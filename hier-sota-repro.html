@@ -104,7 +104,7 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <p class="lede">这条线测两层结构：预训练的 VLM 或视频模型当上层，单独训练的策略当下层，两层之间有明确的交接。回答三个问题：交接传 latent 还是显式的量；上层的输入输出和运行频率；上层要不要跑完。</p>
 <p class="lede">本页是执行用的具体版本。只想看结论和要拍板的事，读 <a href="hier-sota-repro-brief.html">快速阅览</a>；已经跑出来的数字在 <a href="hier-sota-results.html">实验记录</a>。</p>
 
-<div class="key good" id="v3"><b>当前 v3：H1 过闸门（2026-11-25）。</b>MIRA 在官方设置下 250 回合 49.6%，官方 51.4%；上层约 0.24 Hz。H1 的三个对照臂和一次重跑在跑。H2 的刷新间隔改为 1、2、4、8。数字在 <a href="hier-sota-results.html">实验记录</a>。</div>
+<div class="key good" id="v3"><b>当前 v3：H1 过闸门（2026-11-25）。</b>MIRA 在官方设置下 250 回合 49.6%，官方 51.4%；上层约 0.24 Hz。H1 的三个对照臂和一次重跑在跑。H2 的刷新间隔改为 1、2、4、8；H3 按核查结果改用论文配方；新增 H4。数字在 <a href="hier-sota-results.html">实验记录</a>。</div>
 <div class="key warn" id="v2"><b>v2 的改题（2026-11-25）。</b>v1 用“现成权重上能直接切的开关”筛候选，选到的三组都是上下层联合训练的整体模型。v2 按 § 2 的合格条件重新筛，定了 H1、H2、H3 三个实验。v1 的 A、B 组保留为旁证并裁剪。标 <span class="pill ran">已核</span> 的事实是我直接从仓库、README 或论文表格读的；标 <span class="pill none">转述</span> 的由检索代理读出，开跑前我会再核。</div>
 <div id="v1"></div>
 
@@ -114,10 +114,10 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <tbody>
 <tr><td><a href="#v1">v1</a></td><td>2026-11-25</td><td>立项：选了三组（π0.5、Fast-WAM、DexJoCo 的 π0.5），都用官方权重，只动推理开关</td><td>当时的筛选条件是“现成权重上能直接切的开关”</td><td>A 组基线过闸门，两个模型的耗时量完：<a href="hier-sota-results.html#v1">结果 v1</a>。被 v2 取代</td><td>无</td></tr>
 <tr><td><a href="#v2">v2</a></td><td>2026-11-25</td><td>改题：改测真正的两层系统。新增 H1（MIRA）、H2（RoboDual）、H3（SmolVLA）；v1 的 A、B 组降为旁证并裁剪；C 组和 LIBERO-Plus 暂缓</td><td>v1 的三组都是上下层一起训练好的整体模型，测不到分层结构；允许训练下层以后，候选范围变了</td><td>被 v3 更新</td><td>无</td></tr>
-<tr><td><a href="#v3">v3</a></td><td>2026-11-25</td><td>H1 过闸门并量出上层的实际频率；H2 的刷新间隔改成 1、2、4、8；H1 闸门从每任务 10 回合改成 5 回合，并加一次默认设置的重跑</td><td>RoboDual 的粗动作块只有 8 步，间隔不能超过 8；MIRA 一遍 250 回合要 1.5 小时，四个臂加重跑放不下 500 回合</td><td>H1 闸门 49.6% 对官方 51.4%，上层约 0.24 Hz：<a href="hier-sota-results.html#v2">结果 v2</a></td><td><a href="hier-sota-results.html#videos">两段示例</a></td></tr>
+<tr><td><a href="#v3">v3</a></td><td>2026-11-25</td><td>H1 过闸门并量出上层的实际频率；H2 的刷新间隔改成 1、2、4、8；H3 改用论文配方（上层原版冻结、下层从零训）；新增 H4（mimic-video）；H1 闸门从每任务 10 回合改成 5 回合，并加一次默认设置的重跑</td><td>RoboDual 的粗动作块只有 8 步；SmolVLA 放出的权重没有官方成绩，层数对照必须同一初始化；mimic-video 的权重核实为免授权；MIRA 一遍 250 回合要 1.5 小时</td><td>H1 闸门 49.6% 对官方 51.4%，上层约 0.24 Hz：<a href="hier-sota-results.html#v2">结果 v2</a></td><td><a href="hier-sota-results.html#videos">两段示例</a></td></tr>
 </tbody></table></div>
 
-<nav class="toc" aria-label="本页目录"><a href="#scope">问题与范围</a> · <a href="#criteria">合格条件与候选</a> · <a href="#tests">三个实验</a> · <a href="#sota">文献数字</a> · <a href="#protocol">测量协议</a> · <a href="#steps">步骤与闸门</a> · <a href="#resources">资源</a> · <a href="#deviations">偏离官方流程的地方</a> · <a href="#risks">限制</a> · <a href="#decisions">待你定</a></nav>
+<nav class="toc" aria-label="本页目录"><a href="#scope">问题与范围</a> · <a href="#criteria">合格条件与候选</a> · <a href="#tests">四个实验</a> · <a href="#sota">文献数字</a> · <a href="#protocol">测量协议</a> · <a href="#steps">步骤与闸门</a> · <a href="#resources">资源</a> · <a href="#deviations">偏离官方流程的地方</a> · <a href="#risks">限制</a> · <a href="#decisions">待你定</a></nav>
 
 <h2 id="scope"><span class="n">§ 1</span>问题与范围</h2>
 <div class="tw"><table>
@@ -125,7 +125,7 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <tr><td>交接用 latent 还是显式的</td><td>每个实验各有一种交接，在实验内部变交接的内容；跨接口的同下层对照只引文献</td><td>H1（显式），H2、H3（latent）；VLA-OS 文献</td></tr>
 <tr><td>上层的输入输出、频率</td><td>上层每次调用的耗时和实际调用间隔；上层刷新间隔对成功率的影响</td><td>H1、H2</td></tr>
 <tr><td>怎么让上层懂我们的任务</td><td>微调过的上层对没微调的同款上层，下层固定</td><td>H1</td></tr>
-<tr><td>上层要不要跑完</td><td>VLM 截到前 N 层并重训下层；视频模型只走一次前向</td><td>H3；H4（核对中）</td></tr>
+<tr><td>上层要不要跑完</td><td>VLM 截到前 N 层并重训下层；视频模型只走一次前向</td><td>H3；H4</td></tr>
 </table></div>
 <p><b>目标频率。</b>上层 5 到 10 Hz，下层更快。</p>
 <p><b>范围。</b>v2 起允许训练下层。仍然不做的：在 L20 或 UR3e 上做实验；自己搭一个小模型来比接口。</p>
@@ -137,18 +137,18 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <tr><th>候选</th><th>上层</th><th>下层</th><th>交接</th><th>结论</th></tr>
 <tr><td>MIRA <span class="pill ran">已核</span></td><td>Qwen3-VL-4B，作者单独微调，每段触发一次</td><td>子目标条件的 π0.5，单独训练，自己有三路图像</td><td>子目标文字 + 预计步数</td><td><b>合格，H1</b></td></tr>
 <tr><td>RoboDual <span class="pill ran">已核</span></td><td>OpenVLA-7B，冻结，每 8 步一次</td><td>扩散策略，单独训练，每步跑，自己有 RGB-D</td><td>最后一层 latent + 粗动作</td><td><b>合格，H2</b></td></tr>
-<tr><td>SmolVLA <span class="pill none">转述</span></td><td>SmolVLM2，冻结，截到前 N 层</td><td>动作头，可由我们训练；图像只经上层进入</td><td>第 N 层特征</td><td><b>部分合格，H3</b>：上层不能单独刷新，只答截断和冻结</td></tr>
+<tr><td>SmolVLA <span class="pill none">转述</span></td><td>SmolVLM2，冻结，截到前 N 层</td><td>动作头，可由我们训练；图像只经上层进入</td><td>逐层特征：下层第 i 层读上层第 i 层的键和值</td><td><b>部分合格，H3</b>：上层不能单独刷新，只答截断和冻结</td></tr>
 <tr><td>OpenHelix <span class="pill none">转述</span></td><td>LLaVA-7B，冻结</td><td>3D Diffuser Actor，自己有 RGB-D</td><td><code>&lt;ACT&gt;</code> 的隐状态，512 维</td><td>合格但不选：两层都只有约 1.5 Hz，论文里上层只把 3.27 提到 3.45</td></tr>
 <tr><td>GR00T N1.5 <span class="pill none">转述</span></td><td>Eagle VLM，默认冻结，取第 12 层</td><td>DiT 动作头；只看到上层的 token 和本体状态，看不到图像</td><td>第 12 层隐状态</td><td>H3 的备选：训练更贵；下层没有自己的图像，不能做频率测试</td></tr>
 <tr><td>VLA-OS <span class="pill none">转述</span></td><td>Qwen2.5 系列 + 规划头</td><td>动作头</td><td>可切换：隐式、语言、视觉、图像预测</td><td>不复现：没有评测和推理代码，分层路径有代码缺陷，四个臂约 60 到 260 个 A100 小时</td></tr>
 <tr><td>VP-VLA；RPent <span class="pill none">转述</span></td><td>现成的 VLM 或 LLM，不训练</td><td>单独训练的策略，或 π0.5 加解析技能</td><td>画在图上的标记；技能调用</td><td>合格但被挡：都依赖 SAM 3，它的仓库要人工授权</td></tr>
 <tr><td>RoboCerebra <span class="pill none">转述</span></td><td>论文里是 VLM 规划器</td><td>OpenVLA</td><td>子目标文字</td><td>不选：仓库里没有规划器代码，评测喂的是真值步骤文字</td></tr>
 <tr><td>π0.5；Fast-WAM；DexJoCo 的 π0.5 <span class="pill ran">已核</span></td><td colspan="2">上下层是同一个模型里联合训练的两部分</td><td>逐层注意力</td><td><b>不合格</b>，只作旁证（v1 的 A、B、C 组）</td></tr>
-<tr><td>mimic-video <span class="pill none">转述</span></td><td>Cosmos-Predict2 2B 视频模型，冻结（带 LoRA）</td><td>动作解码器，单独训练</td><td>视频模型第 20 层的隐状态；去噪可以提前停</td><td><b>H4 候选</b>：权重约 77 GB，正在核对是否全部免授权</td></tr>
+<tr><td>mimic-video <span class="pill none">转述</span></td><td>Cosmos-Predict2 2B 视频模型，冻结（LoRA 已并入）</td><td>动作解码器，单独训练</td><td>视频去噪到第 N 步时第 20 层的隐状态</td><td><b>合格，H4</b>：权重全部免授权，一个套件约 51 GB</td></tr>
 </table></div>
 <p>没有找到的：下层用 RL 训练、读上层 latent、并且比上层跑得快的开源系统。SONIC 的 64 维 token 由下层定义，它公开的上层是 GR00T N1.7，底座要授权。</p>
 
-<h2 id="tests"><span class="n">§ 3</span>三个实验</h2>
+<h2 id="tests"><span class="n">§ 3</span>四个实验</h2>
 
 <h3 id="h1">H1：MIRA，显式交接</h3>
 <div class="tw wide"><table>
@@ -185,14 +185,33 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <h3 id="h3">H3：SmolVLA，冻结并截短上层，只训下层</h3>
 <div class="tw wide"><table>
 <tr><th>项</th><th>内容</th></tr>
-<tr><td>来源</td><td>huggingface/lerobot，<a href="https://arxiv.org/abs/2506.01844">arXiv 2506.01844</a>。预训练权重 <code>lerobot/smolvla_base</code>（0.9 GB），数据 <code>lerobot/libero</code>（1.9 GB），免授权 <span class="pill ran">已核</span>（体积和授权）</td></tr>
-<tr><td>上层</td><td>SmolVLM2（约 0.5B）。配置项 <code>train_expert_only=True</code> 冻结它，<code>num_vlm_layers</code> 决定用前几层，默认 16 <span class="pill none">转述</span></td></tr>
-<tr><td>下层</td><td>动作头，flow matching，读上层第 N 层的特征</td></tr>
-<tr><td>闸门</td><td>官方配方原样训一遍，对论文数字；再换一个种子训一遍，两次之差就是训练噪声。论文表 8 的层数消融：N = 8、16、24、32 对应 75.0、78.5、79.5、80.3（每任务 10 回合） <span class="pill none">转述</span></td></tr>
-<tr><td>对照</td><td>N = 8、32（各重训，其余配置不动）；上层冻结改成一起训</td></tr>
-<tr><td>要量的</td><td>LIBERO 成功率；上层和下层各自的耗时随 N 怎么变</td></tr>
-<tr><td>能说</td><td>上层截短到一半或四分之一，下层重训后掉多少、快多少；上层冻结够不够</td></tr>
-<tr><td>不能说</td><td>频率。它是骨干冻结的小 VLA，上层不能单独刷新</td></tr>
+<tr><td>来源</td><td>huggingface/lerobot（main，提交 b07adcc），<a href="https://arxiv.org/abs/2506.01844">arXiv 2506.01844</a>。数据 <code>lerobot/libero</code>（1.9 GB，1,693 条演示，40 个任务），上层 <code>SmolVLM2-500M-Video-Instruct</code>（2.0 GB），都免授权 <span class="pill none">转述</span></td></tr>
+<tr><td>上层</td><td>SmolVLM2 原版，没见过机器人数据。<code>train_expert_only=true</code> 冻结整个 VLM（视觉编码器、连接层、语言层，约 3.5 亿参数）；<code>num_vlm_layers</code> 只保留前 N 层，全长 32 层 <span class="pill none">转述</span></td></tr>
+<tr><td>下层</td><td>动作头（flow matching），约 1 亿参数，从随机初始化训练。它的第 i 层读上层第 i 层的键和值，所以它的层数等于 N <span class="pill none">转述</span></td></tr>
+<tr><td>为什么不用官方放出的权重当闸门</td><td><code>lerobot/smolvla_libero</code> 的配方是从机器人预训练权重出发、上层一起训、2.5 万步，模型卡没有成绩；第三方用它自带的设置测到 62.75%，改成每 10 步重规划后 Spatial 76 到 78、Object 89 到 91 <span class="pill none">转述</span>。它不是“冻结上层”的配方，也没有可对的官方数字</td></tr>
+<tr><td>流程检查</td><td>先评测放出的 <code>lerobot/smolvla_libero</code>，对第三方的数字，只为确认评测流程没装错</td></tr>
+<tr><td>基线（闸门）</td><td>论文配方：上层冻结，下层从零训，N = 16，批大小 64。论文训 10 万步，四个套件 90 / 96 / 92 / 71，平均 87.3；别人按同一配方重训，6 万步 81.9，10 万步 80.2 <span class="pill none">转述</span>。我们的步数等装好环境量过速度再定，各臂相同。基线训两个种子，差值就是训练噪声</td></tr>
+<tr><td>对照 1：截短上层</td><td>N = 8、32，其余不动，同样从零训下层。论文表 8 的层数消融：N = 8、16、24、32 为 75.0、78.5、79.5、80.3 <span class="pill none">转述</span></td></tr>
+<tr><td>对照 2：上层要不要一起训</td><td><code>train_expert_only=false</code>，N = 16。当前代码在这个设置下仍会冻结最后一层语言层 <span class="pill none">转述</span></td></tr>
+<tr><td>评测</td><td>lerobot 自带的 LIBERO 评测，四个套件，每任务 10 回合，共 400 回合；每 10 步重规划（维护者建议的设置）。MuJoCo 固定在 3.3，新版本会让 Spatial 的一个任务失败 <span class="pill none">转述</span></td></tr>
+<tr><td>要量的</td><td>成功率；上层和下层各自的耗时随 N 怎么变</td></tr>
+<tr><td>能说</td><td>一个没见过机器人数据的冻结 VLM 当上层，下层从零训能到多少；上层截短到一半或四分之一掉多少、快多少；上层一起训多多少</td></tr>
+<tr><td>不能说</td><td>频率（上层不能单独刷新）。截短的效果里混着下层变小（下层层数等于 N）</td></tr>
+</table></div>
+
+<h3 id="h4">H4：mimic-video，视频模型当上层，不生成完就交接</h3>
+<div class="tw wide"><table>
+<tr><th>项</th><th>内容</th></tr>
+<tr><td>来源</td><td><a href="https://github.com/mimic-video/mimic-video">mimic-video/mimic-video</a>，权重 <code>jonpai/mimic-video</code>，免授权。评测时护栏模型（要授权）在代码里是关着的 <span class="pill none">转述</span></td></tr>
+<tr><td>上层</td><td>Cosmos-Predict2 2B 视频模型，每个套件一份，LoRA 已并入（3.9 GB），冻结 <span class="pill none">转述</span></td></tr>
+<tr><td>交接</td><td>视频去噪到第 N 步时停下，取第 20 层（共 28 层）的隐状态。停下以后不再往下算，所以每次查询要跑 N + 1 遍骨干 <span class="pill none">转述</span></td></tr>
+<tr><td>下层</td><td>动作解码器（1.0 GB），作者单独训练；每次执行 5 步动作 <span class="pill none">转述</span></td></tr>
+<tr><td>闸门</td><td>论文表 II：Spatial 94.2，Object 96.8，Goal 90.6，每套件 500 回合。作者没有写这些数字用的 N，只在问答里说“小于 10”“试试 0”<span class="pill none">转述</span>。所以闸门先在 Spatial 上跑 N = 0、2、5，取与论文相符的那个，并写明这是我们选的</td></tr>
+<tr><td>对照</td><td>N = 0、2、5、10、20、34（上限）。前 12 步噪声水平都在 0.9 以上，12 到 27 步才从 0.9 降到 0.1 <span class="pill none">转述</span></td></tr>
+<tr><td>要量的</td><td>成功率随 N 的变化；每次查询的耗时随 N 的变化。作者给的参考是 H200 上每次查询 470 ms，没说 N <span class="pill none">转述</span></td></tr>
+<tr><td>空间</td><td>一个套件 50.7 GB，其中文本编码器 T5-11B 占 45 GB；每多一个套件加 4.9 GB</td></tr>
+<tr><td>能说</td><td>视频上层去噪多少步才够下层用；完全不生成视频（N = 0）掉多少</td></tr>
+<tr><td>不能说</td><td>论文里没有 LIBERO 上的这条曲线，也没有别人复现过，所以没有可对的参照曲线</td></tr>
 </table></div>
 
 <h2 id="sota"><span class="n">§ 4</span>文献数字</h2>
@@ -229,8 +248,8 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <tr><td><b>HS-4</b></td><td>空 GPU 计时</td><td>π0.5 的耗时随 flow 步数线性变化</td><td><span class="pill ran">完成</span> <a href="hier-sota-results.html#timing">结果</a></td></tr>
 <tr><td><b>HS-5</b></td><td>H1：MIRA 闸门，然后三个对照、一次重跑、一次单独计时</td><td>总体在官方 51.4% 的约 5 个点以内</td><td><span class="pill ran">闸门过</span> 49.6%，<a href="hier-sota-results.html#h1-gate">结果</a>；对照臂在跑</td></tr>
 <tr><td><b>HS-6</b></td><td>H2：RoboDual 闸门，然后扫刷新间隔</td><td>调试数据集能代替全量数据；默认间隔与 3.66 相符</td><td><span class="pill todo">待执行</span></td></tr>
-<tr><td><b>HS-7</b></td><td>H3：SmolVLA 原样训两遍，然后各臂</td><td>与论文数字相符；两个种子之差已知</td><td><span class="pill todo">待执行</span></td></tr>
-<tr><td><b>HS-8</b></td><td>H4：mimic-video，扫视频去噪停在第几步</td><td>LIBERO Spatial 94.2、Object 96.8（转述）</td><td><span class="pill none">核对中</span> 权重授权和体积</td></tr>
+<tr><td><b>HS-7</b></td><td>H3：SmolVLA 按论文配方训两个种子，然后 N = 8、32 和“上层一起训”三个臂</td><td>流程检查与第三方数字相符；基线落在论文 87.3 与第三方重训 80.2 附近；两个种子之差已知</td><td><span class="pill todo">待执行</span> 设计已改</td></tr>
+<tr><td><b>HS-8</b></td><td>H4：mimic-video 闸门，然后扫视频去噪停在第几步</td><td>Spatial 94.2（论文表 II）</td><td><span class="pill todo">待执行</span> 权重免授权</td></tr>
 <tr><td><b>HS-9</b></td><td>汇总，更新实验记录，清理权重</td><td>—</td><td><span class="pill todo">待执行</span></td></tr>
 </table></div>
 
@@ -247,7 +266,7 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <li><b>机器。</b>berlin，一张 H200（GPU 3，143 GB），20 个核（60 到 79）。渲染用 MuJoCo 的 EGL，已测通。没有 Docker，没有 Hugging Face 令牌。</li>
 <li><b>位置。</b>全部在 <code>berlin · ~/Projects/hier_sota</code>。结果、日志和脚本的快照已拷到 <code>Mac · ~/rl_logs/hier_sota</code>。</li>
 <li><b>磁盘。</b>配额 200 GB，现在 184 GB。这条线占 82 GB，其中 MIRA 68 GB（权重 21，厨房资产 24，三套环境 23）、没微调的 Qwen3-VL-4B 8.4 GB、结果 3 GB。以前就在的目录约 102 GB，没有动。</li>
-<li><b>为什么要排队。</b>H2 约 25 GB，H3 的环境和数据约 10 GB，都要等 MIRA 删掉以后才放得下。</li>
+<li><b>为什么要排队。</b>H3 的环境和数据约 14 GB，H4 约 51 GB，H2 约 25 GB。MIRA 删掉以后先放 H3 和 H4，H4 跑完删掉再放 H2。</li>
 </ul>
 
 <h2 id="deviations"><span class="n">§ 8</span>偏离官方流程的地方</h2>
@@ -262,12 +281,14 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 
 <h2 id="risks"><span class="n">§ 9</span>限制</h2>
 <ul>
-<li><b>三个实验不能横比。</b>基准、下层、数据都不同。</li>
+<li><b>四个实验不能横比。</b>基准、下层、数据都不同。</li>
 <li><b>H1 的“没微调”一臂是下限。</b>提示词是为微调版写的。</li>
 <li><b>H1 的官方成绩含手写规则和模拟器真值。</b>80% 的回合触发过规则；上层读一个真值的“任务是否完成”。真机上没有这一位。</li>
 <li><b>H1 每个臂只有 250 回合。</b>总体的 95% 区间约 ±6 个点。</li>
 <li><b>H2 取决于一个还没实测的前提。</b>调试数据集能否代替全量数据。</li>
 <li><b>H3 的上层很小。</b>0.5B 的 VLM 上的截断结论，不一定能推到 4B 或 7B。</li>
+<li><b>H3 没有官方闸门。</b>论文数字和放出的权重对不上，第三方重训也比论文低 7 个点。我们的基线只能和这两个数一起看。</li>
+<li><b>H4 的闸门带一个我们选的参数。</b>作者没写论文数字用的去噪步数。</li>
 <li><b>训练臂只有两个种子。</b>小于两个种子之差的臂间差别不算发现。</li>
 <li><b>都不是 L20，下层都不是 RL。</b>对我们自己的线是类比。</li>
 </ul>
@@ -276,8 +297,8 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <div class="tw"><table>
 <tr><th>事项</th><th>默认</th><th>我的建议</th></tr>
 <tr><td>H3 的载体</td><td>SmolVLA</td><td>按默认。想要更大的上层就换 GR00T N1.5，训练贵几倍，且它的下层看不到图像</td></tr>
-<tr><td>顺序</td><td>H1、H2、H3</td><td>按默认。H1 最贴近“VLM 指挥、VLA 执行”</td></tr>
-<tr><td>LIBERO-Plus；DexJoCo 的 π0.5</td><td>暂缓</td><td>三个分层实验跑完后再排</td></tr>
+<tr><td>顺序</td><td>H1，然后 H3 训练与 H4、H2 评测并行</td><td>按默认。H3 的训练最久，先放进后台</td></tr>
+<tr><td>LIBERO-Plus；DexJoCo 的 π0.5</td><td>暂缓</td><td>分层实验跑完后再排</td></tr>
 <tr><td>闸门阈值</td><td>§ 3 和 § 6 的暂定值</td><td>先按暂定值走</td></tr>
 <tr><td>磁盘</td><td>排队：H1 跑完删掉再装 H2、H3</td><td>按默认。想快几个小时，就同意删 <code>gen_grasp</code>、<code>Share-Control-Hand</code>、<code>stage12_eval</code>、<code>latent_adapt</code>、<code>shc_warp</code>（约 40 GB，不能恢复）；OakInk2 不动</td></tr>
 </table></div>

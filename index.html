@@ -179,10 +179,10 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 
 <a class="card" id="plan-hier-sota" href="hier-sota-repro-brief.html">
   <div class="t">分层架构 SOTA 复现：预训练上层 + 快速下层<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">v3 · H1 过闸门，对照臂在跑</span></div>
-  <div class="d">独立于共享控制的一条线，编号 HS-x：预训练的 VLM 或视频模型当上层、单独训练的策略当下层，两层之间的交接传什么、上层跑多快、上层要不要跑完。只收真正的两层系统：H1 MIRA（显式子目标文字，RoboCasa365）、H2 RoboDual（latent，两层不同频率，CALVIN）、H3 SmolVLA（冻结并截短上层、只训下层，LIBERO）。v3：H1 在官方设置下复现到 49.6%（官方 51.4%），它的上层平均每 4.2 秒才运行一次。本卡进入快速阅览：合格条件、三个实验、能说和不能说的、进度与待定事项。</div>
+  <div class="d">独立于共享控制的一条线，编号 HS-x：预训练的 VLM 或视频模型当上层、单独训练的策略当下层，两层之间的交接传什么、上层跑多快、上层要不要跑完。只收真正的两层系统：H1 MIRA（显式子目标文字，RoboCasa365）、H2 RoboDual（latent，两层不同频率，CALVIN）、H3 SmolVLA（冻结并截短上层、只训下层，LIBERO）、H4 mimic-video（视频模型当上层，去噪提前停，LIBERO）。v3：H1 在官方设置下复现到 49.6%（官方 51.4%），它的上层平均每 4.2 秒才运行一次。本卡进入快速阅览：合格条件、四个实验、能说和不能说的、进度与待定事项。</div>
 </a>
 <nav class="sub stage-list" aria-label="分层架构 SOTA 复现的页面">
-  <a href="hier-sota-repro.html"><span class="rel">HS · 具体计划 ·</span> <span class="t2">合格条件与候选逐条对照、三个实验的上层／下层／交接／闸门、测量协议、HS-0 … HS-9</span><br><span class="d2">执行用的版本：候选按四条合格条件筛；事实分“已核”和“转述”；训练臂先原样复现再换种子；v1 的整体式模型两组降为旁证；H1 闸门已过，H2、H3 待执行。</span></a>
+  <a href="hier-sota-repro.html"><span class="rel">HS · 具体计划 ·</span> <span class="t2">合格条件与候选逐条对照、四个实验的上层／下层／交接／闸门、测量协议、HS-0 … HS-9</span><br><span class="d2">执行用的版本：候选按四条合格条件筛；事实分“已核”和“转述”；训练臂先原样复现再换种子；v1 的整体式模型两组降为旁证；H1 闸门已过，H2、H3、H4 待执行。</span></a>
 </nav>
 
 <h3 id="plan-options">待验证方案</h3>

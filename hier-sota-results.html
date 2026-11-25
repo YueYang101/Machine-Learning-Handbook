@@ -103,7 +103,7 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <h1>预训练上层 + 快速下层：实验记录</h1>
 <p class="lede">这页只放真正跑出来的数字。计划和每个实验的设计在 <a href="hier-sota-repro.html">具体计划</a>，三分钟版在 <a href="hier-sota-repro-brief.html">快速阅览</a>。</p>
 
-<div class="key good" id="v2"><b>当前 v2：第一个分层实验 H1（MIRA）过了闸门（2026-11-25）。</b>官方默认设置下 250 回合，成功率 49.6%，官方是 51.4%。同一批回合还量出了上层实际多久运行一次。三个对照臂和一次默认设置的重跑正在排队，跑完进 v3。H2、H3 还没有结果。机器是 berlin 的一张 H200。</div>
+<div class="key good" id="v2"><b>当前 v2：第一个分层实验 H1（MIRA）过了闸门（2026-11-25）。</b>官方默认设置下 250 回合，成功率 49.6%，官方是 51.4%。同一批回合还量出了上层实际多久运行一次。三个对照臂和一次默认设置的重跑正在排队，跑完进 v3。H2、H3、H4 还没有结果。机器是 berlin 的一张 H200。</div>
 <div id="v1"></div>
 
 <div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
@@ -327,12 +327,12 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 </ol>
 </details>
 
-<details id="not-run"><summary><h2><span class="n">§ 8</span>还没跑的</h2><span class="one">H1 的三个对照臂和重跑在排队；H2、H3 没有结果。</span></summary>
+<details id="not-run"><summary><h2><span class="n">§ 8</span>还没跑的</h2><span class="one">H1 的三个对照臂和重跑在排队；H2、H3、H4 没有结果。</span></summary>
 <ul>
 <li><b>H1 对照臂。</b>关掉手写规则；上层换成没微调的同款模型；交给下层的文字换成详细句。各 250 回合，与闸门按回合配对。</li>
 <li><b>H1 默认设置重跑。</b>量这 250 回合上的噪声底，再判读对照臂的差别。</li>
 <li><b>H1 单独计时。</b>一套模拟器、6 个回合。</li>
-<li><b>H2（RoboDual）、H3（SmolVLA）。</b>见 <a href="hier-sota-repro.html#tests">具体计划 § 3</a>。磁盘只够一次放一个实验，H1 结束后再装。</li>
+<li><b>H2（RoboDual）、H3（SmolVLA）、H4（mimic-video）。</b>见 <a href="hier-sota-repro.html#tests">具体计划 § 3</a>。磁盘一次只放得下一到两个实验，H1 结束后再装。</li>
 <li><b>暂缓。</b>DexJoCo 灵巧手和 LIBERO-Plus。</li>
 </ul>
 </details>
