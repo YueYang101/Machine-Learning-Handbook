@@ -178,11 +178,11 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 </nav>
 
 <a class="card" id="plan-hier-sota" href="hier-sota-repro-brief.html">
-  <div class="t">分层架构 SOTA 复现：预训练上层 + 快速下层<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">v2 · 改测两层结构，分层实验待执行</span></div>
-  <div class="d">独立于共享控制的一条线，编号 HS-x：预训练的 VLM 或视频模型当上层、单独训练的策略当下层，两层之间的交接传什么、上层跑多快、上层要不要跑完。v2 起只收真正的两层系统：H1 MIRA（显式子目标文字，RoboCasa365）、H2 RoboDual（latent，两层不同频率，CALVIN）、H3 SmolVLA（冻结并截短上层、只训下层，LIBERO）。本卡进入快速阅览：合格条件、三个实验、能说和不能说的、进度与待定事项。</div>
+  <div class="t">分层架构 SOTA 复现：预训练上层 + 快速下层<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">v3 · H1 过闸门，对照臂在跑</span></div>
+  <div class="d">独立于共享控制的一条线，编号 HS-x：预训练的 VLM 或视频模型当上层、单独训练的策略当下层，两层之间的交接传什么、上层跑多快、上层要不要跑完。只收真正的两层系统：H1 MIRA（显式子目标文字，RoboCasa365）、H2 RoboDual（latent，两层不同频率，CALVIN）、H3 SmolVLA（冻结并截短上层、只训下层，LIBERO）。v3：H1 在官方设置下复现到 49.6%（官方 51.4%），它的上层平均每 4.2 秒才运行一次。本卡进入快速阅览：合格条件、三个实验、能说和不能说的、进度与待定事项。</div>
 </a>
 <nav class="sub stage-list" aria-label="分层架构 SOTA 复现的页面">
-  <a href="hier-sota-repro.html"><span class="rel">HS · 具体计划 ·</span> <span class="t2">合格条件与候选逐条对照、三个实验的上层／下层／交接／闸门、测量协议、HS-0 … HS-9</span><br><span class="d2">执行用的版本：候选按四条合格条件筛；事实分“已核”和“转述”；训练臂先原样复现再换种子；v1 的整体式模型两组降为旁证；分层实验全部待执行，阈值暂定。</span></a>
+  <a href="hier-sota-repro.html"><span class="rel">HS · 具体计划 ·</span> <span class="t2">合格条件与候选逐条对照、三个实验的上层／下层／交接／闸门、测量协议、HS-0 … HS-9</span><br><span class="d2">执行用的版本：候选按四条合格条件筛；事实分“已核”和“转述”；训练臂先原样复现再换种子；v1 的整体式模型两组降为旁证；H1 闸门已过，H2、H3 待执行。</span></a>
 </nav>
 
 <h3 id="plan-options">待验证方案</h3>
@@ -200,8 +200,8 @@ a:focus-visible { outline:2px solid var(--blue); outline-offset:4px; }
 <p class="note">自己跑出来的东西：版本、曲线、视频、失败解剖。</p>
 
 <a class="card" href="hier-sota-results.html">
-  <div class="t">分层架构 SOTA 复现（HS）：实验记录<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">v1 · 只有旁证组</span></div>
-  <div class="d">计划页「分层架构 SOTA 复现」的配套记录，berlin 一张 H200 · 官方 π0.5 的 LIBERO 四套件复现 98.4 / 98.0 / 97.6 / 93.2 %（README 98.8 / 98.2 / 98.0 / 92.4，各 500 回合）· 空 GPU 计时：π0.5 的 VLM 前缀 22.7 ms、每个 flow 步 2.09 ms；Fast-WAM 不想象未来 71.5 ms、先想象未来 179.1 ms · 这些是整体式模型的旁证，分层实验 H1 / H2 / H3 还没有结果</div>
+  <div class="t">分层架构 SOTA 复现（HS）：实验记录<span style="color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px">v2 · H1 MIRA 过闸门</span></div>
+  <div class="d">计划页「分层架构 SOTA 复现」的配套记录，berlin 一张 H200 · H1 MIRA（Qwen3-VL-4B 规划器 + π0.5 执行器，RoboCasa365）官方设置 250 回合 49.6 %，官方 51.4 % · 上层由下层触发：每回合调用 17 次，相邻两次隔 3.0 秒（中位数），约 0.24 Hz，单次约 0.8 秒 · 80 % 的回合触发过手写规则，上层另读一个模拟器真值 · 旁证组：π0.5 的 LIBERO 四套件 98.4 / 98.0 / 97.6 / 93.2 %，同设置重跑 500 回合里 44 回合翻转；Fast-WAM 先想象未来 97.4 % 对不想象 95.4 % · H1 对照臂在跑，H2 / H3 还没有结果</div>
 </a>
 <a class="card" href="rgb-shape-stacking-results.html">
   <div class="t">换形状叠放（RGB-Stacking 式测试，UR3e + L20）：D 只看位姿、E 真实形状、S SDF 形状码</div>

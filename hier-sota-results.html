@@ -88,6 +88,7 @@ table.versions caption { text-align:left; color:var(--sub); padding:0 0 8px; cap
 .ci { color:var(--sub); font-size:.86em; white-space:nowrap; }
 table.nums th:first-child, table.nums td:first-child { min-width:8em; }
 .tw.fit table { min-width:0; }
+.figwrap video { width:100%; height:auto; display:block; border-radius:6px; background:#000; }
 .tw.fit td:first-child, .tw.fit th:first-child { white-space:nowrap; }
 details { border-top:1px solid var(--line); margin:1.2em 0; }
 details > summary { cursor:pointer; padding:10px 0; }
@@ -98,40 +99,173 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <body>
 <main class="wrap">
 <a class="bk" href="index.html">← Machine Learning Handbook</a>
-<div class="kicker">实验记录 · 分层架构 SOTA 复现（HS）· 当前 v1 · 2026-11-25</div>
+<div class="kicker">实验记录 · 分层架构 SOTA 复现（HS）· 当前 v2 · 2026-11-25</div>
 <h1>预训练上层 + 快速下层：实验记录</h1>
 <p class="lede">这页只放真正跑出来的数字。计划和每个实验的设计在 <a href="hier-sota-repro.html">具体计划</a>，三分钟版在 <a href="hier-sota-repro-brief.html">快速阅览</a>。</p>
 
-<div class="key warn" id="v1"><b>当前 v1：只有旁证组的数字（2026-11-25）。</b>这些来自整体式模型（π0.5 和 Fast-WAM）在 LIBERO 上的复现和计时，不是分层结构测试。分层实验 H1、H2、H3 还没有结果。机器是 berlin 的一张 H200。</div>
+<div class="key good" id="v2"><b>当前 v2：第一个分层实验 H1（MIRA）过了闸门（2026-11-25）。</b>官方默认设置下 250 回合，成功率 49.6%，官方是 51.4%。同一批回合还量出了上层实际多久运行一次。三个对照臂和一次默认设置的重跑正在排队，跑完进 v3。H2、H3 还没有结果。机器是 berlin 的一张 H200。</div>
+<div id="v1"></div>
 
 <div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
-<caption>版本索引 · 当前 v1</caption>
+<caption>版本索引 · 当前 v2</caption>
 <thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
 <tbody>
-<tr><td><a href="#v1">v1</a></td><td>2026-11-25</td><td>π0.5 在 LIBERO 四个套件上的基线复现；π0.5 和 Fast-WAM 的空 GPU 计时</td><td>对应计划页 v1 的 A 组闸门和计时</td><td>基线过闸门；计时见 § 2</td><td>待补</td></tr>
+<tr><td><a href="#v1">v1</a></td><td>2026-11-25</td><td>π0.5 在 LIBERO 四个套件上的基线复现；π0.5 和 Fast-WAM 的空 GPU 计时</td><td>对应计划页 v1 的 A 组闸门和计时</td><td>基线过闸门；计时见 <a href="#timing">§ 5</a></td><td>无</td></tr>
+<tr><td><a href="#v2">v2</a></td><td>2026-11-25</td><td>H1 MIRA 的闸门（250 回合）和两层各自的运行统计；旁证组补齐：π0.5 的重跑对照、Fast-WAM 两种模式的成功率</td><td>计划页 v2 改测真正的两层系统，H1 排第一</td><td>闸门过：<a href="#h1-gate">§ 1</a>；上层约 0.24 Hz：<a href="#h1-rate">§ 2</a></td><td><a href="#videos">两段示例</a>；<a href="#v2-fig-interval">调用间隔分布</a></td></tr>
 </tbody></table></div>
 
-<nav class="toc" aria-label="本页目录"><a href="#main">主要结论</a> · <a href="#overview">总表</a> · <a href="#a-baseline">§ 1 π0.5 基线</a> · <a href="#timing">§ 2 计时</a> · <a href="#deviations">§ 3 偏离官方流程的地方</a> · <a href="#not-run">§ 4 还没跑的</a></nav>
+<nav class="toc" aria-label="本页目录"><a href="#main">主要结论</a> · <a href="#overview">总表</a> · <a href="#videos">示例视频</a> · <a href="#h1-gate">§ 1 H1 闸门</a> · <a href="#h1-rate">§ 2 H1 两层各跑多快</a> · <a href="#h1-rules">§ 3 H1 里不属于两层的部分</a> · <a href="#a-baseline">§ 4 旁证：π0.5</a> · <a href="#b-modes">§ 5 旁证：Fast-WAM</a> · <a href="#timing">§ 6 计时</a> · <a href="#deviations">§ 7 偏离官方流程的地方</a> · <a href="#not-run">§ 8 还没跑的</a></nav>
 
 <div class="key good" id="main"><b>主要结论。</b>
 <ul>
-<li>官方 π0.5 的 LIBERO 数字复现了：四个套件 98.4 / 98.0 / 97.6 / 93.2，README 是 98.8 / 98.2 / 98.0 / 92.4。每个套件 500 回合。</li>
-<li>π0.5 在 H200 上，VLM 前缀一次约 23 ms，每个 flow 步约 2.1 ms。默认 10 步合计 43.7 ms，约 23 Hz。</li>
-<li>Fast-WAM 在 H200 上，不想象未来是 71.5 ms（约 14 Hz），先想象未来是 179.1 ms（约 5.6 Hz），相差 2.5 倍。</li>
-<li>这些都不是分层结构的结果，只说明两个整体式模型的速度量级。</li>
+<li><b>H1 复现了。</b>MIRA（Qwen3-VL-4B 规划器 + π0.5 执行器）在 RoboCasa365 上，50 个任务各 5 回合，成功率 49.6%（124 / 250，区间 43.5 到 55.8），官方 51.4%。按官方每个任务的成功率算，我们应得 128.5 个成功，实得 124 个。</li>
+<li><b>上层约每 4 秒运行一次，不是 5 到 10 Hz。</b>下层每执行完一段才调用上层。相邻两次调用之间的机器人时间，中位数 3.0 秒，平均 4.2 秒，折合约 0.24 Hz。短于 1 秒的分段只有 1.7%。</li>
+<li><b>上层单次调用约 0.8 秒。</b>这是 H200 上单独跑的数字，只有 2 个回合 12 次调用。输入的中位数约 1,900 个 token，带满 32 帧视频时约 3,900 个。照这个输入量，上层最快约 1.2 Hz。</li>
+<li><b>这个系统不只有两层。</b>上层和下层之间有一组手写规则，80% 的回合触发过，平均每回合 10.4 次；6.5% 的分段由规则直接重发，没有调用上层。上层每轮还读一个来自模拟器的真值：任务是否已完成。</li>
+<li><b>旁证组。</b>官方 π0.5 的 LIBERO 数字复现了；同一设置重跑一遍，500 回合里有 44 回合的成败翻转，这是比较各臂时的噪声底。Fast-WAM 先想象未来 97.4%，不想象 95.4%，差 2.0 个点，没有达到显著。</li>
 </ul></div>
 
 <h2 id="overview">总表</h2>
-<div class="tw fit"><table>
-<tr><th>项</th><th>设置</th><th>结果</th></tr>
-<tr><td>π0.5 成功率</td><td>LIBERO 四套件，各 500 回合</td><td>98.4 / 98.0 / 97.6 / 93.2</td></tr>
-<tr><td>π0.5 耗时</td><td>VLM 前缀；每个 flow 步</td><td>22.7 ms；2.09 ms</td></tr>
-<tr><td>Fast-WAM 耗时</td><td>不想象；先想象（各 10 步）</td><td>71.5 ms；179.1 ms</td></tr>
-<tr><td>Fast-WAM 显存</td><td>推理峰值</td><td>25.0 GB</td></tr>
+<div class="tw"><table>
+<tr><th>项</th><th>设置</th><th>结果</th><th>参照</th></tr>
+<tr><td>H1 成功率，总体</td><td>RoboCasa365，50 任务 × 5 回合，官方默认</td><td class="n">49.6%（124 / 250）</td><td class="n">官方 51.4%</td></tr>
+<tr><td>H1 成功率，分三类</td><td>原子／见过的组合／没见过的组合</td><td class="n">83.3 / 40.0 / 21.2</td><td class="n">官方 78.8 / 49.4 / 22.6</td></tr>
+<tr><td>H1 每回合调用上层</td><td>原子／见过的组合／没见过的组合</td><td class="n">5.2 / 21.4 / 26.4 次</td><td class="n">官方 5.7 / 20.2 / 26.7</td></tr>
+<tr><td>H1 上层调用间隔</td><td>机器人时间，中位数；平均</td><td class="n">3.0 s；4.2 s</td><td class="n">目标 0.1 到 0.2 s</td></tr>
+<tr><td>H1 上层单次耗时</td><td>单独跑；10 套并行</td><td class="n">0.81 s；2.64 s</td><td class="n">—</td></tr>
+<tr><td>H1 下层单次耗时</td><td>一个 16 步动作块，单独跑</td><td class="n">64 ms</td><td class="n">16 步是 0.8 s</td></tr>
+<tr><td>π0.5 成功率</td><td>LIBERO 四套件，各 500 回合</td><td class="n">98.4 / 98.0 / 97.6 / 93.2</td><td class="n">README 98.8 / 98.2 / 98.0 / 92.4</td></tr>
+<tr><td>π0.5 重跑</td><td>LIBERO-10，同一设置再跑 500 回合</td><td class="n">92.4%，44 回合翻转</td><td class="n">第一遍 93.2%</td></tr>
+<tr><td>Fast-WAM 成功率</td><td>LIBERO-10：先想象未来；不想象</td><td class="n">97.4%；95.4%</td><td class="n">README 97.0；95.8</td></tr>
+<tr><td>π0.5 耗时</td><td>VLM 前缀；每个 flow 步</td><td class="n">22.7 ms；2.09 ms</td><td class="n">—</td></tr>
+<tr><td>Fast-WAM 耗时</td><td>不想象；先想象（各 10 步）</td><td class="n">71.5 ms；179.1 ms</td><td class="n">—</td></tr>
 </table></div>
 
-<details id="a-baseline" open><summary><h2><span class="n">§ 1</span>π0.5 基线</h2><span class="one">四个套件都在 README 数字的 1 个点以内，过闸门。</span></summary>
-<p>官方 openpi（提交 215abfb），权重 <code>gs://openpi-assets/checkpoints/pi05_libero</code>。官方设置：动作块 10 步，每 5 步重规划，flow 10 步，种子 7，每任务 50 回合。</p>
+<h2 id="videos">示例视频</h2>
+<p>两段都来自闸门运行，6 倍速。画面是三路相机拼成的一帧，也是上层看到的画面。顶部文字是这一段开始时上层交给下层的子目标，以及这一段实际执行了多少步。</p>
+<div class="duo">
+<figure class="figwrap" id="v2-video-success"><video controls loop muted playsinline preload="metadata" poster="assets/hier-sota-results/v2-mira-success-poster.png" src="assets/hier-sota-results/v2-mira-success.mp4"></video><figcaption><b>成功：GetToastedBread。</b>上层调用 10 次，共 2,055 步。第 3 段“移到烤面包机上方等待”执行了 950 步，也就是 47.5 秒没有调用上层。</figcaption></figure>
+<figure class="figwrap" id="v2-video-failure"><video controls loop muted playsinline preload="metadata" poster="assets/hier-sota-results/v2-mira-failure-poster.png" src="assets/hier-sota-results/v2-mira-failure.mp4"></video><figcaption><b>失败：PrepareCoffee。</b>上层调用 13 次，1,800 步用完。杯子放好了，按启动键这一步上层重发了三轮，环境始终没有判定完成。这个任务 5 回合全败，官方是 12%。</figcaption></figure>
+</div>
+<figure class="figwrap" id="v2-fig-interval"><a href="assets/hier-sota-results/v2-mira-upper-interval.png"><img src="assets/hier-sota-results/v2-mira-upper-interval.png" alt="直方图：MIRA 闸门运行中相邻两次上层调用之间的机器人时间，对数横轴。分布集中在 1 到 20 秒，中位数 3.0 秒；目标区间 0.1 到 0.2 秒内几乎没有分段。"></a><figcaption>相邻两次上层调用之间隔多久。4,293 个分段里，落在目标区间（0.1 到 0.2 秒）以内的占 0.1%。</figcaption></figure>
+
+<details id="h1-gate" open><summary><h2><span class="n">§ 1</span>H1 闸门</h2><span class="one">总体和三类任务都与官方数字相符；见过的组合任务偏低 9 个点，在抽样误差的边缘。</span></summary>
+<p><b>设置。</b>官方仓库 yinpei-tri-pi/sys1_sys2（提交 b9afc15）和它放出的两份权重。官方评测循环 <code>official_eval.py</code>，<code>--split target --seed 7</code>，手写规则全开（官方默认）。官方每任务 50 回合，我们取前 5 回合。</p>
+<div class="tw wide"><table>
+<tr><th>任务类别</th><th>我们</th><th>95% 区间</th><th>官方</th><th>按官方每任务成功率，我们应得</th><th>偏差</th></tr>
+<tr><td>原子任务（18 个）</td><td class="n">83.3%（75 / 90）</td><td class="n">74.3 – 89.6</td><td class="n">78.8</td><td class="n">70.9 个</td><td class="n">+1.1 个标准差</td></tr>
+<tr><td>见过的组合任务（16 个）</td><td class="n">40.0%（32 / 80）</td><td class="n">30.0 – 51.0</td><td class="n">49.4</td><td class="n">39.5 个</td><td class="n">−1.7 个标准差</td></tr>
+<tr><td>没见过的组合任务（16 个）</td><td class="n">21.2%（17 / 80）</td><td class="n">13.7 – 31.4</td><td class="n">22.6</td><td class="n">18.1 个</td><td class="n">−0.3 个标准差</td></tr>
+<tr><td><b>总体</b></td><td class="n"><b>49.6%（124 / 250）</b></td><td class="n">43.5 – 55.8</td><td class="n">51.4</td><td class="n">128.5 个</td><td class="n">−0.7 个标准差</td></tr>
+</table></div>
+<p><b>偏差怎么算的。</b>官方文档给了每个任务 50 回合的成功率。把它当作每个任务的真实概率，算我们 5 回合应得几个成功，再和实得比；标准差同时计入我们这 5 回合和官方那 50 回合的抽样误差。50 个任务里没有一个单独偏离到 5% 显著水平。</p>
+<p><b>结论的边界。</b>总体相符。见过的组合任务低 9.4 个点，约 1.7 个标准差，不能排除是抽样，也不能排除我们的环境有小差别。每回合调用上层的次数与官方一致（5.2 对 5.7，21.4 对 20.2，26.4 对 26.7），说明循环本身的行为没有变。</p>
+<p><b>核查。</b>250 回合里没有因异常被记成失败的回合；上层的 4,281 次请求全部正常返回；回合结束的原因是环境判定成功 124 次、步数用完 124 次、同一子目标重复到上限 2 次。</p>
+<details><summary>50 个任务逐个对比</summary>
+<div class="tw wide"><table>
+<tr><th>任务</th><th>类别</th><th>我们成功</th><th>官方成功率（%）</th><th>我们每回合调用上层</th><th>官方每回合调用上层</th></tr>
+<tr><td>CloseBlenderLid</td><td>原子任务</td><td class="n">3 / 5</td><td class="n">48</td><td class="n">8.8</td><td class="n">10.0</td></tr>
+<tr><td>CloseFridge</td><td>原子任务</td><td class="n">5 / 5</td><td class="n">92</td><td class="n">2.8</td><td class="n">4.9</td></tr>
+<tr><td>CloseToasterOvenDoor</td><td>原子任务</td><td class="n">5 / 5</td><td class="n">84</td><td class="n">3.2</td><td class="n">3.0</td></tr>
+<tr><td>CoffeeSetupMug</td><td>原子任务</td><td class="n">3 / 5</td><td class="n">54</td><td class="n">6.6</td><td class="n">7.2</td></tr>
+<tr><td>NavigateKitchen</td><td>原子任务</td><td class="n">5 / 5</td><td class="n">60</td><td class="n">2.0</td><td class="n">5.0</td></tr>
+<tr><td>OpenCabinet</td><td>原子任务</td><td class="n">5 / 5</td><td class="n">96</td><td class="n">4.8</td><td class="n">4.8</td></tr>
+<tr><td>OpenDrawer</td><td>原子任务</td><td class="n">5 / 5</td><td class="n">94</td><td class="n">3.6</td><td class="n">4.4</td></tr>
+<tr><td>OpenStandMixerHead</td><td>原子任务</td><td class="n">5 / 5</td><td class="n">100</td><td class="n">2.2</td><td class="n">2.3</td></tr>
+<tr><td>PickPlaceCounterToCabinet</td><td>原子任务</td><td class="n">3 / 5</td><td class="n">76</td><td class="n">9.2</td><td class="n">8.8</td></tr>
+<tr><td>PickPlaceCounterToStove</td><td>原子任务</td><td class="n">5 / 5</td><td class="n">88</td><td class="n">6.0</td><td class="n">7.0</td></tr>
+<tr><td>PickPlaceDrawerToCounter</td><td>原子任务</td><td class="n">4 / 5</td><td class="n">74</td><td class="n">11.6</td><td class="n">10.5</td></tr>
+<tr><td>PickPlaceSinkToCounter</td><td>原子任务</td><td class="n">5 / 5</td><td class="n">100</td><td class="n">5.8</td><td class="n">6.3</td></tr>
+<tr><td>PickPlaceToasterToCounter</td><td>原子任务</td><td class="n">4 / 5</td><td class="n">90</td><td class="n">7.6</td><td class="n">7.0</td></tr>
+<tr><td>SlideDishwasherRack</td><td>原子任务</td><td class="n">4 / 5</td><td class="n">78</td><td class="n">2.8</td><td class="n">3.6</td></tr>
+<tr><td>TurnOffStove</td><td>原子任务</td><td class="n">3 / 5</td><td class="n">44</td><td class="n">5.6</td><td class="n">7.0</td></tr>
+<tr><td>TurnOnElectricKettle</td><td>原子任务</td><td class="n">4 / 5</td><td class="n">92</td><td class="n">4.2</td><td class="n">3.4</td></tr>
+<tr><td>TurnOnMicrowave</td><td>原子任务</td><td class="n">5 / 5</td><td class="n">82</td><td class="n">4.2</td><td class="n">4.5</td></tr>
+<tr><td>TurnOnSinkFaucet</td><td>原子任务</td><td class="n">2 / 5</td><td class="n">66</td><td class="n">2.8</td><td class="n">3.1</td></tr>
+<tr><td>DeliverStraw</td><td>见过的组合任务</td><td class="n">2 / 5</td><td class="n">56</td><td class="n">22.6</td><td class="n">21.0</td></tr>
+<tr><td>GetToastedBread</td><td>见过的组合任务</td><td class="n">5 / 5</td><td class="n">74</td><td class="n">12.0</td><td class="n">13.9</td></tr>
+<tr><td>KettleBoiling</td><td>见过的组合任务</td><td class="n">1 / 5</td><td class="n">54</td><td class="n">15.4</td><td class="n">14.6</td></tr>
+<tr><td>LoadDishwasher</td><td>见过的组合任务</td><td class="n">2 / 5</td><td class="n">46</td><td class="n">16.2</td><td class="n">17.8</td></tr>
+<tr><td>PackIdenticalLunches</td><td>见过的组合任务</td><td class="n">1 / 5</td><td class="n">20</td><td class="n">57.4</td><td class="n">52.7</td></tr>
+<tr><td>PreSoakPan</td><td>见过的组合任务</td><td class="n">3 / 5</td><td class="n">70</td><td class="n">14.8</td><td class="n">15.7</td></tr>
+<tr><td>PrepareCoffee</td><td>见过的组合任务</td><td class="n">0 / 5</td><td class="n">12</td><td class="n">14.4</td><td class="n">15.4</td></tr>
+<tr><td>RinseSinkBasin</td><td>见过的组合任务</td><td class="n">2 / 5</td><td class="n">50</td><td class="n">13.8</td><td class="n">12.3</td></tr>
+<tr><td>ScrubCuttingBoard</td><td>见过的组合任务</td><td class="n">3 / 5</td><td class="n">62</td><td class="n">12.0</td><td class="n">12.3</td></tr>
+<tr><td>SearingMeat</td><td>见过的组合任务</td><td class="n">1 / 5</td><td class="n">36</td><td class="n">32.0</td><td class="n">29.1</td></tr>
+<tr><td>SetUpCuttingStation</td><td>见过的组合任务</td><td class="n">1 / 5</td><td class="n">58</td><td class="n">28.6</td><td class="n">23.3</td></tr>
+<tr><td>StackBowlsCabinet</td><td>见过的组合任务</td><td class="n">3 / 5</td><td class="n">76</td><td class="n">14.2</td><td class="n">11.5</td></tr>
+<tr><td>SteamInMicrowave</td><td>见过的组合任务</td><td class="n">1 / 5</td><td class="n">32</td><td class="n">36.8</td><td class="n">31.2</td></tr>
+<tr><td>StirVegetables</td><td>见过的组合任务</td><td class="n">2 / 5</td><td class="n">42</td><td class="n">20.0</td><td class="n">18.5</td></tr>
+<tr><td>StoreLeftoversInBowl</td><td>见过的组合任务</td><td class="n">4 / 5</td><td class="n">40</td><td class="n">19.0</td><td class="n">22.9</td></tr>
+<tr><td>WashLettuce</td><td>见过的组合任务</td><td class="n">1 / 5</td><td class="n">62</td><td class="n">13.8</td><td class="n">11.0</td></tr>
+<tr><td>ArrangeBreadBasket</td><td>没见过的组合任务</td><td class="n">1 / 5</td><td class="n">42</td><td class="n">48.8</td><td class="n">44.7</td></tr>
+<tr><td>ArrangeTea</td><td>没见过的组合任务</td><td class="n">0 / 5</td><td class="n">24</td><td class="n">19.6</td><td class="n">17.8</td></tr>
+<tr><td>BreadSelection</td><td>没见过的组合任务</td><td class="n">1 / 5</td><td class="n">50</td><td class="n">15.0</td><td class="n">15.8</td></tr>
+<tr><td>CategorizeCondiments</td><td>没见过的组合任务</td><td class="n">0 / 5</td><td class="n">4</td><td class="n">15.4</td><td class="n">15.3</td></tr>
+<tr><td>CuttingToolSelection</td><td>没见过的组合任务</td><td class="n">2 / 5</td><td class="n">36</td><td class="n">16.6</td><td class="n">13.8</td></tr>
+<tr><td>GarnishPancake</td><td>没见过的组合任务</td><td class="n">3 / 5</td><td class="n">36</td><td class="n">27.6</td><td class="n">27.9</td></tr>
+<tr><td>GatherTableware</td><td>没见过的组合任务</td><td class="n">0 / 5</td><td class="n">2</td><td class="n">18.8</td><td class="n">19.1</td></tr>
+<tr><td>HeatKebabSandwich</td><td>没见过的组合任务</td><td class="n">0 / 5</td><td class="n">0</td><td class="n">30.8</td><td class="n">27.1</td></tr>
+<tr><td>MakeIceLemonade</td><td>没见过的组合任务</td><td class="n">1 / 5</td><td class="n">28</td><td class="n">34.0</td><td class="n">30.9</td></tr>
+<tr><td>PanTransfer</td><td>没见过的组合任务</td><td class="n">0 / 5</td><td class="n">2</td><td class="n">29.8</td><td class="n">27.6</td></tr>
+<tr><td>PortionHotDogs</td><td>没见过的组合任务</td><td class="n">1 / 5</td><td class="n">10</td><td class="n">29.8</td><td class="n">36.0</td></tr>
+<tr><td>RecycleBottlesByType</td><td>没见过的组合任务</td><td class="n">1 / 5</td><td class="n">6</td><td class="n">30.8</td><td class="n">33.3</td></tr>
+<tr><td>SeparateFreezerRack</td><td>没见过的组合任务</td><td class="n">1 / 5</td><td class="n">8</td><td class="n">32.8</td><td class="n">36.0</td></tr>
+<tr><td>WaffleReheat</td><td>没见过的组合任务</td><td class="n">4 / 5</td><td class="n">56</td><td class="n">26.2</td><td class="n">35.3</td></tr>
+<tr><td>WashFruitColander</td><td>没见过的组合任务</td><td class="n">2 / 5</td><td class="n">44</td><td class="n">24.0</td><td class="n">24.1</td></tr>
+<tr><td>WeighIngredients</td><td>没见过的组合任务</td><td class="n">0 / 5</td><td class="n">14</td><td class="n">22.2</td><td class="n">22.0</td></tr>
+</table></div>
+</details>
+</details>
+
+<details id="h1-rate" open><summary><h2><span class="n">§ 2</span>H1 两层各跑多快</h2><span class="one">上层由下层触发，平均每 4.2 秒一次；下层 20 Hz，每 0.8 秒重新规划一次。</span></summary>
+<h3>上层何时运行</h3>
+<div class="tw"><table>
+<tr><th>量</th><th>数值</th></tr>
+<tr><td>每回合调用上层的次数</td><td>平均 17.2，中位数 15，第 90 百分位 36，最多 70。成功的回合平均 8.6 次，失败的回合平均 25.6 次</td></tr>
+<tr><td>一段有多少步</td><td>第 10 百分位 32，中位数 59，平均 85，第 90 百分位 166，最长 950</td></tr>
+<tr><td>折合机器人时间（20 Hz）</td><td>1.6 s，3.0 s，4.2 s，8.3 s，47.5 s</td></tr>
+<tr><td>上层的平均频率</td><td>0.24 Hz</td></tr>
+<tr><td>一段怎么结束的</td><td>下层自己判断这一段做完：91.3%。上层给的步数预算用完：5.7%。环境判定任务成功：2.9%</td></tr>
+<tr><td>上层估的步数准不准</td><td>实际步数与估计步数之比，中位数 0.92；35% 的分段超过了估计</td></tr>
+<tr><td>上层怎么评价上一段</td><td>除每回合第一次外的 3,766 次调用里：完成 72.7%，没做完、继续 22.3%，失败 1.5%，宣布任务结束 3.6%</td></tr>
+</table></div>
+<p><b>读法。</b>决定上层频率的不是上层的算力，而是下层：91% 的分段由下层自己的完成度信号结束。上层给的预计步数只是上限，不是时钟。</p>
+<h3>上层每次读什么、写什么</h3>
+<div class="tw"><table>
+<tr><th>调用</th><th>输入</th><th>输出</th></tr>
+<tr><td>写计划（每回合一次）</td><td>一帧拼接图（192 个视觉 token）和任务文字。合计中位数 431 个 token</td><td>思考和里程碑清单。中位数 159 个 token，最多 449</td></tr>
+<tr><td>每段之后</td><td>上一段的视频（每秒 4 帧，最多 32 帧，每两帧 192 个 token）、当前清单、任务状态、夹爪状态。合计中位数 1,910，第 90 百分位 3,883，最多 4,130</td><td>思考、对上一段的评价、清单的改动、下一个子目标、预计步数。中位数 171，最多 471</td></tr>
+</table></div>
+<h3>耗时</h3>
+<div class="tw fit"><table>
+<tr><th>量</th><th>单独跑</th><th>10 套并行</th></tr>
+<tr><td>上层写计划</td><td class="n">0.69 s</td><td class="n">2.19 s</td></tr>
+<tr><td>上层每段之后，中位数</td><td class="n">0.81 s</td><td class="n">2.64 s</td></tr>
+<tr><td>上层每段之后，第 90 百分位</td><td class="n">0.95 s</td><td class="n">3.48 s</td></tr>
+<tr><td>下层一个 16 步动作块</td><td class="n">64 ms</td><td class="n">0.53 s</td></tr>
+</table></div>
+<p>“单独跑”来自冒烟测试，只有 2 个回合、12 次上层调用，是粗数字；一次 6 个回合的单独计时已经排在队列里。“10 套并行”是闸门运行时的数字，10 个模拟器共用一张卡和 20 个核，不能当作模型本身的速度。</p>
+<p><b>对 5 到 10 Hz 的含义。</b>这个上层单次要 0.8 秒，是因为它每次读一段视频并写一段思考。要到 5 Hz，单次要压到 200 ms 以内，也就是输入和输出都要砍掉大半。MIRA 没有这样做，它靠下层的完成度信号把上层的调用次数降下来。</p>
+</details>
+
+<details id="h1-rules" open><summary><h2><span class="n">§ 3</span>H1 里不属于两层的部分</h2><span class="one">官方 51.4% 是“上层 + 手写规则 + 模拟器真值 + 下层”的成绩；纯两层的数字要看关掉规则的对照臂。</span></summary>
+<p><b>手写规则。</b>官方把一组规则放在上层和下层之间，改写上层的输出。闸门运行里：</p>
+<div class="tw"><table>
+<tr><th>规则</th><th>做什么</th><th>触发次数（250 回合）</th></tr>
+<tr><td>最后一个里程碑重试</td><td>上层宣布任务结束、但环境说没结束时，恢复最后一个里程碑再做</td><td>改写清单 335 次，其中压下“任务结束”134 次</td></tr>
+<tr><td>步数估计改写</td><td>替换上层给的预计步数</td><td>323 次</td></tr>
+<tr><td>重复上限</td><td>同一个子目标发到第三次（伸手类第二次）就推进到下一步。这一条是循环的终止策略，关不掉</td><td>记录 305 条</td></tr>
+<tr><td>再按一次</td><td>把“继续按某个键”改写成“再按一次某个键”，后一种说法下层在训练里见得多</td><td>157 次</td></tr>
+<tr><td>重新抓取</td><td>夹爪合上却没夹到东西时，插入一次重新抓取</td><td>56 次</td></tr>
+</table></div>
+<p>80% 的回合至少触发一次，平均每回合 10.4 次。4,295 个分段里有 279 个（6.5%）是规则直接重发上一个子目标，没有调用上层。</p>
+<p><b>模拟器真值。</b>上层每轮的输入里有一行“当前任务状态：进行中／已完成”，来自模拟器的成功判定；还有一行夹爪状态。官方在代码和提示词里都标明这是特权信息。真机上没有这一位。</p>
+<p><b>下一步。</b>关掉规则的对照臂（只留“重复上限”）正在跑。它也关掉了“最后一个里程碑重试”，所以给出的是更接近纯两层的成绩。</p>
+</details>
+
+<details id="a-baseline"><summary><h2><span class="n">§ 4</span>旁证：π0.5</h2><span class="one">四个套件都在 README 数字的 1 个点以内；同一设置重跑，500 回合里 44 回合翻转。</span></summary>
+<p>整体式模型，不是分层测试。官方 openpi（提交 215abfb），权重 <code>gs://openpi-assets/checkpoints/pi05_libero</code>。官方设置：动作块 10 步，每 5 步重规划，flow 10 步，种子 7，每任务 50 回合。</p>
 <div class="tw"><table>
 <tr><th>套件</th><th>我们</th><th>95% 区间</th><th>README</th><th>差</th></tr>
 <tr><td>Spatial</td><td class="n">98.4%（492 / 500）</td><td class="n">96.9 – 99.2</td><td class="n">98.8</td><td class="n">−0.4</td></tr>
@@ -140,11 +274,23 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <tr><td>LIBERO-10</td><td class="n">93.2%（466 / 500）</td><td class="n">90.6 – 95.1</td><td class="n">92.4</td><td class="n">+0.8</td></tr>
 <tr><td>平均</td><td class="n">96.80</td><td class="n">—</td><td class="n">96.85</td><td class="n">−0.05</td></tr>
 </table></div>
-<p>2,000 回合里没有因异常中断的回合。闸门规则是每个套件差 3 个点以内、平均差 1.5 个点以内，都满足。冒烟测试（LIBERO-10 第 0 号任务，3 回合）3 / 3。</p>
+<p>2,000 回合里没有因异常中断的回合。闸门规则是每个套件差 3 个点以内、平均差 1.5 个点以内，都满足。</p>
+<p><b>重跑对照。</b>LIBERO-10 用同一设置再跑 500 回合：92.4%（462 / 500）。按回合配对，第一遍成功而重跑失败的有 24 回合，反过来 20 回合，差 0.8 个点，p = 0.65。两遍设置完全相同，仍有 8.8% 的回合结果翻转。比较任何两个臂时，小于这个量级的差别不算发现。</p>
+<p>原计划的其余六个臂（flow 步数、延迟、重规划间隔）没有跑：改题后它们不回答分层的问题，权重已删。</p>
 </details>
 
-<details id="timing" open><summary><h2><span class="n">§ 2</span>计时</h2><span class="one">π0.5 的耗时随 flow 步数严格线性；Fast-WAM 先想象未来比不想象慢 2.5 倍。</span></summary>
-<p>条件：GPU 上没有别的进程，批大小 1。数字是端到端的一次推理，包含输入预处理和把结果取回主机。</p>
+<details id="b-modes"><summary><h2><span class="n">§ 5</span>旁证：Fast-WAM</h2><span class="one">同一份权重，先想象未来 97.4%，不想象 95.4%；差 2.0 个点，p = 0.10。</span></summary>
+<p>整体式模型，不是分层测试。官方仓库（提交 7faa711），权重 <code>libero_optional_idm_2cam224.pt</code>，官方开关 <code>action_infer_mode</code>。LIBERO-10，两种模式各 500 回合，同一批初始状态。</p>
+<div class="tw"><table>
+<tr><th>模式</th><th>我们</th><th>95% 区间</th><th>README</th></tr>
+<tr><td>先想象未来画面，再出动作</td><td class="n">97.4%（487 / 500）</td><td class="n">95.6 – 98.5</td><td class="n">97.0</td></tr>
+<tr><td>不想象，直接出动作</td><td class="n">95.4%（477 / 500）</td><td class="n">93.2 – 96.9</td><td class="n">95.8</td></tr>
+</table></div>
+<p>按回合配对：只有“先想象”成功的 20 回合，只有“不想象”成功的 10 回合，p = 0.099。方向与作者的数字一致，量级在 π0.5 重跑的噪声之内。代价是每次推理慢 2.5 倍（<a href="#timing">§ 6</a>）。</p>
+</details>
+
+<details id="timing"><summary><h2><span class="n">§ 6</span>计时</h2><span class="one">π0.5 的耗时随 flow 步数严格线性；Fast-WAM 先想象未来比不想象慢 2.5 倍。</span></summary>
+<p>条件：GPU 上没有别的进程，批大小 1。数字是端到端的一次推理，包含输入预处理和把结果取回主机。MIRA 的耗时在 <a href="#h1-rate">§ 2</a>。</p>
 <h3 id="timing-pi05">π0.5</h3>
 <p>先预热 10 次，再量 100 次，取中位数。</p>
 <div class="tw fit"><table>
@@ -156,9 +302,9 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <tr><td>10（默认）</td><td class="n">43.67 ms</td><td class="n">43.62 – 43.76</td></tr>
 <tr><td>20</td><td class="n">64.58 ms</td><td class="n">64.53 – 64.67</td></tr>
 </table></div>
-<p>直线拟合：截距 22.71 ms，斜率 2.094 ms 每步。截距是 VLM 前缀加预处理，也就是上层那一部分；斜率是动作头走一步。只算上层，H200 上能到约 44 Hz。</p>
+<p>直线拟合：截距 22.71 ms，斜率 2.094 ms 每步。截距是 VLM 前缀加预处理；斜率是动作头走一步。</p>
 <h3 id="timing-fastwam">Fast-WAM</h3>
-<p>官方仓库（提交 7faa711）的同一个推理函数，包含文本编码和 VAE 编码。先预热 6 次，再量 30 次。动作块 32 步。</p>
+<p>官方仓库的同一个推理函数，包含文本编码和 VAE 编码。先预热 6 次，再量 30 次。动作块 32 步。</p>
 <div class="tw fit"><table>
 <tr><th>去噪步数</th><th>不想象未来</th><th>先想象未来</th></tr>
 <tr><td>10（默认）</td><td class="n">71.5 ms</td><td class="n">179.1 ms</td></tr>
@@ -166,24 +312,28 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <tr><td>2</td><td class="n">38.1 ms</td><td class="n">61.8 ms</td></tr>
 <tr><td>1</td><td class="n">33.3 ms</td><td class="n">47.2 ms</td></tr>
 </table></div>
-<p>推理峰值显存 25.0 GB。成功率还在跑，没有数字。冒烟测试（LIBERO-10 第 0 号任务，3 回合）两种模式各 3 / 3。</p>
+<p>推理峰值显存 25.0 GB。</p>
 </details>
 
-<details id="deviations"><summary><h2><span class="n">§ 3</span>偏离官方流程的地方</h2><span class="one">模型、权重和每回合的执行逻辑没有改，改的是评测外壳。</span></summary>
+<details id="deviations"><summary><h2><span class="n">§ 7</span>偏离官方流程的地方</h2><span class="one">模型、权重和每回合的执行逻辑没有改，改的是评测外壳和回合数。</span></summary>
 <ol>
+<li><b>MIRA 每任务 5 回合，不是 50。</b>官方的环境按固定种子依次重置，我们取的是每个任务的前 5 回合。</li>
+<li><b>MIRA 的上层不在 Docker 里。</b>berlin 没有容器运行时。我在虚拟环境里装同一版 vLLM 0.19.1，启动参数与官方脚本逐项相同，只把显存占比从 0.20 改成 0.15。官方镜像另外设了几个视频采样的环境变量，它们作用于 vLLM 不使用的一个库；我核对了实际的 token 数（一帧 192 个，32 帧视频 3,072 个），与设计一致。</li>
+<li><b>MIRA 一张卡上跑 10 套模拟器。</b>官方是 8 张 A100、每张两套。评测循环是同步的，模拟器等模型返回才走下一步，所以并行只影响耗时，不影响成败。</li>
 <li><b>π0.5 客户端拆成多个进程。</b>官方脚本按顺序跑完一个套件；我的版本把 10 个任务分给几个进程，回合循环照抄官方，另加每回合一行的记录。</li>
-<li><b>π0.5 服务端只监听本机。</b></li>
-<li><b>基线用了两个服务端同时跑。</b>它们共用一张卡，所以基线期间记下的推理耗时不能用；§ 2 的计时是另外在空 GPU 上量的。</li>
+<li><b>π0.5 基线用了两个服务端同时跑。</b>所以基线期间记下的推理耗时不能用；§ 6 的计时是另外在空 GPU 上量的。</li>
 <li><b>Fast-WAM 的文本编码器和 VAE 换了下载地方。</b>仓库默认指向的 ModelScope 镜像现在要登录。我改从 Wan 官方的 Hugging Face 发布下载同一份权重，并用仓库自带的开关 <code>model.redirect_common_files=false</code>。</li>
+<li><b>Fast-WAM 只跑了 LIBERO-10。</b>README 的数字是四个套件；这里只对 LIBERO-10 那一列。</li>
 </ol>
 </details>
 
-<details id="not-run"><summary><h2><span class="n">§ 4</span>还没跑的</h2><span class="one">分层实验 H1、H2、H3 都没有结果；旁证组的对照臂在跑。</span></summary>
+<details id="not-run"><summary><h2><span class="n">§ 8</span>还没跑的</h2><span class="one">H1 的三个对照臂和重跑在排队；H2、H3 没有结果。</span></summary>
 <ul>
-<li>分层实验 H1（MIRA）、H2（RoboDual）、H3（SmolVLA）：见 <a href="hier-sota-repro.html#tests">具体计划 § 3</a>。</li>
-<li>π0.5 的对照臂（flow 步数、延迟、重规划间隔）：在跑，跑完补到这里。</li>
-<li>Fast-WAM 两种模式在 LIBERO-10 上的成功率：在跑。</li>
-<li>DexJoCo 灵巧手和 LIBERO-Plus：暂缓。</li>
+<li><b>H1 对照臂。</b>关掉手写规则；上层换成没微调的同款模型；交给下层的文字换成详细句。各 250 回合，与闸门按回合配对。</li>
+<li><b>H1 默认设置重跑。</b>量这 250 回合上的噪声底，再判读对照臂的差别。</li>
+<li><b>H1 单独计时。</b>一套模拟器、6 个回合。</li>
+<li><b>H2（RoboDual）、H3（SmolVLA）。</b>见 <a href="hier-sota-repro.html#tests">具体计划 § 3</a>。磁盘只够一次放一个实验，H1 结束后再装。</li>
+<li><b>暂缓。</b>DexJoCo 灵巧手和 LIBERO-Plus。</li>
 </ul>
 </details>
 
