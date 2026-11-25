@@ -99,22 +99,23 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <body>
 <main class="wrap">
 <a class="bk" href="index.html">← Machine Learning Handbook</a>
-<div class="kicker">实验记录 · 分层架构 SOTA 复现（HS）· 当前 v2 · 2026-11-25</div>
+<div class="kicker">实验记录 · 分层架构 SOTA 复现（HS）· 当前 v3 · 2026-11-25</div>
 <h1>预训练上层 + 快速下层：实验记录</h1>
 <p class="lede">这页只放真正跑出来的数字。计划和每个实验的设计在 <a href="hier-sota-repro.html">具体计划</a>，三分钟版在 <a href="hier-sota-repro-brief.html">快速阅览</a>。</p>
 
-<div class="key good" id="v2"><b>当前 v2：第一个分层实验 H1（MIRA）过了闸门（2026-11-25）。</b>官方默认设置下 250 回合，成功率 49.6%，官方是 51.4%。同一批回合还量出了上层实际多久运行一次。三个对照臂和一次默认设置的重跑正在排队，跑完进 v3。H2、H3、H4 还没有结果。机器是 berlin 的一张 H200。</div>
-<div id="v1"></div>
+<div class="key good" id="v3"><b>当前 v3：H1 的两个对照臂跑完（2026-11-25）。</b>关掉手写规则，或者把交给下层的文字换成详细句，成功率都从 49.6% 掉到约 39%。默认设置的重跑（噪声底）还在跑，所以这两个差值先当初步结论。H2、H3、H4 的评测链路都验证通了，正式成绩还没有。机器是 berlin 的一张 H200。</div>
+<div id="v2"></div><div id="v1"></div>
 
 <div class="tw" tabindex="0" role="region" aria-label="版本索引"><table class="versions">
-<caption>版本索引 · 当前 v2</caption>
+<caption>版本索引 · 当前 v3</caption>
 <thead><tr><th scope="col">版本</th><th scope="col">日期</th><th scope="col">变了什么</th><th scope="col">原因／证据</th><th scope="col">结果／记录</th><th scope="col">截图／视频</th></tr></thead>
 <tbody>
-<tr><td><a href="#v1">v1</a></td><td>2026-11-25</td><td>π0.5 在 LIBERO 四个套件上的基线复现；π0.5 和 Fast-WAM 的空 GPU 计时</td><td>对应计划页 v1 的 A 组闸门和计时</td><td>基线过闸门；计时见 <a href="#timing">§ 5</a></td><td>无</td></tr>
+<tr><td><a href="#v1">v1</a></td><td>2026-11-25</td><td>π0.5 在 LIBERO 四个套件上的基线复现；π0.5 和 Fast-WAM 的空 GPU 计时</td><td>对应计划页 v1 的 A 组闸门和计时</td><td>基线过闸门；计时见 <a href="#timing">§ 8</a></td><td>无</td></tr>
 <tr><td><a href="#v2">v2</a></td><td>2026-11-25</td><td>H1 MIRA 的闸门（250 回合）和两层各自的运行统计；旁证组补齐：π0.5 的重跑对照、Fast-WAM 两种模式的成功率</td><td>计划页 v2 改测真正的两层系统，H1 排第一</td><td>闸门过：<a href="#h1-gate">§ 1</a>；上层约 0.24 Hz：<a href="#h1-rate">§ 2</a></td><td><a href="#videos">两段示例</a>；<a href="#v2-fig-interval">调用间隔分布</a></td></tr>
+<tr><td><a href="#v3">v3</a></td><td>2026-11-25</td><td>H1 的“关规则”和“详细句”两个臂；“没微调的上层”试跑后改成子集；H3 的评测流程检查；H4、H2 的冒烟测试</td><td>计划页 v4</td><td>两个臂都低约 10 个点：<a href="#h1-arms">§ 4</a>；流程检查：<a href="#checks">§ 5</a></td><td>无</td></tr>
 </tbody></table></div>
 
-<nav class="toc" aria-label="本页目录"><a href="#main">主要结论</a> · <a href="#overview">总表</a> · <a href="#videos">示例视频</a> · <a href="#h1-gate">§ 1 H1 闸门</a> · <a href="#h1-rate">§ 2 H1 两层各跑多快</a> · <a href="#h1-rules">§ 3 H1 里不属于两层的部分</a> · <a href="#a-baseline">§ 4 旁证：π0.5</a> · <a href="#b-modes">§ 5 旁证：Fast-WAM</a> · <a href="#timing">§ 6 计时</a> · <a href="#deviations">§ 7 偏离官方流程的地方</a> · <a href="#not-run">§ 8 还没跑的</a></nav>
+<nav class="toc" aria-label="本页目录"><a href="#main">主要结论</a> · <a href="#overview">总表</a> · <a href="#videos">示例视频</a> · <a href="#h1-gate">§ 1 H1 闸门</a> · <a href="#h1-rate">§ 2 H1 两层各跑多快</a> · <a href="#h1-rules">§ 3 H1 里不属于两层的部分</a> · <a href="#h1-arms">§ 4 H1 对照臂</a> · <a href="#checks">§ 5 H2、H3、H4 的流程检查</a> · <a href="#a-baseline">§ 6 旁证：π0.5</a> · <a href="#b-modes">§ 7 旁证：Fast-WAM</a> · <a href="#timing">§ 8 计时</a> · <a href="#deviations">§ 9 偏离官方流程的地方</a> · <a href="#not-run">§ 10 还没跑的</a></nav>
 
 <div class="key good" id="main"><b>主要结论。</b>
 <ul>
@@ -122,6 +123,9 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <li><b>上层约每 4 秒运行一次，不是 5 到 10 Hz。</b>下层每执行完一段才调用上层。相邻两次调用之间的机器人时间，中位数 3.0 秒，平均 4.2 秒，折合约 0.24 Hz。短于 1 秒的分段只有 1.7%。</li>
 <li><b>上层单次调用约 0.8 秒。</b>这是 H200 上单独跑的数字，只有 2 个回合 12 次调用。输入的中位数约 1,900 个 token，带满 32 帧视频时约 3,900 个。照这个输入量，上层最快约 1.2 Hz。</li>
 <li><b>这个系统不只有两层。</b>上层和下层之间有一组手写规则，80% 的回合触发过，平均每回合 10.4 次；6.5% 的分段由规则直接重发，没有调用上层。上层每轮还读一个来自模拟器的真值：任务是否已完成。</li>
+<li><b>规则值约 10 个点（初步）。</b>关掉规则后是 39.2%，比默认低 10.4 个点（p = 0.007）。四分之一的回合是上层误判“任务已完成”而提前结束的。</li>
+<li><b>交接的措辞也值约 10 个点（初步）。</b>把交给下层的短句换成详细句，39.6%，低 10.0 个点（p = 0.006）。两个臂掉的都主要是原子任务。</li>
+<li><b>这两个差值还缺噪声底。</b>默认设置的重跑正在跑。闸门是单独占着卡跑的，两个臂是和别的任务共用卡跑的；评测循环是同步的，按理不受影响，重跑会检验这一点。</li>
 <li><b>旁证组。</b>官方 π0.5 的 LIBERO 数字复现了；同一设置重跑一遍，500 回合里有 44 回合的成败翻转，这是比较各臂时的噪声底。Fast-WAM 先想象未来 97.4%，不想象 95.4%，差 2.0 个点，没有达到显著。</li>
 </ul></div>
 
@@ -130,10 +134,13 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <tr><th>项</th><th>设置</th><th>结果</th><th>参照</th></tr>
 <tr><td>H1 成功率，总体</td><td>RoboCasa365，50 任务 × 5 回合，官方默认</td><td class="n">49.6%（124 / 250）</td><td class="n">官方 51.4%</td></tr>
 <tr><td>H1 成功率，分三类</td><td>原子／见过的组合／没见过的组合</td><td class="n">83.3 / 40.0 / 21.2</td><td class="n">官方 78.8 / 49.4 / 22.6</td></tr>
+<tr><td>H1 关掉手写规则</td><td>同上 250 回合，按回合配对</td><td class="n">39.2%（98 / 250）</td><td class="n">默认 49.6%，p = 0.007</td></tr>
+<tr><td>H1 交接换成详细句</td><td>同上 250 回合，按回合配对</td><td class="n">39.6%（99 / 250）</td><td class="n">默认 49.6%，p = 0.006</td></tr>
 <tr><td>H1 每回合调用上层</td><td>原子／见过的组合／没见过的组合</td><td class="n">5.2 / 21.4 / 26.4 次</td><td class="n">官方 5.7 / 20.2 / 26.7</td></tr>
 <tr><td>H1 上层调用间隔</td><td>机器人时间，中位数；平均</td><td class="n">3.0 s；4.2 s</td><td class="n">目标 0.1 到 0.2 s</td></tr>
 <tr><td>H1 上层单次耗时</td><td>单独跑；10 套并行</td><td class="n">0.81 s；2.64 s</td><td class="n">—</td></tr>
 <tr><td>H1 下层单次耗时</td><td>一个 16 步动作块，单独跑</td><td class="n">64 ms</td><td class="n">16 步是 0.8 s</td></tr>
+<tr><td>H3 流程检查</td><td>官方放出的 SmolVLA 权重，LIBERO 四套件各 100 回合</td><td class="n">89 / 96 / 88 / 68</td><td class="n">不是成绩，只验流程</td></tr>
 <tr><td>π0.5 成功率</td><td>LIBERO 四套件，各 500 回合</td><td class="n">98.4 / 98.0 / 97.6 / 93.2</td><td class="n">README 98.8 / 98.2 / 98.0 / 92.4</td></tr>
 <tr><td>π0.5 重跑</td><td>LIBERO-10，同一设置再跑 500 回合</td><td class="n">92.4%，44 回合翻转</td><td class="n">第一遍 93.2%</td></tr>
 <tr><td>Fast-WAM 成功率</td><td>LIBERO-10：先想象未来；不想象</td><td class="n">97.4%；95.4%</td><td class="n">README 97.0；95.8</td></tr>
@@ -261,10 +268,60 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 </table></div>
 <p>80% 的回合至少触发一次，平均每回合 10.4 次。4,295 个分段里有 279 个（6.5%）是规则直接重发上一个子目标，没有调用上层。</p>
 <p><b>模拟器真值。</b>上层每轮的输入里有一行“当前任务状态：进行中／已完成”，来自模拟器的成功判定；还有一行夹爪状态。官方在代码和提示词里都标明这是特权信息。真机上没有这一位。</p>
-<p><b>下一步。</b>关掉规则的对照臂（只留“重复上限”）正在跑。它也关掉了“最后一个里程碑重试”，所以给出的是更接近纯两层的成绩。</p>
+<p>关掉规则的对照臂见 <a href="#h1-arms">§ 4</a>。</p>
 </details>
 
-<details id="a-baseline"><summary><h2><span class="n">§ 4</span>旁证：π0.5</h2><span class="one">四个套件都在 README 数字的 1 个点以内；同一设置重跑，500 回合里 44 回合翻转。</span></summary>
+<details id="h1-arms" open><summary><h2><span class="n">§ 4</span>H1 对照臂</h2><span class="one">关规则和换详细句各掉约 10 个点，都主要掉在原子任务；噪声底的重跑还没完。</span></summary>
+<p>每个臂 50 个任务各 5 回合，与闸门按“任务 × 回合序号”配对。下层、权重和其余设置不动。</p>
+<div class="tw wide"><table>
+<tr><th>臂</th><th>改了什么</th><th>成功率</th><th>原子／见过的组合／没见过的组合</th><th>与默认配对</th></tr>
+<tr><td>默认（闸门）</td><td>—</td><td class="n">49.6%（124 / 250）</td><td class="n">83.3 / 40.0 / 21.2</td><td>—</td></tr>
+<tr><td>关掉手写规则</td><td>只留“重复上限”；“最后一个里程碑重试”也关</td><td class="n">39.2%（98 / 250）</td><td class="n">63.3 / 37.5 / 13.8</td><td>只有默认成功 57 回合，只有此臂成功 31 回合；−10.4 点，p = 0.007</td></tr>
+<tr><td>交接换成详细句</td><td>官方开关 <code>--prompt-source subgoal_detail</code>；规则全开</td><td class="n">39.6%（99 / 250）</td><td class="n">63.3 / 38.8 / 13.8</td><td>51 对 26；−10.0 点，p = 0.006</td></tr>
+<tr><td>没微调的上层（试跑）</td><td>上层换成 Qwen3-VL-4B 原版</td><td class="n">0 / 9，中途停止</td><td class="n">—</td><td>不配对</td></tr>
+</table></div>
+<p><b>分类看。</b>两个臂在原子任务上都低 20 个点（p = 0.001 和 0.003）。见过的组合任务几乎不变（−2.5 和 −1.2）。没见过的组合任务都低 7.5 个点，没有达到显著。</p>
+<p><b>回合怎么结束的。</b></p>
+<div class="tw fit"><table>
+<tr><th>结束原因</th><th>默认</th><th>关规则</th><th>详细句</th></tr>
+<tr><td>环境判定成功</td><td class="n">124</td><td class="n">98</td><td class="n">99</td></tr>
+<tr><td>步数用完</td><td class="n">124</td><td class="n">24</td><td class="n">148</td></tr>
+<tr><td>上层宣布任务结束，环境没判成功</td><td class="n">0</td><td class="n">64</td><td class="n">1</td></tr>
+<tr><td>同一子目标重复到上限</td><td class="n">2</td><td class="n">64</td><td class="n">0</td></tr>
+<tr><td>上层没给出子目标</td><td class="n">0</td><td class="n">0</td><td class="n">2</td></tr>
+</table></div>
+<p><b>读法。</b></p>
+<ul>
+<li><b>关规则。</b>四分之一的回合（64 个）死在上层误判完成。提示词里已经给了“任务状态：进行中”的真值，上层仍然宣布结束；默认设置下是规则把它压回去重做。也就是说，“任务做完没有”这件事，这个上层自己判断不可靠。</li>
+<li><b>详细句。</b>规则全开，回合不再提前结束，而是做不完、步数用光。官方默认交给下层的是短句；换成详细句以后下层执行变差。我没有核实下层训练时见过哪种句子，所以“措辞要和下层训练时一致”只是推测。</li>
+<li><b>两个臂的总数几乎相同是巧合。</b>逐回合看，两个臂结果相同的有 165 回合，按各任务成功率独立估计应有 171 回合，没有“同一批回合一起坏”的迹象；掉分的任务也不同。</li>
+</ul>
+<div class="key warn"><b>还缺噪声底。</b>默认设置的重跑（250 回合）正在跑。另外，同一“任务 × 回合序号”在两个臂里的初始场景并不总相同：指令文字一致的只有 189 和 206 对。配对检验仍然成立，但这两个差值要等重跑出来再定。闸门是单独占卡跑的，两个臂与训练任务共用一张卡；评测循环是同步的，我在代码里没找到依赖真实时间的地方。</div>
+<p><b>没微调的上层为什么停了。</b>原版模型每次回复很长，单次调用 8.4 秒，一回合要 7 分钟多，250 回合要 9 小时。完成的 9 个回合全部失败：7 个卡在重复同一个子目标，2 个没给出子目标。这 9 个都属于步数上限最长的组合任务，默认设置在这类任务上本来也低，所以只能当迹象。改成每任务 2 回合的子集（100 回合），已排队。</p>
+</details>
+
+<details id="checks" open><summary><h2><span class="n">§ 5</span>H2、H3、H4 的流程检查</h2><span class="one">三个实验的评测链路都跑通了；这里的数字只说明流程没装错，不是成绩。</span></summary>
+<h3>H3：官方放出的 SmolVLA 权重</h3>
+<p>用 lerobot 自带的评测脚本跑 <code>lerobot/smolvla_libero</code>，每任务 10 回合，每 10 步重规划，图像 256 像素，MuJoCo 3.3.1。</p>
+<div class="tw"><table>
+<tr><th>来源</th><th>Spatial</th><th>Object</th><th>Goal</th><th>Long</th><th>平均</th></tr>
+<tr><td>我们（400 回合）</td><td class="n">89</td><td class="n">96</td><td class="n">88</td><td class="n">68</td><td class="n">85.3</td></tr>
+<tr><td>第三方报告（转述），同一权重、每 10 步重规划</td><td class="n">76 – 78</td><td class="n">89 – 91</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>
+<tr><td>第三方报告（转述），同一权重、自带设置（每 50 步）</td><td class="n">60</td><td class="n">62</td><td class="n">80</td><td class="n">49</td><td class="n">62.8</td></tr>
+<tr><td>论文表 2（另一个配方的模型）</td><td class="n">90</td><td class="n">96</td><td class="n">92</td><td class="n">71</td><td class="n">87.3</td></tr>
+</table></div>
+<p>我们的数字比第三方报告的高，接近论文。论文那一行是另一个配方训出来的模型，不能当这份权重的对照，只说明评测流程没有把成功率压低。第三方的差距可能来自 MuJoCo 版本：新版本会让 Spatial 的一个任务失败，我们固定在 3.3.1。</p>
+<p>训练链路也检查过：用“上层一起训”的配置训 200 步、存盘、再评测自己存的检查点，40 回合没有报错（成功率 0，符合预期）。</p>
+<h3>H4：mimic-video 冒烟和闸门的中途数字</h3>
+<ul>
+<li><b>冒烟。</b>LIBERO-Spatial，去噪停在第 0 步（完全不生成视频），10 个任务各 1 回合：成功 9 个。</li>
+<li><b>闸门的中途数字。</b>同一设置、每任务 50 回合的运行跑到 157 回合时被我停下（退回单卡），成功 149 个。它按任务顺序跑，这 157 回合只覆盖前 5 个任务（第 5 个只跑了一部分），不能当套件成绩；论文是 94.2%。续跑已排队。</li>
+</ul>
+<h3>H2：RoboDual 冒烟</h3>
+<p>CALVIN ABC→D，官方间隔 8，2 条序列：两条都连续完成 5 个任务。评测环境只用调试数据集的验证目录提供场景配置（场景 D），这一条前提成立。在与训练共用的卡上每条序列要近 10 分钟。</p>
+</details>
+
+<details id="a-baseline"><summary><h2><span class="n">§ 6</span>旁证：π0.5</h2><span class="one">四个套件都在 README 数字的 1 个点以内；同一设置重跑，500 回合里 44 回合翻转。</span></summary>
 <p>整体式模型，不是分层测试。官方 openpi（提交 215abfb），权重 <code>gs://openpi-assets/checkpoints/pi05_libero</code>。官方设置：动作块 10 步，每 5 步重规划，flow 10 步，种子 7，每任务 50 回合。</p>
 <div class="tw"><table>
 <tr><th>套件</th><th>我们</th><th>95% 区间</th><th>README</th><th>差</th></tr>
@@ -279,17 +336,17 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <p>原计划的其余六个臂（flow 步数、延迟、重规划间隔）没有跑：改题后它们不回答分层的问题，权重已删。</p>
 </details>
 
-<details id="b-modes"><summary><h2><span class="n">§ 5</span>旁证：Fast-WAM</h2><span class="one">同一份权重，先想象未来 97.4%，不想象 95.4%；差 2.0 个点，p = 0.10。</span></summary>
+<details id="b-modes"><summary><h2><span class="n">§ 7</span>旁证：Fast-WAM</h2><span class="one">同一份权重，先想象未来 97.4%，不想象 95.4%；差 2.0 个点，p = 0.10。</span></summary>
 <p>整体式模型，不是分层测试。官方仓库（提交 7faa711），权重 <code>libero_optional_idm_2cam224.pt</code>，官方开关 <code>action_infer_mode</code>。LIBERO-10，两种模式各 500 回合，同一批初始状态。</p>
 <div class="tw"><table>
 <tr><th>模式</th><th>我们</th><th>95% 区间</th><th>README</th></tr>
 <tr><td>先想象未来画面，再出动作</td><td class="n">97.4%（487 / 500）</td><td class="n">95.6 – 98.5</td><td class="n">97.0</td></tr>
 <tr><td>不想象，直接出动作</td><td class="n">95.4%（477 / 500）</td><td class="n">93.2 – 96.9</td><td class="n">95.8</td></tr>
 </table></div>
-<p>按回合配对：只有“先想象”成功的 20 回合，只有“不想象”成功的 10 回合，p = 0.099。方向与作者的数字一致，量级在 π0.5 重跑的噪声之内。代价是每次推理慢 2.5 倍（<a href="#timing">§ 6</a>）。</p>
+<p>按回合配对：只有“先想象”成功的 20 回合，只有“不想象”成功的 10 回合，p = 0.099。方向与作者的数字一致，量级在 π0.5 重跑的噪声之内。代价是每次推理慢 2.5 倍（<a href="#timing">§ 8</a>）。</p>
 </details>
 
-<details id="timing"><summary><h2><span class="n">§ 6</span>计时</h2><span class="one">π0.5 的耗时随 flow 步数严格线性；Fast-WAM 先想象未来比不想象慢 2.5 倍。</span></summary>
+<details id="timing"><summary><h2><span class="n">§ 8</span>计时</h2><span class="one">π0.5 的耗时随 flow 步数严格线性；Fast-WAM 先想象未来比不想象慢 2.5 倍。</span></summary>
 <p>条件：GPU 上没有别的进程，批大小 1。数字是端到端的一次推理，包含输入预处理和把结果取回主机。MIRA 的耗时在 <a href="#h1-rate">§ 2</a>。</p>
 <h3 id="timing-pi05">π0.5</h3>
 <p>先预热 10 次，再量 100 次，取中位数。</p>
@@ -315,24 +372,33 @@ details > summary .one { display:block; color:var(--sub); font-size:.95rem; marg
 <p>推理峰值显存 25.0 GB。</p>
 </details>
 
-<details id="deviations"><summary><h2><span class="n">§ 7</span>偏离官方流程的地方</h2><span class="one">模型、权重和每回合的执行逻辑没有改，改的是评测外壳和回合数。</span></summary>
+<details id="deviations"><summary><h2><span class="n">§ 9</span>偏离官方流程的地方</h2><span class="one">模型、权重和每回合的执行逻辑没有改，改的是评测外壳、依赖版本和回合数。</span></summary>
 <ol>
 <li><b>MIRA 每任务 5 回合，不是 50。</b>官方的环境按固定种子依次重置，我们取的是每个任务的前 5 回合。</li>
 <li><b>MIRA 的上层不在 Docker 里。</b>berlin 没有容器运行时。我在虚拟环境里装同一版 vLLM 0.19.1，启动参数与官方脚本逐项相同，只把显存占比从 0.20 改成 0.15。官方镜像另外设了几个视频采样的环境变量，它们作用于 vLLM 不使用的一个库；我核对了实际的 token 数（一帧 192 个，32 帧视频 3,072 个），与设计一致。</li>
 <li><b>MIRA 一张卡上跑 10 套模拟器。</b>官方是 8 张 A100、每张两套。评测循环是同步的，模拟器等模型返回才走下一步，所以并行只影响耗时，不影响成败。</li>
 <li><b>π0.5 客户端拆成多个进程。</b>官方脚本按顺序跑完一个套件；我的版本把 10 个任务分给几个进程，回合循环照抄官方，另加每回合一行的记录。</li>
-<li><b>π0.5 基线用了两个服务端同时跑。</b>所以基线期间记下的推理耗时不能用；§ 6 的计时是另外在空 GPU 上量的。</li>
+<li><b>π0.5 基线用了两个服务端同时跑。</b>所以基线期间记下的推理耗时不能用；§ 8 的计时是另外在空 GPU 上量的。</li>
 <li><b>Fast-WAM 的文本编码器和 VAE 换了下载地方。</b>仓库默认指向的 ModelScope 镜像现在要登录。我改从 Wan 官方的 Hugging Face 发布下载同一份权重，并用仓库自带的开关 <code>model.redirect_common_files=false</code>。</li>
 <li><b>Fast-WAM 只跑了 LIBERO-10。</b>README 的数字是四个套件；这里只对 LIBERO-10 那一列。</li>
+<li><b>H1 的对照臂与别的任务共用一张卡。</b>闸门是单独跑的。评测循环同步，并行只影响耗时；默认设置的重跑也在共用的卡上跑，用来检验这一点。</li>
+<li><b>H1“没微调的上层”改成子集。</b>每任务 2 回合，不是 5。</li>
+<li><b>H3 的依赖版本。</b>lerobot main（提交 b07adcc），torch 2.10；MuJoCo 固定 3.3.1（lerobot 自己的模拟器镜像也是这个版本）；berlin 没有 FFmpeg，视频解码用 PyAV；四个套件各开一个评测进程。</li>
+<li><b>H4 的依赖版本。</b>默认会装进 MuJoCo 3.17，和它用的 robosuite 1.4.0 不兼容，固定到 3.3.1。每次运行用独立的工作目录，因为官方脚本按全局回合序号跳过已有结果。</li>
+<li><b>H2 的环境。</b>作者的安装清单不全，CALVIN 自带的清单又会把 torch 换成旧版。我按作者 <code>requirements.txt</code> 里的版本补包，CALVIN 的模型包不装它的依赖清单。评测脚本加了四个环境变量开关（刷新间隔、序列数、输出目录、渲染用哪张卡），默认值都是作者写死的值；另把 CALVIN 生成序列的进程数从“每个 CPU 一个”改成 1，生成的序列不变。</li>
+<li><b>robosuite 的文件日志关掉了。</b>它固定写 <code>/tmp/robosuite.log</code>，那个文件属于别的用户。用的是 robosuite 自带的私有配置。</li>
+<li><b>一次事故。</b>11-25 12:25，H2 的第一次冒烟让 CALVIN 按 CPU 数（192）派生子进程，派生到 80 多个时把整机的内存承诺额度顶满，H3 的四个训练臂因此中断并重启。原因是上一条里的进程数，已改。之后应用户要求退回一张卡、20 个核，H3 又重启了一次。这些只影响耗时，不影响任何已记录的成功率。</li>
 </ol>
 </details>
 
-<details id="not-run"><summary><h2><span class="n">§ 8</span>还没跑的</h2><span class="one">H1 的三个对照臂和重跑在排队；H2、H3、H4 没有结果。</span></summary>
+<details id="not-run"><summary><h2><span class="n">§ 10</span>还没跑的</h2><span class="one">都排在一张卡上依次跑：H1 的重跑和子集，H3 的五个训练臂，H4 和 H2 的闸门与扫描。</span></summary>
 <ul>
-<li><b>H1 对照臂。</b>关掉手写规则；上层换成没微调的同款模型；交给下层的文字换成详细句。各 250 回合，与闸门按回合配对。</li>
-<li><b>H1 默认设置重跑。</b>量这 250 回合上的噪声底，再判读对照臂的差别。</li>
-<li><b>H1 单独计时。</b>一套模拟器、6 个回合。</li>
-<li><b>H2（RoboDual）、H3（SmolVLA）、H4（mimic-video）。</b>见 <a href="hier-sota-repro.html#tests">具体计划 § 3</a>。磁盘一次只放得下一到两个实验，H1 结束后再装。</li>
+<li><b>H1 默认设置重跑。</b>在跑。量这 250 回合上的噪声底。</li>
+<li><b>H1“没微调的上层”子集。</b>每任务 2 回合，排在重跑之后。</li>
+<li><b>H1 单独计时。</b>等卡空下来再量，否则不是“单独”。</li>
+<li><b>H3（SmolVLA）。</b>四个训练臂在跑，第五个排队；各 3 万步，训完自动评测。</li>
+<li><b>H4（mimic-video）。</b>闸门续跑（333 回合），然后去噪停在第 5 步和第 20 步各 100 回合。</li>
+<li><b>H2（RoboDual）。</b>闸门：间隔 8，100 条序列；之后扫间隔 1、2、4。</li>
 <li><b>暂缓。</b>DexJoCo 灵巧手和 LIBERO-Plus。</li>
 </ul>
 </details>
